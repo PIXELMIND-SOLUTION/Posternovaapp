@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/providers/customer/customer_provider.dart';
@@ -36,10 +35,24 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
     _loadUserData();
 
     nameController = TextEditingController(text: widget.customer['name'] ?? '');
-    emailController = TextEditingController(text: widget.customer['email'] ?? '');
-    mobileController = TextEditingController(text: widget.customer['mobile'] ?? '');
-    addressController = TextEditingController(text: widget.customer['address'] ?? '');
-    selectedGender = widget.customer['gender'] ?? '';
+    emailController = TextEditingController(
+      text: widget.customer['email'] ?? '',
+    );
+    mobileController = TextEditingController(
+      text: widget.customer['mobile'] ?? '',
+    );
+    addressController = TextEditingController(
+      text: widget.customer['address'] ?? '',
+    );
+    // selectedGender = widget.customer['gender'] ?? '';
+
+    String rawGender = widget.customer['gender'] ?? '';
+    if (rawGender.isNotEmpty) {
+      selectedGender =
+          rawGender[0].toUpperCase() + rawGender.substring(1).toLowerCase();
+    } else {
+      selectedGender = '';
+    }
     _initializeDateFields();
   }
 
@@ -48,7 +61,9 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
     String dobValue = widget.customer['dob'] ?? '';
     if (dobValue.isNotEmpty && dobValue != 'Not Specified') {
       dobApiFormat = _normalizeApiFormat(dobValue);
-      dobController = TextEditingController(text: _formatDateForDisplay(dobValue));
+      dobController = TextEditingController(
+        text: _formatDateForDisplay(dobValue),
+      );
     } else {
       dobController = TextEditingController(text: '');
       dobApiFormat = '';
@@ -58,7 +73,9 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
     String anniversaryValue = widget.customer['anniversaryDate'] ?? '';
     if (anniversaryValue.isNotEmpty && anniversaryValue != 'Not Specified') {
       anniversaryApiFormat = _normalizeApiFormat(anniversaryValue);
-      anniversaryController = TextEditingController(text: _formatDateForDisplay(anniversaryValue));
+      anniversaryController = TextEditingController(
+        text: _formatDateForDisplay(anniversaryValue),
+      );
     } else {
       anniversaryController = TextEditingController(text: '');
       anniversaryApiFormat = '';
@@ -72,7 +89,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
 
     try {
       DateTime? date;
-      
+
       if (dateString.contains('T')) {
         date = DateTime.parse(dateString);
       } else if (dateString.length == 8) {
@@ -83,7 +100,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
       } else if (dateString.length == 10) {
         date = DateTime.parse(dateString);
       }
-      
+
       if (date != null) {
         return date.toIso8601String();
       }
@@ -100,7 +117,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
 
     try {
       DateTime? date;
-      
+
       if (dateString.contains('T')) {
         date = DateTime.parse(dateString);
       } else if (dateString.length == 8) {
@@ -111,7 +128,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
       } else if (dateString.length == 10) {
         date = DateTime.parse(dateString);
       }
-      
+
       if (date != null) {
         return DateFormat('dd/MM/yyyy').format(date);
       }
@@ -141,9 +158,15 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
     }
   }
 
-  Future<void> _selectDate(BuildContext context, TextEditingController controller, bool isDob) async {
+  Future<void> _selectDate(
+    BuildContext context,
+    TextEditingController controller,
+    bool isDob,
+  ) async {
     DateTime? initialDate;
-    String currentApiFormat = isDob ? (dobApiFormat ?? '') : (anniversaryApiFormat ?? '');
+    String currentApiFormat = isDob
+        ? (dobApiFormat ?? '')
+        : (anniversaryApiFormat ?? '');
 
     if (currentApiFormat.isNotEmpty && currentApiFormat != 'Not Specified') {
       try {
@@ -218,10 +241,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
           ),
           title: const Text(
             'Updated Successfully!',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           content: const Text(
             'Customer information has been updated successfully.',
@@ -278,10 +298,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
           ),
           title: const Text(
             'Update Failed',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           content: Text(
             message,
@@ -344,26 +361,20 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
         keyboardType: keyboardType,
         validator: validator,
         readOnly: readOnly,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           labelText: labelText,
           hintText: hintText,
-          prefixIcon: prefixIcon != null 
-            ? Icon(prefixIcon, color: const Color(0xFF64748B), size: 20)
-            : null,
+          prefixIcon: prefixIcon != null
+              ? Icon(prefixIcon, color: const Color(0xFF64748B), size: 20)
+              : null,
           suffixIcon: suffixIcon,
           labelStyle: const TextStyle(
             color: Color(0xFF64748B),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          hintStyle: const TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 14,
-          ),
+          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
           filled: true,
           fillColor: const Color(0xFFF8FAFC),
           border: OutlineInputBorder(
@@ -386,20 +397,92 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );
   }
 
+  // Widget _buildCustomDropdown() {
+  //   return Container(
+  //     margin: const EdgeInsets.only(bottom: 20),
+  //     child: DropdownButtonFormField<String>(
+  //       value: selectedGender,
+  //       decoration: InputDecoration(
+  //         labelText: 'Gender',
+  //         prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF64748B), size: 20),
+  //         labelStyle: const TextStyle(
+  //           color: Color(0xFF64748B),
+  //           fontSize: 14,
+  //           fontWeight: FontWeight.w500,
+  //         ),
+  //         filled: true,
+  //         fillColor: const Color(0xFFF8FAFC),
+  //         border: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(12),
+  //           borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+  //         ),
+  //         enabledBorder: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(12),
+  //           borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+  //         ),
+  //         focusedBorder: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(12),
+  //           borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+  //         ),
+  //         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  //       ),
+  //       items: ['Male', 'Female', 'Other']
+  //           .map((gender) => DropdownMenuItem(
+  //                 value: gender,
+  //                 child: Text(
+  //                   gender,
+  //                   style: const TextStyle(
+  //                     fontSize: 16,
+  //                     fontWeight: FontWeight.w500,
+  //                   ),
+  //                 ),
+  //               ))
+  //           .toList(),
+  //       onChanged: (value) {
+  //         setState(() {
+  //           selectedGender = value;
+  //         });
+  //       },
+  //       validator: (value) {
+  //         if (value == null || value.isEmpty) {
+  //           return 'Please select a gender';
+  //         }
+  //         return null;
+  //       },
+  //     ),
+  //   );
+  // }
+
   Widget _buildCustomDropdown() {
+    // Normalize the gender value to match dropdown items
+    String? normalizedGender;
+    if (selectedGender != null && selectedGender!.isNotEmpty) {
+      // Convert to title case to match dropdown items
+      normalizedGender =
+          selectedGender![0].toUpperCase() +
+          selectedGender!.substring(1).toLowerCase();
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: DropdownButtonFormField<String>(
-        value: selectedGender,
+        value: normalizedGender,
         decoration: InputDecoration(
           labelText: 'Gender',
-          prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF64748B), size: 20),
+          prefixIcon: const Icon(
+            Icons.person_outline,
+            color: Color(0xFF64748B),
+            size: 20,
+          ),
           labelStyle: const TextStyle(
             color: Color(0xFF64748B),
             fontSize: 14,
@@ -419,19 +502,24 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
         items: ['Male', 'Female', 'Other']
-            .map((gender) => DropdownMenuItem(
-                  value: gender,
-                  child: Text(
-                    gender,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+            .map(
+              (gender) => DropdownMenuItem(
+                value: gender,
+                child: Text(
+                  gender,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
-                ))
+                ),
+              ),
+            )
             .toList(),
         onChanged: (value) {
           setState(() {
@@ -450,7 +538,10 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<CreateCustomerProvider>(context, listen: false);
+    final provider = Provider.of<CreateCustomerProvider>(
+      context,
+      listen: false,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
@@ -665,7 +756,8 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                     color: Color(0xFF64748B),
                                     size: 20,
                                   ),
-                                  onPressed: () => _selectDate(context, dobController, true),
+                                  onPressed: () =>
+                                      _selectDate(context, dobController, true),
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -689,24 +781,37 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                     color: Color(0xFF64748B),
                                     size: 20,
                                   ),
-                                  onPressed: () => _selectDate(context, anniversaryController, false),
+                                  onPressed: () => _selectDate(
+                                    context,
+                                    anniversaryController,
+                                    false,
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
 
+                        // _buildCustomTextField(
+                        //   controller: addressController,
+                        //   labelText: 'Address',
+                        //   hintText: 'Enter address',
+                        //   prefixIcon: Icons.location_on_outlined,
+                        //   validator: (value) {
+                        //     if (value == null || value.isEmpty) {
+                        //       return 'Please enter an address';
+                        //     }
+                        //     return null;
+                        //   },
+                        // ),
+
+                        // commented the validation for address
+                        
                         _buildCustomTextField(
                           controller: addressController,
                           labelText: 'Address',
                           hintText: 'Enter address',
                           prefixIcon: Icons.location_on_outlined,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter an address';
-                            }
-                            return null;
-                          },
                         ),
 
                         const SizedBox(height: 16),
@@ -725,17 +830,23 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                       });
 
                                       try {
-                                        final success = await provider.updateCustomer(
-                                          userId: userId,
-                                          customerId: widget.customer['_id'] ?? '',
-                                          name: nameController.text,
-                                          email: emailController.text,
-                                          mobile: mobileController.text,
-                                          address: addressController.text,
-                                          gender: selectedGender ?? '',
-                                          dob: dobApiFormat ?? 'Not Specified',
-                                          anniversaryDate: anniversaryApiFormat ?? 'Not Specified',
-                                        );
+                                        final success = await provider
+                                            .updateCustomer(
+                                              userId: userId,
+                                              customerId:
+                                                  widget.customer['_id'] ?? '',
+                                              name: nameController.text,
+                                              email: emailController.text,
+                                              mobile: mobileController.text,
+                                              address: addressController.text,
+                                              gender: selectedGender ?? '',
+                                              dob:
+                                                  dobApiFormat ??
+                                                  'Not Specified',
+                                              anniversaryDate:
+                                                  anniversaryApiFormat ??
+                                                  'Not Specified',
+                                            );
 
                                         setState(() {
                                           _isLoading = false;
@@ -744,13 +855,17 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                         if (success) {
                                           _showSuccessDialog();
                                         } else {
-                                          _showErrorDialog('Failed to update customer. Please try again.');
+                                          _showErrorDialog(
+                                            'Failed to update customer. Please try again.',
+                                          );
                                         }
                                       } catch (e) {
                                         setState(() {
                                           _isLoading = false;
                                         });
-                                        _showErrorDialog('An error occurred while updating customer. Please try again.');
+                                        _showErrorDialog(
+                                          'An error occurred while updating customer. Please try again.',
+                                        );
                                       }
                                     }
                                   },
@@ -761,7 +876,9 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              shadowColor: const Color(0xFF7C3AED).withOpacity(0.3),
+                              shadowColor: const Color(
+                                0xFF7C3AED,
+                              ).withOpacity(0.3),
                             ),
                             child: _isLoading
                                 ? const SizedBox(

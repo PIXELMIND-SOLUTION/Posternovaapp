@@ -3,8 +3,8 @@ class SignupModel {
   final String name;
   final String email;
   final String mobile;
-  final String dob;
-  final String marriageAnniversary;
+   String? dob;
+   String? marriageAnniversary;
   final String? referralCode;
 
   SignupModel({
@@ -12,8 +12,8 @@ class SignupModel {
     required this.name,
     required this.email,
     required this.mobile,
-    required this.dob,
-    required this.marriageAnniversary,
+     this.dob,
+     this.marriageAnniversary,
     this.referralCode,
   });
 

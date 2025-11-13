@@ -2,12 +2,12 @@
 class PlanPurchaseRequestModel {
   final String userId;
   final String planId;
-  final String transactionId;
+   String? transactionId;
 
   PlanPurchaseRequestModel({
     required this.userId,
     required this.planId,
-    required this.transactionId,
+     this.transactionId,
   });
 
   Map<String, dynamic> toJson() {
@@ -24,22 +24,22 @@ class PlanPurchaseRequestModel {
 class PlanPurchaseResponseModel {
   final String message;
   final PurchasedPlanDetails plan;
-  final String upiId;
-  final String qrCode;
+   String? upiId;
+   String? qrCode;
 
   PlanPurchaseResponseModel({
     required this.message,
     required this.plan,
-    required this.upiId,
-    required this.qrCode,
+     this.upiId,
+     this.qrCode,
   });
 
   factory PlanPurchaseResponseModel.fromJson(Map<String, dynamic> json) {
     return PlanPurchaseResponseModel(
       message: json['message'],
       plan: PurchasedPlanDetails.fromJson(json['plan']),
-      upiId: json['upiId'],
-      qrCode: json['qrCode'],
+      upiId: json['upiId'] ?? '',
+      qrCode: json['qrCode'] ?? '',
     );
   }
 }

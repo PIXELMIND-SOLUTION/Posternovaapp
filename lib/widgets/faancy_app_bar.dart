@@ -762,7 +762,7 @@ class _FancyAppBarState extends State<FancyAppBar>
                       ],
                     ),
                     child: CircleAvatar(
-                      radius: 50,
+                      radius: 65,
                       backgroundColor: Colors.white,
                       backgroundImage: widget.profileImageUrl != null && 
                               widget.profileImageUrl!.isNotEmpty

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:posternova/views/PosterModule/home.dart';
-import 'package:posternova/views/ProfileScreen/profile_screen.dart';
 import 'package:posternova/views/category/category_screen.dart';
 import 'package:posternova/views/createposter/poster_screen.dart';
 import 'package:posternova/views/customer/customer_screen.dart';
 import 'package:posternova/views/horrorscope/horror_scope.dart';
-
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({Key? key}) : super(key: key);
@@ -23,7 +21,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const PosterScreen(),
     const HoroscopeScreen(),
     // const ProfileScreen(),
-    const CustomerScreen()
+    const CustomerScreen(),
   ];
 
   @override
@@ -59,9 +57,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             fontWeight: FontWeight.w600,
             fontSize: 12,
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 12,
-          ),
+          unselectedLabelStyle: const TextStyle(fontSize: 12),
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined, size: 28),
@@ -69,24 +65,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: 'Home',
             ),
 
-              BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.grid_view_rounded, size: 28),
               activeIcon: Icon(Icons.grid_view, size: 28),
               label: 'Category',
             ),
-                  BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.edit_outlined, size: 28),
               activeIcon: Icon(Icons.edit, size: 28),
               label: 'Poster',
             ),
-         BottomNavigationBarItem(
-  icon: Icon(Icons.nightlight_round, size: 28), // 🌙 spooky night
-  activeIcon: Icon(Icons.nightlight, size: 28),
-  label: 'Horror',
-),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.auto_awesome, size: 28),
+              activeIcon: Icon(Icons.auto_awesome, size: 28),
+              label: 'HorrorScope',
+            ),
 
-
-             BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Icon(Icons.group_outlined, size: 28),
               activeIcon: Icon(Icons.group, size: 28),
               label: 'Customer',
@@ -97,4 +92,3 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
-

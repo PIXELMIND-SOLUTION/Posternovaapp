@@ -941,7 +941,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
             ),
             const SizedBox(height: 32),
             Text(
-               'Start chat with AI',
+               'Start chat with Chicha',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -1037,7 +1037,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
             ),
             const SizedBox(width: 12),
             Text(
-              AppText.translate(context, 'chat_with_ai'),
+              AppText.translate(context, 'Chat with Chicha'),
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 18,

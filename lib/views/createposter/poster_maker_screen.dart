@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
@@ -70,6 +69,28 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
   File? _profileImage;
   String? _imageBase64;
   String? profileImage;
+
+  final List<Color> _presetColors = [
+    Colors.black,
+    Colors.white,
+    Colors.red,
+    Colors.blue,
+    Colors.green,
+    Colors.yellow,
+    Colors.orange,
+    Colors.purple,
+    Colors.pink,
+    Colors.teal,
+    Colors.cyan,
+    Colors.amber,
+    Colors.indigo,
+    Colors.lime,
+    Colors.brown,
+    Colors.grey,
+  ];
+
+  Color _emailTextColor = Colors.black;
+  Color _mobileTextColor = Colors.black;
 
   final TransformationController _transformationController =
       TransformationController();
@@ -660,6 +681,7 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
       });
     }
   }
+
   void imageConvert() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -668,7 +690,7 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
 
       if (imageString != null && imageString.isNotEmpty) {
         final file = await convertBase64ToFile(imageString);
-        await _createProfileItem(file); 
+        await _createProfileItem(file);
         print('Converted file path: ${file.path}');
       }
     } catch (e) {
@@ -2742,36 +2764,172 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
   }
 
   // CONTACT INFO METHODS
+  // void _editContactInfo() {
+  //   final TextEditingController controller = TextEditingController(text: email);
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Edit Contact Information'),
+  //       content: TextField(
+  //         controller: controller,
+  //         decoration: const InputDecoration(
+  //           hintText: 'Enter contact information',
+  //         ),
+  //         maxLines: 3,
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Cancel'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             setState(() {
+  //               // _emailInfoController.text = controller.text;
+  //               email = controller.text;
+  //             });
+  //             Navigator.pop(context);
+  //           },
+  //           child: const Text('Save'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   void _editContactInfo() {
     final TextEditingController controller = TextEditingController(text: email);
+    Color tempTextColor = _emailTextColor;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Contact Information'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Enter contact information',
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                // _emailInfoController.text = controller.text;
-                email = controller.text;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Edit Contact Information'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter contact information',
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Select Text Color:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  // Color palette grid
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 8,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemCount: _presetColors.length,
+                    itemBuilder: (context, index) {
+                      final color = _presetColors[index];
+                      final isSelected = tempTextColor == color;
+                      return GestureDetector(
+                        onTap: () {
+                          setDialogState(() {
+                            tempTextColor = color;
+                          });
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? Colors.blue : Colors.grey,
+                              width: isSelected ? 3 : 1,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.blue.withOpacity(0.5),
+                                      blurRadius: 8,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 16,
+                                )
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  // Custom color picker option
+                  TextButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Pick a custom color'),
+                            content: SingleChildScrollView(
+                              child: ColorPicker(
+                                pickerColor: tempTextColor,
+                                onColorChanged: (color) {
+                                  setDialogState(() {
+                                    tempTextColor = color;
+                                  });
+                                },
+                                pickerAreaHeightPercent: 0.8,
+                              ),
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                child: const Text('Done'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.color_lens),
+                    label: const Text('Custom Color'),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    email = controller.text;
+                    _emailTextColor = tempTextColor;
+                  });
+                  Navigator.pop(context);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -2810,38 +2968,176 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
     );
   }
 
+  // void _editMobileInfo() {
+  //   final TextEditingController controller = TextEditingController(
+  //     text: phoneNumber,
+  //   );
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Edit Mobile Information'),
+  //       content: TextField(
+  //         controller: controller,
+  //         decoration: const InputDecoration(
+  //           hintText: 'Enter Mobile information',
+  //         ),
+  //         maxLines: 3,
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Cancel'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             setState(() {
+  //               // _emailInfoController.text = controller.text;
+  //               phoneNumber = controller.text;
+  //             });
+  //             Navigator.pop(context);
+  //           },
+  //           child: const Text('Save'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   void _editMobileInfo() {
     final TextEditingController controller = TextEditingController(
       text: phoneNumber,
     );
+    Color tempTextColor = _mobileTextColor;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Mobile Information'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Enter Mobile information',
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                // _emailInfoController.text = controller.text;
-                phoneNumber = controller.text;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Edit Mobile Information'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter Mobile information',
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Select Text Color:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  // Color palette grid
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 8,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemCount: _presetColors.length,
+                    itemBuilder: (context, index) {
+                      final color = _presetColors[index];
+                      final isSelected = tempTextColor == color;
+                      return GestureDetector(
+                        onTap: () {
+                          setDialogState(() {
+                            tempTextColor = color;
+                          });
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? Colors.blue : Colors.grey,
+                              width: isSelected ? 3 : 1,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.blue.withOpacity(0.5),
+                                      blurRadius: 8,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 16,
+                                )
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  // Custom color picker option
+                  TextButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Pick a custom color'),
+                            content: SingleChildScrollView(
+                              child: ColorPicker(
+                                pickerColor: tempTextColor,
+                                onColorChanged: (color) {
+                                  setDialogState(() {
+                                    tempTextColor = color;
+                                  });
+                                },
+                                pickerAreaHeightPercent: 0.8,
+                              ),
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                child: const Text('Done'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.color_lens),
+                    label: const Text('Custom Color'),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    phoneNumber = controller.text;
+                    _mobileTextColor = tempTextColor;
+                  });
+                  Navigator.pop(context);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -3699,6 +3995,128 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
                             .toList(),
 
                         // Contact info section - remains the same
+                        // if (contactInfoItem != null ||
+                        //     mobileInfoItem != null ||
+                        //     siteInfoItem != null)
+                        //   Positioned(
+                        //     left: 0,
+                        //     right: 0,
+                        //     bottom: 0,
+                        //     child: DraggableWidget(
+                        //       item: contactInfoItem!,
+                        //       child: Container(
+                        //         padding: const EdgeInsets.all(8),
+                        //         decoration: BoxDecoration(
+                        //           // color: Colors.orange,
+                        //           borderRadius: BorderRadius.circular(4),
+                        //           border: _selectedItemId == contactInfoItem!.id
+                        //               ? Border.all(
+                        //                   color: const Color.fromARGB(
+                        //                     255,
+                        //                     255,
+                        //                     255,
+                        //                     255,
+                        //                   ),
+                        //                   width: 2,
+                        //                 )
+                        //               : null,
+                        //         ),
+                        //         child: SingleChildScrollView(
+                        //           scrollDirection: Axis.horizontal,
+                        //           child: IntrinsicWidth(
+                        //             child: Row(
+                        //               children: [
+                        //                 ConstrainedBox(
+                        //                   constraints: const BoxConstraints(
+                        //                     minWidth: 150,
+                        //                     maxWidth: 250,
+                        //                   ),
+                        //                   child: IntrinsicWidth(
+                        //                     child: TextField(
+                        //                       controller: TextEditingController(
+                        //                         text: email != null
+                        //                             ? email
+                        //                             : contactInfoItem!.text,
+                        //                       ),
+                        //                       onTap: () {
+                        //                         setState(() {
+                        //                           _selectedItemId =
+                        //                               contactInfoItem!.id;
+                        //                           _selectedItemType = 'contact';
+                        //                         });
+                        //                         _editContactInfo();
+                        //                       },
+                        //                       style: TextStyle(
+                        //                         fontSize: 12,
+                        //                         fontWeight: FontWeight.bold,
+                        //                         color:
+                        //                             _emailTextColor, // Apply the selected color
+                        //                       ),
+                        //                       decoration: const InputDecoration(
+                        //                         hintText: 'Email',
+                        //                         hintStyle: TextStyle(
+                        //                           color: Colors.white54,
+                        //                         ),
+                        //                         border: InputBorder.none,
+                        //                         isDense: true,
+                        //                         contentPadding:
+                        //                             EdgeInsets.symmetric(
+                        //                               horizontal: 8,
+                        //                             ),
+                        //                       ),
+                        //                     ),
+                        //                   ),
+                        //                 ),
+                        //                 const SizedBox(width: 10),
+                        //                 const SizedBox(width: 15),
+                        //                 ConstrainedBox(
+                        //                   constraints: const BoxConstraints(
+                        //                     minWidth: 120,
+                        //                     maxWidth: 180,
+                        //                   ),
+                        //                   child: IntrinsicWidth(
+                        //                     child: TextField(
+                        //                       controller: TextEditingController(
+                        //                         text: phoneNumber != null
+                        //                             ? phoneNumber
+                        //                             : mobileInfoItem!.text,
+                        //                       ),
+                        //                       onTap: () {
+                        //                         setState(() {
+                        //                           _selectedItemId =
+                        //                               mobileInfoItem!.id;
+                        //                           _selectedItemType = 'mobile';
+                        //                         });
+                        //                         _editMobileInfo();
+                        //                       },
+                        //                       style: TextStyle(
+                        //                         fontSize: 12,
+                        //                         fontWeight: FontWeight.bold,
+                        //                         color:
+                        //                             _mobileTextColor, // Apply the selected color
+                        //                       ),
+                        //                       decoration: const InputDecoration(
+                        //                         hintText: 'Phone',
+                        //                         hintStyle: TextStyle(
+                        //                           color: Colors.white54,
+                        //                         ),
+                        //                         border: InputBorder.none,
+                        //                         isDense: true,
+                        //                         contentPadding:
+                        //                             EdgeInsets.symmetric(
+                        //                               horizontal: 8,
+                        //                             ),
+                        //                       ),
+                        //                     ),
+                        //                   ),
+                        //                 ),
+                        //               ],
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ),
                         if (contactInfoItem != null ||
                             mobileInfoItem != null ||
                             siteInfoItem != null)
@@ -3711,19 +4129,8 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  // color: Colors.orange,
                                   borderRadius: BorderRadius.circular(4),
-                                  border: _selectedItemId == contactInfoItem!.id
-                                      ? Border.all(
-                                          color: const Color.fromARGB(
-                                            255,
-                                            255,
-                                            255,
-                                            255,
-                                          ),
-                                          width: 2,
-                                        )
-                                      : null,
+                                  // Removed the Border.all condition
                                 ),
                                 child: SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
@@ -3751,9 +4158,9 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
                                                 _editContactInfo();
                                               },
                                               style: TextStyle(
-                                                fontSize: 14,
+                                                fontSize: 12,
                                                 fontWeight: FontWeight.bold,
-                                                color: Colors.black,
+                                                color: _emailTextColor,
                                               ),
                                               decoration: const InputDecoration(
                                                 hintText: 'Email',
@@ -3793,9 +4200,9 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
                                                 _editMobileInfo();
                                               },
                                               style: TextStyle(
-                                                fontSize: 14,
+                                                fontSize: 12,
                                                 fontWeight: FontWeight.bold,
-                                                color: Colors.black,
+                                                color: _mobileTextColor,
                                               ),
                                               decoration: const InputDecoration(
                                                 hintText: 'Phone',

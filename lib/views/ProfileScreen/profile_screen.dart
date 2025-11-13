@@ -1839,11 +1839,12 @@ import 'package:posternova/providers/plans/get_all_plan_provider.dart';
 import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/views/AI/chat_ai.dart';
 import 'package:posternova/views/AuthModule/auth_screen.dart';
-import 'package:posternova/views/ProfileScreen/settings.dart';
+import 'package:posternova/views/ProfileScreen/edit_profile.dart';
 import 'package:posternova/views/about/about_screen.dart';
 import 'package:posternova/views/backgroundremover/background_remover.dart';
 import 'package:posternova/views/deleteaccount/delete_account_screen.dart';
 import 'package:posternova/views/invoices/create_invoice_screen.dart';
+import 'package:posternova/views/modes/dark_light_mode_screen.dart';
 import 'package:posternova/views/referearn/referearn_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
@@ -1901,42 +1902,35 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            child: Container(
-                              padding: const EdgeInsets.all(50),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF1D1E33),
-                                shape: BoxShape.circle,
-                              ),
-                              child: authProvider.isLoading
-                                  ? const CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.purple,
-                                      ),
-                                    )
-                                  : user?.user.profileImage != null &&
-                                        user!.user.profileImage!.isNotEmpty
-                                  ? ClipOval(
-                                      child: Image.network(
-                                        user.user.profileImage!,
-                                        width: 60,
-                                        height: 60,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return const Icon(
-                                                Icons.person,
-                                                size: 60,
-                                                color: Colors.white,
-                                              );
-                                            },
-                                      ),
-                                    )
-                                  : const Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: Colors.white,
+                            child: authProvider.isLoading
+                                ? const CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.purple,
                                     ),
-                            ),
+                                  )
+                                : user?.user.profileImage != null &&
+                                      user!.user.profileImage!.isNotEmpty
+                                ? ClipOval(
+                                    child: Image.network(
+                                      user.user.profileImage!,
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return const Icon(
+                                              Icons.person,
+                                              size: 60,
+                                              color: Colors.white,
+                                            );
+                                          },
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors.white,
+                                  ),
                           ),
                           Positioned(
                             bottom: 0,
@@ -2004,6 +1998,16 @@ class ProfileScreen extends StatelessWidget {
                                 isPremiumRequired: false,
                                 isPurchased: myPlanProvider.isPurchase ?? false,
                               ),
+
+                               _buildMenuItem(
+                                icon: Icons.person,
+                                title: 'Settings',
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context)=>EditProfile()));
+                                },
+                                isPremiumRequired: false,
+                                isPurchased: myPlanProvider.isPurchase ?? false,
+                              ),
                               _buildMenuItem(
                                 icon: Icons.info_outline,
                                 title: 'About',
@@ -2018,6 +2022,23 @@ class ProfileScreen extends StatelessWidget {
                                 isPremiumRequired: false,
                                 isPurchased: myPlanProvider.isPurchase ?? false,
                               ),
+                              //  _buildMenuItem(
+                              //   icon: Icons.light_mode,
+                              //   title: 'Modes',
+                              //   onTap: () {
+                              //     if(myPlanProvider.isPurchase==true){
+                              //          Navigator.push(
+                              //       context,
+                              //       MaterialPageRoute(
+                              //         builder: (context) => ThemeSettingsScreen(),
+                              //       ),
+                              //     );
+                              //     }
+                                 
+                              //   },
+                              //   // isPremiumRequired: false,
+                              //   // isPurchased: myPlanProvider.isPurchase ?? false,
+                              // ),
                               _buildMenuItem(
                                 icon: Icons.request_page,
                                 title: 'Invoice',
@@ -2038,7 +2059,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _buildMenuItem(
                                 icon: Icons.chat_bubble_outline,
-                                title: 'Chat with AI',
+                                title: 'Chicha AI',
                                 onTap: () {
                                   if (myPlanProvider.isPurchase == true) {
                                     Navigator.push(

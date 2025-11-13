@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:posternova/models/category_model.dart';
@@ -15,7 +14,8 @@ class SearchScreen extends StatefulWidget {
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMixin {
+class _SearchScreenState extends State<SearchScreen>
+    with TickerProviderStateMixin {
   final searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   List<CategoryModel> filteredPosters = [];
@@ -37,7 +37,7 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
       parent: _animationController,
       curve: Curves.easeOutBack,
     );
-    
+
     Future.microtask(
       () => Provider.of<PosterProvider>(context, listen: false).fetchPosters(),
     );
@@ -62,7 +62,11 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
       },
       onError: (error) {
         setState(() => _isListening = false);
-        _showSnackBar('Voice recognition error', Icons.error_outline, Colors.red);
+        _showSnackBar(
+          'Voice recognition error',
+          Icons.error_outline,
+          Colors.red,
+        );
       },
     );
   }
@@ -77,7 +81,10 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -150,7 +157,10 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
         filteredPosters = [];
       });
     } else {
-      final posterProvider = Provider.of<PosterProvider>(context, listen: false);
+      final posterProvider = Provider.of<PosterProvider>(
+        context,
+        listen: false,
+      );
       final searchResults = posterProvider.posters
           .where((poster) {
             if (poster is CategoryModel) {
@@ -201,7 +211,10 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                 controller: searchController,
                 focusNode: _searchFocusNode,
                 onChanged: handleSearch,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Search templates...',
                   hintStyle: TextStyle(
@@ -216,12 +229,19 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                   ),
                   suffixIcon: searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, color: Colors.grey.shade600, size: 20),
+                          icon: Icon(
+                            Icons.clear,
+                            color: Colors.grey.shade600,
+                            size: 20,
+                          ),
                           onPressed: _clearSearch,
                         )
                       : null,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                 ),
               ),
             ),
@@ -270,21 +290,21 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
     );
   }
 
-  Widget _buildFilterChips() {
-    return Container(
-      height: 44,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          _buildChip('Recent', 'recent'),
-          _buildChip('Popular', 'popular'),
-          _buildChip('A-Z', 'az'),
-          _buildChip('Category', 'category'),
-        ],
-      ),
-    );
-  }
+  // Widget _buildFilterChips() {
+  //   return Container(
+  //     height: 44,
+  //     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //     child: ListView(
+  //       scrollDirection: Axis.horizontal,
+  //       children: [
+  //         // _buildChip('Recent', 'recent'),
+  //         // _buildChip('Popular', 'popular'),
+  //         // _buildChip('A-Z', 'az'),
+  //         // _buildChip('Category', 'category'),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildChip(String label, String value) {
     final isSelected = _selectedSort == value;
@@ -332,7 +352,9 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                   ],
                 ),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.3)),
+                border: Border.all(
+                  color: const Color(0xFF6366F1).withOpacity(0.3),
+                ),
               ),
               child: Row(
                 children: [
@@ -359,7 +381,9 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF6366F1),
+                      ),
                     ),
                   ),
                 ],
@@ -402,7 +426,9 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
               children: [
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -411,31 +437,42 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                                 poster.images[0],
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
-                                  return _buildPlaceholder(Icons.broken_image_outlined);
-                                },
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(
-                                    color: Colors.grey.shade50,
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        value: loadingProgress.expectedTotalBytes != null
-                                            ? loadingProgress.cumulativeBytesLoaded / 
-                                              loadingProgress.expectedTotalBytes!
-                                            : null,
-                                        strokeWidth: 2,
-                                        color: const Color(0xFF6366F1),
-                                      ),
-                                    ),
+                                  return _buildPlaceholder(
+                                    Icons.broken_image_outlined,
                                   );
                                 },
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        color: Colors.grey.shade50,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            value:
+                                                loadingProgress
+                                                        .expectedTotalBytes !=
+                                                    null
+                                                ? loadingProgress
+                                                          .cumulativeBytesLoaded /
+                                                      loadingProgress
+                                                          .expectedTotalBytes!
+                                                : null,
+                                            strokeWidth: 2,
+                                            color: const Color(0xFF6366F1),
+                                          ),
+                                        ),
+                                      );
+                                    },
                               )
                             : _buildPlaceholder(Icons.image_outlined),
                         Positioned(
                           top: 8,
                           right: 8,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.95),
                               borderRadius: BorderRadius.circular(8),
@@ -449,7 +486,7 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.category, size: 12, color: Color(0xFF6366F1)),
+                                // const Icon(Icons.category, size: 12, color: Color(0xFF6366F1)),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${poster.images?.length ?? 0}',
@@ -504,13 +541,7 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
   Widget _buildPlaceholder(IconData icon) {
     return Container(
       color: Colors.grey.shade50,
-      child: Center(
-        child: Icon(
-          icon,
-          size: 48,
-          color: Colors.grey.shade300,
-        ),
-      ),
+      child: Center(child: Icon(icon, size: 48, color: Colors.grey.shade300)),
     );
   }
 
@@ -533,11 +564,7 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                   color: const Color(0xFF6366F1).withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  size: 64,
-                  color: const Color(0xFF6366F1),
-                ),
+                child: Icon(icon, size: 64, color: const Color(0xFF6366F1)),
               ),
               const SizedBox(height: 24),
               Text(
@@ -577,10 +604,7 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
         ),
         title: const Text(
           'Search',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
         ),
         centerTitle: true,
         elevation: 0,
@@ -626,7 +650,11 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                         color: Colors.red.shade50,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.cloud_off, size: 64, color: Colors.red.shade400),
+                      child: Icon(
+                        Icons.cloud_off,
+                        size: 64,
+                        color: Colors.red.shade400,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     const Text(
@@ -640,7 +668,10 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                     const SizedBox(height: 8),
                     Text(
                       posterProvider.error!,
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
@@ -655,7 +686,10 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                   ],
@@ -668,29 +702,31 @@ class _SearchScreenState extends State<SearchScreen> with TickerProviderStateMix
             children: [
               _buildSearchBar(),
               _buildListeningBanner(),
-              if (searchValue) _buildFilterChips(),
+              // if (searchValue) _buildFilterChips(),
               Expanded(
                 child: searchValue
                     ? filteredPosters.isNotEmpty
-                        ? GridView.builder(
-                            padding: const EdgeInsets.all(16),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.75,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
-                            itemCount: filteredPosters.length,
-                            itemBuilder: (context, index) => _buildResultCard(
-                              filteredPosters[index],
-                              index,
-                            ),
-                          )
-                        : _buildEmptyState(
-                            icon: Icons.search_off,
-                            title: "No Results Found",
-                            subtitle: "Try different keywords or check your spelling",
-                          )
+                          ? GridView.builder(
+                              padding: const EdgeInsets.all(16),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    childAspectRatio: 0.75,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                  ),
+                              itemCount: filteredPosters.length,
+                              itemBuilder: (context, index) => _buildResultCard(
+                                filteredPosters[index],
+                                index,
+                              ),
+                            )
+                          : _buildEmptyState(
+                              icon: Icons.search_off,
+                              title: "No Results Found",
+                              subtitle:
+                                  "Try different keywords or check your spelling",
+                            )
                     : _buildEmptyState(
                         icon: Icons.travel_explore,
                         title: "Start Searching",

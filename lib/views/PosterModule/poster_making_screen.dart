@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'dart:convert';
@@ -6,6 +7,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -18,7 +20,7 @@ class PosterTemplate {
   String id;
   String name;
   String categoryName;
-  String description; 
+  String description;
   String title;
   String email;
   String mobile;
@@ -131,7 +133,9 @@ class PosterTemplate {
           width: 600,
           height: 150,
           fontSize: textStyles.email.fontSize ?? 24,
-          color: textStyles.email.color ?? const ui.Color.fromARGB(255, 158, 26, 26),
+          color:
+              textStyles.email.color ??
+              const ui.Color.fromARGB(255, 158, 26, 26),
           fontWeight: textStyles.email.fontWeight ?? FontWeight.bold,
           fontFamily: textStyles.email.fontFamily ?? 'Times New Roman',
           textAlign: TextAlign.left,
@@ -1124,6 +1128,547 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
       }
     }
   }
+
+  // void _showColorPickerDialog() {
+  //   if (_selectedTextElement == null) return;
+
+  //   Color currentColor = _selectedTextElement!.color;
+  //   int red = currentColor.red;
+  //   int green = currentColor.green;
+  //   int blue = currentColor.blue;
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => StatefulBuilder(
+  //       builder: (context, setDialogState) {
+  //         return AlertDialog(
+  //           title: const Text('Choose Text Color'),
+  //           content: SingleChildScrollView(
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 // Color preview
+  //                 Container(
+  //                   width: double.infinity,
+  //                   height: 60,
+  //                   decoration: BoxDecoration(
+  //                     color: Color.fromRGBO(red, green, blue, 1),
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     border: Border.all(color: Colors.grey),
+  //                   ),
+  //                   child: Center(
+  //                     child: Text(
+  //                       'Preview Text',
+  //                       style: TextStyle(
+  //                         color: _getContrastColor(
+  //                           Color.fromRGBO(red, green, blue, 1),
+  //                         ),
+  //                         fontSize: 16,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 20),
+
+  //                 // Red slider
+  //                 _buildColorSlider('Red', red, 0, 255, (value) {
+  //                   setDialogState(() {
+  //                     red = value.round();
+  //                   });
+  //                 }, Colors.red),
+  //                 const SizedBox(height: 16),
+
+  //                 // Green slider
+  //                 _buildColorSlider('Green', green, 0, 255, (value) {
+  //                   setDialogState(() {
+  //                     green = value.round();
+  //                   });
+  //                 }, Colors.green),
+  //                 const SizedBox(height: 16),
+
+  //                 // Blue slider
+  //                 _buildColorSlider('Blue', blue, 0, 255, (value) {
+  //                   setDialogState(() {
+  //                     blue = value.round();
+  //                   });
+  //                 }, Colors.blue),
+  //                 const SizedBox(height: 16),
+
+  //                 // RGB values display
+  //                 Container(
+  //                   padding: const EdgeInsets.all(12),
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.grey[100],
+  //                     borderRadius: BorderRadius.circular(8),
+  //                   ),
+  //                   child: Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceAround,
+  //                     children: [
+  //                       _buildColorValue('R', red, Colors.red),
+  //                       _buildColorValue('G', green, Colors.green),
+  //                       _buildColorValue('B', blue, Colors.blue),
+  //                     ],
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 10),
+
+  //                 // Hex value
+  //                 Text(
+  //                   'Hex: #${red.toRadixString(16).padLeft(2, '0')}'
+  //                   '${green.toRadixString(16).padLeft(2, '0')}'
+  //                   '${blue.toRadixString(16).padLeft(2, '0')}',
+  //                   style: const TextStyle(
+  //                     fontWeight: FontWeight.bold,
+  //                     fontSize: 14,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //               onPressed: () => Navigator.pop(context),
+  //               child: const Text('Cancel'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 setState(() {
+  //                   _selectedTextElement!.color = Color.fromRGBO(
+  //                     red,
+  //                     green,
+  //                     blue,
+  //                     1,
+  //                   );
+  //                 });
+  //                 Navigator.pop(context);
+  //               },
+  //               child: const Text('Apply'),
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
+
+  // Widget _buildColorSlider(
+  //   String label,
+  //   int value,
+  //   int min,
+  //   int max,
+  //   Function(double) onChanged,
+  //   Color color,
+  // ) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: [
+  //           Text(
+  //             '$label:',
+  //             style: const TextStyle(fontWeight: FontWeight.w500),
+  //           ),
+  //           Text(
+  //             value.toString(),
+  //             style: TextStyle(fontWeight: FontWeight.bold, color: color),
+  //           ),
+  //         ],
+  //       ),
+  //       const SizedBox(height: 8),
+  //       Slider(
+  //         value: value.toDouble(),
+  //         min: min.toDouble(),
+  //         max: max.toDouble(),
+  //         divisions: 255,
+  //         activeColor: color,
+  //         inactiveColor: color.withOpacity(0.3),
+  //         onChanged: onChanged,
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  // Widget _buildColorValue(String label, int value, Color color) {
+  //   return Column(
+  //     children: [
+  //       Text(
+  //         label,
+  //         style: TextStyle(
+  //           fontWeight: FontWeight.bold,
+  //           color: color,
+  //           fontSize: 14,
+  //         ),
+  //       ),
+  //       Text(
+  //         value.toString(),
+  //         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  // Color _getContrastColor(Color backgroundColor) {
+  //   // Calculate the perceptive luminance (human eye favors green color)
+  //   double luminance =
+  //       (0.299 * backgroundColor.red +
+  //           0.587 * backgroundColor.green +
+  //           0.114 * backgroundColor.blue) /
+  //       255;
+
+  //   // Return black for light colors, white for dark colors
+  //   return luminance > 0.5 ? Colors.black : Colors.white;
+  // }
+
+
+
+//   void _showColorPickerDialog() {
+//   if (_selectedTextElement == null) return;
+
+//   Color currentColor = _selectedTextElement!.color;
+//   final List<Color> _presetColors = [
+//     Colors.black,
+//     Colors.white,
+//     Colors.red,
+//     Colors.blue,
+//     Colors.green,
+//     Colors.yellow,
+//     Colors.orange,
+//     Colors.purple,
+//     Colors.pink,
+//     Colors.teal,
+//     Colors.cyan,
+//     Colors.amber,
+//     Colors.indigo,
+//     Colors.lime,
+//     Colors.brown,
+//     Colors.grey,
+//   ];
+
+//   showDialog(
+//     context: context,
+//     builder: (context) => StatefulBuilder(
+//       builder: (context, setDialogState) {
+//         Color tempColor = currentColor;
+
+//         return AlertDialog(
+//           title: const Text('Pick Text Color'),
+//           content: SingleChildScrollView(
+//             child: Column(
+//               mainAxisSize: MainAxisSize.min,
+//               children: [
+//                 // Color preview
+//                 Container(
+//                   width: double.infinity,
+//                   height: 60,
+//                   decoration: BoxDecoration(
+//                     color: tempColor,
+//                     borderRadius: BorderRadius.circular(8),
+//                     border: Border.all(color: Colors.grey),
+//                   ),
+//                   child: Center(
+//                     child: Text(
+//                       'Preview Text',
+//                       style: TextStyle(
+//                         color: _getContrastColor(tempColor),
+//                         fontSize: 16,
+//                         fontWeight: FontWeight.bold,
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//                 const SizedBox(height: 20),
+
+//                 // Preset colors grid
+//                 const Text(
+//                   'Preset Colors:',
+//                   style: TextStyle(fontWeight: FontWeight.bold),
+//                 ),
+//                 const SizedBox(height: 10),
+//                 GridView.builder(
+//                   shrinkWrap: true,
+//                   physics: const NeverScrollableScrollPhysics(),
+//                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+//                     crossAxisCount: 8,
+//                     crossAxisSpacing: 8,
+//                     mainAxisSpacing: 8,
+//                   ),
+//                   itemCount: _presetColors.length,
+//                   itemBuilder: (context, index) {
+//                     final color = _presetColors[index];
+//                     final isSelected = tempColor == color;
+//                     return GestureDetector(
+//                       onTap: () {
+//                         setDialogState(() {
+//                           tempColor = color;
+//                           _selectedTextElement!.color = color;
+//                         });
+//                       },
+//                       child: Container(
+//                         decoration: BoxDecoration(
+//                           color: color,
+//                           shape: BoxShape.circle,
+//                           border: Border.all(
+//                             color: isSelected ? Colors.blue : Colors.grey,
+//                             width: isSelected ? 3 : 1,
+//                           ),
+//                           boxShadow: isSelected
+//                               ? [
+//                                   BoxShadow(
+//                                     color: Colors.blue.withOpacity(0.5),
+//                                     blurRadius: 8,
+//                                     spreadRadius: 2,
+//                                   ),
+//                                 ]
+//                               : null,
+//                         ),
+//                         child: isSelected
+//                             ? const Icon(
+//                                 Icons.check,
+//                                 color: Colors.white,
+//                                 size: 16,
+//                               )
+//                             : null,
+//                       ),
+//                     );
+//                   },
+//                 ),
+//                 const SizedBox(height: 20),
+
+//                 // Advanced color picker
+//                 const Text(
+//                   'Custom Color:',
+//                   style: TextStyle(fontWeight: FontWeight.bold),
+//                 ),
+//                 const SizedBox(height: 10),
+//                 ColorPicker(
+//                   pickerColor: tempColor,
+//                   onColorChanged: (color) {
+//                     setDialogState(() {
+//                       tempColor = color;
+//                       _selectedTextElement!.color = color;
+//                     });
+//                   },
+//                   pickerAreaHeightPercent: 0.4,
+//                   enableAlpha: false,
+//                   displayThumbColor: true,
+//                   colorPickerWidth: 300,
+//                   pickerAreaBorderRadius: BorderRadius.circular(12),
+//                   hexInputBar: false,
+//                   labelTypes: const [],
+                  
+//                   // pickerAreaPadding: const EdgeInsets.all(8),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           actions: [
+//             TextButton(
+//               onPressed: () {
+//                 // Revert to original color
+//                 setState(() {
+//                   _selectedTextElement!.color = currentColor;
+//                 });
+//                 Navigator.pop(context);
+//               },
+//               child: const Text('Cancel'),
+//             ),
+//             TextButton(
+//               onPressed: () {
+//                 Navigator.pop(context);
+//               },
+//               child: const Text('Apply'),
+//             ),
+//           ],
+//         );
+//       },
+//     ),
+//   );
+// }
+
+// // Helper method to get contrast color
+// Color _getContrastColor(Color backgroundColor) {
+//   // Calculate the perceptive luminance
+//   double luminance = (0.299 * backgroundColor.red +
+//           0.587 * backgroundColor.green +
+//           0.114 * backgroundColor.blue) /
+//       255;
+//   return luminance > 0.5 ? Colors.black : Colors.white;
+// }
+
+
+
+void _showColorPickerDialog() {
+  if (_selectedTextElement == null) return;
+
+  Color currentColor = _selectedTextElement!.color;
+  Color tempColor = currentColor; // Track temporary color separately
+  
+  final List<Color> _presetColors = [
+    Colors.black,
+    Colors.white,
+    Colors.red,
+    Colors.blue,
+    Colors.green,
+    Colors.yellow,
+    Colors.orange,
+    Colors.purple,
+    Colors.pink,
+    Colors.teal,
+    Colors.cyan,
+    Colors.amber,
+    Colors.indigo,
+    Colors.lime,
+    Colors.brown,
+    Colors.grey,
+  ];
+
+  showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) {
+        return AlertDialog(
+          title: const Text('Pick Text Color'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Color preview
+                Container(
+                  width: double.infinity,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: tempColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Preview Text',
+                      style: TextStyle(
+                        color: _getContrastColor(tempColor),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Preset colors grid
+                const Text(
+                  'Preset Colors:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 8,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: _presetColors.length,
+                  itemBuilder: (context, index) {
+                    final color = _presetColors[index];
+                    final isSelected = tempColor == color;
+                    return GestureDetector(
+                      onTap: () {
+                        setDialogState(() {
+                          tempColor = color;
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? Colors.blue : Colors.grey,
+                            width: isSelected ? 3 : 1,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.blue.withOpacity(0.5),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: isSelected
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 16,
+                              )
+                            : null,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Advanced color picker
+                const Text(
+                  'Custom Color:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                ColorPicker(
+                  pickerColor: tempColor,
+                  onColorChanged: (color) {
+                    setDialogState(() {
+                      tempColor = color;
+                    });
+                  },
+                  pickerAreaHeightPercent: 0.4,
+                  enableAlpha: false,
+                  displayThumbColor: true,
+                  colorPickerWidth: 300,
+                  pickerAreaBorderRadius: BorderRadius.circular(12),
+                  hexInputBar: false,
+                  labelTypes: const [],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Don't apply changes - just close
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Apply the color change to the main widget state
+                setState(() {
+                  _selectedTextElement!.color = tempColor;
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('Apply'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+// Helper method to get contrast color (add this if not present)
+Color _getContrastColor(Color backgroundColor) {
+  // Calculate the perceptive luminance
+  double luminance = (0.299 * backgroundColor.red +
+          0.587 * backgroundColor.green +
+          0.114 * backgroundColor.blue) /
+      255;
+  return luminance > 0.5 ? Colors.black : Colors.white;
+}
 
   Future<void> _loadProfileImage() async {
     try {
@@ -2162,6 +2707,7 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                 tooltip: 'Edit Text',
               ),
               const VerticalDivider(width: 16),
+
               // Font Size Slider for Text Elements
               const Text(
                 'Size: ',
@@ -2178,7 +2724,6 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                   onChanged: (value) {
                     setState(() {
                       _selectedTextElement!.fontSize = value;
-
                       if (value > 100) {
                         final textLength = _selectedTextElement!.text.length;
                         _selectedTextElement!.width = (textLength * value * 0.5)
@@ -2188,10 +2733,6 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                           _template!.height * 2,
                         );
                       }
-                      //    if (value > 100) {
-                      //   _selectedTextElement!.width = (_selectedTextElement!.width).clamp(400.0, _template!.width * 1.5);
-                      //   _selectedTextElement!.height = (_selectedTextElement!.height).clamp(200.0, _template!.height * 1.5);
-                      // }
                     });
                   },
                 ),
@@ -2202,7 +2743,6 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                 icon: const Icon(Icons.fit_screen, color: Colors.deepPurple),
                 onPressed: () {
                   setState(() {
-                    // Auto-adjust container size based on font size and text length
                     double estimatedWidth =
                         _selectedTextElement!.text.length *
                         _selectedTextElement!.fontSize *
@@ -2222,6 +2762,8 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                 },
                 tooltip: 'Auto-fit Size',
               ),
+
+              // Font Family Dropdown
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
@@ -2254,6 +2796,8 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                 ),
               ),
               const SizedBox(width: 8),
+
+              // Font Weight Dropdown
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
@@ -2293,6 +2837,8 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                 ),
               ),
               const VerticalDivider(width: 16),
+
+              // Text Alignment
               Row(
                 children: [
                   IconButton(
@@ -2340,34 +2886,17 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                 ],
               ),
               const VerticalDivider(width: 16),
-              const Text(
-                'Color: ',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              ..._colors.map(
-                (color) => GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedTextElement!.color = color;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: color,
-                      border: Border.all(
-                        color: _selectedTextElement!.color == color
-                            ? Colors.deepPurple
-                            : Colors.grey,
-                        width: _selectedTextElement!.color == color ? 3 : 1,
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
+
+              // RGB Color Picker Button
+              IconButton(
+                icon: Icon(
+                  Icons.color_lens,
+                  color: _selectedTextElement!.color,
                 ),
+                onPressed: _showColorPickerDialog,
+                tooltip: 'Choose Color',
               ),
+
               // Delete button for text elements
               const VerticalDivider(width: 16),
               IconButton(
@@ -2437,7 +2966,7 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                 icon: const Icon(Icons.crop_square, color: Colors.deepPurple),
                 onPressed: () {
                   setState(() {
-                    _selectedImageElement!.borderRadius = 0.0; 
+                    _selectedImageElement!.borderRadius = 0.0;
                   });
                 },
                 tooltip: 'Sharp Corners',
@@ -2785,39 +3314,39 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                     (_selectedTextElement != null ||
                         _selectedImageElement != null))
                   _buildToolbar(),
+
                 Expanded(
                   child: GestureDetector(
                     onScaleStart: (details) {
                       _focusPoint = details.focalPoint;
                       _previousScale = _currentScale;
                       _startOffset = _currentOffset;
-
-                      // _startOffset = details.focalPoint;
-                      // _currentBaseScale = _currentScale;
-                      // _normalizedOffset = _currentOffset;
                     },
                     onScaleUpdate: (details) {
                       setState(() {
-                        _currentScale = (_previousScale * details.scale).clamp(
-                          0.5,
-                          3.0,
-                        );
+                        // Handle scaling
+                        if (details.scale != 1.0) {
+                          _currentScale = (_previousScale * details.scale)
+                              .clamp(0.5, 3.0);
+                        }
 
-                        final focalPointInOriginal =
-                            (_focusPoint - _startOffset) / _previousScale;
-
-                        // Calculate where that point should be after scaling
-                        final focalPointAfterScale =
-                            focalPointInOriginal * _currentScale;
-
-                        // Adjust the offset so the focal point stays under the user's fingers
-                        _currentOffset = _focusPoint - focalPointAfterScale;
-                      
+                        // Handle panning - this is the key fix
+                        if (details.scale == 1.0) {
+                          // Pure panning (no scaling)
+                          final delta = details.focalPoint - _focusPoint;
+                          _currentOffset = _startOffset + delta;
+                        } else {
+                          // Scaling with panning adjustment
+                          // When scaling, we need to adjust the offset to keep the focal point stable
+                          final focalPointDelta =
+                              details.focalPoint - _focusPoint;
+                          _currentOffset = _startOffset + focalPointDelta;
+                        }
                       });
                     },
                     onScaleEnd: (details) {
                       _previousScale = _currentScale;
-                      // _normalizedOffset = _currentOffset;
+                      _startOffset = _currentOffset;
                     },
                     onTap: _deselectAll,
                     child: Transform(
@@ -2845,8 +3374,6 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                                     height: _template!.height,
                                     decoration: BoxDecoration(
                                       color: _template!.backgroundColor,
-                                      // border: Border.all(
-                                      //     color: Colors.grey.shade300),
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.2),
@@ -2949,6 +3476,170 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
                     ),
                   ),
                 ),
+                // Expanded(
+                //   child: GestureDetector(
+                //     onScaleStart: (details) {
+                //       _focusPoint = details.focalPoint;
+                //       _previousScale = _currentScale;
+                //       _startOffset = _currentOffset;
+
+                //       // _startOffset = details.focalPoint;
+                //       // _currentBaseScale = _currentScale;
+                //       // _normalizedOffset = _currentOffset;
+                //     },
+                //     onScaleUpdate: (details) {
+                //       setState(() {
+                //         _currentScale = (_previousScale * details.scale).clamp(
+                //           0.5,
+                //           3.0,
+                //         );
+
+                //         final focalPointInOriginal =
+                //             (_focusPoint - _startOffset) / _previousScale;
+
+                //         // Calculate where that point should be after scaling
+                //         final focalPointAfterScale =
+                //             focalPointInOriginal * _currentScale;
+
+                //         // Adjust the offset so the focal point stays under the user's fingers
+                //         _currentOffset = _focusPoint - focalPointAfterScale;
+
+                //       });
+                //     },
+                //     onScaleEnd: (details) {
+                //       _previousScale = _currentScale;
+                //       // _normalizedOffset = _currentOffset;
+                //     },
+                //     onTap: _deselectAll,
+                //     child: Transform(
+                //       transform: Matrix4.identity()
+                //         ..translate(_currentOffset.dx, _currentOffset.dy)
+                //         ..scale(_currentScale),
+                //       child: Center(
+                //         child: SingleChildScrollView(
+                //           scrollDirection: Axis.vertical,
+                //           child: SingleChildScrollView(
+                //             scrollDirection: Axis.horizontal,
+                //             child: RepaintBoundary(
+                //               key: _canvasKey,
+                //               child: Container(
+                //                 constraints: BoxConstraints(
+                //                   maxWidth:
+                //                       MediaQuery.of(context).size.width * 0.9,
+                //                   maxHeight:
+                //                       MediaQuery.of(context).size.height * 0.8,
+                //                 ),
+                //                 child: FittedBox(
+                //                   fit: BoxFit.contain,
+                //                   child: Container(
+                //                     width: _template!.width,
+                //                     height: _template!.height,
+                //                     decoration: BoxDecoration(
+                //                       color: _template!.backgroundColor,
+                //                       // border: Border.all(
+                //                       //     color: Colors.grey.shade300),
+                //                       boxShadow: [
+                //                         BoxShadow(
+                //                           color: Colors.black.withOpacity(0.2),
+                //                           blurRadius: 10,
+                //                           offset: const Offset(0, 5),
+                //                         ),
+                //                       ],
+                //                     ),
+                //                     child: Stack(
+                //                       clipBehavior: Clip.hardEdge,
+                //                       children: [
+                //                         if (_template!.backgroundImage != null)
+                //                           Positioned.fill(
+                //                             child: Image.network(
+                //                               _template!.backgroundImage!,
+                //                               fit: BoxFit.fill,
+                //                               loadingBuilder: (context, child, loadingProgress) {
+                //                                 if (loadingProgress == null)
+                //                                   return child;
+                //                                 return Container(
+                //                                   color: Colors.grey[200],
+                //                                   child: Center(
+                //                                     child: Column(
+                //                                       mainAxisAlignment:
+                //                                           MainAxisAlignment
+                //                                               .center,
+                //                                       children: [
+                //                                         CircularProgressIndicator(
+                //                                           value:
+                //                                               loadingProgress
+                //                                                       .expectedTotalBytes !=
+                //                                                   null
+                //                                               ? loadingProgress
+                //                                                         .cumulativeBytesLoaded /
+                //                                                     loadingProgress
+                //                                                         .expectedTotalBytes!
+                //                                               : null,
+                //                                         ),
+                //                                         const SizedBox(
+                //                                           height: 8,
+                //                                         ),
+                //                                         const Text(
+                //                                           'Loading background...',
+                //                                         ),
+                //                                       ],
+                //                                     ),
+                //                                   ),
+                //                                 );
+                //                               },
+                //                               errorBuilder:
+                //                                   (context, error, stackTrace) {
+                //                                     return Container(
+                //                                       color: _template!
+                //                                           .backgroundColor,
+                //                                       child: const Center(
+                //                                         child: Column(
+                //                                           mainAxisAlignment:
+                //                                               MainAxisAlignment
+                //                                                   .center,
+                //                                           children: [
+                //                                             Icon(
+                //                                               Icons.error,
+                //                                               size: 48,
+                //                                               color: Colors.red,
+                //                                             ),
+                //                                             SizedBox(height: 8),
+                //                                             Text(
+                //                                               'Failed to load background',
+                //                                             ),
+                //                                           ],
+                //                                         ),
+                //                                       ),
+                //                                     );
+                //                                   },
+                //                             ),
+                //                           ),
+                //                         ..._template!.textElements.map(
+                //                           (element) =>
+                //                               _buildTextElement(element),
+                //                         ),
+                //                         ..._template!.imageElements.map(
+                //                           (element) =>
+                //                               _buildImageElement(element),
+                //                         ),
+                //                         if (_profileImageBytes != null &&
+                //                             _profileImageElement != null)
+                //                           _buildProfileImage(),
+                //                         if (_logoImage != null &&
+                //                             _logoImageElement != null)
+                //                           _buildLogoImage(),
+                //                       ],
+                //                     ),
+                //                   ),
+                //                 ),
+                //               ),
+                //             ),
+                //           ),
+                //         ),
+                //       ),
+                //     ),
+                //   ),
+                // ),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,

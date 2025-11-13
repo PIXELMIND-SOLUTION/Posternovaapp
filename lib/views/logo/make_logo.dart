@@ -2070,6 +2070,9 @@ class _EditLogoState extends State<MakeLogo> with SingleTickerProviderStateMixin
                     _modernColorPicker(const Color(0xFFF38181), selectedColor, (color) {
                       setModalState(() => selectedColor = color);
                     }),
+                      _modernColorPicker(const ui.Color.fromARGB(255, 0, 0, 0), selectedColor, (color) {
+                      setModalState(() => selectedColor = color);
+                    }),
                   ],
                 ),
 
@@ -2226,6 +2229,9 @@ class _EditLogoState extends State<MakeLogo> with SingleTickerProviderStateMixin
                       setModalState(() => selectedColor = color);
                     }),
                     _modernColorPicker(const Color(0xFFF38181), selectedColor, (color) {
+                      setModalState(() => selectedColor = color);
+                    }),
+                         _modernColorPicker(const ui.Color.fromARGB(255, 0, 0, 0), selectedColor, (color) {
                       setModalState(() => selectedColor = color);
                     }),
                   ],
@@ -2761,6 +2767,7 @@ class _EditLogoState extends State<MakeLogo> with SingleTickerProviderStateMixin
                         _modernColorPicker(const Color(0xFF95E1D3), selectedColor, (color) {
                           setDialogState(() => selectedColor = color);
                         }),
+                     
                       ],
                     ),
 

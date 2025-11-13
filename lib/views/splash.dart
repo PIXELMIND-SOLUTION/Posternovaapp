@@ -521,7 +521,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         ],
                       ).createShader(bounds),
                       child: const Text(
-                        'PosterNova',
+                        'Editezy',
                         style: TextStyle(
                           fontSize: 48,
                           fontWeight: FontWeight.bold,

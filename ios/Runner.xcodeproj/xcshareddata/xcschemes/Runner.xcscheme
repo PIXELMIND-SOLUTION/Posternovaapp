@@ -62,7 +62,9 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       enableGPUValidationMode = "1"
-      allowLocationSimulation = "YES">
+      allowLocationSimulation = "YES"
+      consoleMode = "0"
+      structuredConsoleMode = "1">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
@@ -73,6 +75,9 @@
             ReferencedContainer = "container:Runner.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "../Pods/EditEasy.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Profile"

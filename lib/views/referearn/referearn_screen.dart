@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -56,10 +55,7 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
         });
 
         if (userId != null) {
-          await Future.wait([
-            fetchReferralCode(),
-            fetchWalletAmount(),
-          ]);
+          await Future.wait([fetchReferralCode(), fetchWalletAmount()]);
         } else {
           setState(() {
             referralCode = 'User not found';
@@ -163,35 +159,54 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
     }
   }
 
-  Future<void> shareReferralCode() async {
-    if (referralCode != 'Loading...' &&
-        referralCode != 'Error loading code' &&
-        referralCode != 'Network error') {
-      try {
-        final String shareMessage = '''
-🎉 Join me on our amazing app and get instant rewards! 🎉
+  //   Future<void> shareReferralCode() async {
+  //     if (referralCode != 'Loading...' &&
+  //         referralCode != 'Error loading code' &&
+  //         referralCode != 'Network error') {
+  //       try {
+  //         final String shareMessage = '''
+  // 🎉 Join me on our amazing app and get instant rewards! 🎉
+
+  // Use my referral code: $referralCode
+
+  // ✨ What you get:
+  // • 30 Credits instantly when you sign up
+  // • 50 More credits when you make your first purchase
+  // • Amazing deals and offers
+
+  // Download the app now and start earning!
+
+  // #ReferAndEarn #InstantRewards
+  //         ''';
+
+  //         await Share.share(
+  //           shareMessage,
+  //           subject: 'Join me and earn instant rewards!',
+  //         );
+
+  //         showSnackBar(context, 'Shared successfully!');
+  //       } catch (e) {
+  //         showSnackBar(context, 'Error sharing referral code');
+  //       }
+  //     }
+  //   }
+
+  void shareReferralCode() {
+    if (referralCode != null && referralCode!.isNotEmpty) {
+      final shareText =
+          '''
+🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
 
 Use my referral code: $referralCode
 
-✨ What you get:
-• 30 Credits instantly when you sign up
-• 50 More credits when you make your first purchase
-• Amazing deals and offers
+You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
 
-Download the app now and start earning!
+Download EditEzy now:
+https://play.google.com/store/apps/details?id=com.posternova.posternova
 
-#ReferAndEarn #InstantRewards
-        ''';
-
-        await Share.share(
-          shareMessage,
-          subject: 'Join me and earn instant rewards!',
-        );
-
-        showSnackBar(context, 'Shared successfully!');
-      } catch (e) {
-        showSnackBar(context, 'Error sharing referral code');
-      }
+Don't miss out on this opportunity! 🚀
+''';
+      Share.share(shareText, subject: 'Join EditEzy using my referral code');
     }
   }
 
@@ -236,7 +251,7 @@ Download the app now and start earning!
                       label: 'Share',
                       onTap: () async {
                         Navigator.pop(context);
-                        await shareReferralCode();
+                        shareReferralCode();
                       },
                     ),
                     _ShareChip(
@@ -303,7 +318,7 @@ Download the app now and start earning!
               onShare: showShareOptions,
             ),
             const SizedBox(height: 16),
-            _InfoCard(),
+            // _InfoCard(),
             const SizedBox(height: 16),
             _HowItWorks(),
             const SizedBox(height: 24),
@@ -327,7 +342,10 @@ Download the app now and start earning!
                   child: ElevatedButton.icon(
                     onPressed: isLoading ? null : showShareOptions,
                     icon: const Icon(Icons.share, color: Colors.white),
-                    label: const AppText('share_invite_code', style: buttonTextStyle),
+                    label: const AppText(
+                      'share_invite_code',
+                      style: buttonTextStyle,
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -366,11 +384,8 @@ class _HeaderCard extends StatelessWidget {
     return Container(
       height: 230,
       decoration: BoxDecoration(
-        gradient:  LinearGradient(
-          colors: [
-        Colors.deepPurple,
-        Colors.deepPurple.withValues(alpha: 0.5),
-      ],
+        gradient: LinearGradient(
+          colors: [Colors.deepPurple, Colors.deepPurple.withValues(alpha: 0.5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -380,7 +395,7 @@ class _HeaderCard extends StatelessWidget {
             color: const Color(0xFF6E62FF).withOpacity(0.25),
             blurRadius: 18,
             offset: const Offset(0, 8),
-          )
+          ),
         ],
       ),
       padding: const EdgeInsets.all(18),
@@ -401,12 +416,16 @@ class _HeaderCard extends StatelessWidget {
               children: [
                 _StatTile(
                   labelKey: 'total_earning',
-                  value: isWalletLoading ? null : '₹${totalEarning.toStringAsFixed(0)}',
+                  value: isWalletLoading
+                      ? null
+                      : '₹${totalEarning.toStringAsFixed(0)}',
                 ),
                 const SizedBox(width: 12),
                 _StatTile(
                   labelKey: 'current_balance',
-                  value: isWalletLoading ? null : '₹${walletAmount.toStringAsFixed(0)}',
+                  value: isWalletLoading
+                      ? null
+                      : '₹${walletAmount.toStringAsFixed(0)}',
                 ),
               ],
             ),
@@ -510,7 +529,8 @@ class _ReferralCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool disabled = isLoading ||
+    final bool disabled =
+        isLoading ||
         referralCode == 'Error loading code' ||
         referralCode == 'Network error';
 
@@ -569,14 +589,17 @@ class _ReferralCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10,
+                        horizontal: 14,
+                        vertical: 10,
                       ),
                       elevation: 0,
                     ),
                     child: const Text(
                       'Share',
                       style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w700),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -595,35 +618,35 @@ class _ReferralCard extends StatelessWidget {
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: _surface(),
-      padding: const EdgeInsets.all(16),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppText(
-            'introduce_friend',
-            style: _ReferEarnScreenState.contentTextStyle,
-          ),
-          SizedBox(height: 8),
-          AppText(
-            'bonus_credit',
-            style: _ReferEarnScreenState.contentTextStyle,
-          ),
-        ],
-      ),
-    );
-  }
+// class _InfoCard extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     // return Container(
+//     //   decoration: _surface(),
+//     //   padding: const EdgeInsets.all(16),
+//     //   child: const Column(
+//     //     crossAxisAlignment: CrossAxisAlignment.start,
+//     //     children: [
+//     //       // AppText(
+//     //       //   'introduce_friend',
+//     //       //   style: _ReferEarnScreenState.contentTextStyle,
+//     //       // ),
+//     //       SizedBox(height: 8),
+//     //       // AppText(
+//     //       //   'bonus_credit',
+//     //       //   style: _ReferEarnScreenState.contentTextStyle,
+//     //       // ),
+//     //     ],
+//     //   ),
+//     // );
+//   }
 
-  BoxDecoration _surface() => BoxDecoration(
-        color: const Color(0xFFFDFEFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      );
-}
+//   BoxDecoration _surface() => BoxDecoration(
+//         color: const Color(0xFFFDFEFF),
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: Colors.grey.shade200),
+//       );
+// }
 
 class _HowItWorks extends StatelessWidget {
   @override
@@ -660,10 +683,10 @@ class _HowItWorks extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 10),
-            ...steps.map((s) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: s,
-                )),
+            ...steps.map(
+              (s) =>
+                  Padding(padding: const EdgeInsets.only(bottom: 10), child: s),
+            ),
           ],
         ),
       ),
@@ -700,14 +723,21 @@ class _HowItWorksItem extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 14)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: const TextStyle(
-                    fontSize: 12, color: Colors.black54, height: 1.3),
+                  fontSize: 12,
+                  color: Colors.black54,
+                  height: 1.3,
+                ),
               ),
             ],
           ),
@@ -747,8 +777,7 @@ class _ShareChip extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),

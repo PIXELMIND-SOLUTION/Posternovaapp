@@ -25,6 +25,7 @@ import 'package:posternova/widgets/faancy_app_bar.dart';
 import 'package:posternova/widgets/home_courosel_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:share_plus/share_plus.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,6 +51,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Map<String, dynamic> birthdayData = {};
   Map<String, dynamic> anniversaryData = {};
+
+  List<dynamic> customers = [];
+  bool isLoadingCustomers = false;
 
   Locale _locale = const Locale('en');
 
@@ -96,7 +100,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _loadUserData();
     _loadUserId();
     _initializeUser();
-    Future.microtask(() {
+    Future.microtask(() async {
+      await _loadUserId(); // Ensure userId is loaded first
+      fetchCustomers();
       final myPlanProvider = Provider.of<MyPlanProvider>(
         context,
         listen: false,
@@ -114,13 +120,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         listen: false,
       );
 
+      final authprovider = Provider.of<AuthProvider>(context, listen: false);
 
-          final authprovider = Provider.of<AuthProvider>(
-        context,
-        listen: false,
-      );
-
-    
       myPlanProvider
           .fetchMyPlan(userId.toString())
           .then((_) {
@@ -186,6 +187,57 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       print('Error loading user ID or birthday data: $e');
+    }
+  }
+
+  Future<void> fetchCustomers() async {
+    // Wait for userId to be loaded first
+    if (userId == null) {
+      print('userId is null, waiting...');
+      // Give it a moment for _loadUserId to complete
+      await Future.delayed(Duration(milliseconds: 500));
+
+      if (userId == null) {
+        print('Cannot fetch customers: userId is still null');
+        return;
+      }
+    }
+
+    setState(() {
+      isLoadingCustomers = true;
+    });
+
+    try {
+      print('Fetching customers for userId: $userId');
+      final response = await http.get(
+        Uri.parse('http://194.164.148.244:4061/api/users/allcustomers/$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          customers = data['customers'] ?? [];
+          isLoadingCustomers = false;
+        });
+        print('✅ Customers fetched successfully: ${customers.length}');
+
+        // Debug: Print customer data
+        for (var customer in customers) {
+          print(
+            'Customer: ${customer['name']}, DOB: ${customer['dob']}, Anniversary: ${customer['anniversaryDate']}',
+          );
+        }
+      } else {
+        setState(() {
+          isLoadingCustomers = false;
+        });
+        print('❌ Failed to load customers: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingCustomers = false;
+      });
+      print('❌ Error fetching customers: $e');
     }
   }
 
@@ -255,9 +307,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (userData != null && userData.user != null) {
       setState(() {
         userId = userData.user.id;
-        username = userData.user.name;  // Add this
-      userImage = userData.user.profileImage;  
+        username = userData.user.name; // Add this
+        userImage = userData.user.profileImage;
       });
+      fetchCustomers();
       print('User ID: $userId');
     } else {
       print("No User ID");
@@ -331,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final posters = posterProvider.posters;
 
     return Scaffold(
-      appBar:  FancyAppBar(username: username,profileImageUrl: userImage,),
+      appBar: FancyAppBar(username: username, profileImageUrl: userImage),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -433,6 +486,302 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  //   Widget _buildCustomerCelebrationsSection() {
+  //   List<String> celebrations = [];
+
+  //   print('=== Customer Celebrations Debug ===');
+  //   print('Total customers: ${customers.length}');
+  //   print('Is loading: $isLoadingCustomers');
+
+  //   if (customers.isNotEmpty) {
+  //     final today = DateTime.now();
+  //     print('Today: ${today.year}-${today.month}-${today.day}');
+
+  //     for (var customer in customers) {
+  //       print('\nChecking customer: ${customer['name']}');
+
+  //       // Check for birthday
+  //       if (customer['dob'] != null && customer['dob'].isNotEmpty) {
+  //         try {
+  //           final dob = DateTime.parse(customer['dob']);
+  //           print('  DOB: ${dob.year}-${dob.month}-${dob.day}');
+  //           print('  Match: month=${dob.month == today.month}, day=${dob.day == today.day}');
+
+  //           if (dob.month == today.month && dob.day == today.day) {
+  //             final age = today.year - dob.year;
+  //             final celebration = "🎂 Happy ${age}th Birthday ${customer['name']}!";
+  //             celebrations.add(celebration);
+  //             print('  ✅ Birthday celebration added: $celebration');
+  //           }
+  //         } catch (e) {
+  //           print('  ❌ Error parsing DOB for ${customer['name']}: $e');
+  //         }
+  //       } else {
+  //         print('  No DOB data');
+  //       }
+
+  //       // Check for anniversary
+  //       if (customer['anniversaryDate'] != null && customer['anniversaryDate'].isNotEmpty) {
+  //         try {
+  //           final anniversary = DateTime.parse(customer['anniversaryDate']);
+  //           print('  Anniversary: ${anniversary.year}-${anniversary.month}-${anniversary.day}');
+  //           print('  Match: month=${anniversary.month == today.month}, day=${anniversary.day == today.day}');
+
+  //           if (anniversary.month == today.month && anniversary.day == today.day) {
+  //             final years = today.year - anniversary.year;
+  //             final celebration = "💐 Happy ${years}th Anniversary ${customer['name']}!";
+  //             celebrations.add(celebration);
+  //             print('  ✅ Anniversary celebration added: $celebration');
+  //           }
+  //         } catch (e) {
+  //           print('  ❌ Error parsing anniversary for ${customer['name']}: $e');
+  //         }
+  //       } else {
+  //         print('  No anniversary data');
+  //       }
+  //     }
+  //   } else {
+  //     print('No customers available');
+  //   }
+
+  //   print('\nTotal celebrations found: ${celebrations.length}');
+  //   if (celebrations.isNotEmpty) {
+  //     print('Celebrations: $celebrations');
+  //   }
+  //   print('=== End Debug ===\n');
+
+  //   // If no celebrations to display, return empty widget
+  //   if (celebrations.isEmpty) {
+  //     return const SizedBox();
+  //   }
+
+  //   return Container(
+  //     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       gradient: const LinearGradient(
+  //         colors: [
+  //           Color(0xFFFFF3E0),
+  //           Color(0xFFFFE0B2),
+  //         ],
+  //         begin: Alignment.topLeft,
+  //         end: Alignment.bottomRight,
+  //       ),
+  //       borderRadius: BorderRadius.circular(20),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: const Color(0xFFFF6F00).withOpacity(0.3),
+  //           blurRadius: 10,
+  //           offset: const Offset(0, 4),
+  //         ),
+  //       ],
+  //       border: Border.all(color: const Color(0xFFFFB74D), width: 1.2),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Container(
+  //           padding: const EdgeInsets.all(10),
+  //           decoration: BoxDecoration(
+  //             color: const Color(0xFFE65100),
+  //             borderRadius: BorderRadius.circular(10),
+  //           ),
+  //           child: const Icon(Icons.cake, color: Colors.white, size: 22),
+  //         ),
+  //         const SizedBox(width: 14),
+  //         Expanded(
+  //           child: SizedBox(
+  //             height: 26,
+  //             child: Marquee(
+  //               text: celebrations.join("  •  "),
+  //               style: const TextStyle(
+  //                 fontSize: 15,
+  //                 fontWeight: FontWeight.w600,
+  //                 color: Color(0xFFBF360C),
+  //               ),
+  //               scrollAxis: Axis.horizontal,
+  //               crossAxisAlignment: CrossAxisAlignment.center,
+  //               blankSpace: 40.0,
+  //               velocity: 35.0,
+  //               pauseAfterRound: const Duration(seconds: 2),
+  //               startPadding: 10.0,
+  //               accelerationDuration: const Duration(seconds: 1),
+  //               accelerationCurve: Curves.easeInOut,
+  //               decelerationDuration: const Duration(milliseconds: 600),
+  //               decelerationCurve: Curves.easeOut,
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  Widget _buildCustomerCelebrationsSection() {
+    List<String> celebrations = [];
+
+    print('=== Customer Celebrations Debug ===');
+    print('Total customers: ${customers.length}');
+    print('Is loading: $isLoadingCustomers');
+
+    if (customers.isNotEmpty) {
+      final today = DateTime.now();
+      print('Today: ${today.year}-${today.month}-${today.day}');
+
+      for (var customer in customers) {
+        print('\nChecking customer: ${customer['name']}');
+
+        // Check for birthday
+        if (customer['dob'] != null && customer['dob'].isNotEmpty) {
+          try {
+            final dob = DateTime.parse(customer['dob']);
+            print('  DOB: ${dob.year}-${dob.month}-${dob.day}');
+            print(
+              '  Match: month=${dob.month == today.month}, day=${dob.day == today.day}',
+            );
+
+            if (dob.month == today.month && dob.day == today.day) {
+              final age = today.year - dob.year;
+
+              // Determine suffix (st, nd, rd, th)
+              String suffix;
+              if (age % 10 == 1 && age != 11) {
+                suffix = 'st';
+              } else if (age % 10 == 2 && age != 12) {
+                suffix = 'nd';
+              } else if (age % 10 == 3 && age != 13) {
+                suffix = 'rd';
+              } else {
+                suffix = 'th';
+              }
+
+              final celebration = age > 0
+                  ? "🎂 Happy ${age}${suffix} Birthday ${customer['name']}!"
+                  : "🎂 Happy Birthday ${customer['name']}!";
+
+              celebrations.add(celebration);
+              print('  ✅ Birthday celebration added: $celebration');
+            }
+          } catch (e) {
+            print('  ❌ Error parsing DOB for ${customer['name']}: $e');
+          }
+        } else {
+          print('  No DOB data');
+        }
+
+        // Check for anniversary
+        if (customer['anniversaryDate'] != null &&
+            customer['anniversaryDate'].isNotEmpty) {
+          try {
+            final anniversary = DateTime.parse(customer['anniversaryDate']);
+            print(
+              '  Anniversary: ${anniversary.year}-${anniversary.month}-${anniversary.day}',
+            );
+            print(
+              '  Match: month=${anniversary.month == today.month}, day=${anniversary.day == today.day}',
+            );
+
+            if (anniversary.month == today.month &&
+                anniversary.day == today.day) {
+              final years = today.year - anniversary.year;
+
+              String suffix;
+              if (years % 10 == 1 && years != 11) {
+                suffix = 'st';
+              } else if (years % 10 == 2 && years != 12) {
+                suffix = 'nd';
+              } else if (years % 10 == 3 && years != 13) {
+                suffix = 'rd';
+              } else {
+                suffix = 'th';
+              }
+
+              final celebration = years > 0
+                  ? "💐 Happy ${years}${suffix} Anniversary ${customer['name']}!"
+                  : "💐 Happy Anniversary ${customer['name']}!";
+
+              celebrations.add(celebration);
+              print('  ✅ Anniversary celebration added: $celebration');
+            }
+          } catch (e) {
+            print('  ❌ Error parsing anniversary for ${customer['name']}: $e');
+          }
+        } else {
+          print('  No anniversary data');
+        }
+      }
+    } else {
+      print('No customers available');
+    }
+
+    print('\nTotal celebrations found: ${celebrations.length}');
+    if (celebrations.isNotEmpty) {
+      print('Celebrations: $celebrations');
+    }
+    print('=== End Debug ===\n');
+
+    // If no celebrations to display, return empty widget
+    if (celebrations.isEmpty) {
+      return const SizedBox();
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6F00).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFFFB74D), width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE65100),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.cake, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: SizedBox(
+              height: 26,
+              child: Marquee(
+                text: celebrations.join("  •  "),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFBF360C),
+                ),
+                scrollAxis: Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                blankSpace: 40.0,
+                velocity: 35.0,
+                pauseAfterRound: const Duration(seconds: 2),
+                startPadding: 10.0,
+                accelerationDuration: const Duration(seconds: 1),
+                accelerationCurve: Curves.easeInOut,
+                decelerationDuration: const Duration(milliseconds: 600),
+                decelerationCurve: Curves.easeOut,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Widget _buildWishesSection() {
   //   if (birthdayData['wishes'] == null || birthdayData['wishes'].isEmpty) {
   //     return const SizedBox();
@@ -499,6 +848,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         SizedBox(height: 20),
 
         _buildWishesSection(),
+        _buildCustomerCelebrationsSection(),
+
         // _buildSectionHeader(
         //   title: 'Featured Templates',
         //   subtitle: 'Trending designs for you',
@@ -2108,6 +2459,568 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  // void showReferAndEarnModal(BuildContext context) {
+  //   String? userId;
+  //   String? userReferralCode;
+  //   bool isLoading = true;
+  //   String? errorMessage;
+
+  //   showGeneralDialog(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     barrierLabel: 'Refer and Earn',
+  //     barrierColor: Colors.black.withOpacity(0.5),
+  //     transitionDuration: const Duration(milliseconds: 300),
+  //     pageBuilder: (context, animation, secondaryAnimation) {
+  //       return const SizedBox.shrink();
+  //     },
+  //     transitionBuilder: (context, animation, secondaryAnimation, child) {
+  //       return FadeTransition(
+  //         opacity: animation,
+  //         child: ScaleTransition(
+  //           scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+  //             CurvedAnimation(parent: animation, curve: Curves.easeOut),
+  //           ),
+  //           child: Center(
+  //             child: Material(
+  //               color: Colors.transparent,
+  //               child: StatefulBuilder(
+  //                 builder: (context, setState) {
+  //                   Future<void> loadUserDataAndFetchReferralCode() async {
+  //                     try {
+  //                       setState(() {
+  //                         isLoading = true;
+  //                         errorMessage = null;
+  //                       });
+
+  //                       final userData = await AuthPreferences.getUserData();
+  //                       if (userData != null && userData.user != null) {
+  //                         userId = userData.user.id;
+
+  //                         if (userId != null) {
+  //                           final response = await http.get(
+  //                             Uri.parse(
+  //                               'http://194.164.148.244:4061/api/users/refferalcode/$userId',
+  //                             ),
+  //                             headers: {'Content-Type': 'application/json'},
+  //                           );
+
+  //                           if (response.statusCode == 200) {
+  //                             final data = json.decode(response.body);
+  //                             String? fetchedCode =
+  //                                 data['referralCode'] ??
+  //                                 data['refferalCode'] ??
+  //                                 data['code'] ??
+  //                                 data['referral_code'] ??
+  //                                 data['refferal_code'];
+
+  //                             setState(() {
+  //                               isLoading = false;
+  //                               userReferralCode = fetchedCode;
+  //                               errorMessage = fetchedCode == null
+  //                                   ? 'No referral code found'
+  //                                   : null;
+  //                             });
+  //                           } else {
+  //                             setState(() {
+  //                               userReferralCode = null;
+  //                               errorMessage = 'Failed to load referral code';
+  //                               isLoading = false;
+  //                             });
+  //                           }
+  //                         } else {
+  //                           setState(() {
+  //                             userReferralCode = null;
+  //                             errorMessage = 'User ID is null';
+  //                             isLoading = false;
+  //                           });
+  //                         }
+  //                       } else {
+  //                         setState(() {
+  //                           userReferralCode = null;
+  //                           errorMessage = 'User data not found';
+  //                           isLoading = false;
+  //                         });
+  //                       }
+  //                     } catch (e) {
+  //                       setState(() {
+  //                         userReferralCode = null;
+  //                         errorMessage = 'Network error: ${e.toString()}';
+  //                         isLoading = false;
+  //                       });
+  //                     }
+  //                   }
+
+  //                   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //                     if (isLoading &&
+  //                         userReferralCode == null &&
+  //                         errorMessage == null) {
+  //                       loadUserDataAndFetchReferralCode();
+  //                     }
+  //                   });
+
+  //                   return Container(
+  //                     margin: const EdgeInsets.symmetric(horizontal: 24),
+  //                     constraints: BoxConstraints(
+  //                       maxHeight: MediaQuery.of(context).size.height * 0.8,
+  //                       maxWidth: 500,
+  //                     ),
+  //                     decoration: BoxDecoration(
+  //                       color: Colors.white,
+  //                       borderRadius: BorderRadius.circular(16),
+  //                       boxShadow: [
+  //                         BoxShadow(
+  //                           color: Colors.black.withOpacity(0.1),
+  //                           blurRadius: 20,
+  //                           offset: const Offset(0, 4),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                     child: ClipRRect(
+  //                       borderRadius: BorderRadius.circular(16),
+  //                       child: Column(
+  //                         mainAxisSize: MainAxisSize.min,
+  //                         children: [
+  //                           // Header
+  //                           Container(
+  //                             padding: const EdgeInsets.symmetric(
+  //                               horizontal: 20,
+  //                               vertical: 16,
+  //                             ),
+  //                             decoration: BoxDecoration(
+  //                               color: Colors.grey[50],
+  //                               border: Border(
+  //                                 bottom: BorderSide(color: Colors.grey[200]!),
+  //                               ),
+  //                             ),
+  //                             child: Row(
+  //                               children: [
+  //                                 Container(
+  //                                   padding: const EdgeInsets.all(8),
+  //                                   decoration: BoxDecoration(
+  //                                     color: const Color(
+  //                                       0xFF4F46E5,
+  //                                     ).withOpacity(0.1),
+  //                                     borderRadius: BorderRadius.circular(8),
+  //                                   ),
+  //                                   child: const Icon(
+  //                                     Icons.people_outline,
+  //                                     color: Color(0xFF4F46E5),
+  //                                     size: 24,
+  //                                   ),
+  //                                 ),
+  //                                 const SizedBox(width: 12),
+  //                                 const Expanded(
+  //                                   child: Text(
+  //                                     'Refer & Earn',
+  //                                     style: TextStyle(
+  //                                       fontSize: 20,
+  //                                       fontWeight: FontWeight.w600,
+  //                                       color: Color(0xFF111827),
+  //                                     ),
+  //                                   ),
+  //                                 ),
+  //                                 IconButton(
+  //                                   onPressed: () => Navigator.pop(context),
+  //                                   icon: const Icon(Icons.close, size: 24),
+  //                                   color: Colors.grey[600],
+  //                                   padding: EdgeInsets.zero,
+  //                                   constraints: const BoxConstraints(),
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ),
+
+  //                           // Content
+  //                           Flexible(
+  //                             child: SingleChildScrollView(
+  //                               padding: const EdgeInsets.all(24),
+  //                               child: Column(
+  //                                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                                 children: [
+  //                                   // Info Card
+  //                                   Container(
+  //                                     width: double.infinity,
+  //                                     padding: const EdgeInsets.all(16),
+  //                                     decoration: BoxDecoration(
+  //                                       color: const Color(0xFFF0F9FF),
+  //                                       borderRadius: BorderRadius.circular(12),
+  //                                       border: Border.all(
+  //                                         color: const Color(0xFFBAE6FD),
+  //                                       ),
+  //                                     ),
+  //                                     child: Row(
+  //                                       children: [
+  //                                         Container(
+  //                                           padding: const EdgeInsets.all(8),
+  //                                           decoration: BoxDecoration(
+  //                                             color: const Color(0xFF0EA5E9),
+  //                                             borderRadius:
+  //                                                 BorderRadius.circular(8),
+  //                                           ),
+  //                                           child: const Icon(
+  //                                             Icons.info_outline,
+  //                                             color: Colors.white,
+  //                                             size: 20,
+  //                                           ),
+  //                                         ),
+  //                                         const SizedBox(width: 12),
+  //                                         const Expanded(
+  //                                           child: Text(
+  //                                             'Share your referral code with friends and earn rewards when they upgrade.',
+  //                                             style: TextStyle(
+  //                                               fontSize: 14,
+  //                                               color: Color(0xFF0C4A6E),
+  //                                               height: 1.4,
+  //                                             ),
+  //                                           ),
+  //                                         ),
+  //                                       ],
+  //                                     ),
+  //                                   ),
+
+  //                                   const SizedBox(height: 24),
+
+  //                                   // Referral Code Section
+  //                                   const Text(
+  //                                     'Your Referral Code',
+  //                                     style: TextStyle(
+  //                                       fontSize: 14,
+  //                                       fontWeight: FontWeight.w600,
+  //                                       color: Color(0xFF374151),
+  //                                     ),
+  //                                   ),
+  //                                   const SizedBox(height: 12),
+
+  //                                   AnimatedSwitcher(
+  //                                     duration: const Duration(
+  //                                       milliseconds: 300,
+  //                                     ),
+  //                                     child: isLoading
+  //                                         ? Container(
+  //                                             key: const ValueKey('loading'),
+  //                                             padding: const EdgeInsets.all(20),
+  //                                             decoration: BoxDecoration(
+  //                                               color: Colors.grey[50],
+  //                                               borderRadius:
+  //                                                   BorderRadius.circular(12),
+  //                                               border: Border.all(
+  //                                                 color: Colors.grey[200]!,
+  //                                               ),
+  //                                             ),
+  //                                             child: const Row(
+  //                                               mainAxisAlignment:
+  //                                                   MainAxisAlignment.center,
+  //                                               children: [
+  //                                                 SizedBox(
+  //                                                   width: 20,
+  //                                                   height: 20,
+  //                                                   child:
+  //                                                       CircularProgressIndicator(
+  //                                                         strokeWidth: 2,
+  //                                                         color: Color(
+  //                                                           0xFF4F46E5,
+  //                                                         ),
+  //                                                       ),
+  //                                                 ),
+  //                                                 SizedBox(width: 12),
+  //                                                 Text(
+  //                                                   'Loading...',
+  //                                                   style: TextStyle(
+  //                                                     fontSize: 14,
+  //                                                     color: Color(0xFF6B7280),
+  //                                                   ),
+  //                                                 ),
+  //                                               ],
+  //                                             ),
+  //                                           )
+  //                                         : (errorMessage != null)
+  //                                         ? Container(
+  //                                             key: const ValueKey('error'),
+  //                                             padding: const EdgeInsets.all(16),
+  //                                             decoration: BoxDecoration(
+  //                                               color: const Color(0xFFFEF2F2),
+  //                                               borderRadius:
+  //                                                   BorderRadius.circular(12),
+  //                                               border: Border.all(
+  //                                                 color: const Color(
+  //                                                   0xFFFECACA,
+  //                                                 ),
+  //                                               ),
+  //                                             ),
+  //                                             child: Column(
+  //                                               children: [
+  //                                                 Row(
+  //                                                   children: [
+  //                                                     const Icon(
+  //                                                       Icons.error_outline,
+  //                                                       color: Color(
+  //                                                         0xFFEF4444,
+  //                                                       ),
+  //                                                       size: 20,
+  //                                                     ),
+  //                                                     const SizedBox(width: 8),
+  //                                                     Expanded(
+  //                                                       child: Text(
+  //                                                         errorMessage!,
+  //                                                         style:
+  //                                                             const TextStyle(
+  //                                                               fontSize: 14,
+  //                                                               color: Color(
+  //                                                                 0xFF991B1B,
+  //                                                               ),
+  //                                                             ),
+  //                                                       ),
+  //                                                     ),
+  //                                                   ],
+  //                                                 ),
+  //                                                 const SizedBox(height: 12),
+  //                                                 SizedBox(
+  //                                                   width: double.infinity,
+  //                                                   child: OutlinedButton.icon(
+  //                                                     onPressed:
+  //                                                         loadUserDataAndFetchReferralCode,
+  //                                                     style: OutlinedButton.styleFrom(
+  //                                                       foregroundColor:
+  //                                                           const Color(
+  //                                                             0xFFEF4444,
+  //                                                           ),
+  //                                                       side: const BorderSide(
+  //                                                         color: Color(
+  //                                                           0xFFEF4444,
+  //                                                         ),
+  //                                                       ),
+  //                                                       padding:
+  //                                                           const EdgeInsets.symmetric(
+  //                                                             vertical: 12,
+  //                                                           ),
+  //                                                       shape: RoundedRectangleBorder(
+  //                                                         borderRadius:
+  //                                                             BorderRadius.circular(
+  //                                                               8,
+  //                                                             ),
+  //                                                       ),
+  //                                                     ),
+  //                                                     icon: const Icon(
+  //                                                       Icons.refresh,
+  //                                                       size: 18,
+  //                                                     ),
+  //                                                     label: const Text(
+  //                                                       'Retry',
+  //                                                     ),
+  //                                                   ),
+  //                                                 ),
+  //                                               ],
+  //                                             ),
+  //                                           )
+  //                                         : Container(
+  //                                             key: const ValueKey('code'),
+  //                                             padding: const EdgeInsets.all(16),
+  //                                             decoration: BoxDecoration(
+  //                                               color: Colors.grey[50],
+  //                                               borderRadius:
+  //                                                   BorderRadius.circular(12),
+  //                                               border: Border.all(
+  //                                                 color: Colors.grey[300]!,
+  //                                               ),
+  //                                             ),
+  //                                             child: Row(
+  //                                               children: [
+  //                                                 Expanded(
+  //                                                   child: Column(
+  //                                                     crossAxisAlignment:
+  //                                                         CrossAxisAlignment
+  //                                                             .start,
+  //                                                     children: [
+  //                                                       Text(
+  //                                                         userReferralCode ??
+  //                                                             '--',
+  //                                                         style:
+  //                                                             const TextStyle(
+  //                                                               fontSize: 24,
+  //                                                               fontWeight:
+  //                                                                   FontWeight
+  //                                                                       .w700,
+  //                                                               letterSpacing:
+  //                                                                   2,
+  //                                                               color: Color(
+  //                                                                 0xFF4F46E5,
+  //                                                               ),
+  //                                                             ),
+  //                                                       ),
+  //                                                       const SizedBox(
+  //                                                         height: 4,
+  //                                                       ),
+  //                                                       const Text(
+  //                                                         'Tap to copy',
+  //                                                         style: TextStyle(
+  //                                                           fontSize: 12,
+  //                                                           color: Color(
+  //                                                             0xFF6B7280,
+  //                                                           ),
+  //                                                         ),
+  //                                                       ),
+  //                                                     ],
+  //                                                   ),
+  //                                                 ),
+  //                                                 IconButton(
+  //                                                   onPressed: () {
+  //                                                     if (userReferralCode !=
+  //                                                             null &&
+  //                                                         userReferralCode!
+  //                                                             .isNotEmpty) {
+  //                                                       Clipboard.setData(
+  //                                                         ClipboardData(
+  //                                                           text:
+  //                                                               userReferralCode!,
+  //                                                         ),
+  //                                                       );
+  //                                                       ScaffoldMessenger.of(
+  //                                                         context,
+  //                                                       ).showSnackBar(
+  //                                                         SnackBar(
+  //                                                           content: const Text(
+  //                                                             'Referral code copied to clipboard',
+  //                                                           ),
+  //                                                           behavior:
+  //                                                               SnackBarBehavior
+  //                                                                   .floating,
+  //                                                           backgroundColor:
+  //                                                               const Color(
+  //                                                                 0xFF10B981,
+  //                                                               ),
+  //                                                           duration:
+  //                                                               const Duration(
+  //                                                                 seconds: 2,
+  //                                                               ),
+  //                                                         ),
+  //                                                       );
+  //                                                     }
+  //                                                   },
+  //                                                   icon: const Icon(
+  //                                                     Icons.copy,
+  //                                                     size: 20,
+  //                                                   ),
+  //                                                   color: const Color(
+  //                                                     0xFF4F46E5,
+  //                                                   ),
+  //                                                   style: IconButton.styleFrom(
+  //                                                     backgroundColor:
+  //                                                         const Color(
+  //                                                           0xFF4F46E5,
+  //                                                         ).withOpacity(0.1),
+  //                                                   ),
+  //                                                 ),
+  //                                               ],
+  //                                             ),
+  //                                           ),
+  //                                   ),
+
+  //                                   const SizedBox(height: 24),
+
+  //                                   // How It Works
+  //                                   const Text(
+  //                                     'How It Works',
+  //                                     style: TextStyle(
+  //                                       fontSize: 14,
+  //                                       fontWeight: FontWeight.w600,
+  //                                       color: Color(0xFF374151),
+  //                                     ),
+  //                                   ),
+  //                                   const SizedBox(height: 12),
+
+  //                                   _buildSteps(
+  //                                     number: '1',
+  //                                     title: 'Share Your Code',
+  //                                     description:
+  //                                         'Send your referral code to friends via any platform',
+  //                                   ),
+  //                                   const SizedBox(height: 12),
+  //                                   _buildSteps(
+  //                                     number: '2',
+  //                                     title: 'Friend Signs Up',
+  //                                     description:
+  //                                         'They enter your code during registration',
+  //                                   ),
+  //                                   const SizedBox(height: 12),
+  //                                   _buildSteps(
+  //                                     number: '3',
+  //                                     title: 'Earn Rewards',
+  //                                     description:
+  //                                         'Get ₹200 when they upgrade their account',
+  //                                   ),
+
+  //                                   const SizedBox(height: 24),
+
+  //                                   // Action Button
+  //                                   SizedBox(
+  //                                     width: double.infinity,
+  //                                     child: ElevatedButton.icon(
+  //                                       onPressed: () {
+  //                                         if (userReferralCode != null &&
+  //                                             userReferralCode!.isNotEmpty) {
+  //                                           Clipboard.setData(
+  //                                             ClipboardData(
+  //                                               text: userReferralCode!,
+  //                                             ),
+  //                                           );
+  //                                           ScaffoldMessenger.of(
+  //                                             context,
+  //                                           ).showSnackBar(
+  //                                             const SnackBar(
+  //                                               content: Text(
+  //                                                 'Referral code copied! Share it with your friends.',
+  //                                               ),
+  //                                               behavior:
+  //                                                   SnackBarBehavior.floating,
+  //                                               backgroundColor: Color(
+  //                                                 0xFF10B981,
+  //                                               ),
+  //                                             ),
+  //                                           );
+  //                                         } else {
+  //                                           loadUserDataAndFetchReferralCode();
+  //                                         }
+  //                                       },
+  //                                       icon: const Icon(Icons.copy, size: 20),
+  //                                       label: const Text(
+  //                                         'Copy Referral Code',
+  //                                       ),
+  //                                       style: ElevatedButton.styleFrom(
+  //                                         backgroundColor: const Color(
+  //                                           0xFF4F46E5,
+  //                                         ),
+  //                                         foregroundColor: Colors.white,
+  //                                         padding: const EdgeInsets.symmetric(
+  //                                           vertical: 14,
+  //                                         ),
+  //                                         shape: RoundedRectangleBorder(
+  //                                           borderRadius: BorderRadius.circular(
+  //                                             10,
+  //                                           ),
+  //                                         ),
+  //                                         elevation: 0,
+  //                                       ),
+  //                                     ),
+  //                                   ),
+  //                                 ],
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
   void showReferAndEarnModal(BuildContext context) {
     String? userId;
     String? userReferralCode;
@@ -2199,6 +3112,49 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         });
                       }
                     }
+
+                    void shareReferralCode() {
+                      if (userReferralCode != null &&
+                          userReferralCode!.isNotEmpty) {
+                        final shareText =
+                            '''
+🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
+
+Use my referral code: $userReferralCode
+
+You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
+
+Download EditEzy now:
+https://play.google.com/store/apps/details?id=com.posternova.posternova
+
+Don't miss out on this opportunity! 🚀
+''';
+                        Share.share(
+                          shareText,
+                          subject: 'Join EditEzy using my referral code',
+                        );
+                      }
+                    }
+
+                    //                     void shareReferralCode() {
+                    //                       if (userReferralCode != null &&
+                    //                           userReferralCode!.isNotEmpty) {
+                    //                         final shareText =
+                    //                             '''
+                    // 🎉 Join me on our amazing app!
+
+                    // Use my referral code: $userReferralCode
+
+                    // You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
+
+                    // Don't miss out on this opportunity! 🚀
+                    // ''';
+                    //                         Share.share(
+                    //                           shareText,
+                    //                           subject: 'Join using my referral code',
+                    //                         );
+                    //                       }
+                    //                     }
 
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (isLoading &&
@@ -2527,21 +3483,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                                         ScaffoldMessenger.of(
                                                           context,
                                                         ).showSnackBar(
-                                                          SnackBar(
-                                                            content: const Text(
+                                                          const SnackBar(
+                                                            content: Text(
                                                               'Referral code copied to clipboard',
                                                             ),
                                                             behavior:
                                                                 SnackBarBehavior
                                                                     .floating,
                                                             backgroundColor:
-                                                                const Color(
+                                                                Color(
                                                                   0xFF10B981,
                                                                 ),
-                                                            duration:
-                                                                const Duration(
-                                                                  seconds: 2,
-                                                                ),
+                                                            duration: Duration(
+                                                              seconds: 2,
+                                                            ),
                                                           ),
                                                         );
                                                       }
@@ -2601,56 +3556,99 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                                     const SizedBox(height: 24),
 
-                                    // Action Button
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton.icon(
-                                        onPressed: () {
-                                          if (userReferralCode != null &&
-                                              userReferralCode!.isNotEmpty) {
-                                            Clipboard.setData(
-                                              ClipboardData(
-                                                text: userReferralCode!,
+                                    // Action Buttons
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            onPressed: () {
+                                              if (userReferralCode != null &&
+                                                  userReferralCode!
+                                                      .isNotEmpty) {
+                                                Clipboard.setData(
+                                                  ClipboardData(
+                                                    text: userReferralCode!,
+                                                  ),
+                                                );
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Referral code copied!',
+                                                    ),
+                                                    behavior: SnackBarBehavior
+                                                        .floating,
+                                                    backgroundColor: Color(
+                                                      0xFF10B981,
+                                                    ),
+                                                    duration: Duration(
+                                                      seconds: 2,
+                                                    ),
+                                                  ),
+                                                );
+                                              } else {
+                                                loadUserDataAndFetchReferralCode();
+                                              }
+                                            },
+                                            icon: const Icon(
+                                              Icons.copy,
+                                              size: 20,
+                                            ),
+                                            label: const Text('Copy Code'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xFF4F46E5,
                                               ),
-                                            );
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Referral code copied! Share it with your friends.',
-                                                ),
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                                backgroundColor: Color(
-                                                  0xFF10B981,
-                                                ),
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 14,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
                                               ),
-                                            );
-                                          } else {
-                                            loadUserDataAndFetchReferralCode();
-                                          }
-                                        },
-                                        icon: const Icon(Icons.copy, size: 20),
-                                        label: const Text(
-                                          'Copy Referral Code',
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                            0xFF4F46E5,
-                                          ),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 14,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              10,
+                                              elevation: 0,
                                             ),
                                           ),
-                                          elevation: 0,
                                         ),
-                                      ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            onPressed:
+                                                (userReferralCode != null &&
+                                                    userReferralCode!
+                                                        .isNotEmpty)
+                                                ? shareReferralCode
+                                                : null,
+                                            icon: const Icon(
+                                              Icons.share,
+                                              size: 20,
+                                            ),
+                                            label: const Text('Share'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xFF10B981,
+                                              ),
+                                              foregroundColor: Colors.white,
+                                              disabledBackgroundColor:
+                                                  Colors.grey[300],
+                                              disabledForegroundColor:
+                                                  Colors.grey[500],
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 14,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              elevation: 0,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),

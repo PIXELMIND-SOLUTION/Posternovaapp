@@ -399,7 +399,7 @@ class LocalizationService {
       'bonus_credit': 'Bonus! Get 50 Credit More When They Make a Purchase!',
       'earn_now': 'Earn Now',
       'referral_info':
-          'Did you know you can earn up to AED 3000 by\nreferring 10 friends in a month? That\'s equal to a\nmonth\'s subscription.',
+          'You can earn monthly subscription by refering 3 friends',
 
       'bday_anniversary': "B'day Anniversary Greetings",
       'add_customer_details': 'Add Customer\nDetails',
