@@ -9,7 +9,7 @@
       }
     ]
   },
-  "identifier" : "6A9BC063",
+  "identifier" : "771E418F",
   "nonRenewingSubscriptions" : [
     {
       "displayPrice" : "4.99",
@@ -34,7 +34,7 @@
     "_applicationInternalID" : "6753908761",
     "_developerTeamID" : "DXT464A44Q",
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 784705177.70925903,
+    "_lastSynchronizedDate" : 784914463.89919305,
     "_locale" : "en_US",
     "_storefront" : "USA",
     "_storeKitErrors" : [
@@ -103,7 +103,7 @@
           "displayPrice" : "4.99",
           "familyShareable" : false,
           "groupNumber" : 1,
-          "internalID" : "6755220672",
+          "internalID" : "6755333073",
           "introductoryOffer" : null,
           "localizations" : [
             {
@@ -112,9 +112,9 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.editezy.yearly",
+          "productID" : "com.editezy.premium.yearly.plan",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Premium Yearly Plan",
+          "referenceName" : "Premium Yearly Premium",
           "subscriptionGroupID" : "21827122",
           "type" : "RecurringSubscription",
           "winbackOffers" : [

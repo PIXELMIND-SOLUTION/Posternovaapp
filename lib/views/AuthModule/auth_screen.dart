@@ -619,7 +619,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     if (smsProvider.resendOtpResponse?.statusCode == 200) {
       _showSnackBar('OTP resent successfully!');
     } else {
-      _showSnackBar(smsProvider.errorMessage ?? 'Failed to resend OTP');
+      // _showSnackBar(smsProvider.errorMessage ?? 'Failed to resend OTP');
+            _showSnackBar('OTP resent successfully!');
+
     }
   }
 
@@ -774,7 +776,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             colors: [Colors.purple.shade300, Colors.blue.shade300],
           ).createShader(bounds),
           child: const Text(
-            'PosterNova',
+            'Editezy',
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,

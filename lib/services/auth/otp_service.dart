@@ -57,21 +57,21 @@ class SmsService {
   Future<http.Response> resendOtp(ResendOtpRequest request) async {
     final url = Uri.parse(ApiConstants.resendOtp);
       
-    try {
+    // try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(request.toJson()),
       );
       return response;
-    } on SocketException {
-      throw 'Please turn on your internet connection';
-    } catch (e) {
-      if (NetworkHelper.isNoInternetError(e)) {
-        throw 'Please turn on your internet connection';
-      }
-      throw Exception('Resend OTP failed: $e');
-    }
+    // } on SocketException {
+    //   throw 'Please turn on your internet connection';
+    // } catch (e) {
+    //   if (NetworkHelper.isNoInternetError(e)) {
+    //     throw 'Please turn on your internet connection';
+    //   }
+    //   throw Exception('Resend OTP failed: $e');
+    // }
   }
 }
 

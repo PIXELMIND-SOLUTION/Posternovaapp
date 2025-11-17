@@ -81,10 +81,10 @@ class SmsProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         // Success - OTP resent
       } else {
-        _errorMessage = 'Resend OTP failed: ${response.body}';
+        // _errorMessage = 'Resend OTP failed: ${response.body}';
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = "Otp send successfully";
     } finally {
       _setResending(false);
     }

@@ -867,16 +867,6 @@
 // //   }
 // // }
 
-
-
-
-
-
-
-
-
-
-
 // import 'package:flutter/material.dart';
 // import 'package:posternova/helper/sub_modal_helper.dart';
 // import 'package:posternova/providers/auth/login_provider.dart';
@@ -1035,7 +1025,7 @@
 //                     ),
 
 //                     const SizedBox(height: 110),
-                    
+
 //                     // Menu Options with Plan Check
 //                     Consumer<MyPlanProvider>(
 //                       builder: (context, myPlanProvider, child) {
@@ -1188,7 +1178,6 @@
 //       onSecondaryPressed: () => Navigator.of(context).pop(),
 //     );
 //   }
-
 
 //   void showSubscriptionModal(BuildContext context) async {
 //     final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
@@ -1487,7 +1476,6 @@
 //     );
 //   }
 
-
 //   Future<void> _pickAndUploadImage(
 //     BuildContext context,
 //     AuthProvider authProvider,
@@ -1712,7 +1700,7 @@
 //     bool isPurchased = false,
 //   }) {
 //     final bool isLocked = isPremiumRequired && !isPurchased;
-    
+
 //     return Container(
 //       margin: const EdgeInsets.only(bottom: 30),
 //       decoration: BoxDecoration(
@@ -1822,16 +1810,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:posternova/helper/sub_modal_helper.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
@@ -1870,7 +1848,11 @@ class ProfileScreen extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF0A0E21), Color(0xFF1D1E33), Color(0xFF0A0E21)],
+                colors: [
+                  Color(0xFF0A0E21),
+                  Color(0xFF1D1E33),
+                  Color(0xFF0A0E21),
+                ],
               ),
             ),
             child: SafeArea(
@@ -1985,7 +1967,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 110),
-                      
+
                       // Menu Options with Plan Check
                       Consumer<MyPlanProvider>(
                         builder: (context, myPlanProvider, child) {
@@ -1999,11 +1981,16 @@ class ProfileScreen extends StatelessWidget {
                                 isPurchased: myPlanProvider.isPurchase ?? false,
                               ),
 
-                               _buildMenuItem(
+                              _buildMenuItem(
                                 icon: Icons.person,
                                 title: 'Settings',
                                 onTap: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context)=>EditProfile()));
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditProfile(),
+                                    ),
+                                  );
                                 },
                                 isPremiumRequired: false,
                                 isPurchased: myPlanProvider.isPurchase ?? false,
@@ -2034,7 +2021,7 @@ class ProfileScreen extends StatelessWidget {
                               //       ),
                               //     );
                               //     }
-                                 
+
                               //   },
                               //   // isPremiumRequired: false,
                               //   // isPurchased: myPlanProvider.isPurchase ?? false,
@@ -2047,7 +2034,8 @@ class ProfileScreen extends StatelessWidget {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => CreateInvoiceScreen(),
+                                        builder: (context) =>
+                                            CreateInvoiceScreen(),
                                       ),
                                     );
                                   } else {
@@ -2064,7 +2052,9 @@ class ProfileScreen extends StatelessWidget {
                                   if (myPlanProvider.isPurchase == true) {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => AiScreen()),
+                                      MaterialPageRoute(
+                                        builder: (context) => AiScreen(),
+                                      ),
                                     );
                                   } else {
                                     _showPremiumRequiredDialog(context);
@@ -2077,19 +2067,14 @@ class ProfileScreen extends StatelessWidget {
                                 icon: Icons.delete,
                                 title: 'Delete Account',
                                 onTap: () {
-                                  if (myPlanProvider.isPurchase == true) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => DeleteAccountScreen(),
-                                      ),
-                                    );
-                                  } else {
-                                    _showPremiumRequiredDialog(context);
-                                  }
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          DeleteAccountScreen(),
+                                    ),
+                                  );
                                 },
-                                isPremiumRequired: true,
-                                isPurchased: myPlanProvider.isPurchase ?? false,
                               ),
                               _buildMenuItem(
                                 icon: Icons.redeem,
@@ -2117,7 +2102,8 @@ class ProfileScreen extends StatelessWidget {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => BackgroundRemoverScreen(),
+                                        builder: (context) =>
+                                            BackgroundRemoverScreen(),
                                       ),
                                     );
                                   } else {
@@ -2130,7 +2116,8 @@ class ProfileScreen extends StatelessWidget {
                               _buildMenuItem(
                                 icon: Icons.logout,
                                 title: 'Logout',
-                                onTap: () => _handleLogout(context, authProvider),
+                                onTap: () =>
+                                    _handleLogout(context, authProvider),
                                 isDestructive: true,
                                 isPremiumRequired: false,
                                 isPurchased: myPlanProvider.isPurchase ?? false,
@@ -2665,7 +2652,7 @@ class ProfileScreen extends StatelessWidget {
     bool isPurchased = false,
   }) {
     final bool isLocked = isPremiumRequired && !isPurchased;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 30),
       decoration: BoxDecoration(
@@ -2675,8 +2662,8 @@ class ProfileScreen extends StatelessWidget {
           color: isDestructive
               ? Colors.red.withOpacity(0.3)
               : isLocked
-                  ? Colors.amber.withOpacity(0.3)
-                  : Colors.purple.withOpacity(0.2),
+              ? Colors.amber.withOpacity(0.3)
+              : Colors.purple.withOpacity(0.2),
         ),
       ),
       child: Material(
@@ -2689,8 +2676,8 @@ class ProfileScreen extends StatelessWidget {
               color: isDestructive
                   ? Colors.red.withOpacity(0.2)
                   : isLocked
-                      ? Colors.amber.withOpacity(0.2)
-                      : Colors.purple.withOpacity(0.2),
+                  ? Colors.amber.withOpacity(0.2)
+                  : Colors.purple.withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -2698,8 +2685,8 @@ class ProfileScreen extends StatelessWidget {
               color: isDestructive
                   ? Colors.red.shade300
                   : isLocked
-                      ? Colors.amber.shade300
-                      : Colors.purple.shade300,
+                  ? Colors.amber.shade300
+                  : Colors.purple.shade300,
               size: 24,
             ),
           ),
@@ -2709,8 +2696,8 @@ class ProfileScreen extends StatelessWidget {
               color: isDestructive
                   ? Colors.red.shade300
                   : isLocked
-                      ? Colors.grey.shade400
-                      : Colors.white,
+                  ? Colors.grey.shade400
+                  : Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -2720,7 +2707,10 @@ class ProfileScreen extends StatelessWidget {
             children: [
               if (isLocked)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.amber.shade400, Colors.orange.shade400],
@@ -2729,11 +2719,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: const [
-                      Icon(
-                        Icons.lock,
-                        color: Colors.white,
-                        size: 12,
-                      ),
+                      Icon(Icons.lock, color: Colors.white, size: 12),
                       SizedBox(width: 4),
                       Text(
                         'Premium',
@@ -2748,7 +2734,10 @@ class ProfileScreen extends StatelessWidget {
                 ),
               if (badge != null && !isLocked)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.purple.shade400, Colors.blue.shade400],

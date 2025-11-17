@@ -4778,7 +4778,7 @@ class _PlanDetailsAndPaymentScreenState
   String get _productIdForCurrentPlan {
     // Create a simple product ID based on plan name and price
     final planName = widget.plan.name.toLowerCase().replaceAll(' ', '_');
-    return 'com.editezy.yearly';
+    return 'com.editezy.premium.yearly.plan';
   }
 
   @override
