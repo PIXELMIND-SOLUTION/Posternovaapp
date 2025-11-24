@@ -323,7 +323,7 @@ class _EditProfileState extends State<EditProfile> {
             _buildSectionTitle('Personal Information'),
             const SizedBox(height: 16),
             _buildReadOnlyField(
-              label: 'Full Name',
+              label: 'Business Name',
               value: _name ?? '',
               icon: Icons.person_outline,
             ),
@@ -339,20 +339,20 @@ class _EditProfileState extends State<EditProfile> {
               value: _mobile ?? '',
               icon: Icons.phone_outlined,
             ),
-            // const SizedBox(height: 24),
+            const SizedBox(height: 24),
             // _buildSectionTitle('Important Dates'),
-            // const SizedBox(height: 16),
-            // _buildDateField(
-            //   controller: _dobController,
-            //   label: 'Date of Birth',
-            //   icon: Icons.cake_outlined,
-            // ),
-            // const SizedBox(height: 16),
-            // _buildDateField(
-            //   controller: _anniversaryController,
-            //   label: 'Marriage Anniversary',
-            //   icon: Icons.favorite_outline,
-            // ),
+            const SizedBox(height: 16),
+            _buildDateField(
+              controller: _dobController,
+              label: 'Date of Birth',
+              icon: Icons.cake_outlined,
+            ),
+            const SizedBox(height: 16),
+            _buildDateField(
+              controller: _anniversaryController,
+              label: 'Marriage Anniversary',
+              icon: Icons.favorite_outline,
+            ),
             const SizedBox(height: 32),
             // SizedBox(
             //   width: double.infinity,

@@ -1140,6 +1140,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                   'description',
                   Icons.description_outlined,
                   maxLines: 2,
+                  isRequired: false,
                 ),
 
                 if (_isGoldShop) ...[
@@ -1153,7 +1154,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                 ],
 
                 const SizedBox(height: 20),
-                _buildSectionTitle('Pricing'),
+                _buildSectionTitle('Total & Taxes'),
                 const SizedBox(height: 12),
 
                 Row(
@@ -1173,6 +1174,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                         'offer_price',
                         Icons.local_offer_outlined,
                         inputType: TextInputType.number,
+                        isRequired: false,
                       ),
                     ),
                   ],
@@ -1204,55 +1206,191 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
     );
   }
 
-  Widget _buildModernTextField(
-    TextEditingController controller,
-    String labelKey,
-    IconData icon, {
-    TextInputType inputType = TextInputType.text,
-    int maxLines = 1,
-    Function(String)? onChanged,
-  }) {
-    final label = AppText.translate(context, labelKey);
-    return TextFormField(
-      controller: controller,
-      keyboardType: inputType,
-      maxLines: maxLines,
-      onChanged: onChanged,
-      style: const TextStyle(fontSize: 15),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
-        prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.grey[50],
+  // Widget _buildModernTextField(
+  //   TextEditingController controller,
+  //   String labelKey,
+  //   IconData icon, {
+  //   TextInputType inputType = TextInputType.text,
+  //   int maxLines = 1,
+  //   Function(String)? onChanged,
+  // }) {
+  //   final label = AppText.translate(context, labelKey);
+  //   return TextFormField(
+  //     controller: controller,
+  //     keyboardType: inputType,
+  //     maxLines: maxLines,
+  //     onChanged: onChanged,
+  //     style: const TextStyle(fontSize: 15),
+  //     decoration: InputDecoration(
+  //       labelText: label,
+  //       labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+  //       prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
+  //       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  //       border: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: BorderSide(color: Colors.grey[300]!),
+  //       ),
+  //       enabledBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: BorderSide(color: Colors.grey[300]!),
+  //       ),
+  //       focusedBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+  //       ),
+  //       errorBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: const BorderSide(color: Colors.red),
+  //       ),
+  //       focusedErrorBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: const BorderSide(color: Colors.red, width: 2),
+  //       ),
+  //       filled: true,
+  //       fillColor: Colors.grey[50],
+  //     ),
+  //     validator: (value) {
+  //       if (value == null || value.trim().isEmpty) {
+  //         if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
+  //           return 'Please enter $label';
+  //         }
+  //       }
+  //       if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
+  //         try {
+  //           double.parse(value);
+  //         } catch (e) {
+  //           return 'Please enter a valid number';
+  //         }
+  //       }
+  //       return null;
+  //     },
+  //   );
+  // }
+
+
+//   Widget _buildModernTextField(
+//   TextEditingController controller,
+//   String labelKey,
+//   IconData icon, {
+//   TextInputType inputType = TextInputType.text,
+//   int maxLines = 1,
+//   Function(String)? onChanged,
+// }) {
+//   final label = AppText.translate(context, labelKey);
+//   final theme = Theme.of(context);
+//   final isDarkMode = theme.brightness == Brightness.dark;
+//   final textColor = isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Colors.black87;
+  
+//   return TextFormField(
+//     controller: controller,
+//     keyboardType: inputType,
+//     maxLines: maxLines,
+//     onChanged: onChanged,
+//     style: TextStyle(
+//       fontSize: 15,
+//       color: textColor, // Add this line
+//     ),
+//     decoration: InputDecoration(
+//       labelText: label,
+//       labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+//       prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
+//       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+//       border: OutlineInputBorder(
+//         borderRadius: BorderRadius.circular(12),
+//         borderSide: BorderSide(color: Colors.grey[300]!),
+//       ),
+//       enabledBorder: OutlineInputBorder(
+//         borderRadius: BorderRadius.circular(12),
+//         borderSide: BorderSide(color: Colors.grey[300]!),
+//       ),
+//       focusedBorder: OutlineInputBorder(
+//         borderRadius: BorderRadius.circular(12),
+//         borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+//       ),
+//       errorBorder: OutlineInputBorder(
+//         borderRadius: BorderRadius.circular(12),
+//         borderSide: const BorderSide(color: Colors.red),
+//       ),
+//       focusedErrorBorder: OutlineInputBorder(
+//         borderRadius: BorderRadius.circular(12),
+//         borderSide: const BorderSide(color: Colors.red, width: 2),
+//       ),
+//       filled: true,
+//       fillColor: Colors.grey[50],
+//     ),
+//     validator: (value) {
+//       if (value == null || value.trim().isEmpty) {
+//         if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
+//           return 'Please enter $label';
+//         }
+//       }
+//       if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
+//         try {
+//           double.parse(value);
+//         } catch (e) {
+//           return 'Please enter a valid number';
+//         }
+//       }
+//       return null;
+//     },
+//   );
+// }
+
+Widget _buildModernTextField(
+  TextEditingController controller,
+  String labelKey,
+  IconData icon, {
+  TextInputType inputType = TextInputType.text,
+  int maxLines = 1,
+  Function(String)? onChanged,
+  bool isRequired = true, // Add this parameter
+}) {
+  final label = AppText.translate(context, labelKey);
+  final theme = Theme.of(context);
+  final isDarkMode = theme.brightness == Brightness.dark;
+  final textColor = isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Colors.black87;
+  
+  return TextFormField(
+    controller: controller,
+    keyboardType: inputType,
+    maxLines: maxLines,
+    onChanged: onChanged,
+    style: TextStyle(
+      fontSize: 15,
+      color: textColor,
+    ),
+    decoration: InputDecoration(
+      labelText: isRequired ? label : '$label (Optional)', // Add optional indicator
+      labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+      prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
       ),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
-            return 'Please enter $label';
-          }
-        }
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.grey[50],
+    ),
+    validator: (value) {
+      // Skip validation if field is not required
+      if (!isRequired) {
+        // Still validate number format if it's a number field and has a value
         if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
           try {
             double.parse(value);
@@ -1261,9 +1399,25 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
           }
         }
         return null;
-      },
-    );
-  }
+      }
+      
+      // Original validation for required fields
+      if (value == null || value.trim().isEmpty) {
+        if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
+          return 'Please enter $label';
+        }
+      }
+      if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
+        try {
+          double.parse(value);
+        } catch (e) {
+          return 'Please enter a valid number';
+        }
+      }
+      return null;
+    },
+  );
+}
 }
 
 class ProductEntry {

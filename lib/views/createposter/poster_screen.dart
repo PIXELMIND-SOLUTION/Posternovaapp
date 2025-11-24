@@ -24,24 +24,24 @@
 //   @override
 //   void initState() {
 //     super.initState();
-    
+
 //     _headerController = AnimationController(
 //       duration: const Duration(milliseconds: 1000),
 //       vsync: this,
 //     );
-    
+
 //     _cardController = AnimationController(
 //       duration: const Duration(milliseconds: 1200),
 //       vsync: this,
 //     );
-    
+
 //     _headerFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
 //       CurvedAnimation(
 //         parent: _headerController,
 //         curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
 //       ),
 //     );
-    
+
 //     _headerSlideAnimation = Tween<Offset>(
 //       begin: const Offset(0, -0.5),
 //       end: Offset.zero,
@@ -314,7 +314,7 @@
 //         final index = entry.key;
 //         final tool = entry.value;
 //         final delay = index * 150;
-        
+
 //         return AnimatedBuilder(
 //           animation: _cardController,
 //           builder: (context, child) {
@@ -377,7 +377,7 @@
 //                   parent: animation,
 //                   curve: Curves.easeOutCubic,
 //                 );
-                
+
 //                 return FadeTransition(
 //                   opacity: curvedAnimation,
 //                   child: SlideTransition(
@@ -499,20 +499,6 @@
 //   });
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ignore_for_file: prefer_const_constructors_in_immutables, avoid_unnecessary_containers
 
 import 'dart:ui';
@@ -527,6 +513,7 @@ import 'package:posternova/views/logo/logo_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
+import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
 
 class PosterScreen extends StatefulWidget {
@@ -536,7 +523,8 @@ class PosterScreen extends StatefulWidget {
   State<PosterScreen> createState() => _PosterScreenState();
 }
 
-class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMixin {
+class _PosterScreenState extends State<PosterScreen>
+    with TickerProviderStateMixin {
   late AnimationController _headerController;
   late AnimationController _cardController;
   late Animation<double> _headerFadeAnimation;
@@ -546,33 +534,31 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    
+
     _headerController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _cardController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _headerFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _headerController,
         curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
       ),
     );
-    
-    _headerSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.5),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _headerController,
-        curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
-      ),
-    );
+
+    _headerSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, -0.5), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _headerController,
+            curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _headerController.forward();
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -604,10 +590,7 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
             ),
             title: const Text(
               'Exit App',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
             content: const Text(
               'Are you sure you want to exit?',
@@ -657,14 +640,18 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
     }
 
     final hasShownRecently = await ModalPreferences.hasShownSubscriptionModal();
-    final shouldShowAgain = await ModalPreferences.shouldShowSubscriptionModalAgain(daysBetween: 7);
+    final shouldShowAgain =
+        await ModalPreferences.shouldShowSubscriptionModalAgain(daysBetween: 7);
 
     if (hasShownRecently && !shouldShowAgain) {
       print('Subscription modal shown recently, skipping');
       return;
     }
 
-    final planProvider = Provider.of<GetAllPlanProvider>(context, listen: false);
+    final planProvider = Provider.of<GetAllPlanProvider>(
+      context,
+      listen: false,
+    );
     if (planProvider.plans.isEmpty && !planProvider.isLoading) {
       planProvider.fetchAllPlans();
     }
@@ -861,7 +848,10 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => PlanDetailsAndPaymentScreen(plan: plan),
+                                      builder: (context) =>
+                                          PlanDetailsAndPaymentScreen(
+                                            plan: plan,
+                                          ),
                                     ),
                                   );
                                 },
@@ -938,9 +928,7 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
           child: Column(
             children: [
               _buildModernHeader(),
-              Expanded(
-                child: _buildContentSection(),
-              ),
+              Expanded(child: _buildContentSection()),
             ],
           ),
         ),
@@ -978,10 +966,7 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF2563EB),
-                            Color(0xFF3B82F6),
-                          ],
+                          colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
                         ),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
@@ -1027,10 +1012,7 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
                   ],
                 ),
               ),
-              Container(
-                height: 1,
-                color: Colors.grey[200],
-              ),
+              Container(height: 1, color: Colors.grey[200]),
             ],
           ),
         ),
@@ -1059,10 +1041,7 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
               const SizedBox(height: 8),
               const Text(
                 'Choose a tool to get started',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF64748B),
-                ),
+                style: TextStyle(fontSize: 15, color: Color(0xFF64748B)),
               ),
               const SizedBox(height: 28),
               _buildToolsList(),
@@ -1104,28 +1083,26 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
         final index = entry.key;
         final tool = entry.value;
         final delay = index * 150;
-        
+
         return AnimatedBuilder(
           animation: _cardController,
           builder: (context, child) {
-            final slideAnimation = Tween<Offset>(
-              begin: const Offset(0.3, 0),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(
-                parent: _cardController,
-                curve: Interval(
-                  (delay / 1200).clamp(0.0, 1.0),
-                  ((delay + 600) / 1200).clamp(0.0, 1.0),
-                  curve: Curves.easeOutCubic,
-                ),
-              ),
-            );
+            final slideAnimation =
+                Tween<Offset>(
+                  begin: const Offset(0.3, 0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: _cardController,
+                    curve: Interval(
+                      (delay / 1200).clamp(0.0, 1.0),
+                      ((delay + 600) / 1200).clamp(0.0, 1.0),
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
+                );
 
-            final fadeAnimation = Tween<double>(
-              begin: 0.0,
-              end: 1.0,
-            ).animate(
+            final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
               CurvedAnimation(
                 parent: _cardController,
                 curve: Interval(
@@ -1159,7 +1136,7 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
           onTap: () {
             HapticFeedback.lightImpact();
             setState(() => _selectedIndex = index);
-            
+
             // Check subscription status
             if (myPlanProvider.isPurchase == true) {
               // User has premium, allow access
@@ -1167,24 +1144,26 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
                 Navigator.push(
                   context,
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => tool.screen,
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      final curvedAnimation = CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      );
-                      
-                      return FadeTransition(
-                        opacity: curvedAnimation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.05, 0),
-                            end: Offset.zero,
-                          ).animate(curvedAnimation),
-                          child: child,
-                        ),
-                      );
-                    },
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        tool.screen,
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                          final curvedAnimation = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          );
+
+                          return FadeTransition(
+                            opacity: curvedAnimation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(curvedAnimation),
+                              child: child,
+                            ),
+                          );
+                        },
                     transitionDuration: const Duration(milliseconds: 400),
                   ),
                 ).then((_) {
@@ -1197,12 +1176,19 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
               CommonModal.showWarning(
                 context: context,
                 title: "Premium Feature",
-                message: "Unlock ${tool.title} and other premium features by upgrading to a premium plan.",
+                message:
+                    "Unlock ${tool.title} and other premium features by upgrading to a premium plan.",
                 primaryButtonText: "Upgrade Now",
                 secondaryButtonText: "Cancel",
                 onPrimaryPressed: () {
                   Navigator.of(context).pop();
-                  showSubscriptionModal(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SubscriptionPlansPage(),
+                    ),
+                  );
+                  // showSubscriptionModal(context);
                 },
                 onSecondaryPressed: () => Navigator.of(context).pop(),
               );
@@ -1242,11 +1228,7 @@ class _PosterScreenState extends State<PosterScreen> with TickerProviderStateMix
                         ),
                       ],
                     ),
-                    child: Icon(
-                      tool.icon,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+                    child: Icon(tool.icon, color: Colors.white, size: 28),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

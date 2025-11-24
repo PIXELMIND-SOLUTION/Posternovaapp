@@ -1,4 +1,3 @@
-
 // import 'package:flutter/material.dart';
 // import 'package:http/http.dart' as http;
 // import 'package:posternova/widgets/language_widget.dart';
@@ -301,7 +300,7 @@
 //         leading: IconButton(
 //           onPressed: () {
 //             Navigator.of(context).pop();
-//           }, 
+//           },
 //           icon: const Icon(Icons.arrow_back_ios, size: 20),
 //         ),
 //         title: Text(
@@ -366,7 +365,7 @@
 //                       child: Column(
 //                         mainAxisAlignment: MainAxisAlignment.center,
 //                         children: [
-//                           Icon(Icons.chat_bubble_outline, 
+//                           Icon(Icons.chat_bubble_outline,
 //                               size: 64, color: Colors.grey[300]),
 //                           const SizedBox(height: 16),
 //                           Text(
@@ -447,9 +446,9 @@
 //                 //   ),
 //                 //   child: IconButton(
 //                 //     icon: Icon(
-//                 //       _isListening ? Icons.mic_off : Icons.mic, 
+//                 //       _isListening ? Icons.mic_off : Icons.mic,
 //                 //       size: 22,
-//                 //       color: _speechAvailable 
+//                 //       color: _speechAvailable
 //                 //         ? (_isListening ? Colors.red : Colors.blue[700])
 //                 //         : Colors.grey,
 //                 //     ),
@@ -512,14 +511,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:posternova/widgets/language_widget.dart';
@@ -534,7 +525,8 @@ class AiScreen extends StatefulWidget {
   State<AiScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMixin {
+class _ChatScreenState extends State<AiScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
@@ -548,7 +540,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
 
   static const String apiKey = 'AIzaSyCOi06p94fKvs4Qpy_hOZezoZW9QO-qU3o';
   static const String apiUrl =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$apiKey";
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$apiKey";
 
   @override
   void initState() {
@@ -639,7 +631,10 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
       return;
     }
     if (!_speechAvailable) {
-      setState(() => _lastError = 'Microphone not available or permission not granted.');
+      setState(
+        () =>
+            _lastError = 'Microphone not available or permission not granted.',
+      );
       return;
     }
 
@@ -653,10 +648,11 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
       return;
     }
 
-    if (mounted) setState(() {
-      _lastError = '';
-      _isListening = true;
-    });
+    if (mounted)
+      setState(() {
+        _lastError = '';
+        _isListening = true;
+      });
 
     try {
       await _speech!.listen(
@@ -735,68 +731,68 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
   //   }
   // }
 
-
   Future<void> _sendMessage() async {
-  final userMessage = _messageController.text.trim();
-  if (userMessage.isEmpty) return;
+    final userMessage = _messageController.text.trim();
+    if (userMessage.isEmpty) return;
 
-  setState(() {
-    _messages.add({'role': 'user', 'text': userMessage});
-    _isLoading = true;
-    _messageController.clear();
-  });
+    setState(() {
+      _messages.add({'role': 'user', 'text': userMessage});
+      _isLoading = true;
+      _messageController.clear();
+    });
 
-  _scrollToBottom();
+    _scrollToBottom();
 
-  try {
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "contents": [
-          {
-            "parts": [
-              {"text": userMessage}
-            ]
-          }
-        ]
-      }),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "contents": [
+            {
+              "parts": [
+                {"text": userMessage},
+              ],
+            },
+          ],
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final botReply = data['candidates'][0]['content']['parts'][0]['text'];
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final botReply = data['candidates'][0]['content']['parts'][0]['text'];
 
-      setState(() {
-        _messages.add({'role': 'bot', 'text': botReply});
-      });
-    } else {
-      // Log the actual error for debugging
-      debugPrint('API Error: ${response.statusCode} - ${response.body}');
+        setState(() {
+          _messages.add({'role': 'bot', 'text': botReply});
+        });
+      } else {
+        // Log the actual error for debugging
+        debugPrint('API Error: ${response.statusCode} - ${response.body}');
+        setState(() {
+          _messages.add({
+            'role': 'bot',
+            'text':
+                'Sorry, I encountered an error (${response.statusCode}). Please try again.',
+          });
+        });
+      }
+    } catch (e) {
+      debugPrint('Error sending message: $e');
       setState(() {
         _messages.add({
-          'role': 'bot', 
-          'text': 'Sorry, I encountered an error (${response.statusCode}). Please try again.'
+          'role': 'bot',
+          'text': 'Connection issue. Please check your internet and try again.',
         });
       });
-    }
-  } catch (e) {
-    debugPrint('Error sending message: $e');
-    setState(() {
-      _messages.add({
-        'role': 'bot', 
-        'text': 'Connection issue. Please check your internet and try again.'
-      });
-    });
-  } finally {
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      _scrollToBottom();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
     }
   }
-}
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
@@ -817,7 +813,9 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
@@ -836,10 +834,14 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
                     color: const Color(0xFF667EEA).withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ],
               ),
-              child: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
           ],
@@ -863,12 +865,12 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: isUser 
+                    color: isUser
                         ? const Color(0xFF667EEA).withOpacity(0.3)
                         : Colors.black.withOpacity(0.08),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ],
               ),
               child: Text(
@@ -898,10 +900,14 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
                     color: const Color(0xFF4FD1C5).withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ],
               ),
-              child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.person_outline,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ],
         ],
@@ -930,7 +936,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
                     color: const Color(0xFF667EEA).withOpacity(0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
-                  )
+                  ),
                 ],
               ),
               child: const Icon(
@@ -941,7 +947,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
             ),
             const SizedBox(height: 32),
             Text(
-               'Start chat with Chicha',
+              'Start chat with Chicha',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -993,7 +999,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
               color: Colors.black.withOpacity(0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -1038,10 +1044,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
             const SizedBox(width: 12),
             Text(
               AppText.translate(context, 'Chat with Chicha'),
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 18,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
             ),
           ],
         ),
@@ -1071,15 +1074,16 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.orange[700], size: 20),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.orange[700],
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       _lastError,
-                      style: TextStyle(
-                        color: Colors.orange[900],
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.orange[900], fontSize: 13),
                     ),
                   ),
                 ],
@@ -1107,7 +1111,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
               color: Colors.black.withOpacity(0.05),
               blurRadius: 20,
               offset: const Offset(0, -4),
-            )
+            ),
           ],
         ),
         child: Column(
@@ -1131,7 +1135,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
                     ),
                     const SizedBox(width: 12),
                     Text(
-                       'AI analyzing',
+                      'AI analyzing',
                       style: TextStyle(
                         color: Colors.grey[700],
                         fontSize: 14,
@@ -1161,7 +1165,10 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
                                 textInputAction: TextInputAction.send,
                                 onSubmitted: (_) => _sendMessage(),
                                 decoration: InputDecoration(
-                                  hintText: AppText.translate(context, 'ask_me_anything'),
+                                  hintText: AppText.translate(
+                                    context,
+                                    'ask_me_anything',
+                                  ),
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 20,
@@ -1174,7 +1181,12 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
                                 ),
                                 minLines: 1,
                                 maxLines: 4,
-                                style: const TextStyle(fontSize: 15),
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: Color(
+                                    0xFF2D3748,
+                                  ), // Add this line to explicitly set text color
+                                ),
                               ),
                             ),
                           ],
@@ -1195,7 +1207,7 @@ class _ChatScreenState extends State<AiScreen> with SingleTickerProviderStateMix
                             color: const Color(0xFF667EEA).withOpacity(0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
-                          )
+                          ),
                         ],
                       ),
                       child: IconButton(

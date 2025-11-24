@@ -120,60 +120,67 @@ class PosterTemplate {
       );
     }
 
-    if (textVisibility.isVisible('email')) {
-      textElements.add(
-        TextElement(
-          id: 'email',
-          // Use user email if provided, otherwise fall back to poster data
-          text: userEmail?.isNotEmpty == true
-              ? userEmail!
-              : (posterData['email'] as String? ?? ''),
-          x: textSettings.emailX,
-          y: textSettings.emailY,
-          width: 600,
-          height: 150,
-          fontSize: textStyles.email.fontSize ?? 24,
-          color:
-              textStyles.email.color ??
-              const ui.Color.fromARGB(255, 158, 26, 26),
-          fontWeight: textStyles.email.fontWeight ?? FontWeight.bold,
-          fontFamily: textStyles.email.fontFamily ?? 'Times New Roman',
-          textAlign: TextAlign.left,
-        ),
-      );
-    }
+    // if (textVisibility.isVisible('email')) {
+    //   textElements.add(
+    //     TextElement(
+    //       id: 'email',
+    //       // Use user email if provided, otherwise fall back to poster data
+    //       text: userEmail?.isNotEmpty == true
+    //           ? userEmail!
+    //           : (posterData['email'] as String? ?? ''),
+    //       x: textSettings.emailX,
+    //       y: textSettings.emailY,
+    //       width: 600,
+    //       height: 150,
+    //       fontSize: textStyles.email.fontSize ?? 24,
+    //       color:
+    //           textStyles.email.color ??
+    //           const ui.Color.fromARGB(255, 158, 26, 26),
+    //       fontWeight: textStyles.email.fontWeight ?? FontWeight.bold,
+    //       fontFamily: textStyles.email.fontFamily ?? 'Times New Roman',
+    //       textAlign: TextAlign.left,
+    //     ),
+    //   );
+    // }
 
-    if (textVisibility.isVisible('mobile')) {
-      textElements.add(
-        TextElement(
-          id: 'mobile',
-          // Use user mobile if provided, otherwise fall back to poster data
-          text: userMobile?.isNotEmpty == true
-              ? userMobile!
-              : (posterData['mobile'] as String? ?? ''),
-          x: textSettings.mobileX,
-          y: textSettings.mobileY,
-          width: 500,
-          height: 150,
-          fontSize: textStyles.mobile.fontSize ?? 25,
-          color: textStyles.mobile.color ?? Colors.black,
-          fontWeight: textStyles.mobile.fontWeight ?? FontWeight.bold,
-          fontFamily: textStyles.mobile.fontFamily ?? 'Times New Roman',
-          textAlign: TextAlign.left,
-        ),
-      );
-    }
+    // if (textVisibility.isVisible('mobile')) {
+    //   textElements.add(
+    //     TextElement(
+    //       id: 'mobile',
+    //       // Use user mobile if provided, otherwise fall back to poster data
+    //       text: userMobile?.isNotEmpty == true
+    //           ? userMobile!
+    //           : (posterData['mobile'] as String? ?? ''),
+    //       x: textSettings.mobileX,
+    //       y: textSettings.mobileY,
+    //       width: 500,
+    //       height: 150,
+    //       // fontSize: textStyles.mobile.fontSize ?? 30,
+    //       fontSize: 22,
+
+    //       color: textStyles.mobile.color ?? Colors.black,
+    //       // fontWeight: textStyles.mobile.fontWeight ?? FontWeight.bold,
+    //       fontWeight: FontWeight.bold,
+
+    //       fontFamily: textStyles.mobile.fontFamily ?? 'Times New Roman',
+    //       textAlign: TextAlign.left,
+    //     ),
+    //   );
+    // }
 
     if (textVisibility.isVisible('name')) {
       textElements.add(
         TextElement(
           id: 'name',
-          text: posterData['name'] as String? ?? '',
+          // text: posterData['name'] as String? ?? '',
+          text: 'Business Name',
           x: textSettings.nameX,
           y: textSettings.nameY,
           width: 400,
           height: 100,
-          fontSize: textStyles.name.fontSize ?? 24,
+          // fontSize: textStyles.name.fontSize ?? 24,
+          fontSize: 2,
+
           color: textStyles.name.color ?? Colors.black,
           fontWeight: textStyles.name.fontWeight ?? FontWeight.bold,
           fontFamily: textStyles.name.fontFamily ?? 'Arial',
@@ -991,6 +998,7 @@ class SamplePosterScreen extends StatefulWidget {
 }
 
 class _ApiPosterEditorState extends State<SamplePosterScreen> {
+  final TextEditingController _fontSizecontroller = TextEditingController();
   final GlobalKey _canvasKey = GlobalKey();
   PosterTemplate? _template;
   bool _isLoading = true;
@@ -1023,6 +1031,10 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
   // Persistent image elements for profile and logo
   ProfileElement? _profileImageElement;
   ImageElement? _logoImageElement;
+
+  // Add these with your other state variables
+  double _businessNameFontSize = 20.0;
+  double _phoneNumberFontSize = 20.0;
 
   // final List<String> _fontFamilies = [
   //   'Roboto',
@@ -1321,354 +1333,413 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
   //   return luminance > 0.5 ? Colors.black : Colors.white;
   // }
 
+  //   void _showColorPickerDialog() {
+  //   if (_selectedTextElement == null) return;
 
+  //   Color currentColor = _selectedTextElement!.color;
+  //   final List<Color> _presetColors = [
+  //     Colors.black,
+  //     Colors.white,
+  //     Colors.red,
+  //     Colors.blue,
+  //     Colors.green,
+  //     Colors.yellow,
+  //     Colors.orange,
+  //     Colors.purple,
+  //     Colors.pink,
+  //     Colors.teal,
+  //     Colors.cyan,
+  //     Colors.amber,
+  //     Colors.indigo,
+  //     Colors.lime,
+  //     Colors.brown,
+  //     Colors.grey,
+  //   ];
 
-//   void _showColorPickerDialog() {
-//   if (_selectedTextElement == null) return;
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => StatefulBuilder(
+  //       builder: (context, setDialogState) {
+  //         Color tempColor = currentColor;
 
-//   Color currentColor = _selectedTextElement!.color;
-//   final List<Color> _presetColors = [
-//     Colors.black,
-//     Colors.white,
-//     Colors.red,
-//     Colors.blue,
-//     Colors.green,
-//     Colors.yellow,
-//     Colors.orange,
-//     Colors.purple,
-//     Colors.pink,
-//     Colors.teal,
-//     Colors.cyan,
-//     Colors.amber,
-//     Colors.indigo,
-//     Colors.lime,
-//     Colors.brown,
-//     Colors.grey,
-//   ];
+  //         return AlertDialog(
+  //           title: const Text('Pick Text Color'),
+  //           content: SingleChildScrollView(
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 // Color preview
+  //                 Container(
+  //                   width: double.infinity,
+  //                   height: 60,
+  //                   decoration: BoxDecoration(
+  //                     color: tempColor,
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     border: Border.all(color: Colors.grey),
+  //                   ),
+  //                   child: Center(
+  //                     child: Text(
+  //                       'Preview Text',
+  //                       style: TextStyle(
+  //                         color: _getContrastColor(tempColor),
+  //                         fontSize: 16,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 20),
 
-//   showDialog(
-//     context: context,
-//     builder: (context) => StatefulBuilder(
-//       builder: (context, setDialogState) {
-//         Color tempColor = currentColor;
+  //                 // Preset colors grid
+  //                 const Text(
+  //                   'Preset Colors:',
+  //                   style: TextStyle(fontWeight: FontWeight.bold),
+  //                 ),
+  //                 const SizedBox(height: 10),
+  //                 GridView.builder(
+  //                   shrinkWrap: true,
+  //                   physics: const NeverScrollableScrollPhysics(),
+  //                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //                     crossAxisCount: 8,
+  //                     crossAxisSpacing: 8,
+  //                     mainAxisSpacing: 8,
+  //                   ),
+  //                   itemCount: _presetColors.length,
+  //                   itemBuilder: (context, index) {
+  //                     final color = _presetColors[index];
+  //                     final isSelected = tempColor == color;
+  //                     return GestureDetector(
+  //                       onTap: () {
+  //                         setDialogState(() {
+  //                           tempColor = color;
+  //                           _selectedTextElement!.color = color;
+  //                         });
+  //                       },
+  //                       child: Container(
+  //                         decoration: BoxDecoration(
+  //                           color: color,
+  //                           shape: BoxShape.circle,
+  //                           border: Border.all(
+  //                             color: isSelected ? Colors.blue : Colors.grey,
+  //                             width: isSelected ? 3 : 1,
+  //                           ),
+  //                           boxShadow: isSelected
+  //                               ? [
+  //                                   BoxShadow(
+  //                                     color: Colors.blue.withOpacity(0.5),
+  //                                     blurRadius: 8,
+  //                                     spreadRadius: 2,
+  //                                   ),
+  //                                 ]
+  //                               : null,
+  //                         ),
+  //                         child: isSelected
+  //                             ? const Icon(
+  //                                 Icons.check,
+  //                                 color: Colors.white,
+  //                                 size: 16,
+  //                               )
+  //                             : null,
+  //                       ),
+  //                     );
+  //                   },
+  //                 ),
+  //                 const SizedBox(height: 20),
 
-//         return AlertDialog(
-//           title: const Text('Pick Text Color'),
-//           content: SingleChildScrollView(
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 // Color preview
-//                 Container(
-//                   width: double.infinity,
-//                   height: 60,
-//                   decoration: BoxDecoration(
-//                     color: tempColor,
-//                     borderRadius: BorderRadius.circular(8),
-//                     border: Border.all(color: Colors.grey),
-//                   ),
-//                   child: Center(
-//                     child: Text(
-//                       'Preview Text',
-//                       style: TextStyle(
-//                         color: _getContrastColor(tempColor),
-//                         fontSize: 16,
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 20),
+  //                 // Advanced color picker
+  //                 const Text(
+  //                   'Custom Color:',
+  //                   style: TextStyle(fontWeight: FontWeight.bold),
+  //                 ),
+  //                 const SizedBox(height: 10),
+  //                 ColorPicker(
+  //                   pickerColor: tempColor,
+  //                   onColorChanged: (color) {
+  //                     setDialogState(() {
+  //                       tempColor = color;
+  //                       _selectedTextElement!.color = color;
+  //                     });
+  //                   },
+  //                   pickerAreaHeightPercent: 0.4,
+  //                   enableAlpha: false,
+  //                   displayThumbColor: true,
+  //                   colorPickerWidth: 300,
+  //                   pickerAreaBorderRadius: BorderRadius.circular(12),
+  //                   hexInputBar: false,
+  //                   labelTypes: const [],
 
-//                 // Preset colors grid
-//                 const Text(
-//                   'Preset Colors:',
-//                   style: TextStyle(fontWeight: FontWeight.bold),
-//                 ),
-//                 const SizedBox(height: 10),
-//                 GridView.builder(
-//                   shrinkWrap: true,
-//                   physics: const NeverScrollableScrollPhysics(),
-//                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-//                     crossAxisCount: 8,
-//                     crossAxisSpacing: 8,
-//                     mainAxisSpacing: 8,
-//                   ),
-//                   itemCount: _presetColors.length,
-//                   itemBuilder: (context, index) {
-//                     final color = _presetColors[index];
-//                     final isSelected = tempColor == color;
-//                     return GestureDetector(
-//                       onTap: () {
-//                         setDialogState(() {
-//                           tempColor = color;
-//                           _selectedTextElement!.color = color;
-//                         });
-//                       },
-//                       child: Container(
-//                         decoration: BoxDecoration(
-//                           color: color,
-//                           shape: BoxShape.circle,
-//                           border: Border.all(
-//                             color: isSelected ? Colors.blue : Colors.grey,
-//                             width: isSelected ? 3 : 1,
-//                           ),
-//                           boxShadow: isSelected
-//                               ? [
-//                                   BoxShadow(
-//                                     color: Colors.blue.withOpacity(0.5),
-//                                     blurRadius: 8,
-//                                     spreadRadius: 2,
-//                                   ),
-//                                 ]
-//                               : null,
-//                         ),
-//                         child: isSelected
-//                             ? const Icon(
-//                                 Icons.check,
-//                                 color: Colors.white,
-//                                 size: 16,
-//                               )
-//                             : null,
-//                       ),
-//                     );
-//                   },
-//                 ),
-//                 const SizedBox(height: 20),
+  //                   // pickerAreaPadding: const EdgeInsets.all(8),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //               onPressed: () {
+  //                 // Revert to original color
+  //                 setState(() {
+  //                   _selectedTextElement!.color = currentColor;
+  //                 });
+  //                 Navigator.pop(context);
+  //               },
+  //               child: const Text('Cancel'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () {
+  //                 Navigator.pop(context);
+  //               },
+  //               child: const Text('Apply'),
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
 
-//                 // Advanced color picker
-//                 const Text(
-//                   'Custom Color:',
-//                   style: TextStyle(fontWeight: FontWeight.bold),
-//                 ),
-//                 const SizedBox(height: 10),
-//                 ColorPicker(
-//                   pickerColor: tempColor,
-//                   onColorChanged: (color) {
-//                     setDialogState(() {
-//                       tempColor = color;
-//                       _selectedTextElement!.color = color;
-//                     });
-//                   },
-//                   pickerAreaHeightPercent: 0.4,
-//                   enableAlpha: false,
-//                   displayThumbColor: true,
-//                   colorPickerWidth: 300,
-//                   pickerAreaBorderRadius: BorderRadius.circular(12),
-//                   hexInputBar: false,
-//                   labelTypes: const [],
-                  
-//                   // pickerAreaPadding: const EdgeInsets.all(8),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           actions: [
-//             TextButton(
-//               onPressed: () {
-//                 // Revert to original color
-//                 setState(() {
-//                   _selectedTextElement!.color = currentColor;
-//                 });
-//                 Navigator.pop(context);
-//               },
-//               child: const Text('Cancel'),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.pop(context);
-//               },
-//               child: const Text('Apply'),
-//             ),
-//           ],
-//         );
-//       },
-//     ),
-//   );
-// }
+  // // Helper method to get contrast color
+  // Color _getContrastColor(Color backgroundColor) {
+  //   // Calculate the perceptive luminance
+  //   double luminance = (0.299 * backgroundColor.red +
+  //           0.587 * backgroundColor.green +
+  //           0.114 * backgroundColor.blue) /
+  //       255;
+  //   return luminance > 0.5 ? Colors.black : Colors.white;
+  // }
 
-// // Helper method to get contrast color
-// Color _getContrastColor(Color backgroundColor) {
-//   // Calculate the perceptive luminance
-//   double luminance = (0.299 * backgroundColor.red +
-//           0.587 * backgroundColor.green +
-//           0.114 * backgroundColor.blue) /
-//       255;
-//   return luminance > 0.5 ? Colors.black : Colors.white;
-// }
+  void _showColorPickerDialog() {
+    if (_selectedTextElement == null) return;
 
+    Color currentColor = _selectedTextElement!.color;
+    Color tempColor = currentColor; // Track temporary color separately
 
+    final List<Color> _presetColors = [
+      Colors.black,
+      Colors.white,
+      Colors.red,
+      Colors.blue,
+      Colors.green,
+      Colors.yellow,
+      Colors.orange,
+      Colors.purple,
+      Colors.pink,
+      Colors.teal,
+      Colors.cyan,
+      Colors.amber,
+      Colors.indigo,
+      Colors.lime,
+      Colors.brown,
+      Colors.grey,
+    ];
 
-void _showColorPickerDialog() {
-  if (_selectedTextElement == null) return;
-
-  Color currentColor = _selectedTextElement!.color;
-  Color tempColor = currentColor; // Track temporary color separately
-  
-  final List<Color> _presetColors = [
-    Colors.black,
-    Colors.white,
-    Colors.red,
-    Colors.blue,
-    Colors.green,
-    Colors.yellow,
-    Colors.orange,
-    Colors.purple,
-    Colors.pink,
-    Colors.teal,
-    Colors.cyan,
-    Colors.amber,
-    Colors.indigo,
-    Colors.lime,
-    Colors.brown,
-    Colors.grey,
-  ];
-
-  showDialog(
-    context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setDialogState) {
-        return AlertDialog(
-          title: const Text('Pick Text Color'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Color preview
-                Container(
-                  width: double.infinity,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: tempColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Preview Text',
-                      style: TextStyle(
-                        color: _getContrastColor(tempColor),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Pick Text Color'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Color preview
+                  Container(
+                    width: double.infinity,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: tempColor,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Preview Text',
+                        style: TextStyle(
+                          color: _getContrastColor(tempColor),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // Preset colors grid
-                const Text(
-                  'Preset Colors:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 8,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
+                  // Preset colors grid
+                  const Text(
+                    'Preset Colors:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  itemCount: _presetColors.length,
-                  itemBuilder: (context, index) {
-                    final color = _presetColors[index];
-                    final isSelected = tempColor == color;
-                    return GestureDetector(
-                      onTap: () {
-                        setDialogState(() {
-                          tempColor = color;
-                        });
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? Colors.blue : Colors.grey,
-                            width: isSelected ? 3 : 1,
+                  const SizedBox(height: 10),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 8,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemCount: _presetColors.length,
+                    itemBuilder: (context, index) {
+                      final color = _presetColors[index];
+                      final isSelected = tempColor == color;
+                      return GestureDetector(
+                        onTap: () {
+                          setDialogState(() {
+                            tempColor = color;
+                          });
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? Colors.blue : Colors.grey,
+                              width: isSelected ? 3 : 1,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.blue.withOpacity(0.5),
+                                      blurRadius: 8,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : null,
                           ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.blue.withOpacity(0.5),
-                                    blurRadius: 8,
-                                    spreadRadius: 2,
-                                  ),
-                                ]
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 16,
+                                )
                               : null,
                         ),
-                        child: isSelected
-                            ? const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 16,
-                              )
-                            : null,
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
 
-                // Advanced color picker
-                const Text(
-                  'Custom Color:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                ColorPicker(
-                  pickerColor: tempColor,
-                  onColorChanged: (color) {
-                    setDialogState(() {
-                      tempColor = color;
-                    });
-                  },
-                  pickerAreaHeightPercent: 0.4,
-                  enableAlpha: false,
-                  displayThumbColor: true,
-                  colorPickerWidth: 300,
-                  pickerAreaBorderRadius: BorderRadius.circular(12),
-                  hexInputBar: false,
-                  labelTypes: const [],
-                ),
-              ],
+                  // Advanced color picker
+                  const Text(
+                    'Custom Color:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  ColorPicker(
+                    pickerColor: tempColor,
+                    onColorChanged: (color) {
+                      setDialogState(() {
+                        tempColor = color;
+                      });
+                    },
+                    pickerAreaHeightPercent: 0.4,
+                    enableAlpha: false,
+                    displayThumbColor: true,
+                    colorPickerWidth: 300,
+                    pickerAreaBorderRadius: BorderRadius.circular(12),
+                    hexInputBar: false,
+                    labelTypes: const [],
+                  ),
+                ],
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  // Don't apply changes - just close
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  // Apply the color change to the main widget state
+                  setState(() {
+                    _selectedTextElement!.color = tempColor;
+                  });
+                  Navigator.pop(context);
+                },
+                child: const Text('Apply'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // Helper method to get contrast color (add this if not present)
+  Color _getContrastColor(Color backgroundColor) {
+    // Calculate the perceptive luminance
+    double luminance =
+        (0.299 * backgroundColor.red +
+            0.587 * backgroundColor.green +
+            0.114 * backgroundColor.blue) /
+        255;
+    return luminance > 0.5 ? Colors.black : Colors.white;
+  }
+
+  void _showManualSizeInputDialog() {
+    if (_selectedTextElement == null) return;
+
+    _fontSizecontroller.text = _selectedTextElement!.fontSize
+        .round()
+        .toString();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter Font Size'),
+        content: TextField(
+          controller: _fontSizecontroller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            hintText: 'Enter font size...',
+            border: OutlineInputBorder(),
+            suffixText: 'px',
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                // Don't apply changes - just close
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Apply the color change to the main widget state
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final newSize = double.tryParse(_fontSizecontroller.text);
+              if (newSize != null && newSize >= 8 && newSize <= 600) {
                 setState(() {
-                  _selectedTextElement!.color = tempColor;
+                  _selectedTextElement!.fontSize = newSize;
+                  // Auto-adjust dimensions for large text
+                  if (newSize > 100) {
+                    final textLength = _selectedTextElement!.text.length;
+                    _selectedTextElement!.width = (textLength * newSize * 0.5)
+                        .clamp(200.0, _template!.width * 2);
+                    _selectedTextElement!.height = (newSize * 1.5).clamp(
+                      50.0,
+                      _template!.height * 2,
+                    );
+                  }
                 });
                 Navigator.pop(context);
-              },
-              child: const Text('Apply'),
-            ),
-          ],
-        );
-      },
-    ),
-  );
-}
-
-// Helper method to get contrast color (add this if not present)
-Color _getContrastColor(Color backgroundColor) {
-  // Calculate the perceptive luminance
-  double luminance = (0.299 * backgroundColor.red +
-          0.587 * backgroundColor.green +
-          0.114 * backgroundColor.blue) /
-      255;
-  return luminance > 0.5 ? Colors.black : Colors.white;
-}
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Please enter a valid size between 8 and 600',
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _loadProfileImage() async {
     try {
@@ -2120,7 +2191,7 @@ Color _getContrastColor(Color backgroundColor) {
       y: 350,
       width: 200,
       height: 50,
-      fontSize: 16,
+      fontSize: 50,
       color: Colors.black,
       fontWeight: FontWeight.normal,
       fontFamily: 'Arial',
@@ -2344,7 +2415,7 @@ Color _getContrastColor(Color backgroundColor) {
           child: Container(
             decoration: _profileImageElement!.isSelected
                 ? BoxDecoration(
-                    border: Border.all(color: Colors.green, width: 2),
+                    // border: Border.all(color: Colors.green, width: 2),
                     color: Colors.green.withOpacity(0.1),
                   )
                 : null,
@@ -2395,7 +2466,7 @@ Color _getContrastColor(Color backgroundColor) {
           child: Container(
             decoration: _logoImageElement!.isSelected
                 ? BoxDecoration(
-                    border: Border.all(color: Colors.green, width: 2),
+                    // border: Border.all(color: Colors.green, width: 2),
                     color: Colors.green.withOpacity(0.1),
                   )
                 : null,
@@ -2600,7 +2671,7 @@ Color _getContrastColor(Color backgroundColor) {
           child: Container(
             decoration: element.isSelected
                 ? BoxDecoration(
-                    border: Border.all(color: Colors.green, width: 2),
+                    // border: Border.all(color: Colors.green, width: 2),
                     color: Colors.green.withOpacity(0.1),
                   )
                 : null,
@@ -2686,6 +2757,504 @@ Color _getContrastColor(Color backgroundColor) {
     }
   }
 
+  // Widget _buildToolbar() {
+  //   if (_selectedTextElement == null &&
+  //       _selectedImageElement == null &&
+  //       _selectedProfileImageElement == null) {
+  //     return const SizedBox.shrink();
+  //   }
+
+  //   return Container(
+  //     padding: const EdgeInsets.all(8),
+  //     color: Colors.white,
+  //     child: SingleChildScrollView(
+  //       scrollDirection: Axis.horizontal,
+  //       child: Row(
+  //         children: [
+  //           if (_selectedTextElement != null) ...[
+  //             IconButton(
+  //               icon: const Icon(Icons.edit, color: Colors.deepPurple),
+  //               onPressed: _showTextEditDialog,
+  //               tooltip: 'Edit Text',
+  //             ),
+  //             const VerticalDivider(width: 16),
+
+  //             // Font Size Slider for Text Elements
+  //             const Text(
+  //               'Size: ',
+  //               style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+  //             ),
+  //             SizedBox(
+  //               width: 150,
+  //               child: Slider(
+  //                 value: _selectedTextElement!.fontSize,
+  //                 min: 8.0,
+  //                 max: 600.0,
+  //                 divisions: 100,
+  //                 label: '${_selectedTextElement!.fontSize.round()}',
+  //                 onChanged: (value) {
+  //                   setState(() {
+  //                     _selectedTextElement!.fontSize = value;
+  //                     if (value > 100) {
+  //                       final textLength = _selectedTextElement!.text.length;
+  //                       _selectedTextElement!.width = (textLength * value * 0.5)
+  //                           .clamp(200.0, _template!.width * 2);
+  //                       _selectedTextElement!.height = (value * 1.5).clamp(
+  //                         50.0,
+  //                         _template!.height * 2,
+  //                       );
+  //                     }
+  //                   });
+  //                 },
+  //               ),
+  //             ),
+  //             const VerticalDivider(width: 16),
+
+  //             IconButton(
+  //               icon: const Icon(Icons.fit_screen, color: Colors.deepPurple),
+  //               onPressed: () {
+  //                 setState(() {
+  //                   double estimatedWidth =
+  //                       _selectedTextElement!.text.length *
+  //                       _selectedTextElement!.fontSize *
+  //                       0.6;
+  //                   double estimatedHeight =
+  //                       _selectedTextElement!.fontSize * 1.5;
+
+  //                   _selectedTextElement!.width = estimatedWidth.clamp(
+  //                     100.0,
+  //                     _template!.width * 1.5,
+  //                   );
+  //                   _selectedTextElement!.height = estimatedHeight.clamp(
+  //                     50.0,
+  //                     _template!.height * 1.5,
+  //                   );
+  //                 });
+  //               },
+  //               tooltip: 'Auto-fit Size',
+  //             ),
+
+  //             // Font Family Dropdown
+  //             Container(
+  //               padding: const EdgeInsets.symmetric(horizontal: 8),
+  //               decoration: BoxDecoration(
+  //                 border: Border.all(color: Colors.grey.shade300),
+  //                 borderRadius: BorderRadius.circular(4),
+  //               ),
+  //               child: DropdownButtonHideUnderline(
+  //                 child: DropdownButton<String>(
+  //                   value: _selectedTextElement!.fontFamily,
+  //                   items: _fontFamilies
+  //                       .toSet()
+  //                       .map(
+  //                         (font) => DropdownMenuItem(
+  //                           value: font,
+  //                           child: Text(
+  //                             font,
+  //                             style: TextStyle(fontFamily: font),
+  //                           ),
+  //                         ),
+  //                       )
+  //                       .toList(),
+  //                   onChanged: (value) {
+  //                     if (value != null) {
+  //                       setState(() {
+  //                         _selectedTextElement!.fontFamily = value;
+  //                       });
+  //                     }
+  //                   },
+  //                 ),
+  //               ),
+  //             ),
+  //             const SizedBox(width: 8),
+
+  //             // Font Weight Dropdown
+  //             Container(
+  //               padding: const EdgeInsets.symmetric(horizontal: 8),
+  //               decoration: BoxDecoration(
+  //                 border: Border.all(color: Colors.grey.shade300),
+  //                 borderRadius: BorderRadius.circular(4),
+  //               ),
+  //               child: DropdownButtonHideUnderline(
+  //                 child: DropdownButton<FontWeight>(
+  //                   value: _selectedTextElement!.fontWeight,
+  //                   items: _fontWeights
+  //                       .map(
+  //                         (weight) => DropdownMenuItem(
+  //                           value: weight,
+  //                           child: Text(
+  //                             weight == FontWeight.bold
+  //                                 ? 'Bold'
+  //                                 : weight == FontWeight.w600
+  //                                 ? 'Semi-Bold'
+  //                                 : weight == FontWeight.w300
+  //                                 ? 'Light'
+  //                                 : weight == FontWeight.w900
+  //                                 ? 'Black'
+  //                                 : 'Normal',
+  //                             style: TextStyle(fontWeight: weight),
+  //                           ),
+  //                         ),
+  //                       )
+  //                       .toList(),
+  //                   onChanged: (value) {
+  //                     if (value != null) {
+  //                       setState(() {
+  //                         _selectedTextElement!.fontWeight = value;
+  //                       });
+  //                     }
+  //                   },
+  //                 ),
+  //               ),
+  //             ),
+  //             const VerticalDivider(width: 16),
+
+  //             // Text Alignment
+  //             Row(
+  //               children: [
+  //                 IconButton(
+  //                   icon: Icon(
+  //                     Icons.format_align_left,
+  //                     color: _selectedTextElement!.textAlign == TextAlign.left
+  //                         ? Colors.deepPurple
+  //                         : Colors.grey,
+  //                   ),
+  //                   onPressed: () {
+  //                     setState(() {
+  //                       _selectedTextElement!.textAlign = TextAlign.left;
+  //                     });
+  //                   },
+  //                   tooltip: 'Align Left',
+  //                 ),
+  //                 IconButton(
+  //                   icon: Icon(
+  //                     Icons.format_align_center,
+  //                     color: _selectedTextElement!.textAlign == TextAlign.center
+  //                         ? Colors.deepPurple
+  //                         : Colors.grey,
+  //                   ),
+  //                   onPressed: () {
+  //                     setState(() {
+  //                       _selectedTextElement!.textAlign = TextAlign.center;
+  //                     });
+  //                   },
+  //                   tooltip: 'Align Center',
+  //                 ),
+  //                 IconButton(
+  //                   icon: Icon(
+  //                     Icons.format_align_right,
+  //                     color: _selectedTextElement!.textAlign == TextAlign.right
+  //                         ? Colors.deepPurple
+  //                         : Colors.grey,
+  //                   ),
+  //                   onPressed: () {
+  //                     setState(() {
+  //                       _selectedTextElement!.textAlign = TextAlign.right;
+  //                     });
+  //                   },
+  //                   tooltip: 'Align Right',
+  //                 ),
+  //               ],
+  //             ),
+  //             const VerticalDivider(width: 16),
+
+  //             // RGB Color Picker Button
+  //             IconButton(
+  //               icon: Icon(
+  //                 Icons.color_lens,
+  //                 color: _selectedTextElement!.color,
+  //               ),
+  //               onPressed: _showColorPickerDialog,
+  //               tooltip: 'Choose Color',
+  //             ),
+
+  //             // Delete button for text elements
+  //             const VerticalDivider(width: 16),
+  //             IconButton(
+  //               icon: const Icon(Icons.delete, color: Colors.red),
+  //               onPressed: _deleteSelectedElement,
+  //               tooltip: 'Delete Text',
+  //             ),
+  //           ] else if (_selectedImageElement != null) ...[
+  //             // Size Slider for Image Elements
+  //             const Text(
+  //               'Size: ',
+  //               style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+  //             ),
+  //             SizedBox(
+  //               width: 120,
+  //               child: Slider(
+  //                 value: _selectedImageElement!.width,
+  //                 min: 20.0,
+  //                 max: _template!.width * 0.9,
+  //                 divisions: 50,
+  //                 label: '${_selectedImageElement!.width.round()}',
+  //                 onChanged: (value) {
+  //                   setState(() {
+  //                     final aspectRatio =
+  //                         _selectedImageElement!.width /
+  //                         _selectedImageElement!.height;
+  //                     _selectedImageElement!.width = value;
+  //                     _selectedImageElement!.height = value / aspectRatio;
+
+  //                     _selectedImageElement!.x = _selectedImageElement!.x.clamp(
+  //                       0,
+  //                       _template!.width - _selectedImageElement!.width,
+  //                     );
+  //                     _selectedImageElement!.y = _selectedImageElement!.y.clamp(
+  //                       0,
+  //                       _template!.height - _selectedImageElement!.height,
+  //                     );
+  //                   });
+  //                 },
+  //               ),
+  //             ),
+  //             const VerticalDivider(width: 16),
+
+  //             // Border Radius Slider - NEW ADDITION
+  //             const Text(
+  //               'Corner: ',
+  //               style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+  //             ),
+  //             SizedBox(
+  //               width: 120,
+  //               child: Slider(
+  //                 value: _selectedImageElement!.borderRadius,
+  //                 min: 0.0,
+  //                 max: 100.0,
+  //                 divisions: 20,
+  //                 label: '${_selectedImageElement!.borderRadius.round()}',
+  //                 onChanged: (value) {
+  //                   setState(() {
+  //                     _selectedImageElement!.borderRadius = value;
+  //                   });
+  //                 },
+  //               ),
+  //             ),
+  //             const VerticalDivider(width: 16),
+
+  //             IconButton(
+  //               icon: const Icon(Icons.crop_square, color: Colors.deepPurple),
+  //               onPressed: () {
+  //                 setState(() {
+  //                   _selectedImageElement!.borderRadius = 0.0;
+  //                 });
+  //               },
+  //               tooltip: 'Sharp Corners',
+  //             ),
+  //             IconButton(
+  //               icon: const Icon(
+  //                 Icons.rounded_corner,
+  //                 color: Colors.deepPurple,
+  //               ),
+  //               onPressed: () {
+  //                 setState(() {
+  //                   _selectedImageElement!.borderRadius =
+  //                       12.0; // Rounded corners
+  //                 });
+  //               },
+  //               tooltip: 'Rounded Corners',
+  //             ),
+  //             IconButton(
+  //               icon: const Icon(
+  //                 Icons.circle_outlined,
+  //                 color: Colors.deepPurple,
+  //               ),
+  //               onPressed: () {
+  //                 setState(() {
+  //                   _selectedImageElement!.borderRadius = 50.0; // Circular
+  //                 });
+  //               },
+  //               tooltip: 'Circular',
+  //             ),
+  //             const VerticalDivider(width: 16),
+
+  //             // Reset Size Button
+  //             IconButton(
+  //               icon: const Icon(Icons.aspect_ratio, color: Colors.deepPurple),
+  //               onPressed: () {
+  //                 double originalSize = 200.0;
+  //                 if (_selectedImageElement!.id == 'logo_image') {
+  //                   originalSize = 100.0;
+  //                 } else if (_selectedImageElement!.id == 'profile_image') {
+  //                   originalSize = 200.0;
+  //                 }
+
+  //                 setState(() {
+  //                   _selectedImageElement!.width = originalSize;
+  //                   _selectedImageElement!.height = originalSize;
+  //                 });
+  //               },
+  //               tooltip: 'Reset Size',
+  //             ),
+  //             const VerticalDivider(width: 16),
+
+  //             // Delete Button
+  //             IconButton(
+  //               icon: const Icon(Icons.delete, color: Colors.red),
+  //               onPressed: _deleteSelectedElement,
+  //               tooltip: 'Delete Image',
+  //             ),
+  //           ] else if (_selectedProfileImageElement != null) ...[
+  //             // Profile image specific controls
+  //             const Text(
+  //               'Profile Image',
+  //               style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+  //             ),
+  //             const VerticalDivider(width: 16),
+
+  //             // Size controls for profile image
+  //             IconButton(
+  //               icon: const Icon(Icons.zoom_out, color: Colors.deepPurple),
+  //               onPressed: () {
+  //                 setState(() {
+  //                   final newSize = (_selectedProfileImageElement!.width * 0.9)
+  //                       .clamp(50.0, _template!.width * 0.8);
+  //                   _selectedProfileImageElement!.width = newSize;
+  //                   _selectedProfileImageElement!.height = newSize;
+  //                 });
+  //               },
+  //               tooltip: 'Make Smaller',
+  //             ),
+
+  //             Container(
+  //               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  //               decoration: BoxDecoration(
+  //                 border: Border.all(color: Colors.grey.shade300),
+  //                 borderRadius: BorderRadius.circular(4),
+  //               ),
+  //               child: Text(
+  //                 '${(_selectedProfileImageElement!.width).round()}×${(_selectedProfileImageElement!.height).round()}',
+  //                 style: const TextStyle(fontSize: 12),
+  //               ),
+  //             ),
+
+  //             IconButton(
+  //               icon: const Icon(Icons.zoom_in, color: Colors.deepPurple),
+  //               onPressed: () {
+  //                 setState(() {
+  //                   final newSize = (_selectedProfileImageElement!.width * 1.1)
+  //                       .clamp(50.0, _template!.width * 0.8);
+  //                   _selectedProfileImageElement!.width = newSize;
+  //                   _selectedProfileImageElement!.height = newSize;
+  //                 });
+  //               },
+  //               tooltip: 'Make Larger',
+  //             ),
+
+  //             const VerticalDivider(width: 16),
+
+  //             // Size Slider for Profile Image
+  //             const Text(
+  //               'Size: ',
+  //               style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+  //             ),
+  //             SizedBox(
+  //               width: 120,
+  //               child: Slider(
+  //                 value: _selectedProfileImageElement!.width,
+  //                 min: 50.0,
+  //                 max: _template!.width * 0.8,
+  //                 divisions: 50,
+  //                 label: '${_selectedProfileImageElement!.width.round()}',
+  //                 onChanged: (value) {
+  //                   setState(() {
+  //                     _selectedProfileImageElement!.width = value;
+  //                     _selectedProfileImageElement!.height =
+  //                         value; // Keep it square
+
+  //                     // Keep within bounds
+  //                     _selectedProfileImageElement!
+  //                         .x = _selectedProfileImageElement!.x.clamp(
+  //                       0,
+  //                       _template!.width - _selectedProfileImageElement!.width,
+  //                     );
+  //                     _selectedProfileImageElement!.y =
+  //                         _selectedProfileImageElement!.y.clamp(
+  //                           0,
+  //                           _template!.height -
+  //                               _selectedProfileImageElement!.height,
+  //                         );
+  //                   });
+  //                 },
+  //               ),
+  //             ),
+
+  //             const VerticalDivider(width: 16),
+
+  //             // Replace profile image button
+  //             IconButton(
+  //               icon: const Icon(Icons.photo_camera, color: Colors.deepPurple),
+  //               onPressed: () async {
+  //                 try {
+  //                   final XFile? image = await _picker.pickImage(
+  //                     source: ImageSource.gallery,
+  //                   );
+  //                   if (image != null) {
+  //                     final bytes = await image.readAsBytes();
+  //                     setState(() {
+  //                       _profileImageBytes = bytes;
+  //                     });
+  //                     ScaffoldMessenger.of(context).showSnackBar(
+  //                       const SnackBar(
+  //                         content: Text('Profile image updated!'),
+  //                         backgroundColor: Colors.green,
+  //                         duration: Duration(seconds: 2),
+  //                       ),
+  //                     );
+  //                   }
+  //                 } catch (e) {
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     SnackBar(
+  //                       content: Text('Error updating profile image: $e'),
+  //                       backgroundColor: Colors.red,
+  //                     ),
+  //                   );
+  //                 }
+  //               },
+  //               tooltip: 'Replace Profile Image',
+  //             ),
+
+  //             // Delete profile image button
+  //             IconButton(
+  //               icon: const Icon(Icons.delete, color: Colors.red),
+  //               onPressed: () {
+  //                 // Show confirmation dialog for profile image deletion
+  //                 showDialog(
+  //                   context: context,
+  //                   builder: (context) => AlertDialog(
+  //                     title: const Text('Delete Profile Image'),
+  //                     content: const Text(
+  //                       'Are you sure you want to delete the profile image?',
+  //                     ),
+  //                     actions: [
+  //                       TextButton(
+  //                         onPressed: () => Navigator.pop(context),
+  //                         child: const Text('Cancel'),
+  //                       ),
+  //                       TextButton(
+  //                         onPressed: () {
+  //                           Navigator.pop(context);
+  //                           _deleteSelectedElement();
+  //                         },
+  //                         style: TextButton.styleFrom(
+  //                           foregroundColor: Colors.red,
+  //                         ),
+  //                         child: const Text('Delete'),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 );
+  //               },
+  //               tooltip: 'Delete Profile Image',
+  //             ),
+  //           ],
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildToolbar() {
     if (_selectedTextElement == null &&
         _selectedImageElement == null &&
@@ -2708,7 +3277,15 @@ Color _getContrastColor(Color backgroundColor) {
               ),
               const VerticalDivider(width: 16),
 
-              // Font Size Slider for Text Elements
+              // Font Size Controls - Manual Input Button
+              IconButton(
+                icon: const Icon(Icons.text_fields, color: Colors.deepPurple),
+                onPressed: _showManualSizeInputDialog,
+                tooltip: 'Enter Size Manually',
+              ),
+              const VerticalDivider(width: 16),
+
+              // Font Size Slider for Text Elements (keep existing slider)
               const Text(
                 'Size: ',
                 style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
@@ -2739,6 +3316,24 @@ Color _getContrastColor(Color backgroundColor) {
               ),
               const VerticalDivider(width: 16),
 
+              // Display current font size
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${_selectedTextElement!.fontSize.round()}px',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const VerticalDivider(width: 16),
+
+              // Rest of your existing toolbar code remains the same...
               IconButton(
                 icon: const Icon(Icons.fit_screen, color: Colors.deepPurple),
                 onPressed: () {
@@ -2905,7 +3500,7 @@ Color _getContrastColor(Color backgroundColor) {
                 tooltip: 'Delete Text',
               ),
             ] else if (_selectedImageElement != null) ...[
-              // Size Slider for Image Elements
+              // ... rest of your existing image toolbar code
               const Text(
                 'Size: ',
                 style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
@@ -2940,7 +3535,7 @@ Color _getContrastColor(Color backgroundColor) {
               ),
               const VerticalDivider(width: 16),
 
-              // Border Radius Slider - NEW ADDITION
+              // Border Radius Slider
               const Text(
                 'Corner: ',
                 style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
@@ -2978,8 +3573,7 @@ Color _getContrastColor(Color backgroundColor) {
                 ),
                 onPressed: () {
                   setState(() {
-                    _selectedImageElement!.borderRadius =
-                        12.0; // Rounded corners
+                    _selectedImageElement!.borderRadius = 12.0;
                   });
                 },
                 tooltip: 'Rounded Corners',
@@ -2991,7 +3585,7 @@ Color _getContrastColor(Color backgroundColor) {
                 ),
                 onPressed: () {
                   setState(() {
-                    _selectedImageElement!.borderRadius = 50.0; // Circular
+                    _selectedImageElement!.borderRadius = 50.0;
                   });
                 },
                 tooltip: 'Circular',
@@ -3025,7 +3619,7 @@ Color _getContrastColor(Color backgroundColor) {
                 tooltip: 'Delete Image',
               ),
             ] else if (_selectedProfileImageElement != null) ...[
-              // Profile image specific controls
+              // ... rest of your existing profile image toolbar code
               const Text(
                 'Profile Image',
                 style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
@@ -3089,10 +3683,8 @@ Color _getContrastColor(Color backgroundColor) {
                   onChanged: (value) {
                     setState(() {
                       _selectedProfileImageElement!.width = value;
-                      _selectedProfileImageElement!.height =
-                          value; // Keep it square
+                      _selectedProfileImageElement!.height = value;
 
-                      // Keep within bounds
                       _selectedProfileImageElement!
                           .x = _selectedProfileImageElement!.x.clamp(
                         0,
@@ -3148,7 +3740,6 @@ Color _getContrastColor(Color backgroundColor) {
               IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () {
-                  // Show confirmation dialog for profile image deletion
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
@@ -3190,6 +3781,439 @@ Color _getContrastColor(Color backgroundColor) {
 
     if (_template != null && _scaleFactor == 1.0) {
       _calculateScaleFactor(screenSize);
+    }
+
+    void _showEditDialog({
+      required String title,
+      required String currentValue,
+      required IconData icon,
+      TextInputType keyboardType = TextInputType.text,
+      required Function(String) onSave,
+    }) {
+      final controller = TextEditingController(text: currentValue);
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(icon, color: Colors.deepPurple),
+              const SizedBox(width: 12),
+              Text(title),
+            ],
+          ),
+          content: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            maxLines: keyboardType == TextInputType.phone ? 1 : null,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: keyboardType == TextInputType.phone
+                  ? 'Enter phone...'
+                  : 'Enter business name...',
+              border: const OutlineInputBorder(),
+              prefixIcon: Icon(icon),
+              counterText: '',
+            ),
+            maxLength: keyboardType == TextInputType.phone ? 15 : 50,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  onSave(controller.text);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('$title updated successfully!'),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Value cannot be empty!'),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // void _showBottomInfoEditOptions() {
+    //   showModalBottomSheet(
+    //     context: context,
+    //     backgroundColor: Colors.transparent,
+    //     builder: (context) => Container(
+    //       decoration: const BoxDecoration(
+    //         color: Colors.white,
+    //         borderRadius: BorderRadius.only(
+    //           topLeft: Radius.circular(20),
+    //           topRight: Radius.circular(20),
+    //         ),
+    //       ),
+    //       child: Column(
+    //         mainAxisSize: MainAxisSize.min,
+    //         children: [
+    //           Container(
+    //             width: 40,
+    //             height: 4,
+    //             margin: const EdgeInsets.only(top: 12, bottom: 20),
+    //             decoration: BoxDecoration(
+    //               color: Colors.grey[300],
+    //               borderRadius: BorderRadius.circular(2),
+    //             ),
+    //           ),
+    //           ListTile(
+    //             leading: Container(
+    //               padding: const EdgeInsets.all(8),
+    //               decoration: BoxDecoration(
+    //                 color: Colors.purple.shade50,
+    //                 borderRadius: BorderRadius.circular(8),
+    //               ),
+    //               child: Icon(Icons.business, color: Colors.purple.shade700),
+    //             ),
+    //             title: const Text(
+    //               'Edit Business Name',
+    //               style: TextStyle(fontWeight: FontWeight.w600),
+    //             ),
+    //             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+    //             onTap: () {
+    //               Navigator.pop(context);
+    //               final nameElement = _template?.textElements.firstWhere(
+    //                 (e) => e.id == 'name',
+    //                 orElse: () => TextElement(
+    //                   id: 'name',
+    //                   text: 'Business Name',
+    //                   x: 0,
+    //                   y: 0,
+    //                 ),
+    //               );
+
+    //               if (nameElement != null) {
+    //                 _showEditDialog(
+    //                   title: 'Edit  Name',
+    //                   currentValue: nameElement.text,
+    //                   icon: Icons.business,
+    //                   onSave: (newValue) {
+    //                     setState(() {
+    //                       nameElement.text = newValue;
+    //                     });
+    //                   },
+    //                 );
+    //               }
+    //             },
+    //           ),
+    //           const Divider(height: 1),
+    //           ListTile(
+    //             leading: Container(
+    //               padding: const EdgeInsets.all(8),
+    //               decoration: BoxDecoration(
+    //                 color: Colors.blue.shade50,
+    //                 borderRadius: BorderRadius.circular(8),
+    //               ),
+    //               child: Icon(Icons.phone, color: Colors.blue.shade700),
+    //             ),
+    //             title: const Text(
+    //               'Edit Phone Number',
+    //               style: TextStyle(fontWeight: FontWeight.w600),
+    //             ),
+    //             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+    //             onTap: () {
+    //               Navigator.pop(context);
+    //               final mobileElement = _template?.textElements.firstWhere(
+    //                 (e) => e.id == 'mobile',
+    //                 orElse: () => TextElement(
+    //                   id: 'mobile',
+    //                   text: phoneNumber ?? 'Not Set',
+    //                   x: 0,
+    //                   y: 0,
+    //                 ),
+    //               );
+
+    //               if (mobileElement != null) {
+    //                 _showEditDialog(
+    //                   title: 'Edit  Number',
+    //                   currentValue: mobileElement.text,
+    //                   icon: Icons.phone,
+    //                   keyboardType: TextInputType.phone,
+    //                   onSave: (newValue) {
+    //                     setState(() {
+    //                       mobileElement.text = newValue;
+    //                       phoneNumber = newValue;
+    //                     });
+    //                   },
+    //                 );
+    //               }
+    //             },
+    //           ),
+    //           const SizedBox(height: 20),
+    //         ],
+    //       ),
+    //     ),
+    //   );
+    // }
+
+    void _showBottomInfoEditOptions() {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setModalState) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                // Business Name Edit
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.business, color: Colors.purple.shade700),
+                  ),
+                  title: const Text(
+                    'Edit Business Name',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.pop(context);
+                    final nameElement = _template?.textElements.firstWhere(
+                      (e) => e.id == 'name',
+                      orElse: () => TextElement(
+                        id: 'name',
+                        text: 'Business Name',
+                        x: 0,
+                        y: 0,
+                      ),
+                    );
+
+                    if (nameElement != null) {
+                      _showEditDialog(
+                        title: 'Edit  Name',
+                        currentValue: nameElement.text,
+                        icon: Icons.business,
+                        onSave: (newValue) {
+                          setState(() {
+                            nameElement.text = newValue;
+                          });
+                        },
+                      );
+                    }
+                  },
+                ),
+
+                // Business Name Size Slider
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.text_fields,
+                          color: Colors.purple.shade700,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Name Size: ',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      Expanded(
+                        child: Slider(
+                          value: _businessNameFontSize,
+                          min: 12.0,
+                          max: 40.0,
+                          divisions: 28,
+                          label: '${_businessNameFontSize.round()}',
+                          activeColor: Colors.purple.shade700,
+                          onChanged: (value) {
+                            setState(() {
+                              _businessNameFontSize = value;
+                            });
+                            setModalState(() {});
+                          },
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade100,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '${_businessNameFontSize.round()}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.purple.shade900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                // Phone Number Edit
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.phone, color: Colors.blue.shade700),
+                  ),
+                  title: const Text(
+                    'Edit Phone Number',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.pop(context);
+                    final mobileElement = _template?.textElements.firstWhere(
+                      (e) => e.id == 'mobile',
+                      orElse: () => TextElement(
+                        id: 'mobile',
+                        text: phoneNumber ?? 'Not Set',
+                        x: 0,
+                        y: 0,
+                      ),
+                    );
+
+                    if (mobileElement != null) {
+                      _showEditDialog(
+                        title: 'Edit  Number',
+                        currentValue: mobileElement.text,
+                        icon: Icons.phone,
+                        keyboardType: TextInputType.phone,
+                        onSave: (newValue) {
+                          setState(() {
+                            mobileElement.text = newValue;
+                            phoneNumber = newValue;
+                          });
+                        },
+                      );
+                    }
+                  },
+                ),
+
+                // Phone Number Size Slider
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.text_fields,
+                          color: Colors.blue.shade700,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Phone Size: ',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      Expanded(
+                        child: Slider(
+                          value: _phoneNumberFontSize,
+                          min: 12.0,
+                          max: 40.0,
+                          divisions: 28,
+                          label: '${_phoneNumberFontSize.round()}',
+                          activeColor: Colors.blue.shade700,
+                          onChanged: (value) {
+                            setState(() {
+                              _phoneNumberFontSize = value;
+                            });
+                            setModalState(() {});
+                          },
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '${_phoneNumberFontSize.round()}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
@@ -3434,11 +4458,11 @@ Color _getContrastColor(Color backgroundColor) {
                                                               MainAxisAlignment
                                                                   .center,
                                                           children: [
-                                                            Icon(
-                                                              Icons.error,
-                                                              size: 48,
-                                                              color: Colors.red,
-                                                            ),
+                                                            // Icon(
+                                                            //   Icons.error,
+                                                            //   size: 48,
+                                                            //   color: Colors.red,
+                                                            // ),
                                                             SizedBox(height: 8),
                                                             Text(
                                                               'Failed to load background',
@@ -3464,6 +4488,726 @@ Color _getContrastColor(Color backgroundColor) {
                                         if (_logoImage != null &&
                                             _logoImageElement != null)
                                           _buildLogoImage(),
+
+                                        // Add this inside the Stack widget of your poster canvas
+                                        // Place it after all other elements (text, images, profile, logo)
+
+                                        // Business Info Bar at Bottom of Poster
+                                        // Positioned(
+                                        //   left: 0,
+                                        //   right: 0,
+                                        //   bottom: 0,
+                                        //   child: GestureDetector(
+                                        //     onTap: () {
+                                        //       // Show options to edit business name or phone
+                                        //       _showBottomInfoEditOptions();
+                                        //     },
+                                        //     child: Container(
+                                        //       padding:
+                                        //           const EdgeInsets.symmetric(
+                                        //             horizontal: 20,
+                                        //             vertical: 15,
+                                        //           ),
+                                        //       decoration: BoxDecoration(
+                                        //         gradient: LinearGradient(
+                                        //           colors: [
+                                        //             Colors.black.withOpacity(
+                                        //               0.8,
+                                        //             ),
+                                        //             Colors.black.withOpacity(
+                                        //               0.9,
+                                        //             ),
+                                        //           ],
+                                        //           begin: Alignment.topCenter,
+                                        //           end: Alignment.bottomCenter,
+                                        //         ),
+                                        //         border: Border(
+                                        //           top: BorderSide(
+                                        //             color: Colors.white
+                                        //                 .withOpacity(0.3),
+                                        //             width: 1,
+                                        //           ),
+                                        //         ),
+                                        //       ),
+                                        //       child: Row(
+                                        //         children: [
+                                        //           // Business Name Section
+                                        //           Expanded(
+                                        //             child: GestureDetector(
+                                        //               onTap: () {
+                                        //                 final nameElement = _template
+                                        //                     ?.textElements
+                                        //                     .firstWhere(
+                                        //                       (e) =>
+                                        //                           e.id ==
+                                        //                           'name',
+                                        //                       orElse: () =>
+                                        //                           TextElement(
+                                        //                             id: 'name',
+                                        //                             text:
+                                        //                                 'Business Name',
+                                        //                                 // fontSize: 30,
+                                        //                             x: 0,
+                                        //                             y: 0,
+                                        //                           ),
+                                        //                     );
+
+                                        //                 if (nameElement !=
+                                        //                     null) {
+                                        //                   _showEditDialog(
+                                        //                     title: 'Edit  Name',
+                                        //                     currentValue:
+                                        //                         nameElement
+                                        //                             .text,
+                                        //                     icon:
+                                        //                         Icons.business,
+                                        //                     onSave: (newValue) {
+                                        //                       setState(() {
+                                        //                         nameElement
+                                        //                                 .text =
+                                        //                             newValue;
+                                        //                       });
+                                        //                     },
+                                        //                   );
+                                        //                 }
+                                        //               },
+                                        //               child: Row(
+                                        //                 children: [
+                                        //                   Container(
+                                        //                     padding:
+                                        //                         const EdgeInsets.all(
+                                        //                           8,
+                                        //                         ),
+                                        //                     decoration: BoxDecoration(
+                                        //                       color: Colors
+                                        //                           .purple
+                                        //                           .withOpacity(
+                                        //                             0.3,
+                                        //                           ),
+                                        //                       borderRadius:
+                                        //                           BorderRadius.circular(
+                                        //                             8,
+                                        //                           ),
+                                        //                     ),
+                                        //                     child: const Icon(
+                                        //                       Icons.business,
+                                        //                       color:
+                                        //                           Colors.white,
+                                        //                       size: 20,
+                                        //                     ),
+                                        //                   ),
+                                        //                   const SizedBox(
+                                        //                     width: 12,
+                                        //                   ),
+                                        //                   Expanded(
+                                        //                     child: Column(
+                                        //                       crossAxisAlignment:
+                                        //                           CrossAxisAlignment
+                                        //                               .start,
+                                        //                       mainAxisSize:
+                                        //                           MainAxisSize
+                                        //                               .min,
+                                        //                       children: [
+                                        //                         Row(
+                                        //                           children: [
+                                        //                             const Text(
+                                        //                               'Business',
+                                        //                               style: TextStyle(
+                                        //                                 fontSize:
+                                        //                                     11,
+                                        //                                 color: Colors
+                                        //                                     .white70,
+                                        //                                 fontWeight:
+                                        //                                     FontWeight.w500,
+                                        //                               ),
+                                        //                             ),
+                                        //                             const SizedBox(
+                                        //                               width: 4,
+                                        //                             ),
+                                        //                             Icon(
+                                        //                               Icons
+                                        //                                   .edit,
+                                        //                               size: 14,
+                                        //                               color: Colors
+                                        //                                   .white
+                                        //                                   .withOpacity(
+                                        //                                     0.5,
+                                        //                                   ),
+                                        //                             ),
+                                        //                           ],
+                                        //                         ),
+                                        //                         const SizedBox(
+                                        //                           height: 3,
+                                        //                         ),
+                                        //                         Text(
+                                        //                           _template
+                                        //                                   ?.textElements
+                                        //                                   .firstWhere(
+                                        //                                     (
+                                        //                                       e,
+                                        //                                     ) =>
+                                        //                                         e.id ==
+                                        //                                         'name',
+                                        //                                     orElse: () => TextElement(
+                                        //                                       id: 'name',
+                                        //                                       text: 'Business Name',
+                                        //                                       x: 0,
+                                        //                                       y: 0,
+                                        //                                     ),
+                                        //                                   )
+                                        //                                   .text ??
+                                        //                               'Business Name',
+                                        //                           style: const TextStyle(
+                                        //                             fontSize:
+                                        //                                 20,
+                                        //                             fontWeight:
+                                        //                                 FontWeight
+                                        //                                     .bold,
+                                        //                             color: Colors
+                                        //                                 .white,
+                                        //                           ),
+                                        //                           maxLines: 1,
+                                        //                           overflow:
+                                        //                               TextOverflow
+                                        //                                   .ellipsis,
+                                        //                         ),
+                                        //                       ],
+                                        //                     ),
+                                        //                   ),
+                                        //                 ],
+                                        //               ),
+                                        //             ),
+                                        //           ),
+
+                                        //           // Vertical Divider
+                                        //           Container(
+                                        //             height: 50,
+                                        //             width: 1,
+                                        //             margin:
+                                        //                 const EdgeInsets.symmetric(
+                                        //                   horizontal: 15,
+                                        //                 ),
+                                        //             color: Colors.white
+                                        //                 .withOpacity(0.3),
+                                        //           ),
+
+                                        //           // Phone Number Section
+                                        //           Expanded(
+                                        //             child: GestureDetector(
+                                        //               onTap: () {
+                                        //                 final mobileElement = _template
+                                        //                     ?.textElements
+                                        //                     .firstWhere(
+                                        //                       (e) =>
+                                        //                           e.id ==
+                                        //                           'mobile',
+                                        //                       orElse: () =>
+                                        //                           TextElement(
+                                        //                             id: 'mobile',
+                                        //                             text:
+                                        //                                 phoneNumber ??
+                                        //                                 'Not Set',
+                                        //                             x: 0,
+                                        //                             y: 0,
+                                        //                           ),
+                                        //                     );
+
+                                        //                 if (mobileElement !=
+                                        //                     null) {
+                                        //                   _showEditDialog(
+                                        //                     title:
+                                        //                         'Edit Number',
+                                        //                     currentValue:
+                                        //                         mobileElement
+                                        //                             .text,
+                                        //                     icon: Icons.phone,
+                                        //                     keyboardType:
+                                        //                         TextInputType
+                                        //                             .phone,
+                                        //                     onSave: (newValue) {
+                                        //                       setState(() {
+                                        //                         mobileElement
+                                        //                                 .text =
+                                        //                             newValue;
+                                        //                         phoneNumber =
+                                        //                             newValue;
+                                        //                       });
+                                        //                     },
+                                        //                   );
+                                        //                 }
+                                        //               },
+                                        //               child: Row(
+                                        //                 children: [
+                                        //                   SizedBox(width: 200,),
+                                        //                   Container(
+                                        //                     padding:
+                                        //                         const EdgeInsets.all(
+                                        //                           8,
+                                        //                         ),
+                                        //                     decoration: BoxDecoration(
+                                        //                       color: Colors.blue
+                                        //                           .withOpacity(
+                                        //                             0.3,
+                                        //                           ),
+                                        //                       borderRadius:
+                                        //                           BorderRadius.circular(
+                                        //                             8,
+                                        //                           ),
+                                        //                     ),
+                                        //                     child: const Icon(
+                                        //                       Icons.phone,
+                                        //                       color:
+                                        //                           Colors.white,
+                                        //                       size: 20,
+                                        //                     ),
+                                        //                   ),
+                                        //                   const SizedBox(
+                                        //                     width: 12,
+                                        //                   ),
+                                        //                   Expanded(
+                                        //                     child: Column(
+                                        //                       crossAxisAlignment:
+                                        //                           CrossAxisAlignment
+                                        //                               .start,
+                                        //                       mainAxisSize:
+                                        //                           MainAxisSize
+                                        //                               .min,
+                                        //                       children: [
+                                        //                         Row(
+                                        //                           children: [
+                                        //                             const Text(
+                                        //                               'Phone',
+                                        //                               style: TextStyle(
+                                        //                                 fontSize:
+                                        //                                     14,
+                                        //                                 color: Colors
+                                        //                                     .white70,
+                                        //                                 fontWeight:
+                                        //                                     FontWeight.w500,
+                                        //                               ),
+                                        //                             ),
+                                        //                             const SizedBox(
+                                        //                               width: 4,
+                                        //                             ),
+                                        //                             Icon(
+                                        //                               Icons
+                                        //                                   .edit,
+                                        //                               size: 11,
+                                        //                               color: Colors
+                                        //                                   .white
+                                        //                                   .withOpacity(
+                                        //                                     0.5,
+                                        //                                   ),
+                                        //                             ),
+                                        //                           ],
+                                        //                         ),
+                                        //                         const SizedBox(
+                                        //                           height: 3,
+                                        //                         ),
+                                        //                         Text(
+                                        //                           phoneNumber ??
+                                        //                               _template
+                                        //                                   ?.textElements
+                                        //                                   .firstWhere(
+                                        //                                     (
+                                        //                                       e,
+                                        //                                     ) =>
+                                        //                                         e.id ==
+                                        //                                         'mobile',
+                                        //                                     orElse: () => TextElement(
+                                        //                                       id: 'mobile',
+                                        //                                       text: 'Not Set',
+                                        //                                       x: 0,
+                                        //                                       y: 0,
+                                        //                                     ),
+                                        //                                   )
+                                        //                                   .text ??
+                                        //                               'Not Set',
+                                        //                           style: const TextStyle(
+                                        //                             fontSize:
+                                        //                                 20,
+                                        //                             fontWeight:
+                                        //                                 FontWeight
+                                        //                                     .bold,
+                                        //                             color: Colors
+                                        //                                 .white,
+                                        //                           ),
+                                        //                           maxLines: 1,
+                                        //                           overflow:
+                                        //                               TextOverflow
+                                        //                                   .ellipsis,
+                                        //                         ),
+                                        //                       ],
+                                        //                     ),
+                                        //                   ),
+                                        //                 ],
+                                        //               ),
+                                        //             ),
+                                        //           ),
+                                        //         ],
+                                        //       ),
+                                        //     ),
+                                        //   ),
+                                        // ),
+
+                                        // Business Info Bar at Bottom of Poster
+                                        Positioned(
+                                          left: 0,
+                                          right: 0,
+                                          bottom: 0,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              // Show options to edit business name or phone
+                                              _showBottomInfoEditOptions();
+                                            },
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 20,
+                                                    vertical: 15,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    Colors.black.withOpacity(
+                                                      0.8,
+                                                    ),
+                                                    Colors.black.withOpacity(
+                                                      0.9,
+                                                    ),
+                                                  ],
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                ),
+                                                border: Border(
+                                                  top: BorderSide(
+                                                    color: Colors.white
+                                                        .withOpacity(0.3),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  // Business Name Section
+                                                  Expanded(
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        final nameElement = _template
+                                                            ?.textElements
+                                                            .firstWhere(
+                                                              (e) =>
+                                                                  e.id ==
+                                                                  'name',
+                                                              orElse: () =>
+                                                                  TextElement(
+                                                                    id: 'name',
+                                                                    text:
+                                                                        'Business Name',
+                                                                    x: 0,
+                                                                    y: 0,
+                                                                  ),
+                                                            );
+
+                                                        if (nameElement !=
+                                                            null) {
+                                                          _showEditDialog(
+                                                            title: 'Edit  Name',
+                                                            currentValue:
+                                                                nameElement
+                                                                    .text,
+                                                            icon:
+                                                                Icons.business,
+                                                            onSave: (newValue) {
+                                                              setState(() {
+                                                                nameElement
+                                                                        .text =
+                                                                    newValue;
+                                                              });
+                                                            },
+                                                          );
+                                                        }
+                                                      },
+                                                      child: Row(
+                                                        children: [
+                                                          Container(
+                                                            padding:
+                                                                const EdgeInsets.all(
+                                                                  8,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors
+                                                                  .purple
+                                                                  .withOpacity(
+                                                                    0.3,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    8,
+                                                                  ),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.business,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 20,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Row(
+                                                                  children: [
+                                                                    // const Text(
+                                                                    //   'Business',
+                                                                    //   style: TextStyle(
+                                                                    //     fontSize:
+                                                                    //         11,
+                                                                    //     color: Colors
+                                                                    //         .white70,
+                                                                    //     fontWeight:
+                                                                    //         FontWeight.w500,
+                                                                    //   ),
+                                                                    // ),
+                                                                    const SizedBox(
+                                                                      width: 4,
+                                                                    ),
+                                                                    // Icon(
+                                                                    //   Icons
+                                                                    //       .edit,
+                                                                    //   size: 14,
+                                                                    //   color: Colors
+                                                                    //       .white
+                                                                    //       .withOpacity(
+                                                                    //         0.5,
+                                                                    //       ),
+                                                                    // ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 3,
+                                                                ),
+                                                                Text(
+                                                                  _template
+                                                                          ?.textElements
+                                                                          .firstWhere(
+                                                                            (
+                                                                              e,
+                                                                            ) =>
+                                                                                e.id ==
+                                                                                'name',
+                                                                            orElse: () => TextElement(
+                                                                              id: 'name',
+                                                                              text: 'Business Name',
+                                                                              x: 0,
+                                                                              y: 0,
+                                                                            ),
+                                                                          )
+                                                                          .text ??
+                                                                      'Business Name',
+                                                                  style: TextStyle(
+                                                                    fontSize:
+                                                                        _businessNameFontSize, // UPDATED
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: Colors
+                                                                        .white,
+                                                                  ),
+                                                                  maxLines: 1,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+
+                                                  // Vertical Divider
+                                                  Container(
+                                                    height: 50,
+                                                    width: 1,
+                                                    margin:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 15,
+                                                        ),
+                                                    color: Colors.white
+                                                        .withOpacity(0.3),
+                                                  ),
+
+                                                  // Phone Number Section
+                                                  Expanded(
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        final mobileElement = _template
+                                                            ?.textElements
+                                                            .firstWhere(
+                                                              (e) =>
+                                                                  e.id ==
+                                                                  'mobile',
+                                                              orElse: () =>
+                                                                  TextElement(
+                                                                    id: 'mobile',
+                                                                    text:
+                                                                        phoneNumber ??
+                                                                        'Not Set',
+                                                                    x: 0,
+                                                                    y: 0,
+                                                                  ),
+                                                            );
+
+                                                        if (mobileElement !=
+                                                            null) {
+                                                          _showEditDialog(
+                                                            title:
+                                                                'Edit Number',
+                                                            currentValue:
+                                                                mobileElement
+                                                                    .text,
+                                                            icon: Icons.phone,
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .phone,
+                                                            onSave: (newValue) {
+                                                              setState(() {
+                                                                mobileElement
+                                                                        .text =
+                                                                    newValue;
+                                                                phoneNumber =
+                                                                    newValue;
+                                                              });
+                                                            },
+                                                          );
+                                                        }
+                                                      },
+                                                      child: Row(
+                                                        children: [
+                                                          const SizedBox(
+                                                            width: 200,
+                                                          ),
+                                                          Container(
+                                                            padding:
+                                                                const EdgeInsets.all(
+                                                                  8,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.blue
+                                                                  .withOpacity(
+                                                                    0.3,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    8,
+                                                                  ),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.phone,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 20,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Row(
+                                                                  children: [
+                                                                    // const Text(
+                                                                    //   'Phone',
+                                                                    //   style: TextStyle(
+                                                                    //     fontSize:
+                                                                    //         14,
+                                                                    //     color: Colors
+                                                                    //         .white70,
+                                                                    //     fontWeight:
+                                                                    //         FontWeight.w500,
+                                                                    //   ),
+                                                                    // ),
+                                                                    const SizedBox(
+                                                                      width: 4,
+                                                                    ),
+                                                                    // Icon(
+                                                                    //   Icons
+                                                                    //       .edit,
+                                                                    //   size: 11,
+                                                                    //   color: Colors
+                                                                    //       .white
+                                                                    //       .withOpacity(
+                                                                    //         0.5,
+                                                                    //       ),
+                                                                    // ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 3,
+                                                                ),
+                                                                Text(
+                                                                  phoneNumber ??
+                                                                      _template
+                                                                          ?.textElements
+                                                                          .firstWhere(
+                                                                            (
+                                                                              e,
+                                                                            ) =>
+                                                                                e.id ==
+                                                                                'mobile',
+                                                                            orElse: () => TextElement(
+                                                                              id: 'mobile',
+                                                                              text: 'Not Set',
+                                                                              x: 0,
+                                                                              y: 0,
+                                                                            ),
+                                                                          )
+                                                                          .text ??
+                                                                      'Not Set',
+                                                                  style: TextStyle(
+                                                                    fontSize:
+                                                                        _phoneNumberFontSize, // UPDATED
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: Colors
+                                                                        .white,
+                                                                  ),
+                                                                  maxLines: 1,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -3476,6 +5220,241 @@ Color _getContrastColor(Color backgroundColor) {
                     ),
                   ),
                 ),
+
+                // Container(
+                //   padding: const EdgeInsets.symmetric(
+                //     horizontal: 16,
+                //     vertical: 12,
+                //   ),
+                //   decoration: BoxDecoration(
+                //     color: Colors.white,
+                //     boxShadow: [
+                //       BoxShadow(
+                //         color: Colors.black.withOpacity(0.1),
+                //         blurRadius: 4,
+                //         offset: const Offset(0, -2),
+                //       ),
+                //     ],
+                //   ),
+                //   child: Row(
+                //     children: [
+                //       // Business Name Section - EDITABLE
+                //       Expanded(
+                //         child: GestureDetector(
+                //           onTap: () {
+                //             // Find the business name text element
+                //             final nameElement = _template?.textElements
+                //                 .firstWhere(
+                //                   (e) => e.id == 'name',
+                //                   orElse: () => TextElement(
+                //                     id: 'name',
+                //                     text: 'Business Name',
+                //                     x: 0,
+                //                     y: 0,
+                //                   ),
+                //                 );
+
+                //             if (nameElement != null) {
+                //               _showEditDialog(
+                //                 title: 'Edit Name',
+                //                 currentValue: nameElement.text,
+                //                 icon: Icons.business,
+                //                 onSave: (newValue) {
+                //                   setState(() {
+                //                     nameElement.text = newValue;
+                //                   });
+                //                 },
+                //               );
+                //             }
+                //           },
+                //           child: Container(
+                //             padding: const EdgeInsets.symmetric(
+                //               horizontal: 12,
+                //               vertical: 8,
+                //             ),
+                //             decoration: BoxDecoration(
+                //               color: Colors.purple.shade50,
+                //               borderRadius: BorderRadius.circular(8),
+                //               border: Border.all(
+                //                 color: Colors.purple.shade200,
+                //                 width: 1,
+                //               ),
+                //             ),
+                //             child: Row(
+                //               children: [
+                //                 Icon(
+                //                   Icons.business,
+                //                   color: Colors.purple.shade700,
+                //                   size: 20,
+                //                 ),
+                //                 const SizedBox(width: 8),
+                //                 Expanded(
+                //                   child: Column(
+                //                     crossAxisAlignment:
+                //                         CrossAxisAlignment.start,
+                //                     mainAxisSize: MainAxisSize.min,
+                //                     children: [
+                //                       Row(
+                //                         children: [
+                //                           Text(
+                //                             'Business Name',
+                //                             style: TextStyle(
+                //                               fontSize: 10,
+                //                               color: Colors.grey[600],
+                //                               fontWeight: FontWeight.w500,
+                //                             ),
+                //                           ),
+                //                           const SizedBox(width: 4),
+                //                           Icon(
+                //                             Icons.edit,
+                //                             size: 12,
+                //                             color: Colors.grey[500],
+                //                           ),
+                //                         ],
+                //                       ),
+                //                       const SizedBox(height: 2),
+                //                       Text(
+                //                         _template?.textElements
+                //                                 .firstWhere(
+                //                                   (e) => e.id == 'name',
+                //                                   orElse: () => TextElement(
+                //                                     id: 'name',
+                //                                     text: 'Business Name',
+                //                                     x: 0,
+                //                                     y: 0,
+                //                                   ),
+                //                                 )
+                //                                 .text ??
+                //                             'Business Name',
+                //                         style: TextStyle(
+                //                           fontSize: 14,
+                //                           fontWeight: FontWeight.bold,
+                //                           color: Colors.purple.shade900,
+                //                         ),
+                //                         maxLines: 1,
+                //                         overflow: TextOverflow.ellipsis,
+                //                       ),
+                //                     ],
+                //                   ),
+                //                 ),
+                //               ],
+                //             ),
+                //           ),
+                //         ),
+                //       ),
+                //       const SizedBox(width: 12),
+
+                //       // Phone Number Section - EDITABLE
+                //       Expanded(
+                //         child: GestureDetector(
+                //           onTap: () {
+                //             // Find the mobile text element
+                //             final mobileElement = _template?.textElements
+                //                 .firstWhere(
+                //                   (e) => e.id == 'mobile',
+                //                   orElse: () => TextElement(
+                //                     id: 'mobile',
+                //                     text: phoneNumber ?? 'Not Set',
+                //                     x: 0,
+                //                     y: 0,
+                //                   ),
+                //                 );
+
+                //             if (mobileElement != null) {
+                //               _showEditDialog(
+                //                 title: 'Edit Number',
+                //                 currentValue: mobileElement.text,
+                //                 icon: Icons.phone,
+                //                 keyboardType: TextInputType.phone,
+                //                 onSave: (newValue) {
+                //                   setState(() {
+                //                     mobileElement.text = newValue;
+                //                     phoneNumber = newValue;
+                //                   });
+                //                 },
+                //               );
+                //             }
+                //           },
+                //           child: Container(
+                //             padding: const EdgeInsets.symmetric(
+                //               horizontal: 12,
+                //               vertical: 8,
+                //             ),
+                //             decoration: BoxDecoration(
+                //               color: Colors.blue.shade50,
+                //               borderRadius: BorderRadius.circular(8),
+                //               border: Border.all(
+                //                 color: Colors.blue.shade200,
+                //                 width: 1,
+                //               ),
+                //             ),
+                //             child: Row(
+                //               children: [
+                //                 Icon(
+                //                   Icons.phone,
+                //                   color: Colors.blue.shade700,
+                //                   size: 20,
+                //                 ),
+                //                 const SizedBox(width: 8),
+                //                 Expanded(
+                //                   child: Column(
+                //                     crossAxisAlignment:
+                //                         CrossAxisAlignment.start,
+                //                     mainAxisSize: MainAxisSize.min,
+                //                     children: [
+                //                       Row(
+                //                         children: [
+                //                           Text(
+                //                             'Phone Number',
+                //                             style: TextStyle(
+                //                               fontSize: 10,
+                //                               color: Colors.grey[600],
+                //                               fontWeight: FontWeight.w500,
+                //                             ),
+                //                           ),
+                //                           const SizedBox(width: 4),
+                //                           Icon(
+                //                             Icons.edit,
+                //                             size: 12,
+                //                             color: Colors.grey[500],
+                //                           ),
+                //                         ],
+                //                       ),
+                //                       const SizedBox(height: 2),
+                //                       Text(
+                //                         phoneNumber ??
+                //                             _template?.textElements
+                //                                 .firstWhere(
+                //                                   (e) => e.id == 'mobile',
+                //                                   orElse: () => TextElement(
+                //                                     id: 'mobile',
+                //                                     text: 'Not Set',
+                //                                     x: 0,
+                //                                     y: 0,
+                //                                   ),
+                //                                 )
+                //                                 .text ??
+                //                             'Not Set',
+                //                         style: TextStyle(
+                //                           fontSize: 14,
+                //                           fontWeight: FontWeight.bold,
+                //                           color: Colors.blue.shade900,
+                //                         ),
+                //                         maxLines: 1,
+                //                         overflow: TextOverflow.ellipsis,
+                //                       ),
+                //                     ],
+                //                   ),
+                //                 ),
+                //               ],
+                //             ),
+                //           ),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
+
                 // Expanded(
                 //   child: GestureDetector(
                 //     onScaleStart: (details) {

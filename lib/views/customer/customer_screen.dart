@@ -1350,6 +1350,7 @@ import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
 import 'package:posternova/widgets/language_widget.dart';
+import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
 
 class CustomerScreen extends StatefulWidget {
@@ -1810,7 +1811,13 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
         secondaryButtonText: "Cancel",
         onPrimaryPressed: () {
           Navigator.of(context).pop();
-          showSubscriptionModal(context);
+          // showSubscriptionModal(context);
+              Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SubscriptionPlansPage(),
+        ),
+      );
         },
         onSecondaryPressed: () => Navigator.of(context).pop(),
       );

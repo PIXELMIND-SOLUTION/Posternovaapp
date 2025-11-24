@@ -27,6 +27,112 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 
+class ContactBottomBar extends StatelessWidget {
+  final String email;
+  final String phoneNumber;
+  final Color emailTextColor;
+  final Color mobileTextColor;
+  final Color backgroundColor;
+  final VoidCallback onEditEmail;
+  final VoidCallback onEditMobile;
+  final bool isSelected;
+
+  const ContactBottomBar({
+    Key? key,
+    required this.email,
+    required this.phoneNumber,
+    required this.emailTextColor,
+    required this.mobileTextColor,
+    this.backgroundColor = Colors.black87,
+    required this.onEditEmail,
+    required this.onEditMobile,
+    this.isSelected = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 4,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          // Email Section
+          Expanded(
+            child: GestureDetector(
+              onTap: onEditEmail,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.person, color: emailTextColor, size: 18),
+
+                  // Icon(Icons.email, color: emailTextColor, size: 16),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      email.isEmpty ? 'Add Email' : email,
+                      style: TextStyle(
+                        color: emailTextColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Divider
+          Container(
+            height: 20,
+            width: 1,
+            color: Colors.white38,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+          ),
+
+          // Phone Section
+          Expanded(
+            child: GestureDetector(
+              onTap: onEditMobile,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.phone, color: mobileTextColor, size: 16),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      phoneNumber.isEmpty ? 'Add Phone' : phoneNumber,
+                      style: TextStyle(
+                        color: mobileTextColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class PosterMaker extends StatelessWidget {
   final dynamic posterSize;
   final bool isCustom;
@@ -89,8 +195,8 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
     Colors.grey,
   ];
 
-  Color _emailTextColor = Colors.black;
-  Color _mobileTextColor = Colors.black;
+  Color _emailTextColor = const Color.fromARGB(255, 255, 254, 254);
+  Color _mobileTextColor = const Color.fromARGB(255, 255, 254, 254);
 
   final TransformationController _transformationController =
       TransformationController();
@@ -99,6 +205,7 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
 
   String? phoneNumber; // Assuming you defined this
   String? email;
+  String? name;
 
   final TextEditingController _emailInfoController = TextEditingController(
     text: 'info@example.com',
@@ -108,6 +215,10 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
   );
   final TextEditingController _mobileController = TextEditingController(
     text: '',
+  );
+
+  final TextEditingController _nameContoller = TextEditingController(
+    text: 'Business Name',
   );
 
   // Future<void> _loadUserData() async {
@@ -133,12 +244,14 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
         profileImage = userData.user.profileImage ?? 'profile';
         phoneNumber = userData.user.mobile ?? phoneNumber;
         email = userData.user.email ?? email;
+        name = userData.user.name ?? name;
 
         // Update text controllers
         _emailInfoController.text = email.toString();
         _mobileController.text = phoneNumber.toString();
+        _nameContoller.text = name.toString();
 
-        print('User data loaded: $phoneNumber, $email, $profileImage');
+        print('User data loaded: $phoneNumber, $email, $profileImage, $name');
       });
 
       // If there's a profile image URL/path, create the profile item
@@ -2799,7 +2912,11 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
   // }
 
   void _editContactInfo() {
-    final TextEditingController controller = TextEditingController(text: email);
+    // final TextEditingController controller = TextEditingController(text: email);
+    final TextEditingController controller = TextEditingController(text: name);
+
+    // final TextEditingController controller = TextEditingController(text: 'Business Name');
+
     Color tempTextColor = _emailTextColor;
 
     showDialog(
@@ -2807,7 +2924,9 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            title: const Text('Edit Contact Information'),
+            title: const Text('Edit Business Name'),
+
+            // title: const Text('Edit Contact Information'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -2920,7 +3039,9 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
               TextButton(
                 onPressed: () {
                   setState(() {
-                    email = controller.text;
+                    // email = controller.text;
+                    name = controller.text;
+
                     _emailTextColor = tempTextColor;
                   });
                   Navigator.pop(context);
@@ -2934,39 +3055,39 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
     );
   }
 
-  void _editSiteInfo() {
-    final TextEditingController controller = TextEditingController(
-      text: siteInfoItem?.text,
-    );
+  // void _editSiteInfo() {
+  //   final TextEditingController controller = TextEditingController(
+  //     text: siteInfoItem?.text,
+  //   );
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Site Information'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: 'Enter Site information'),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _siteInfoController.text = controller.text;
-                siteInfoItem?.text = controller.text;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Edit Site Information'),
+  //       content: TextField(
+  //         controller: controller,
+  //         decoration: const InputDecoration(hintText: 'Enter Site information'),
+  //         maxLines: 3,
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Cancel'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             setState(() {
+  //               _siteInfoController.text = controller.text;
+  //               siteInfoItem?.text = controller.text;
+  //             });
+  //             Navigator.pop(context);
+  //           },
+  //           child: const Text('Save'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // void _editMobileInfo() {
   //   final TextEditingController controller = TextEditingController(
@@ -4120,109 +4241,144 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
                         if (contactInfoItem != null ||
                             mobileInfoItem != null ||
                             siteInfoItem != null)
+                          // Positioned(
+                          //   left: 0,
+                          //   right: 0,
+                          //   bottom: 0,
+                          //   child: DraggableWidget(
+                          //     item: contactInfoItem!,
+                          //     child: Container(
+                          //       padding: const EdgeInsets.all(8),
+                          //       decoration: BoxDecoration(
+                          //         borderRadius: BorderRadius.circular(4),
+                          //         // Removed the Border.all condition
+                          //       ),
+                          //       child: SingleChildScrollView(
+                          //         scrollDirection: Axis.horizontal,
+                          //         child: IntrinsicWidth(
+                          //           child: Row(
+                          //             children: [
+                          //               ConstrainedBox(
+                          //                 constraints: const BoxConstraints(
+                          //                   minWidth: 150,
+                          //                   maxWidth: 250,
+                          //                 ),
+                          //                 child: IntrinsicWidth(
+                          //                   child: TextField(
+                          //                     controller: TextEditingController(
+                          //                       text: email != null
+                          //                           ? email
+                          //                           : contactInfoItem!.text,
+                          //                     ),
+                          //                     onTap: () {
+                          //                       setState(() {
+                          //                         _selectedItemId =
+                          //                             contactInfoItem!.id;
+                          //                         _selectedItemType = 'contact';
+                          //                       });
+                          //                       _editContactInfo();
+                          //                     },
+                          //                     style: TextStyle(
+                          //                       fontSize: 12,
+                          //                       fontWeight: FontWeight.bold,
+                          //                       color: _emailTextColor,
+                          //                     ),
+                          //                     decoration: const InputDecoration(
+                          //                       hintText: 'Email',
+                          //                       hintStyle: TextStyle(
+                          //                         color: Colors.white54,
+                          //                       ),
+                          //                       border: InputBorder.none,
+                          //                       isDense: true,
+                          //                       contentPadding:
+                          //                           EdgeInsets.symmetric(
+                          //                             horizontal: 8,
+                          //                           ),
+                          //                     ),
+                          //                   ),
+                          //                 ),
+                          //               ),
+                          //               const SizedBox(width: 10),
+                          //               const SizedBox(width: 15),
+                          //               ConstrainedBox(
+                          //                 constraints: const BoxConstraints(
+                          //                   minWidth: 120,
+                          //                   maxWidth: 180,
+                          //                 ),
+                          //                 child: IntrinsicWidth(
+                          //                   child: TextField(
+                          //                     controller: TextEditingController(
+                          //                       text: phoneNumber != null
+                          //                           ? phoneNumber
+                          //                           : mobileInfoItem!.text,
+                          //                     ),
+                          //                     onTap: () {
+                          //                       setState(() {
+                          //                         _selectedItemId =
+                          //                             mobileInfoItem!.id;
+                          //                         _selectedItemType = 'mobile';
+                          //                       });
+                          //                       _editMobileInfo();
+                          //                     },
+                          //                     style: TextStyle(
+                          //                       fontSize: 12,
+                          //                       fontWeight: FontWeight.bold,
+                          //                       color: _mobileTextColor,
+                          //                     ),
+                          //                     decoration: const InputDecoration(
+                          //                       hintText: 'Phone',
+                          //                       hintStyle: TextStyle(
+                          //                         color: Colors.white54,
+                          //                       ),
+                          //                       border: InputBorder.none,
+                          //                       isDense: true,
+                          //                       contentPadding:
+                          //                           EdgeInsets.symmetric(
+                          //                             horizontal: 8,
+                          //                           ),
+                          //                     ),
+                          //                   ),
+                          //                 ),
+                          //               ),
+                          //             ],
+                          //           ),
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
                           Positioned(
                             left: 0,
                             right: 0,
                             bottom: 0,
                             child: DraggableWidget(
                               item: contactInfoItem!,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(4),
-                                  // Removed the Border.all condition
-                                ),
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: IntrinsicWidth(
-                                    child: Row(
-                                      children: [
-                                        ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                            minWidth: 150,
-                                            maxWidth: 250,
-                                          ),
-                                          child: IntrinsicWidth(
-                                            child: TextField(
-                                              controller: TextEditingController(
-                                                text: email != null
-                                                    ? email
-                                                    : contactInfoItem!.text,
-                                              ),
-                                              onTap: () {
-                                                setState(() {
-                                                  _selectedItemId =
-                                                      contactInfoItem!.id;
-                                                  _selectedItemType = 'contact';
-                                                });
-                                                _editContactInfo();
-                                              },
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: _emailTextColor,
-                                              ),
-                                              decoration: const InputDecoration(
-                                                hintText: 'Email',
-                                                hintStyle: TextStyle(
-                                                  color: Colors.white54,
-                                                ),
-                                                border: InputBorder.none,
-                                                isDense: true,
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                    ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        const SizedBox(width: 15),
-                                        ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                            minWidth: 120,
-                                            maxWidth: 180,
-                                          ),
-                                          child: IntrinsicWidth(
-                                            child: TextField(
-                                              controller: TextEditingController(
-                                                text: phoneNumber != null
-                                                    ? phoneNumber
-                                                    : mobileInfoItem!.text,
-                                              ),
-                                              onTap: () {
-                                                setState(() {
-                                                  _selectedItemId =
-                                                      mobileInfoItem!.id;
-                                                  _selectedItemType = 'mobile';
-                                                });
-                                                _editMobileInfo();
-                                              },
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: _mobileTextColor,
-                                              ),
-                                              decoration: const InputDecoration(
-                                                hintText: 'Phone',
-                                                hintStyle: TextStyle(
-                                                  color: Colors.white54,
-                                                ),
-                                                border: InputBorder.none,
-                                                isDense: true,
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                    ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                              child: ContactBottomBar(
+                                // email: email ?? '',
+                                // email: 'Business Name' ?? '',
+                                email: name ?? '',
+
+                                phoneNumber: phoneNumber ?? '',
+                                emailTextColor: _emailTextColor,
+                                mobileTextColor: _mobileTextColor,
+                                backgroundColor: Colors.black87,
+                                onEditEmail: () {
+                                  setState(() {
+                                    _selectedItemId = contactInfoItem!.id;
+                                    _selectedItemType = 'contact';
+                                  });
+                                  _editContactInfo();
+                                },
+                                onEditMobile: () {
+                                  setState(() {
+                                    _selectedItemId = mobileInfoItem!.id;
+                                    _selectedItemType = 'mobile';
+                                  });
+                                  _editMobileInfo();
+                                },
+                                isSelected:
+                                    _selectedItemId == contactInfoItem!.id ||
+                                    _selectedItemId == mobileInfoItem!.id,
                               ),
                             ),
                           ),

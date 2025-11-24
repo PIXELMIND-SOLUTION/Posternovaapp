@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -11,6 +10,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:posternova/models/invoice_model.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:ui' as ui;
@@ -19,10 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class InvoiceDetailScreen extends StatefulWidget {
   final Invoice invoice;
 
-  const InvoiceDetailScreen({
-    super.key,
-    required this.invoice,
-  });
+  const InvoiceDetailScreen({super.key, required this.invoice});
 
   @override
   State<InvoiceDetailScreen> createState() => _InvoiceDetailScreenState();
@@ -61,6 +58,58 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     _loadLogoImage();
   }
 
+  //   Future<void> _printPdf() async {
+  //   try {
+  //     final pdfBytes = await _generatePdf();
+  //     await Printing.layoutPdf(
+  //       onLayout: (PdfPageFormat format) async => pdfBytes,
+  //     );
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error printing PDF: $e')),
+  //     );
+  //   }
+  // }
+
+  Future<void> _printPdf() async {
+    try {
+      setState(() {
+        _isGeneratingPdf = true;
+      });
+
+      final invoice = widget.invoice;
+      final invoiceId = _generateInvoiceNumber(invoice.id);
+
+      // Generate PDF bytes first
+      final Uint8List pdfBytes = await _generatePdf();
+
+      // Then print
+      await Printing.layoutPdf(
+        name: 'Invoice_$invoiceId.pdf',
+        onLayout: (PdfPageFormat format) async => pdfBytes,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Print dialog opened')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error printing PDF: ${e.toString()}')),
+        );
+      }
+      debugPrint('Print error details: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingPdf = false;
+        });
+      }
+    }
+  }
+
   Future<void> _loadLogoImage() async {
     final prefs = await SharedPreferences.getInstance();
     final logoBase64 = prefs.getString('logo_image');
@@ -80,7 +129,6 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.user?.user.id;
- 
     } finally {
       setState(() {
         _isLoading = false;
@@ -117,21 +165,17 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
     final invoice = widget.invoice;
-    final golditem=invoice.products[0].isGoldItem;
+    final golditem = invoice.products[0].isGoldItem;
     final dueDate = invoice.createdAt.add(const Duration(days: 20));
     final totalAmount = invoice.products.fold<double>(0, (total, product) {
-       final wastageAmount = product.offerPrice * (product.wastage / 100);
-      
-      final productTotal = (product.offerPrice + wastageAmount)*product.quantity;
-      
-     
-      
-      return  productTotal;
+      final wastageAmount = product.offerPrice * (product.wastage / 100);
+
+      final productTotal =
+          (product.offerPrice + wastageAmount) * product.quantity;
+
+      return productTotal;
     });
-
-
 
     double gstRate = 0.0;
     if (gst != 'Not Available') {
@@ -149,604 +193,710 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
     final totalWithTax = totalAmount + tax;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Invoice',
-          // 'Invoice ${_generateInvoiceNumber(invoice.id)}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+    return Theme(
+      data: ThemeData.light(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Invoice',
+            // 'Invoice ${_generateInvoiceNumber(invoice.id)}',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
         ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(2.0),
-        child: SingleChildScrollView(
-          child: RepaintBoundary(
-            key: _printableKey,
-            child: Container(
-              color: Colors.white,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 15,
-                    color: const Color(0xFF4ACBBC),
-                  ),
+        body: Padding(
+          padding: const EdgeInsets.all(2.0),
+          child: SingleChildScrollView(
+            child: RepaintBoundary(
+              key: _printableKey,
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(height: 15, color: const Color(0xFF4ACBBC)),
 
-                  // Navy header
-                  Container(
-                    color: const Color(0xFF0E2945),
-                    width: double.infinity,
-                    height: 8,
-                  ),
+                    // Navy header
+                    Container(
+                      color: const Color(0xFF0E2945),
+                      width: double.infinity,
+                      height: 8,
+                    ),
 
-                  Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header with logo and invoice title
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Invoice title
-                            const Text(
-                              'INVOICE BILL',
-                              style: TextStyle(
-                                fontSize: 38,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-
-                            // Logo
-                            Container(
-                              decoration: BoxDecoration(
-                                // color: const Color(0xFFFFC84D),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              padding: const EdgeInsets.all(10),
-                              height: 80,
-                              width: 80,
-                              child: _logoImageBase64 != null &&
-                                      _logoImageBase64!.isNotEmpty
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: Image.memory(
-                                        base64Decode(_logoImageBase64!),
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  : const Center(
-                                      child: Text(
-                                        'd',
-                                        style: TextStyle(
-                                          fontSize: 40,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Bill To Section
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Bill To:',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Client Name: $name',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  // Text(
-                                  //   'Company Name: $clientCompany',
-                                  //   style: const TextStyle(fontSize: 14),
-                                  // ),
-                                  Text(
-                                    'Billing Address: $clientAddress',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  Text(
-                                    'Phone: $clientPhone',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  Text(
-                                    'Email: $clientEmail',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Invoice Details
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Row(
-                                    // mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      SizedBox(width: 1,),
-                                      const Text(
-                                        'Invoice Number: ',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      Text(
-                                        _generateInvoiceNumber(invoice.id),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    // mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                       SizedBox(width: 1,),
-                                      const Text(
-                                        'Invoice Date: ',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      Text(
-                                        _formatDate(invoice.createdAt),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 30),
-
-                        // Service Details
-                        const Text(
-                          'Service Details:',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Table header with gold background
-                        // Header section
-                        Container(
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFFC84D),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 8),
-                          child:  Row(
+                    Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header with logo and invoice title
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // No.
-                              Expanded(
-                                flex: 1,
-                                child: Text(
-                                  'No',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
+                              // Invoice title
+                              const Text(
+                                'INVOICE BILL',
+                                style: TextStyle(
+                                  fontSize: 38,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  letterSpacing: 1.5,
                                 ),
                               ),
-                              SizedBox(width: 5),
-                              // Product
+
+                              // Logo
+                              Container(
+                                decoration: BoxDecoration(
+                                  // color: const Color(0xFFFFC84D),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.all(10),
+                                height: 80,
+                                width: 80,
+                                child:
+                                    _logoImageBase64 != null &&
+                                        _logoImageBase64!.isNotEmpty
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Image.memory(
+                                          base64Decode(_logoImageBase64!),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : const Center(
+                                        child: Text(
+                                          'd',
+                                          style: TextStyle(
+                                            fontSize: 40,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Bill To Section
                               Expanded(
-                                flex: 3,
-                                child: Text(
-                                  'Product',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Bill To:',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Client Name: $name',
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                    // Text(
+                                    //   'Company Name: $clientCompany',
+                                    //   style: const TextStyle(fontSize: 14),
+                                    // ),
+                                    Text(
+                                      'Billing Address: $clientAddress',
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                    Text(
+                                      'Phone: $clientPhone',
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                    Text(
+                                      'Email: $clientEmail',
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(width: 5),
-                              // Description
+
+                              // Invoice Details
                               Expanded(
-                                flex: 3,
-                                child: Text(
-                                  'Description',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 9,
-                                  ),
-                                ),
-                              ),
-                              // Quantity
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  'Quantity',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              // Price
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Price',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              SizedBox(width: 5),
-                              // Offer Price
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Offer Price',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              // Wastage
-                              if(golditem)
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  'Wastage',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                              // HSN
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'HSN',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                  textAlign: TextAlign.right,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      // mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        SizedBox(width: 1),
+                                        const Text(
+                                          'Invoice Number: ',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          _generateInvoiceNumber(invoice.id),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+
+                                    // Row(
+                                    //   // mainAxisAlignment: MainAxisAlignment.end,
+                                    //   children: [
+                                    //      SizedBox(width: 1,),
+                                    //     const Text(
+                                    //       'Invoice Date: ',
+                                    //       style: TextStyle(
+                                    //         fontSize: 12,
+                                    //         fontWeight: FontWeight.w500,
+                                    //       ),
+                                    //     ),
+                                    //     Text(
+                                    //       _formatDate(invoice.createdAt),
+                                    //       style: const TextStyle(
+                                    //         fontSize: 12,
+                                    //         fontWeight: FontWeight.bold,
+                                    //       ),
+                                    //     ),
+                                    //   ],
+                                    // ),
+                                    Row(
+                                      children: [
+                                        const SizedBox(width: 1),
+                                        const Text(
+                                          'Invoice Date: ',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+
+                                        // 👇 FIX: Wrap dynamic text in Flexible to prevent overflow
+                                        Flexible(
+                                          child: Text(
+                                            _formatDate(invoice.createdAt),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow
+                                                .ellipsis, // optional
+                                            softWrap: true,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ),
 
-// Product list section
-                        ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: invoice.products.length,
-                          itemBuilder: (context, index) {
-                            final product = invoice.products[index];
-                            final isEven = index % 2 == 0;
+                          const SizedBox(height: 30),
 
-                            return Container(
-                              color:
-                                  isEven ? Colors.grey.shade200 : Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 8),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  // No.
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      '${index + 1}',
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  ),
-                                  SizedBox(width: 5),
-                                  // Product Name
-                                  Expanded(
-                                    flex: 3,
-                                    child: Text(
-                                      product.productName,
-                                      style: const TextStyle(fontSize: 10),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  SizedBox(width: 5),
-                                  // Description
-                                  Expanded(
-                                    flex: 3,
-                                    child: Text(
-                                      '${product.description}',
-                                      style: const TextStyle(fontSize: 10),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  // Quantity with unit
-                                  Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                      '${product.quantity}${product.unit.isNotEmpty ? ' ${product.unit}' : ''}',
-                                      style: const TextStyle(fontSize: 10),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  // Price
-                                  Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                      '${product.price.toStringAsFixed(2)}',
-                                      style: const TextStyle(fontSize: 10),
-                                      textAlign: TextAlign.right,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  SizedBox(width: 5),
-                                  // Offer Price
-                                  Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                      '${product.offerPrice.toStringAsFixed(2) ?? "-"}',
-                                      style: const TextStyle(fontSize: 10),
-                                      textAlign: TextAlign.right,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  if(golditem)
-                                  // Wastage
-                                  Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                      '${product.wastage ?? 0}%',
-                                      style: const TextStyle(fontSize: 10),
-                                      textAlign: TextAlign.right,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  // HSN
-                                  Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                      '${product.hsn ?? 0}',
-                                      style: const TextStyle(fontSize: 10),
-                                      textAlign: TextAlign.right,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 20),
+                          // Service Details
+                          const Text(
+                            'Service Details:',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
 
-                        // Terms and Conditions and Summary
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Summary section first
-                            Row(
+                          // Table header with gold background
+                          // Header section
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFFC84D),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 8,
+                            ),
+                            child: Row(
                               children: [
+                                // No.
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text(
-                                            'Subtotal',
-                                            style: TextStyle(fontSize: 14),
-                                          ),
-                                          Text(
-                                            '${totalAmount.toStringAsFixed(2)}',
-                                            style:
-                                                const TextStyle(fontSize: 14),
-                                          ),
-                                        ],
+                                  flex: 1,
+                                  child: Text(
+                                    'No',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 5),
+                                // Product
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    'Product',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 5),
+                                // Description
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    'Description',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 9,
+                                    ),
+                                  ),
+                                ),
+                                // Quantity
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    'Quantity',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                // Price
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'Price',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                                SizedBox(width: 5),
+                                // Offer Price
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'Offer Price',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                                // Wastage
+                                if (golditem)
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      'Wastage',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10,
                                       ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text(
-                                            'GST',
-                                            style: TextStyle(fontSize: 14),
-                                          ),
-                                          Text(
-                                            'Tax (${gst != 'Not Available' ? gst : '0%'})',
-                                            style:
-                                                const TextStyle(fontSize: 14),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      const Divider(),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text(
-                                            'Grand Total:',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          Text(
-                                            '${totalWithTax.toStringAsFixed(2)}',
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                      textAlign: TextAlign.right,
+                                    ),
+                                  ),
+                                // HSN
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'HSN',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                    textAlign: TextAlign.right,
                                   ),
                                 ),
                               ],
                             ),
+                          ),
 
-                            // Add some space between sections
-                            const SizedBox(height: 24),
+                          // Product list section
+                          ListView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            itemCount: invoice.products.length,
+                            itemBuilder: (context, index) {
+                              final product = invoice.products[index];
+                              final isEven = index % 2 == 0;
 
-                            // Terms and Conditions below
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                              return Container(
+                                color: isEven
+                                    ? Colors.grey.shade200
+                                    : Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 8,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    // No.
+                                    Expanded(
+                                      flex: 1,
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    // Product Name
+                                    Expanded(
+                                      flex: 3,
+                                      child: Text(
+                                        product.productName,
+                                        style: const TextStyle(fontSize: 10),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    // Description
+                                    Expanded(
+                                      flex: 3,
+                                      child: Text(
+                                        '${product.description}',
+                                        style: const TextStyle(fontSize: 10),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    // Quantity with unit
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        '${product.quantity}${product.unit.isNotEmpty ? ' ${product.unit}' : ''}',
+                                        style: const TextStyle(fontSize: 10),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                    // Price
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        '${product.price.toStringAsFixed(2)}',
+                                        style: const TextStyle(fontSize: 10),
+                                        textAlign: TextAlign.right,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    // Offer Price
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        '${product.offerPrice.toStringAsFixed(2) ?? "-"}',
+                                        style: const TextStyle(fontSize: 10),
+                                        textAlign: TextAlign.right,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                    if (golditem)
+                                      // Wastage
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          '${product.wastage ?? 0}%',
+                                          style: const TextStyle(fontSize: 10),
+                                          textAlign: TextAlign.right,
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                    // HSN
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        '${product.hsn ?? 0}',
+                                        style: const TextStyle(fontSize: 10),
+                                        textAlign: TextAlign.right,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 20),
 
-                  // Payment Information - Navy background
-                  Container(
-                    // color: const Color(0xFF0E2945),
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            // Payment Details
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          // Terms and Conditions and Summary
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Summary section first
+                              Row(
                                 children: [
-                                  Row(
-                                    children: [
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                     
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                     
-                                    ],
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            const Text(
+                                              'Subtotal',
+                                              style: TextStyle(fontSize: 14),
+                                            ),
+                                            Text(
+                                              '${totalAmount.toStringAsFixed(2)}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            const Text(
+                                              'GST',
+                                              style: TextStyle(fontSize: 14),
+                                            ),
+                                            Text(
+                                              'Tax (${gst != 'Not Available' ? gst : '0%'})',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Divider(),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            const Text(
+                                              'Grand Total:',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              '${totalWithTax.toStringAsFixed(2)}',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
-                            ),
 
-                           
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                              // Add some space between sections
+                              const SizedBox(height: 24),
 
-                  // Questions Section
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 8),
-                      ],
+                              // Terms and Conditions below
+                              const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+
+                    // Payment Information - Navy background
+                    Container(
+                      // color: const Color(0xFF0E2945),
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              // Payment Details
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(children: [
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(children: [
+                                       
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(children: [
+                                       
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Questions Section
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [const SizedBox(height: 8)],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _sharePdf,
-                icon: const Icon(Icons.share, color: Colors.white),
-                label: const Text(
-                  'Share',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Color.fromARGB(255, 255, 255, 255)),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:  Colors.purple.shade300,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+        // bottomNavigationBar: Padding(
+        //   padding: const EdgeInsets.all(16.0),
+        //   child: Row(
+        //     children: [
+        //       Expanded(
+        //         child: ElevatedButton.icon(
+        //           onPressed: _sharePdf,
+        //           icon: const Icon(Icons.share, color: Colors.white),
+        //           label: const Text(
+        //             'Share',
+        //             style: TextStyle(
+        //                 fontWeight: FontWeight.bold, color: Color.fromARGB(255, 255, 255, 255)),
+        //           ),
+        //           style: ElevatedButton.styleFrom(
+        //             backgroundColor:  Colors.purple.shade300,
+        //             shape: RoundedRectangleBorder(
+        //               borderRadius: BorderRadius.circular(12),
+        //             ),
+        //             padding: const EdgeInsets.symmetric(vertical: 12),
+        //           ),
+        //         ),
+        //       ),
+        //       const SizedBox(width: 16),
+        //       Expanded(
+        //         child: ElevatedButton.icon(
+        //           onPressed: _downloadPdf,
+        //           icon: const Icon(Icons.download, color: Colors.white),
+        //           label: const Text(
+        //             'Download',
+        //             style: TextStyle(
+        //                 fontWeight: FontWeight.bold, color: Colors.white),
+        //           ),
+        //           style: ElevatedButton.styleFrom(
+        //             backgroundColor:  Colors.green,
+        //             shape: RoundedRectangleBorder(
+        //               borderRadius: BorderRadius.circular(12),
+        //             ),
+        //             padding: const EdgeInsets.symmetric(vertical: 12),
+        //           ),
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
+
+        // 1. Add this import at the top of your file:
+
+        // 2. Add this method to your _InvoiceDetailScreenState class:
+
+        // 3. Update your bottomNavigationBar to include the Print button:
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _printPdf,
+                  icon: const Icon(Icons.print, color: Colors.white),
+                  label: const Text(
+                    'Print',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _downloadPdf,
-                icon: const Icon(Icons.download, color: Colors.white),
-                label: const Text(
-                  'Download',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:  Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _sharePdf,
+                  icon: const Icon(Icons.share, color: Colors.white),
+                  label: const Text(
+                    'Share',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple.shade300,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _downloadPdf,
+                  icon: const Icon(Icons.download, color: Colors.white),
+                  label: const Text(
+                    'Download',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+
+        // 4. Add this to your pubspec.yaml dependencies:
+        // printing: ^5.11.0
       ),
     );
   }
@@ -859,10 +1009,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           ),
           build: (pw.Context context) => [
             // Top teal accent and navy header
-            pw.Container(
-              height: 15,
-              color: PdfColor.fromHex('4ACBBC'),
-            ),
+            pw.Container(height: 15, color: PdfColor.fromHex('4ACBBC')),
             pw.Container(
               color: PdfColor.fromHex('0E2945'),
               width: double.infinity,
@@ -976,10 +1123,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             // Service Details
             pw.Text(
               'Service Details:',
-              style: pw.TextStyle(
-                fontSize: 18,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 10),
 
@@ -988,10 +1132,11 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               decoration: pw.BoxDecoration(
                 // color: PdfColor.fromHex('FFC84DD'),
                 color: PdfColor.fromHex('#3344C4'),
-
               ),
-              padding:
-                  const pw.EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+              padding: const pw.EdgeInsets.symmetric(
+                vertical: 10,
+                horizontal: 8,
+              ),
               child: pw.Row(
                 children: [
                   pw.Expanded(
@@ -1090,8 +1235,10 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
               return pw.Container(
                 color: isEven ? PdfColor.fromHex('EEEEEE') : PdfColors.white,
-                padding:
-                    const pw.EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                padding: const pw.EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 8,
+                ),
                 child: pw.Row(
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
@@ -1296,20 +1443,17 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                         child: pw.Column(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            pw.Row(
-                              children: [
+                            pw.Row(children: [
                           
                               ],
                             ),
                             pw.SizedBox(height: 4),
-                            pw.Row(
-                              children: [
+                            pw.Row(children: [
                                
                               ],
                             ),
                             pw.SizedBox(height: 4),
-                            pw.Row(
-                              children: [
+                            pw.Row(children: [
                               
                               ],
                             ),
@@ -1332,7 +1476,6 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                               ),
                             ),
                             pw.SizedBox(height: 4),
-
                           ],
                         ),
                       ),
@@ -1347,11 +1490,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               padding: const pw.EdgeInsets.all(16.0),
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-         
-                  pw.SizedBox(height: 8),
-
-                ],
+                children: [pw.SizedBox(height: 8)],
               ),
             ),
           ],
@@ -1387,9 +1526,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             'Please find attached invoice ${_generateInvoiceNumber(invoice.id)}',
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error sharing PDF: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error sharing PDF: $e')));
     }
   }
 
@@ -1403,21 +1542,17 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
           'Invoice_${_generateInvoiceNumber(invoice.id)}.pdf';
       final file = File('${directory.path}/$invoiceFileName');
       await file.writeAsBytes(pdfBytes);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Invoice saved to ${file.path}'),
-          action: SnackBarAction(
-            label: 'View',
-            onPressed: () async {
-            },
-          ),
+          action: SnackBarAction(label: 'View', onPressed: () async {}),
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error downloading PDF: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error downloading PDF: $e')));
     }
   }
 }

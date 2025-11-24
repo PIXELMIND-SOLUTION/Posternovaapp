@@ -191,13 +191,32 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
   //     }
   //   }
 
-  void shareReferralCode() {
-    if (referralCode != null && referralCode!.isNotEmpty) {
-      final shareText =
-          '''
+//   void shareReferralCode() {
+//     if (referralCode != null && referralCode!.isNotEmpty) {
+//       final shareText =
+//           '''
+// 🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
+
+// Use my referral code: $referralCode
+
+// You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
+
+// Download EditEzy now:
+// https://play.google.com/store/apps/details?id=com.posternova.posternova
+
+// Don't miss out on this opportunity! 🚀
+// ''';
+//       Share.share(shareText, subject: 'Join EditEzy using my referral code');
+//     }
+//   }
+
+
+void shareReferralCode() {
+  if (referralCode != null && referralCode!.isNotEmpty) {
+    final shareText = '''
 🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
 
-Use my referral code: $referralCode
+Use my referral code: *$referralCode*
 
 You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
 
@@ -206,9 +225,9 @@ https://play.google.com/store/apps/details?id=com.posternova.posternova
 
 Don't miss out on this opportunity! 🚀
 ''';
-      Share.share(shareText, subject: 'Join EditEzy using my referral code');
-    }
+    Share.share(shareText, subject: 'Join EditEzy using my referral code');
   }
+}
 
   void showShareOptions() {
     if (referralCode == 'Loading...' ||

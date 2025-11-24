@@ -12,6 +12,7 @@ import 'package:posternova/views/category/search_category.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
+import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -228,7 +229,16 @@ class _CategoryScreenState extends State<CategoryScreen>
                       "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
                   primaryButtonText: "Upgrade Now",
                   secondaryButtonText: "Cancel",
-                  onPrimaryPressed: () => showSubscriptionModal(context),
+                  // onPrimaryPressed: () => showSubscriptionModal(context),
+                  onPrimaryPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SubscriptionPlansPage(),
+                      ),
+                    );
+                  },
+
                   onSecondaryPressed: () => Navigator.of(context).pop(),
                 );
               }
@@ -344,7 +354,16 @@ class _CategoryScreenState extends State<CategoryScreen>
                             "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
                         primaryButtonText: "Upgrade Now",
                         secondaryButtonText: "Cancel",
-                        onPrimaryPressed: () => showSubscriptionModal(context),
+                        // onPrimaryPressed: () => showSubscriptionModal(context),
+                        onPrimaryPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SubscriptionPlansPage(),
+                            ),
+                          );
+                        },
+
                         onSecondaryPressed: () => Navigator.of(context).pop(),
                       );
                     }
@@ -763,7 +782,15 @@ class _CategoryScreenState extends State<CategoryScreen>
                       "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
                   primaryButtonText: "Upgrade Now",
                   secondaryButtonText: "Cancel",
-                  onPrimaryPressed: () => showSubscriptionModal(context),
+                  // onPrimaryPressed: () => showSubscriptionModal(context),
+                  onPrimaryPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SubscriptionPlansPage(),
+                      ),
+                    );
+                  },
                   onSecondaryPressed: () => Navigator.of(context).pop(),
                 );
               }

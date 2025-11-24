@@ -153,21 +153,21 @@ appBar: AppBar(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.error_outline,
-                size: 48,
-                color: Color(0xFFEF4444),
-              ),
-            ),
+            // Container(
+            //   padding: const EdgeInsets.all(16),
+            //   decoration: BoxDecoration(
+            //     color: const Color(0xFFFEF2F2),
+            //     shape: BoxShape.circle,
+            //   ),
+            //   // child: const Icon(
+            //   //   Icons.error_outline,
+            //   //   size: 48,
+            //   //   color: Color(0xFFEF4444),
+            //   // ),
+            // ),
             const SizedBox(height: 24),
             const Text(
-              'Failed to load posters',
+              'No posters available',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -175,33 +175,33 @@ appBar: AppBar(
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              _error ?? 'Unknown error occurred',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF6B7280),
-              ),
-              textAlign: TextAlign.center,
-            ),
+            // Text(
+            //   _error ?? 'Unknown error occurred',
+            //   style: const TextStyle(
+            //     fontSize: 14,
+            //     color: Color(0xFF6B7280),
+            //   ),
+            //   textAlign: TextAlign.center,
+            // ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _fetchPosters,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Retry',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
+            // ElevatedButton(
+            //   onPressed: _fetchPosters,
+            //   style: ElevatedButton.styleFrom(
+            //     backgroundColor: const Color(0xFF6366F1),
+            //     foregroundColor: Colors.white,
+            //     padding: const EdgeInsets.symmetric(
+            //       horizontal: 32,
+            //       vertical: 12,
+            //     ),
+            //     shape: RoundedRectangleBorder(
+            //       borderRadius: BorderRadius.circular(8),
+            //     ),
+            //   ),
+            //   child: const Text(
+            //     'Retry',
+            //     style: TextStyle(fontWeight: FontWeight.w600),
+            //   ),
+            // ),
           ],
         ),
       ),

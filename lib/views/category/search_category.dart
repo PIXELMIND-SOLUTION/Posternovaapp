@@ -187,108 +187,184 @@ class _SearchScreenState extends State<SearchScreen>
     _searchFocusNode.unfocus();
   }
 
+  // Widget _buildSearchBar() {
+  //   return Container(
+  //     margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+  //     child: Row(
+  //       children: [
+  //         Expanded(
+  //           child: Container(
+  //             height: 52,
+  //             decoration: BoxDecoration(
+  //               color: Colors.white,
+  //               borderRadius: BorderRadius.circular(16),
+  //               border: Border.all(color: Colors.grey.shade200),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black.withOpacity(0.04),
+  //                   blurRadius: 8,
+  //                   offset: const Offset(0, 2),
+  //                 ),
+  //               ],
+  //             ),
+  //             child: TextField(
+  //               controller: searchController,
+  //               focusNode: _searchFocusNode,
+  //               onChanged: handleSearch,
+  //               style: const TextStyle(
+  //                 fontSize: 15,
+  //                 fontWeight: FontWeight.w500,
+  //               ),
+  //               decoration: InputDecoration(
+  //                 hintText: 'Search templates...',
+  //                 hintStyle: TextStyle(
+  //                   color: Colors.grey.shade400,
+  //                   fontSize: 15,
+  //                   fontWeight: FontWeight.w400,
+  //                 ),
+  //                 prefixIcon: Icon(
+  //                   Icons.search,
+  //                   color: Colors.grey.shade600,
+  //                   size: 22,
+  //                 ),
+  //                 suffixIcon: searchController.text.isNotEmpty
+  //                     ? IconButton(
+  //                         icon: Icon(
+  //                           Icons.clear,
+  //                           color: Colors.grey.shade600,
+  //                           size: 20,
+  //                         ),
+  //                         onPressed: _clearSearch,
+  //                       )
+  //                     : null,
+  //                 border: InputBorder.none,
+  //                 contentPadding: const EdgeInsets.symmetric(
+  //                   horizontal: 16,
+  //                   vertical: 16,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         const SizedBox(width: 8),
+  //         // Material(
+  //         //   color: _isListening ? const Color(0xFF6366F1) : Colors.white,
+  //         //   borderRadius: BorderRadius.circular(16),
+  //         //   child: InkWell(
+  //         //     onTap: _startListening,
+  //         //     borderRadius: BorderRadius.circular(16),
+  //         //     child: Container(
+  //         //       height: 52,
+  //         //       width: 52,
+  //         //       decoration: BoxDecoration(
+  //         //         border: Border.all(
+  //         //           color: _isListening ? Colors.transparent : Colors.grey.shade200,
+  //         //         ),
+  //         //         borderRadius: BorderRadius.circular(16),
+  //         //         boxShadow: _isListening
+  //         //             ? [
+  //         //                 BoxShadow(
+  //         //                   color: const Color(0xFF6366F1).withOpacity(0.3),
+  //         //                   blurRadius: 12,
+  //         //                   offset: const Offset(0, 4),
+  //         //                 ),
+  //         //               ]
+  //         //             : [
+  //         //                 BoxShadow(
+  //         //                   color: Colors.black.withOpacity(0.04),
+  //         //                   blurRadius: 8,
+  //         //                   offset: const Offset(0, 2),
+  //         //                 ),
+  //         //               ],
+  //         //       ),
+  //         //       child: Icon(
+  //         //         _isListening ? Icons.mic : Icons.mic_none,
+  //         //         color: _isListening ? Colors.white : Colors.grey.shade700,
+  //         //         size: 22,
+  //         //       ),
+  //         //     ),
+  //         //   ),
+  //         // ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
+
   Widget _buildSearchBar() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 52,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: searchController,
-                focusNode: _searchFocusNode,
-                onChanged: handleSearch,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
+  final theme = Theme.of(context);
+  final isDarkMode = theme.brightness == Brightness.dark;
+  final textColor = isDarkMode ? Colors.white : Colors.black87;
+  final hintColor = isDarkMode ? Colors.grey[400] : Colors.grey.shade400;
+  final backgroundColor = isDarkMode ? Colors.grey[850] : Colors.white;
+  final borderColor = isDarkMode ? Colors.grey[700] : Colors.grey.shade200;
+  final iconColor = isDarkMode ? Colors.grey[400] : Colors.grey.shade600;
+
+  return Container(
+    margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+    child: Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 52,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: borderColor!),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-                decoration: InputDecoration(
-                  hintText: 'Search templates...',
-                  hintStyle: TextStyle(
-                    color: Colors.grey.shade400,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.grey.shade600,
-                    size: 22,
-                  ),
-                  suffixIcon: searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            color: Colors.grey.shade600,
-                            size: 20,
-                          ),
-                          onPressed: _clearSearch,
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
+              ],
+            ),
+            child: TextField(
+              controller: searchController,
+              focusNode: _searchFocusNode,
+              onChanged: handleSearch,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search templates...',
+                hintStyle: TextStyle(
+                  color: hintColor,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: iconColor,
+                  size: 22,
+                ),
+                suffixIcon: searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.clear,
+                          color: iconColor,
+                          size: 20,
+                        ),
+                        onPressed: _clearSearch,
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          // Material(
-          //   color: _isListening ? const Color(0xFF6366F1) : Colors.white,
-          //   borderRadius: BorderRadius.circular(16),
-          //   child: InkWell(
-          //     onTap: _startListening,
-          //     borderRadius: BorderRadius.circular(16),
-          //     child: Container(
-          //       height: 52,
-          //       width: 52,
-          //       decoration: BoxDecoration(
-          //         border: Border.all(
-          //           color: _isListening ? Colors.transparent : Colors.grey.shade200,
-          //         ),
-          //         borderRadius: BorderRadius.circular(16),
-          //         boxShadow: _isListening
-          //             ? [
-          //                 BoxShadow(
-          //                   color: const Color(0xFF6366F1).withOpacity(0.3),
-          //                   blurRadius: 12,
-          //                   offset: const Offset(0, 4),
-          //                 ),
-          //               ]
-          //             : [
-          //                 BoxShadow(
-          //                   color: Colors.black.withOpacity(0.04),
-          //                   blurRadius: 8,
-          //                   offset: const Offset(0, 2),
-          //                 ),
-          //               ],
-          //       ),
-          //       child: Icon(
-          //         _isListening ? Icons.mic : Icons.mic_none,
-          //         color: _isListening ? Colors.white : Colors.grey.shade700,
-          //         size: 22,
-          //       ),
-          //     ),
-          //   ),
-          // ),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(width: 8),
+      ],
+    ),
+  );
+}
 
   // Widget _buildFilterChips() {
   //   return Container(

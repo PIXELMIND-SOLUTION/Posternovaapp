@@ -1810,6 +1810,8 @@
 //   }
 // }
 
+
+
 import 'package:flutter/material.dart';
 import 'package:posternova/helper/sub_modal_helper.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
@@ -1822,14 +1824,16 @@ import 'package:posternova/views/about/about_screen.dart';
 import 'package:posternova/views/backgroundremover/background_remover.dart';
 import 'package:posternova/views/deleteaccount/delete_account_screen.dart';
 import 'package:posternova/views/invoices/create_invoice_screen.dart';
-import 'package:posternova/views/modes/dark_light_mode_screen.dart';
 import 'package:posternova/views/referearn/referearn_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
+import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -1973,12 +1977,48 @@ class ProfileScreen extends StatelessWidget {
                         builder: (context, myPlanProvider, child) {
                           return Column(
                             children: [
+                              // _buildMenuItem(
+                              //   icon: Icons.policy,
+                              //   title: 'Privacy & Policy',
+                              //   onTap: () {
+
+                              //   },
+                              //   isPremiumRequired: false,
+                              //   isPurchased: myPlanProvider.isPurchase ?? false,
+                              // ),
                               _buildMenuItem(
                                 icon: Icons.policy,
                                 title: 'Privacy & Policy',
-                                onTap: () {},
-                                isPremiumRequired: false,
-                                isPurchased: myPlanProvider.isPurchase ?? false,
+                                onTap: () async {
+                                  final Uri url = Uri.parse(
+                                    'https://editezy.onrender.com/privacy-and-policy',
+                                  );
+                                  try {
+                                    if (await canLaunchUrl(url)) {
+                                      await launchUrl(
+                                        url,
+                                        mode: LaunchMode
+                                            .externalApplication, 
+                                      );
+                                    } else {
+                                      if (context.mounted) {
+                                        _showSnackBar(
+                                          context,
+                                          'Could not open Privacy & Policy page',
+                                          isError: true,
+                                        );
+                                      }
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      _showSnackBar(
+                                        context,
+                                        'Error opening link: $e',
+                                        isError: true,
+                                      );
+                                    }
+                                  }
+                                },
                               ),
 
                               _buildMenuItem(
@@ -2146,7 +2186,8 @@ class ProfileScreen extends StatelessWidget {
       primaryButtonText: "Upgrade Now",
       secondaryButtonText: "Cancel",
       onPrimaryPressed: () {
-        showSubscriptionModal(context);
+        Navigator.push(context, MaterialPageRoute(builder: (context)=>SubscriptionPlansPage()));
+        // showSubscriptionModal(context);
       },
       onSecondaryPressed: () => Navigator.of(context).pop(),
     );

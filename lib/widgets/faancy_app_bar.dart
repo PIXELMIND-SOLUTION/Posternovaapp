@@ -797,7 +797,7 @@ class _FancyAppBarState extends State<FancyAppBar>
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.notifications_active),
+                    // child: const Icon(Icons.notifications_active),
                   ),
                 ),
               ),
