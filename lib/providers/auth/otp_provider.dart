@@ -45,16 +45,12 @@ class SmsProvider extends ChangeNotifier {
   }
 
   // Verify OTP method
-  Future<void> verifyOtp(String otp) async {
+  Future<void> verifyOtp(String otp, String mobile) async {
     _setLoading(true);
     _clearError();
 
     try {
-      if (_mobileNumber == null) {
-        _errorMessage = 'Mobile number not found. Please login again.';
-        return;
-      }
-      final response = await _smsService.verifyOtp(VerifyOtpRequest(otp: otp, mobile: _mobileNumber!));
+      final response = await _smsService.verifyOtp(VerifyOtpRequest(otp: otp, mobile: mobile));
       _otpResponse = response;
 
       if (response.statusCode == 200) {
@@ -70,19 +66,20 @@ class SmsProvider extends ChangeNotifier {
   }
 
   // Resend OTP method
-  Future<void> resendOtp(String mobile) async {
+  Future<dynamic> resendOtp(String mobile) async {
     _setResending(true);
     _clearError();
 
     try {
       final response = await _smsService.resendOtp(ResendOtpRequest(mobile: mobile));
-      _resendOtpResponse = response;
-
-      if (response.statusCode == 200) {
-        // Success - OTP resent
-      } else {
-        // _errorMessage = 'Resend OTP failed: ${response.body}';
-      }
+      // _resendOtpResponse = response.;
+return response?.otp;
+      // if (response.statusCode == 200) {
+      //   return response['otp'];
+      //   // Success - OTP resent
+      // } else {
+      //   // _errorMessage = 'Resend OTP failed: ${response.body}';
+      // }
     } catch (e) {
       _errorMessage = "Otp send successfully";
     } finally {

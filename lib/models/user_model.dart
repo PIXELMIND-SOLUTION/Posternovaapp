@@ -1,13 +1,14 @@
-
 class LoginResponse {
   final String message;
   final String token;
   final User user;
+  final String otp;
 
   LoginResponse({
     required this.message,
     required this.token,
     required this.user,
+    required this.otp,
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
@@ -15,6 +16,7 @@ class LoginResponse {
       message: json['message'] ?? 'No message', // Handle null message
       token: json['token'] ?? '', // Handle null token
       user: User.fromJson(json['user'] ?? {}), // Handle null user object
+      otp: json['otp'] ?? ''
     );
   }
 
@@ -31,11 +33,13 @@ class LoginResponse {
     String? message,
     String? token,
     User? user,
+    String? otp,
   }) {
     return LoginResponse(
       message: message ?? this.message,
       token: token ?? this.token,
       user: user ?? this.user,
+      otp: otp ?? this.otp
     );
   }
 }

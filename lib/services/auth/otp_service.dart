@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:posternova/constants/api_constant.dart';
 import 'package:posternova/helper/network_helper.dart';
 import 'package:posternova/models/otp_model.dart';
+import 'package:posternova/models/user_model.dart';
 
 class SmsService {
   /// Login request with mobile number
@@ -32,7 +33,7 @@ class SmsService {
     final url = Uri.parse(ApiConstants.verifyOtp);
 
     try {
-
+print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk");
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -54,7 +55,7 @@ class SmsService {
   }
 
   /// Resend OTP request
-  Future<http.Response> resendOtp(ResendOtpRequest request) async {
+  Future<LoginResponse?> resendOtp(ResendOtpRequest request) async {
     final url = Uri.parse(ApiConstants.resendOtp);
       
     // try {
@@ -63,7 +64,9 @@ class SmsService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(request.toJson()),
       );
-      return response;
+              final data = jsonDecode(response.body);
+
+      return LoginResponse.fromJson(data);
     // } on SocketException {
     //   throw 'Please turn on your internet connection';
     // } catch (e) {

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/models/user_model.dart';
@@ -9,10 +8,12 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading=false;
   String?_error;
   LoginResponse? _user;
+  String? _otp;
   
   LoginResponse? get user => _user;
   bool get isLoading=>_isLoading;
   String? get error=>_error;
+  String? get otp => _otp;
   // Initialize method to load saved user on app start
   Future<void> initialize() async {
     _user = await AuthPreferences.getUserData();
@@ -63,6 +64,7 @@ class AuthProvider extends ChangeNotifier {
       final userData = await _authservice.login(mobile);
       if (userData != null) {
         _user = userData;
+        _otp = userData.otp;
         // Save to SharedPreferences
         await AuthPreferences.saveUserData(userData);
         notifyListeners();
