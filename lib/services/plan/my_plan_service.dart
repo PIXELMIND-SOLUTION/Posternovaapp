@@ -18,9 +18,6 @@ class MyPlanServices {
           // Add any additional headers your API requires
           // 'Authorization': 'Bearer your_token_here',
         },
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw Exception('Request timeout'),
       );
 
       print('📊 Response Status Code: ${response.statusCode}');

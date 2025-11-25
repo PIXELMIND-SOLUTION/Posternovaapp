@@ -20,14 +20,29 @@ class GetAllPlanProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+            print('sfjsjfjsjjsdfjskhffdfdfdkfjdlfjlsdfjdslfjdslfjsdfjdsfj');
+
       _plans = await _planService.fetchAllPlans();
+                  print('sfjsjfjsjjsdfjskhffdfdfdkfjdlfjlsdfjdslfjdslfjsdfjdsfj${_plans.length}');
+                      print('📋 ALL PLAN DATA:');
+    for (int i = 0; i < _plans.length; i++) {
+      print('Plan $i:');
+      print('  - ID: ${_plans[i].id}');
+      print('  - Name: ${_plans[i].name}');
+      print('  - Price: ${_plans[i].originalPrice}');
+      print('  - Offer Price: ${_plans[i].offerPrice}');
+      print('  - Duration: ${_plans[i].duration}');
+      print('  - Features: ${_plans[i].features}');
+      print('  ---');
+    }
+                        _isLoading = false;
+      notifyListeners();
+
     } catch (e) {
       print('sfjsjfjsjjsdfjs$e');
       print('planssssssssss$_plans');
       _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+            notifyListeners();
+    } 
   }
 }
