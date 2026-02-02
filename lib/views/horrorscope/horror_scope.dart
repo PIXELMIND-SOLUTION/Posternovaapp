@@ -212,7 +212,7 @@
 
 //     try {
 //       final response = await http.get(
-//         Uri.parse('http://194.164.148.244:4061/api/users/horoscope?sign=$sign'),
+//         Uri.parse('http://31.97.206.144:4061/api/users/horoscope?sign=$sign'),
 //       );
 
 //       if (response.statusCode == 200) {
@@ -971,7 +971,7 @@ class _HoroscopeScreenState extends State<HoroscopeScreen>
 
     try {
       final response = await http.get(
-        Uri.parse('http://194.164.148.244:4061/api/users/horoscope?sign=$sign'),
+        Uri.parse('http://31.97.206.144:4061/api/users/horoscope?sign=$sign'),
       );
 
       if (response.statusCode == 200) {

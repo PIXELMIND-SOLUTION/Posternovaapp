@@ -7,10 +7,7 @@ import 'package:http/http.dart' as http;
 class CanvasPosterListingScreen extends StatefulWidget {
   final String categoryName;
 
-  const CanvasPosterListingScreen({
-    super.key,
-    required this.categoryName,
-  });
+  const CanvasPosterListingScreen({super.key, required this.categoryName});
 
   @override
   State<CanvasPosterListingScreen> createState() =>
@@ -37,7 +34,7 @@ class _CanvasPosterListingScreenState extends State<CanvasPosterListingScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://194.164.148.244:4061/api/poster/canvasposters'),
+        Uri.parse('http://31.97.206.144:4061/api/poster/canvasposters'),
       );
 
       if (response.statusCode == 200) {
@@ -46,8 +43,7 @@ class _CanvasPosterListingScreenState extends State<CanvasPosterListingScreen> {
 
         // Filter by category name
         filteredPosters = allPosters
-            .where((poster) =>
-                poster['categoryName'] == widget.categoryName)
+            .where((poster) => poster['categoryName'] == widget.categoryName)
             .toList();
 
         setState(() {
@@ -71,64 +67,62 @@ class _CanvasPosterListingScreenState extends State<CanvasPosterListingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-appBar: AppBar(
-  backgroundColor: Colors.deepPurple.withOpacity(0.5),
-  elevation: 3,
-  shadowColor: Colors.black.withOpacity(0.1),
-  shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(
-      bottom: Radius.circular(16),
-    ),
-  ),
-  leading: IconButton(
-    icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-    onPressed: () => Navigator.pop(context),
-  ),
-  title: Text(
-    widget.categoryName,
-    style: const TextStyle(
-      color: Color(0xFF111827),
-      fontSize: 20,
-      fontWeight: FontWeight.w600,
-    ),
-  ),
-  centerTitle: true,
-),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurple.withOpacity(0.5),
+        elevation: 3,
+        shadowColor: Colors.black.withOpacity(0.1),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          widget.categoryName,
+          style: const TextStyle(
+            color: Color(0xFF111827),
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
 
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF6366F1)),
             )
           : _error != null
-              ? _buildErrorWidget()
-              : filteredPosters.isEmpty
-                  ? _buildEmptyWidget()
-                  : RefreshIndicator(
-                      onRefresh: _fetchPosters,
-                      color: const Color(0xFF6366F1),
-                      child: Column(
-                        children: [
-                                      SizedBox(height: 30,),
+          ? _buildErrorWidget()
+          : filteredPosters.isEmpty
+          ? _buildEmptyWidget()
+          : RefreshIndicator(
+              onRefresh: _fetchPosters,
+              color: const Color(0xFF6366F1),
+              child: Column(
+                children: [
+                  SizedBox(height: 30),
 
-                          Expanded(
-                            child: GridView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 0.7,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                              ),
-                              itemCount: filteredPosters.length,
-                              itemBuilder: (context, index) {
-                                return _buildPosterCard(filteredPosters[index]);
-                              },
-                            ),
+                  Expanded(
+                    child: GridView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.7,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
                           ),
-                        ],
-                      ),
+                      itemCount: filteredPosters.length,
+                      itemBuilder: (context, index) {
+                        return _buildPosterCard(filteredPosters[index]);
+                      },
                     ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
@@ -225,10 +219,7 @@ appBar: AppBar(
             const SizedBox(height: 8),
             Text(
               'No templates available for ${widget.categoryName}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF6B7280),
-              ),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -245,8 +236,7 @@ appBar: AppBar(
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  SamplePosterScreen(posterId: poster['_id']),
+              builder: (context) => SamplePosterScreen(posterId: poster['_id']),
             ),
           );
         },

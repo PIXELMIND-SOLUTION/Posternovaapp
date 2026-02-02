@@ -439,16 +439,17 @@
 
 
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
 
 class BackgroundRemoverScreen extends StatefulWidget {
@@ -515,57 +516,109 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
     }
   }
 
+  // Future<Uint8List?> _removeBackgroundUsingAPI(String imagePath) async {
+  //   try {
+  //     var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
+
+  //     request.headers.addAll({
+  //       "X-API-Key": apiKey,
+  //     });
+
+  //     request.files.add(await http.MultipartFile.fromPath("image_file", imagePath));
+
+  //     request.fields['size'] = 'auto';
+  //     request.fields['format'] = 'png';
+  //     request.fields['type'] = 'auto';
+
+  //     final response = await request.send();
+
+  //     if (response.statusCode == 200) {
+  //       final bytes = await response.stream.toBytes();
+  //       return Uint8List.fromList(bytes);
+  //     } else {
+  //       final errorBody = await response.stream.bytesToString();
+  //       String errorMessage = 'Failed to remove background';
+  //       try {
+  //         final errorJson = json.decode(errorBody);
+  //         if (errorJson['errors'] != null && errorJson['errors'].isNotEmpty) {
+  //           errorMessage = errorJson['errors'][0]['title'] ?? errorMessage;
+  //         }
+  //       } catch (_) {
+  //         switch (response.statusCode) {
+  //           case 400:
+  //             errorMessage = 'Invalid image format or size';
+  //             break;
+  //           case 402:
+  //             errorMessage = 'Insufficient API credits';
+  //             break;
+  //           case 403:
+  //             errorMessage = 'Invalid API key';
+  //             break;
+  //           case 429:
+  //             errorMessage = 'Rate limit exceeded. Please try again later';
+  //             break;
+  //           default:
+  //             errorMessage = 'Server error (${response.statusCode})';
+  //         }
+  //       }
+  //       throw Exception(errorMessage);
+  //     }
+  //   } catch (e) {
+  //     throw Exception('Network error: ${e.toString()}');
+  //   }
+  // }
+
+
+
   Future<Uint8List?> _removeBackgroundUsingAPI(String imagePath) async {
-    try {
-      var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
+  try {
+    var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
 
-      request.headers.addAll({
-        "X-API-Key": apiKey,
-      });
+    request.headers.addAll({
+      "X-Api-Key": apiKey, // Changed from "X-API-Key" to "X-Api-Key"
+    });
 
-      request.files.add(await http.MultipartFile.fromPath("image_file", imagePath));
+    request.files.add(await http.MultipartFile.fromPath(
+      "image_file", 
+      imagePath,
+      // Add content type explicitly
+      contentType: MediaType('image', 'jpeg'),
+    ));
 
-      request.fields['size'] = 'auto';
-      request.fields['format'] = 'png';
-      request.fields['type'] = 'auto';
+    request.fields['size'] = 'auto';
+    request.fields['format'] = 'png';
 
-      final response = await request.send();
+    final response = await request.send().timeout(
+      const Duration(seconds: 30), // Add timeout
+      onTimeout: () {
+        throw Exception('Request timeout - check your internet connection');
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final bytes = await response.stream.toBytes();
-        return Uint8List.fromList(bytes);
-      } else {
-        final errorBody = await response.stream.bytesToString();
-        String errorMessage = 'Failed to remove background';
-        try {
-          final errorJson = json.decode(errorBody);
-          if (errorJson['errors'] != null && errorJson['errors'].isNotEmpty) {
-            errorMessage = errorJson['errors'][0]['title'] ?? errorMessage;
-          }
-        } catch (_) {
-          switch (response.statusCode) {
-            case 400:
-              errorMessage = 'Invalid image format or size';
-              break;
-            case 402:
-              errorMessage = 'Insufficient API credits';
-              break;
-            case 403:
-              errorMessage = 'Invalid API key';
-              break;
-            case 429:
-              errorMessage = 'Rate limit exceeded. Please try again later';
-              break;
-            default:
-              errorMessage = 'Server error (${response.statusCode})';
-          }
+    if (response.statusCode == 200) {
+      final bytes = await response.stream.toBytes();
+      return Uint8List.fromList(bytes);
+    } else {
+      final errorBody = await response.stream.bytesToString();
+      String errorMessage = 'Failed to remove background';
+      try {
+        final errorJson = json.decode(errorBody);
+        if (errorJson['errors'] != null && errorJson['errors'].isNotEmpty) {
+          errorMessage = errorJson['errors'][0]['title'] ?? errorMessage;
         }
-        throw Exception(errorMessage);
+      } catch (_) {
+        errorMessage = 'Error ${response.statusCode}: $errorBody';
       }
-    } catch (e) {
-      throw Exception('Network error: ${e.toString()}');
+      throw Exception(errorMessage);
     }
+  } on SocketException {
+    throw Exception('No internet connection');
+  } on TimeoutException {
+    throw Exception('Request timeout - check your internet connection');
+  } catch (e) {
+    throw Exception('Network error: ${e.toString()}');
   }
+}
 
   Future<void> _removeBackground() async {
     if (_selectedImage == null) return;

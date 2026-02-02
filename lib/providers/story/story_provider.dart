@@ -139,7 +139,7 @@ class StoryProvider extends ChangeNotifier {
 
     try {
       final response = await http.get(
-        Uri.parse('http://194.164.148.244:4061/api/users/getUserStories/$_currentUserId'),
+        Uri.parse('http://31.97.206.144:4061/api/users/getUserStories/$_currentUserId'),
       );
 
 
@@ -190,7 +190,7 @@ class StoryProvider extends ChangeNotifier {
     try {
       // Fetch all stories
       final response = await http.get(
-        Uri.parse('http://194.164.148.244:4061/api/users/getAllStories'),
+        Uri.parse('http://31.97.206.144:4061/api/users/getAllStories'),
       );
 
       print("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr${response.body}");
@@ -248,7 +248,7 @@ class StoryProvider extends ChangeNotifier {
       print('current user iddddddddddddddddddddddddd $_currentUserId');
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://194.164.148.244:4061/api/users/post/$_currentUserId'),
+        Uri.parse('http://31.97.206.144:4061/api/users/post/$_currentUserId'),
       );
       
       request.fields['caption'] = caption;
@@ -310,7 +310,7 @@ class StoryProvider extends ChangeNotifier {
       print('storyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyid$storyId');
       print('dddddddddaaaaaaaaaaaaaaaaaaaa$mediaUrl');
       final response = await http.delete(
-        Uri.parse('http://194.164.148.244:4061/api/users/deletestory/$userId/$storyId'),
+        Uri.parse('http://31.97.206.144:4061/api/users/deletestory/$userId/$storyId'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'mediaUrl': mediaUrl

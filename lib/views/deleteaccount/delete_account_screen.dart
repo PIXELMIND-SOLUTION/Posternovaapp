@@ -41,7 +41,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       }
 
       final userId = userData!.user!.id;
-      final url = Uri.parse('http://194.164.148.244:4061/api/users/delete-user/$userId');
+      final url = Uri.parse('http://31.97.206.144:4061/api/users/delete-user/$userId');
 
       final response = await http
           .delete(url, headers: {

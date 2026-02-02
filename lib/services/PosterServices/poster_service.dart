@@ -10,20 +10,24 @@ class NewCanvasPosterService {
     try {
       final response = await http.get(Uri.parse(ApiConstants.canvaPosters));
 
-      print('Raw Response Status Code: ${response.statusCode}');
-      print('Raw Response Body: ${response.body}');
-        
+      print('Response status code for weeekly posterss: ${response.statusCode}');
+      print('Response bodyyyyyyyyyyyyyyy for weekly posters: ${response.body}');
+
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
 
         // Fixed: Use 'posters' instead of 'poster' to match your JSON response
-        final List<dynamic> postersJson = decoded['posters'] ?? [];
+        // final List<dynamic> postersJson = decoded['posters'] ?? [];
+
+        final List<dynamic> postersJson = decoded['Sunday'] ?? [];
 
         return postersJson
             .map((json) => CanvasPosterModel.fromJson(json))
             .toList();
       } else {
-        throw Exception('Failed to load canvas posters: ${response.statusCode}');
+        throw Exception(
+          'Failed to load canvas posters: ${response.statusCode}',
+        );
       }
     } on SocketException catch (e) {
       print('No internet connection: $e');

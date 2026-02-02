@@ -6,6 +6,7 @@ class SignupModel {
    String? dob;
    String? marriageAnniversary;
   final String? referralCode;
+  final String?fcmtoken;
 
   SignupModel({
     required this.id,
@@ -15,6 +16,7 @@ class SignupModel {
      this.dob,
      this.marriageAnniversary,
     this.referralCode,
+    this.fcmtoken,
   });
 
   factory SignupModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class SignupModel {
       dob: json['dob'] ?? '',
       marriageAnniversary: json['marriageAnniversary'] ?? '',
       referralCode: json['referralCode'],
+      fcmtoken: json['fcmToken'],
     );
   }
 
@@ -38,6 +41,7 @@ class SignupModel {
       'dob': dob,
       'marriageAnniversary': marriageAnniversary,
       'referralCode': referralCode,
+      'fcmToken':fcmtoken,
     };
   }
 }

@@ -1352,6 +1352,7 @@ import 'package:posternova/widgets/common_modal.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CustomerScreen extends StatefulWidget {
   const CustomerScreen({super.key});
@@ -1365,9 +1366,21 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
   bool _isLoading = true;
   bool _isSearching = false;
   String _searchQuery = '';
+  String? _selectedReligionFilter;
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+
+  final List<String> _religionOptions = [
+    'All',
+    'Hindu',
+    'Muslim',
+    'Christian',
+    'Sikh',
+    'Buddhist',
+    'Jain',
+    'Other'
+  ];
 
   @override
   void initState() {
@@ -1444,6 +1457,34 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
     );
   }
 
+  Future<void> _openWhatsApp(String phoneNumber, String customerName) async {
+    // Remove any spaces or special characters from phone number
+    String cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    
+    // Ensure the number has country code (assuming Indian numbers if no country code)
+    if (!cleanNumber.startsWith('+')) {
+      if (cleanNumber.length == 10) {
+        cleanNumber = '+91$cleanNumber'; // Add India country code
+      }
+    }
+
+    final whatsappUrl = Uri.parse('https://wa.me/$cleanNumber');
+    
+    try {
+      if (await canLaunchUrl(whatsappUrl)) {
+        await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          _showSnackBar('Could not open WhatsApp', isError: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Error opening WhatsApp: $e', isError: true);
+      }
+    }
+  }
+
   void _showDeleteDialog(Map<String, dynamic> customer) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDarkMode ? Colors.grey[850] : Colors.white;
@@ -1498,14 +1539,96 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
   }
 
   List<Map<String, dynamic>> _getFilteredCustomers(List<Map<String, dynamic>> customers) {
-    if (_searchQuery.isEmpty) return customers;
-    return customers.where((customer) {
-      final name = customer['name']?.toString().toLowerCase() ?? '';
-      final email = customer['email']?.toString().toLowerCase() ?? '';
-      final mobile = customer['mobile']?.toString().toLowerCase() ?? '';
-      final query = _searchQuery.toLowerCase();
-      return name.contains(query) || email.contains(query) || mobile.contains(query);
-    }).toList();
+    var filtered = customers;
+
+    // Filter by religion
+    if (_selectedReligionFilter != null && _selectedReligionFilter != 'All') {
+      filtered = filtered.where((customer) {
+        final religion = customer['religion']?.toString() ?? '';
+        return religion.toLowerCase() == _selectedReligionFilter!.toLowerCase();
+      }).toList();
+    }
+
+    // Filter by search query
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((customer) {
+        final name = customer['name']?.toString().toLowerCase() ?? '';
+        final email = customer['email']?.toString().toLowerCase() ?? '';
+        final mobile = customer['mobile']?.toString().toLowerCase() ?? '';
+        final query = _searchQuery.toLowerCase();
+        return name.contains(query) || email.contains(query) || mobile.contains(query);
+      }).toList();
+    }
+
+    return filtered;
+  }
+
+  void _showReligionFilterDialog() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? Colors.grey[850] : Colors.white;
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: backgroundColor,
+        title: Row(
+          children: [
+            Icon(Icons.filter_list, color: textColor),
+            const SizedBox(width: 12),
+            Text(
+              'Filter by Religion',
+              style: TextStyle(color: textColor),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _religionOptions.map((religion) {
+              final isSelected = _selectedReligionFilter == religion || 
+                                 (religion == 'All' && _selectedReligionFilter == null);
+              return RadioListTile<String>(
+                title: Text(
+                  religion,
+                  style: TextStyle(color: textColor),
+                ),
+                value: religion,
+                groupValue: _selectedReligionFilter ?? 'All',
+                onChanged: (value) {
+                  setState(() {
+                    _selectedReligionFilter = value == 'All' ? null : value;
+                  });
+                  Navigator.pop(context);
+                },
+                activeColor: Theme.of(context).primaryColor,
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _selectedReligionFilter = null;
+              });
+              Navigator.pop(context);
+            },
+            child: Text(
+              'Clear Filter',
+              style: TextStyle(color: textColor),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Close',
+              style: TextStyle(color: Theme.of(context).primaryColor),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void showSubscriptionModal(BuildContext context) async {
@@ -1796,13 +1919,11 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
     final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
 
     if (myPlanProvider.isPurchase == true) {
-      // User has premium, allow access
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AddCustomer()),
       ).then((_) => _refreshData());
     } else {
-      // User doesn't have premium, show upgrade modal
       CommonModal.showWarning(
         context: context,
         title: "Premium Feature",
@@ -1811,13 +1932,12 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
         secondaryButtonText: "Cancel",
         onPrimaryPressed: () {
           Navigator.of(context).pop();
-          // showSubscriptionModal(context);
-              Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SubscriptionPlansPage(),
-        ),
-      );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SubscriptionPlansPage(),
+            ),
+          );
         },
         onSecondaryPressed: () => Navigator.of(context).pop(),
       );
@@ -1865,6 +1985,29 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
+          // Filter button
+          IconButton(
+            icon: Stack(
+              children: [
+                Icon(Icons.filter_list, color: textColor),
+                if (_selectedReligionFilter != null)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            onPressed: _showReligionFilterDialog,
+          ),
+          // Search button
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search, color: textColor),
             onPressed: () {
@@ -1911,6 +2054,28 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
 
           return Column(
             children: [
+              // Filter chip
+              if (_selectedReligionFilter != null)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Chip(
+                    avatar: Icon(
+                      Icons.filter_list,
+                      size: 18,
+                      color: primaryColor,
+                    ),
+                    label: Text('Religion: $_selectedReligionFilter'),
+                    deleteIcon: const Icon(Icons.close, size: 18),
+                    onDeleted: () {
+                      setState(() {
+                        _selectedReligionFilter = null;
+                      });
+                    },
+                    backgroundColor: primaryColor.withOpacity(0.1),
+                    labelStyle: TextStyle(color: primaryColor),
+                  ),
+                ),
+
               // Summary Card
               if (customerProvider.customers.isNotEmpty)
                 Container(
@@ -1947,7 +2112,9 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Total Customers',
+                              _selectedReligionFilter != null 
+                                  ? '$_selectedReligionFilter Customers'
+                                  : 'Total Customers',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: subtextColor,
@@ -1955,7 +2122,7 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${customerProvider.customers.length}',
+                              '${filteredCustomers.length}',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -2012,7 +2179,14 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {},
+        onTap: () {
+          // Open WhatsApp when card is clicked
+          if (customer['mobile'] != null && customer['mobile'].toString().isNotEmpty) {
+            _openWhatsApp(customer['mobile'].toString(), customer['name'] ?? 'Customer');
+          } else {
+            _showSnackBar('No mobile number available', isError: true);
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -2046,6 +2220,35 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
                       ),
                     ),
                     const SizedBox(height: 4),
+                    // Religion badge
+                    if (customer['religion'] != null && customer['religion'].toString().isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.temple_hindu_rounded,
+                              size: 12,
+                              color: primaryColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              customer['religion'],
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     if (customer['email'] != null && customer['email'].toString().isNotEmpty)
                       Row(
                         children: [

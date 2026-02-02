@@ -1589,15 +1589,19 @@ import 'dart:ui' as ui;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:math' as math;
 import 'package:photo_manager/photo_manager.dart';
+import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:provider/provider.dart';
 
 class MakeLogo extends StatefulWidget {
+  final String?editedImage;
   final String image;
-  const MakeLogo({super.key, required this.image});
+  final String?id;
+  const MakeLogo({super.key, required this.image,this.id,this.editedImage});
 
   @override
   State<MakeLogo> createState() => _EditLogoState();
@@ -1647,6 +1651,102 @@ class _EditLogoState extends State<MakeLogo> with SingleTickerProviderStateMixin
     _fabAnimationController.dispose();
     super.dispose();
   }
+Future<void> _saveLogoToServer() async {
+  setState(() {
+    _isSaving = true;
+  });
+
+  try {
+    // Capture the edited canvas as image
+    final Uint8List? logoImage = await _captureCanvasAsImage();
+
+    if (logoImage == null) {
+      throw Exception('Failed to capture the canvas');
+    }
+
+    // Get userId from AuthPreferences
+    final userData = await AuthPreferences.getUserData();
+    final userId = userData?.user.id;
+
+    if (userId == null) {
+      throw Exception('User not logged in');
+    }
+
+    // Check if widget.id is available
+    if (widget.id == null || widget.id!.isEmpty) {
+      throw Exception('Logo ID is missing');
+    }
+
+    // Create multipart request
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('http://31.97.206.144:4061/api/users/user-history'),
+    );
+
+    // Add fields
+    request.fields['userId'] = userId;
+    request.fields['logoId'] = widget.id!; // Use the passed id
+
+    // Add file
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'editedImage',
+        logoImage,
+        filename: 'logo_${DateTime.now().millisecondsSinceEpoch}.png',
+      ),
+    );
+
+    // Send request
+    final response = await request.send();
+    
+    // Read response body
+    final responseBody = await response.stream.bytesToString();
+    
+    print('Response status: ${response.statusCode}');
+    print('Response body: $responseBody');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 12),
+              Text('Logo saved successfully!'),
+            ],
+          ),
+          backgroundColor: Colors.green[600],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    } else {
+      throw Exception('Server error: ${response.statusCode} - $responseBody');
+    }
+  } catch (e) {
+    print('Error saving logo: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text('Failed to save: ${e.toString()}')),
+          ],
+        ),
+        backgroundColor: Colors.red[600],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  } finally {
+    setState(() {
+      _isSaving = false;
+    });
+  }
+}
 
   Future<void> _saveLogoToGallery() async {
     setState(() {
@@ -2996,6 +3096,29 @@ class _EditLogoState extends State<MakeLogo> with SingleTickerProviderStateMixin
             onPressed: _isSaving ? null : _saveLogoToGallery,
           ),
           const SizedBox(width: 8),
+
+
+          TextButton(
+  onPressed: _isSaving ? null : _saveLogoToServer,
+  child: _isSaving
+      ? const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        )
+      : const Text(
+          'Save Logo',
+          style: TextStyle(color: Colors.blue),
+        ),
+),
+
+          // TextButton(onPressed: (){
+
+          // }, child: Text('Save Logo',style: TextStyle(color: Colors.blue),)),
+
+          // IconButton(onPressed: (){
+
+          // }, icon: Icon(Icons.download))
         ],
       ),
       body: _isLoading

@@ -1812,6 +1812,9 @@
 
 
 
+
+
+
 import 'package:flutter/material.dart';
 import 'package:posternova/helper/sub_modal_helper.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
@@ -1824,9 +1827,12 @@ import 'package:posternova/views/about/about_screen.dart';
 import 'package:posternova/views/backgroundremover/background_remover.dart';
 import 'package:posternova/views/deleteaccount/delete_account_screen.dart';
 import 'package:posternova/views/invoices/create_invoice_screen.dart';
+import 'package:posternova/views/newcanvapostermodule/canvaposters.dart';
+import 'package:posternova/views/onlinepunchang/online_punchang_screen.dart';
 import 'package:posternova/views/referearn/referearn_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
+import 'package:posternova/views/textremovalmodule/image_editor_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
 import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
@@ -2103,6 +2109,44 @@ class ProfileScreen extends StatelessWidget {
                                 isPremiumRequired: true,
                                 isPurchased: myPlanProvider.isPurchase ?? false,
                               ),
+
+                               _buildMenuItem(
+                                icon: Icons.design_services_outlined,
+                                title: 'Text Remover',
+                                onTap: () {
+                                  if (myPlanProvider.isPurchase == true) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ImageEditorScreen(),
+                                      ),
+                                    );
+                                  } else {
+                                    _showPremiumRequiredDialog(context);
+                                  }
+                                },
+                                isPremiumRequired: true,
+                                isPurchased: myPlanProvider.isPurchase ?? false,
+                              ),
+
+                              //  _buildMenuItem(
+                              //   icon: Icons.auto_awesome_outlined,
+                              //   title: 'Online Punchangam',
+                              //   onTap: () {
+                              //     if (myPlanProvider.isPurchase == true) {
+                              //       Navigator.push(
+                              //         context,
+                              //         MaterialPageRoute(
+                              //           builder: (context) => OnlinePunchangScreen(),
+                              //         ),
+                              //       );
+                              //     } else {
+                              //       _showPremiumRequiredDialog(context);
+                              //     }
+                              //   },
+                              //   isPremiumRequired: true,
+                              //   isPurchased: myPlanProvider.isPurchase ?? false,
+                              // ),
                               _buildMenuItem(
                                 icon: Icons.delete,
                                 title: 'Delete Account',
@@ -2135,7 +2179,7 @@ class ProfileScreen extends StatelessWidget {
                                 isPurchased: myPlanProvider.isPurchase ?? false,
                               ),
                               _buildMenuItem(
-                                icon: Icons.crop,
+                              icon: Icons.crop,
                                 title: 'Remove Background',
                                 onTap: () {
                                   if (myPlanProvider.isPurchase == true) {

@@ -97,6 +97,7 @@ class VoiceGreetingHelper {
   static final FlutterTts _flutterTts = FlutterTts();
   static bool _isInitialized = false;
   static bool _isSpeaking = false;
+  static bool _hasSpokenOnce = false; 
 
   // Initialize TTS settings
   static Future<void> initialize() async {
@@ -121,6 +122,11 @@ class VoiceGreetingHelper {
 
   // Speak the welcome message - will play every time
   static Future<void> speakWelcome(String? username) async {
+
+      if (_hasSpokenOnce) {
+      print("Already spoken in this session, skipping...");
+      return;
+    }
     // Prevent multiple simultaneous speeches
     if (_isSpeaking) {
       print("Already speaking, skipping...");
@@ -150,6 +156,7 @@ class VoiceGreetingHelper {
       
       // Speak the message
       await _flutterTts.speak(message);
+       _hasSpokenOnce = true; 
       
       print("Voice greeting played: $message");
     } catch (e) {
@@ -166,6 +173,10 @@ class VoiceGreetingHelper {
     } catch (e) {
       print("Error stopping TTS: $e");
     }
+  }
+
+   static void resetSession() {
+    _hasSpokenOnce = false;
   }
 
   // Dispose resources

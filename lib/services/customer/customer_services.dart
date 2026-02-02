@@ -14,6 +14,7 @@ class CustomerApiServices {
     required String dob,
     required String address,
     required String gender,
+    required String religion,
     required String anniversaryDate,
   }) async {
     final Uri url = Uri.parse(ApiConstants.addCustomer(userId));
@@ -25,6 +26,7 @@ class CustomerApiServices {
       'dob': dob,
       'address': address,
       'gender': gender,
+      'religion':religion,
       'anniversaryDate': anniversaryDate,
     }};
 
@@ -126,6 +128,7 @@ class CustomerApiServices {
     required String dob,
     required String address,
     required String gender,
+    required String religion,
     required String anniversaryDate,
   }) async {
     final Uri url = Uri.parse(ApiConstants.updateCustomer(userId, customerId));
@@ -138,6 +141,7 @@ class CustomerApiServices {
       'dob': dob,
       'address': address,
       'gender': gender,
+      'religion':religion,
       'anniversaryDate': anniversaryDate,
     }};
 

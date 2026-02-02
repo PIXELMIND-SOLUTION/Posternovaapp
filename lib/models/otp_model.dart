@@ -1,11 +1,12 @@
 class VerifyOtpRequest {
   final String otp;
   final String mobile;
+  final String fcmToken;
 
-  VerifyOtpRequest({required this.otp, required this.mobile});
+  VerifyOtpRequest({required this.otp, required this.mobile,required this.fcmToken});
 
   Map<String, dynamic> tojson() {
-    return {'otp': otp, 'mobile': mobile};
+    return {'otp': otp, 'mobile': mobile,'fcmToken':fcmToken};
   }
 }
 

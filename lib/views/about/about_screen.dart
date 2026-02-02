@@ -244,7 +244,7 @@ class AboutScreen extends StatelessWidget {
                   Icon(Icons.design_services, size: 70, color: Colors.white),
                   SizedBox(height: 12),
                   Text(
-                    "PosterNova",
+                    "Editezy",
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -277,7 +277,7 @@ class AboutScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        "About PosterNova",
+                        "About Editezy",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:marquee/marquee.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/helper/sub_modal_helper.dart';
 import 'package:posternova/models/category_model.dart';
+import 'package:posternova/models/invoice_model.dart';
 import 'package:posternova/models/poster_model.dart';
 import 'package:posternova/providers/PosterProvider/getall_poster_provider.dart';
 import 'package:posternova/providers/PosterProvider/poster_provider.dart';
@@ -17,9 +19,14 @@ import 'package:posternova/providers/story/story_provider.dart';
 import 'package:posternova/views/PosterModule/canvas_poster_listing_screen.dart';
 import 'package:posternova/views/PosterModule/poster_listing_screen.dart';
 import 'package:posternova/views/PosterModule/poster_making_screen.dart';
+import 'package:posternova/views/backgroundremover/background_remover.dart';
+import 'package:posternova/views/category/category_screen.dart';
+import 'package:posternova/views/invoices/add_invoice_data.dart';
+import 'package:posternova/views/onlinepunchang/online_punchang_screen.dart';
 import 'package:posternova/views/stories/story_widget_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
+import 'package:posternova/views/textremovalmodule/image_editor_screen.dart';
 import 'package:posternova/widgets/date_selctor_widget.dart';
 import 'package:posternova/widgets/faancy_app_bar.dart';
 import 'package:posternova/widgets/home_courosel_widget.dart';
@@ -55,6 +62,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Map<String, dynamic> birthdayData = {};
   Map<String, dynamic> anniversaryData = {};
+
+
+  Map<String, List<dynamic>> weeklyPosters = {};
+List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   List<dynamic> customers = [];
   bool isLoadingCustomers = false;
@@ -101,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+      _fetchWeeklyPosters();
     _initializeAnimations();
     _fetchnewposters();
     _loadUserData();
@@ -159,21 +171,36 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       //     });
 
       myPlanProvider
-        .fetchMyPlan(userId.toString())
-        .then((_) {
-          print(
-            'Fetch MyPlan completed - isPurchase: ${myPlanProvider.isPurchase}',
-          );
-          print(
-            'Subscribed Plan: ${myPlanProvider.subscribedPlan?.name ?? 'None'}',
-          );
+          .fetchMyPlan(userId.toString())
+          .then((_) {
+            print(
+              'Fetch MyPlan completed - isPurchase: ${myPlanProvider.isPurchase}',
+            );
+            print(
+              'Subscribed Plan: ${myPlanProvider.subscribedPlan?.name ?? 'None'}',
+            );
 
-          if (myPlanProvider.isPurchase) {
-            print('User has an active subscription');
-          } else {
-            print('User does not have an active subscription');
+            if (myPlanProvider.isPurchase) {
+              print('User has an active subscription');
+            } else {
+              print('User does not have an active subscription');
+              // Navigate to subscription page instead of showing modal
+              if (mounted) {
+                // Check if widget is still mounted
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubscriptionPlansPage(),
+                  ),
+                );
+              }
+            }
+          })
+          .catchError((error) {
+            print('Error fetching MyPlan: $error');
             // Navigate to subscription page instead of showing modal
-            if (mounted) { // Check if widget is still mounted
+            if (mounted) {
+              // Check if widget is still mounted
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -181,20 +208,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               );
             }
-          }
-        })
-        .catchError((error) {
-          print('Error fetching MyPlan: $error');
-          // Navigate to subscription page instead of showing modal
-          if (mounted) { // Check if widget is still mounted
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SubscriptionPlansPage(),
-              ),
-            );
-          }
-        });
+          });
 
       posterProvider.fetchPosters().then((_) {
         print(
@@ -209,6 +223,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
+
+
+  Future<void> _fetchWeeklyPosters() async {
+  try {
+    final response = await http.get(
+      Uri.parse('http://31.97.206.144:4061/api/poster/weeklyposters'),
+    );
+   
+  print('response status code for weekly posters ${response.statusCode}');
+    print('response bodyyyyyyyyyyyyyy for weekly posters ${response.body}');
+
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      setState(() {
+        weeklyPosters = data.map((key, value) => MapEntry(key, List<dynamic>.from(value)));
+      });
+    }
+  } catch (e) {
+    print('Error fetching weekly posters: $e');
+  }
+}
+
   Future<void> _loadUserId() async {
     try {
       final userData = await AuthPreferences.getUserData();
@@ -220,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
         final response = await http.get(
           Uri.parse(
-            'http://194.164.148.244:4061/api/users/wishes/$currentUserId',
+            'http://31.97.206.144:4061/api/users/wishes/$currentUserId',
           ),
         );
 
@@ -262,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     try {
       print('Fetching customers for userId: $userId');
       final response = await http.get(
-        Uri.parse('http://194.164.148.244:4061/api/users/allcustomers/$userId'),
+        Uri.parse('http://31.97.206.144:4061/api/users/allcustomers/$userId'),
       );
 
       if (response.statusCode == 200) {
@@ -311,6 +348,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       storyProvider.fetchStories();
     }
   }
+
+
+  List<String> _getOrderedDaysFromToday() {
+  final today = DateFormat('EEEE').format(DateTime.now());
+  final todayIndex = weekDays.indexOf(today);
+  
+  if (todayIndex == -1) return weekDays;
+  
+  return [
+    ...weekDays.sublist(todayIndex),
+    ...weekDays.sublist(0, todayIndex),
+  ];
+}
 
   void _initializeAnimations() {
     _headerAnimationController = AnimationController(
@@ -380,12 +430,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       });
 
       // Speak welcome after username is loaded
-      if (!_hasSpokenGreeting && username != null) {
-        Future.delayed(const Duration(milliseconds: 800), () {
-          VoiceGreetingHelper.speakWelcome(username);
-          _hasSpokenGreeting = true;
-        });
-      }
+      // if (!_hasSpokenGreeting && username != null) {
+      //   Future.delayed(const Duration(milliseconds: 800), () {
+      //     VoiceGreetingHelper.speakWelcome(username);
+      //     _hasSpokenGreeting = true;
+      //   });
+      // }
 
       fetchCustomers();
       print('User ID: $userId');
@@ -430,7 +480,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     try {
       final response = await http.post(
-        Uri.parse('http://194.164.148.244:4061/api/poster/festival'),
+        Uri.parse('http://31.97.206.144:4061/api/poster/festival'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'festivalDate': _formatDate(date)}),
       );
@@ -470,6 +520,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               context.read<DateTimeProvider>().selectedDate,
             );
             await _fetchnewposters();
+             await _fetchWeeklyPosters(); 
           },
           color: const Color(0xFF6366F1),
           child: CustomScrollView(
@@ -485,7 +536,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       const SizedBox(height: 32),
                       _buildFestivalPostersSection(),
                       const SizedBox(height: 32),
-                      _buildPremiumTemplatesSection(),
+                        _buildSectionHeader(
+                      title: 'Weekly Templates',
+                      subtitle: 'Fresh designs for every day',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildWeeklyPostersSection(),
+                      // _buildPremiumTemplatesSection(),
                       const SizedBox(height: 100),
                     ],
                   ),
@@ -497,6 +554,315 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
+
+
+
+
+
+//   Widget _buildWeeklyPostersSection() {
+//   if (weeklyPosters.isEmpty) return const SizedBox();
+  
+//   final orderedDays = _getOrderedDaysFromToday();
+//   final today = DateFormat('EEEE').format(DateTime.now());
+  
+//   return Column(
+//     children: orderedDays.map((day) {
+//       final posters = weeklyPosters[day] ?? [];
+//       if (posters.isEmpty) return const SizedBox();
+      
+//       final isToday = day == today;
+      
+//       return Column(
+//         children: [
+//           Padding(
+//             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+//             child: Row(
+//               children: [
+//                 Container(
+//                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+//                   decoration: BoxDecoration(
+//                     gradient: isToday
+//                         ? const LinearGradient(
+//                             colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+//                           )
+//                         : null,
+//                     color: isToday ? null : Colors.grey.shade100,
+//                     borderRadius: BorderRadius.circular(8),
+//                   ),
+//                   child: Row(
+//                     children: [
+//                       Icon(
+//                         isToday ? Icons.today : Icons.calendar_today_outlined,
+//                         size: 18,
+//                         color: isToday ? Colors.white : const Color(0xFF6B7280),
+//                       ),
+//                       const SizedBox(width: 8),
+//                       Text(
+//                         isToday ? 'Today - $day' : day,
+//                         style: TextStyle(
+//                           fontSize: 16,
+//                           fontWeight: FontWeight.bold,
+//                           color: isToday ? Colors.white : const Color(0xFF111827),
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//                 const Spacer(),
+//                 Text(
+//                   '${posters.length} templates',
+//                   style: const TextStyle(
+//                     fontSize: 14,
+//                     color: Color(0xFF6B7280),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           Container(
+//             height: 220,
+//             child: ListView.builder(
+//               scrollDirection: Axis.horizontal,
+//               padding: const EdgeInsets.symmetric(horizontal: 20),
+//               itemCount: posters.length,
+//               itemBuilder: (context, index) {
+//                 final poster = posters[index];
+//                 return _buildWeeklyPosterCard(poster, index);
+//               },
+//             ),
+//           ),
+//           const SizedBox(height: 24),
+//         ],
+//       );
+//     }).toList(),
+//   );
+// }
+
+
+Widget _buildWeeklyPostersSection() {
+  if (weeklyPosters.isEmpty) return const SizedBox();
+  
+  final orderedDays = _getOrderedDaysFromToday();
+  final today = DateFormat('EEEE').format(DateTime.now());
+  
+  return Column(
+    children: orderedDays.map((day) {
+      final posters = weeklyPosters[day] ?? [];
+      // Remove this condition - show all days even if empty
+      // if (posters.isEmpty) return const SizedBox();
+      
+      final isToday = day == today;
+      
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: isToday
+                        ? const LinearGradient(
+                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                          )
+                        : null,
+                    color: isToday ? null : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isToday ? Icons.today : Icons.calendar_today_outlined,
+                        size: 18,
+                        color: isToday ? Colors.white : const Color(0xFF6B7280),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isToday ? 'Today - $day' : day,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isToday ? Colors.white : const Color(0xFF111827),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  posters.isEmpty ? 'No templates' : '${posters.length} templates',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: posters.isEmpty ? Colors.grey.shade400 : const Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Show message if no posters, otherwise show the list
+          if (posters.isEmpty)
+            Container(
+              height: 120,
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Center(
+                child: Text(
+                  'No templates available for $day',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              height: 220,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: posters.length,
+                itemBuilder: (context, index) {
+                  final poster = posters[index];
+                  return _buildWeeklyPosterCard(poster, index);
+                },
+              ),
+            ),
+          const SizedBox(height: 24),
+        ],
+      );
+    }).toList(),
+  );
+}
+
+
+
+Widget _buildWeeklyPosterCard(dynamic poster, int index) {
+
+      return Consumer<MyPlanProvider>(
+        builder: (context, myplanprovider, child) {
+           return  Container(
+        width: 160,
+        margin: EdgeInsets.only(right: 16, left: index == 0 ? 0 : 0),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+
+              if(myplanprovider.isPurchase==true){
+                Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SamplePosterScreen(
+                    posterId: poster['_id'] ?? poster['id'],
+                  ),
+                ),
+              );
+              }else{
+                _showPremiumDialog();
+              }
+        
+              
+              // if(myplanprovider.isPurchase==true){
+                 
+              // }else{
+              //     _showPremiumDialog();
+              // }
+             
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(16),
+                        ),
+                        color: Color(0xFFF3F4F6),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(16),
+                        ),
+                        child: Image.network(
+                          poster['images']?[0] ?? '',
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: const Color(0xFFF3F4F6),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF6366F1),
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: const Color(0xFFF3F4F6),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: Color(0xFF9CA3AF),
+                                  size: 32,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          poster['categoryName'] ?? poster['name'] ?? 'Poster',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF374151),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+            );
+        },
+      
+      );
+}
 
   Widget _buildWishesSection() {
     if (birthdayData['wishes'] == null || birthdayData['wishes'].isEmpty) {
@@ -563,137 +929,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
-  //   Widget _buildCustomerCelebrationsSection() {
-  //   List<String> celebrations = [];
-
-  //   print('=== Customer Celebrations Debug ===');
-  //   print('Total customers: ${customers.length}');
-  //   print('Is loading: $isLoadingCustomers');
-
-  //   if (customers.isNotEmpty) {
-  //     final today = DateTime.now();
-  //     print('Today: ${today.year}-${today.month}-${today.day}');
-
-  //     for (var customer in customers) {
-  //       print('\nChecking customer: ${customer['name']}');
-
-  //       // Check for birthday
-  //       if (customer['dob'] != null && customer['dob'].isNotEmpty) {
-  //         try {
-  //           final dob = DateTime.parse(customer['dob']);
-  //           print('  DOB: ${dob.year}-${dob.month}-${dob.day}');
-  //           print('  Match: month=${dob.month == today.month}, day=${dob.day == today.day}');
-
-  //           if (dob.month == today.month && dob.day == today.day) {
-  //             final age = today.year - dob.year;
-  //             final celebration = "🎂 Happy ${age}th Birthday ${customer['name']}!";
-  //             celebrations.add(celebration);
-  //             print('  ✅ Birthday celebration added: $celebration');
-  //           }
-  //         } catch (e) {
-  //           print('  ❌ Error parsing DOB for ${customer['name']}: $e');
-  //         }
-  //       } else {
-  //         print('  No DOB data');
-  //       }
-
-  //       // Check for anniversary
-  //       if (customer['anniversaryDate'] != null && customer['anniversaryDate'].isNotEmpty) {
-  //         try {
-  //           final anniversary = DateTime.parse(customer['anniversaryDate']);
-  //           print('  Anniversary: ${anniversary.year}-${anniversary.month}-${anniversary.day}');
-  //           print('  Match: month=${anniversary.month == today.month}, day=${anniversary.day == today.day}');
-
-  //           if (anniversary.month == today.month && anniversary.day == today.day) {
-  //             final years = today.year - anniversary.year;
-  //             final celebration = "💐 Happy ${years}th Anniversary ${customer['name']}!";
-  //             celebrations.add(celebration);
-  //             print('  ✅ Anniversary celebration added: $celebration');
-  //           }
-  //         } catch (e) {
-  //           print('  ❌ Error parsing anniversary for ${customer['name']}: $e');
-  //         }
-  //       } else {
-  //         print('  No anniversary data');
-  //       }
-  //     }
-  //   } else {
-  //     print('No customers available');
-  //   }
-
-  //   print('\nTotal celebrations found: ${celebrations.length}');
-  //   if (celebrations.isNotEmpty) {
-  //     print('Celebrations: $celebrations');
-  //   }
-  //   print('=== End Debug ===\n');
-
-  //   // If no celebrations to display, return empty widget
-  //   if (celebrations.isEmpty) {
-  //     return const SizedBox();
-  //   }
-
-  //   return Container(
-  //     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-  //     padding: const EdgeInsets.all(16),
-  //     decoration: BoxDecoration(
-  //       gradient: const LinearGradient(
-  //         colors: [
-  //           Color(0xFFFFF3E0),
-  //           Color(0xFFFFE0B2),
-  //         ],
-  //         begin: Alignment.topLeft,
-  //         end: Alignment.bottomRight,
-  //       ),
-  //       borderRadius: BorderRadius.circular(20),
-  //       boxShadow: [
-  //         BoxShadow(
-  //           color: const Color(0xFFFF6F00).withOpacity(0.3),
-  //           blurRadius: 10,
-  //           offset: const Offset(0, 4),
-  //         ),
-  //       ],
-  //       border: Border.all(color: const Color(0xFFFFB74D), width: 1.2),
-  //     ),
-  //     child: Row(
-  //       children: [
-  //         Container(
-  //           padding: const EdgeInsets.all(10),
-  //           decoration: BoxDecoration(
-  //             color: const Color(0xFFE65100),
-  //             borderRadius: BorderRadius.circular(10),
-  //           ),
-  //           child: const Icon(Icons.cake, color: Colors.white, size: 22),
-  //         ),
-  //         const SizedBox(width: 14),
-  //         Expanded(
-  //           child: SizedBox(
-  //             height: 26,
-  //             child: Marquee(
-  //               text: celebrations.join("  •  "),
-  //               style: const TextStyle(
-  //                 fontSize: 15,
-  //                 fontWeight: FontWeight.w600,
-  //                 color: Color(0xFFBF360C),
-  //               ),
-  //               scrollAxis: Axis.horizontal,
-  //               crossAxisAlignment: CrossAxisAlignment.center,
-  //               blankSpace: 40.0,
-  //               velocity: 35.0,
-  //               pauseAfterRound: const Duration(seconds: 2),
-  //               startPadding: 10.0,
-  //               accelerationDuration: const Duration(seconds: 1),
-  //               accelerationCurve: Curves.easeInOut,
-  //               decelerationDuration: const Duration(milliseconds: 600),
-  //               decelerationCurve: Curves.easeOut,
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget _buildCustomerCelebrationsSection() {
     List<String> celebrations = [];
 
@@ -860,65 +1095,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // Widget _buildWishesSection() {
-  //   if (birthdayData['wishes'] == null || birthdayData['wishes'].isEmpty) {
-  //     return const SizedBox();
-  //   }
-
-  //   return Container(
-  //     margin: const EdgeInsets.symmetric(horizontal: 20),
-  //     padding: const EdgeInsets.all(16),
-  //     decoration: BoxDecoration(
-  //       gradient: const LinearGradient(
-  //         colors: [Color(0xFFFEF7CD), Color(0xFFFDE68A)],
-  //       ),
-  //       borderRadius: BorderRadius.circular(16),
-  //       boxShadow: [
-  //         BoxShadow(
-  //           color: const Color(0xFFFDE68A).withOpacity(0.3),
-  //           blurRadius: 8,
-  //           offset: const Offset(0, 4),
-  //         ),
-  //       ],
-  //     ),
-  //     child: Row(
-  //       children: [
-  //         Container(
-  //           padding: const EdgeInsets.all(8),
-  //           decoration: BoxDecoration(
-  //             color: const Color(0xFFF59E0B),
-  //             borderRadius: BorderRadius.circular(8),
-  //           ),
-  //           child: const Icon(Icons.celebration, color: Colors.white, size: 20),
-  //         ),
-  //         const SizedBox(width: 12),
-  //         Expanded(
-  //           child: SizedBox(
-  //             height: 24,
-  //             child: Marquee(
-  //               text: birthdayData['wishes'].join("  •  "),
-  //               style: const TextStyle(
-  //                 fontSize: 14,
-  //                 fontWeight: FontWeight.w600,
-  //                 color: Color(0xFFA16207),
-  //               ),
-  //               scrollAxis: Axis.horizontal,
-  //               crossAxisAlignment: CrossAxisAlignment.center,
-  //               blankSpace: 50.0,
-  //               velocity: 40.0,
-  //               pauseAfterRound: const Duration(seconds: 2),
-  //               startPadding: 10.0,
-  //               accelerationDuration: const Duration(seconds: 1),
-  //               accelerationCurve: Curves.linear,
-  //               decelerationDuration: const Duration(milliseconds: 500),
-  //               decelerationCurve: Curves.easeOut,
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+ 
 
   Widget _buildFeaturedCarousel() {
     return Column(
@@ -938,27 +1115,180 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildHeaderActionButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Material(
+
+
+
+  
+// Add this method to your _HomeScreenState class
+
+Widget _buildCategoriesSection() {
+  final categories = [
+    {
+      'name': 'Edit Poster',
+      'icon': Icons.text_fields_outlined,
+      'color': Color(0xFF8B5CF6),
+      'screen': ImageEditorScreen(),
+    },
+    {
+      'name': 'Categories',
+      'icon': Icons.category_outlined,
+      'color': Color(0xFF10B981),
+      'screen': CategoryScreen(),
+    },
+    {
+      'name': 'Invoices',
+      'icon': Icons.receipt_long_outlined,
+      'color': Color(0xFFEF4444),
+      'screen': AddInvoiceData(),
+    },
+    {
+      'name': 'Background Remover',
+      'icon': Icons.edit_outlined,
+      'color': Color(0xFFF59E0B),
+      'screen': BackgroundRemoverScreen(),
+    },
+     {
+      'name': 'Online Punchang',
+      'icon': Icons.calendar_month,
+      'color': Color(0xFFF59E0B),
+      'screen': OnlinePunchangScreen(),
+    },
+  ];
+
+  return Column(
+    children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Categories',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF111827),
+              ),
+            ),
+            // TextButton(
+            //   onPressed: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (context) => const CategoryScreen(),
+            //       ),
+            //     );
+            //   },
+            //   child: const Text(
+            //     'View All',
+            //     style: TextStyle(
+            //       color: Color(0xFF6366F1),
+            //       fontWeight: FontWeight.w600,
+            //     ),
+            //   ),
+            // ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 16),
+      Container(
+        height: 100,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            final category = categories[index];
+            return _buildCategoryCard(
+              name: category['name'] as String,
+              icon: category['icon'] as IconData,
+              color: category['color'] as Color,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => category['screen'] as Widget,
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+      const SizedBox(height: 32),
+    ],
+  );
+}
+
+Widget _buildCategoryCard({
+  required String name,
+  required IconData icon,
+  required Color color,
+  required VoidCallback onTap,
+}) {
+  return Container(
+    width: 100,
+    margin: const EdgeInsets.only(right: 12),
+    child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.3)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+ 
 
   Widget _buildUpcomingFestivalsSection() {
     return Padding(
@@ -966,6 +1296,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Column(
         children: [
           StoriesWidget(),
+          const SizedBox(height: 16), // Add spacing
+        _buildCategoriesSection(), 
 
           _buildSectionHeader(
             title: 'Seasonal Celebrations',
@@ -1025,52 +1357,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       );
     }
 
-    // if (festivaldata.isEmpty) {
-    //   return Container(
-    //     height: 200,
-    //     margin: const EdgeInsets.symmetric(horizontal: 20),
-    //     padding: const EdgeInsets.all(32),
-    //     decoration: BoxDecoration(
-    //       color: Colors.white,
-    //       borderRadius: BorderRadius.circular(16),
-    //       border: Border.all(color: const Color(0xFFE5E7EB)),
-    //     ),
-    //     child: Column(
-    //       mainAxisAlignment: MainAxisAlignment.center,
-    //       children: [
-    //         // Container(
-    //         //   padding: const EdgeInsets.all(16),
-    //         //   decoration: BoxDecoration(
-    //         //     color: const Color(0xFF6366F1).withOpacity(0.1),
-    //         //     shape: BoxShape.circle,
-    //         //   ),
-    //         //   child: const Icon(
-    //         //     Icons.event_busy,
-    //         //     size: 32,
-    //         //     color: Color(0xFF6366F1),
-    //         //   ),
-    //         // ),
-    //         // const SizedBox(height: 16),
-    //         const Text(
-    //           'No festivals found',
-    //           style: TextStyle(
-    //             fontSize: 16,
-    //             fontWeight: FontWeight.w600,
-    //             color: Color(0xFF374151),
-    //           ),
-    //         ),
-    //         const SizedBox(height: 4),
-    //         Text(
-    //           'Try selecting a different date',
-    //           style: TextStyle(
-    //             fontSize: 14,
-    //             color: const Color(0xFF6B7280),
-    //           ),
-    //         ),
-    //       ],
-    //     ),
-    //   );
-    // }
 
     if (festivaldata.isEmpty) {
       return AnimatedContainer(
@@ -1439,67 +1725,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // Widget _buildCategorySection(
-  //   String categoryName,
-  //   List<CanvasPosterModel> posters,
-  // ) {
-  //   return Column(
-  //     children: [
-  //       Padding(
-  //         padding: const EdgeInsets.symmetric(horizontal: 20),
-  //         child: Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //           children: [
-  //             Text(
-  //               categoryName,
-  //               style: const TextStyle(
-  //                 fontSize: 18,
-  //                 fontWeight: FontWeight.bold,
-  //                 color: Color(0xFF111827),
-  //               ),
-  //             ),
-  //             TextButton.icon(
-  //               onPressed: () {
-  //                 // Navigator.push(
-  //                 //   context,
-  //                 //   MaterialPageRoute(
-  //                 //     builder: (context) => DetailsScreen(category: categoryName),
-  //                 //   ),
-  //                 // );
-  //               },
-  //               // icon: const Icon(
-  //               //   Icons.arrow_forward_ios,
-  //               //   size: 16,
-  //               //   color: Color(0xFF6366F1),
-  //               // ),
-  //               label: const Text(
-  //                 '',
-  //                 style: TextStyle(
-  //                   color: Color(0xFF6366F1),
-  //                   fontWeight: FontWeight.w600,
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //       const SizedBox(height: 12),
-  //       Container(
-  //         height: 190,
-  //         child: ListView.builder(
-  //           scrollDirection: Axis.horizontal,
-  //           padding: const EdgeInsets.symmetric(horizontal: 20),
-  //           itemCount: posters.length,
-  //           itemBuilder: (context, index) {
-  //             return _buildPremiumPosterCard(posters[index], index);
-  //           },
-  //         ),
-  //       ),
-  //       const SizedBox(height: 24),
-  //     ],
-  //   );
-  // }
-
   Widget _buildCategorySection(
     String categoryName,
     List<CanvasPosterModel> posters,
@@ -1536,13 +1761,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         _showPremiumDialog();
                       }
                     },
-                    icon: const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: Color(0xFF6366F1),
-                    ),
+                    // icon: const Icon(
+                    //   Icons.arrow_forward_ios,
+                    //   size: 16,
+                    //   color: Color(0xFF6366F1),
+                    // ),
                     label: const Text(
-                      'View All',
+                      '',
                       style: TextStyle(
                         color: Color(0xFF6366F1),
                         fontWeight: FontWeight.w600,
@@ -1757,1054 +1982,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
-  // void showSubscriptionModal(BuildContext context) async {
-  //     final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
-
-  //     if (myPlanProvider.isPurchase == true) {
-  //       return;
-  //     }
-
-  //     final hasShownRecently = await ModalPreferences.hasShownSubscriptionModal();
-  //     final shouldShowAgain = await ModalPreferences.shouldShowSubscriptionModalAgain(daysBetween: 7);
-
-  //     if (hasShownRecently && !shouldShowAgain) {
-  //       print('Subscription modal shown recently, skipping');
-  //       return;
-  //     }
-
-  //     final planProvider = Provider.of<GetAllPlanProvider>(context, listen: false);
-  //     if (planProvider.plans.isEmpty && !planProvider.isLoading) {
-  //       planProvider.fetchAllPlans();
-  //     }
-
-  //     showGeneralDialog(
-  //       context: context,
-  //       barrierDismissible: true,
-  //       barrierLabel: 'Subscription Modal',
-  //       barrierColor: Colors.black.withOpacity(0.6),
-  //       transitionDuration: const Duration(milliseconds: 600),
-  //       pageBuilder: (context, animation, secondaryAnimation) {
-  //         return const SizedBox.shrink();
-  //       },
-  //       transitionBuilder: (context, animation, secondaryAnimation, child) {
-  //         final curvedAnimation = CurvedAnimation(
-  //           parent: animation,
-  //           curve: Curves.easeOutBack,
-  //         );
-
-  //         return BackdropFilter(
-  //           filter: ImageFilter.blur(
-  //             sigmaX: 4 * animation.value,
-  //             sigmaY: 4 * animation.value,
-  //           ),
-  //           child: SlideTransition(
-  //             position: Tween<Offset>(
-  //               begin: const Offset(0, 0.2),
-  //               end: Offset.zero,
-  //             ).animate(curvedAnimation),
-  //             child: ScaleTransition(
-  //               scale: Tween<double>(
-  //                 begin: 0.8,
-  //                 end: 1.0,
-  //               ).animate(curvedAnimation),
-  //               child: FadeTransition(
-  //                 opacity: Tween<double>(
-  //                   begin: 0.0,
-  //                   end: 1.0,
-  //                 ).animate(curvedAnimation),
-  //                 child: Center(
-  //                   child: Container(
-  //                     margin: const EdgeInsets.symmetric(horizontal: 16),
-  //                     decoration: BoxDecoration(
-  //                       color: Colors.white,
-  //                       borderRadius: BorderRadius.circular(20),
-  //                       boxShadow: [
-  //                         BoxShadow(
-  //                           color: Colors.black.withOpacity(0.2),
-  //                           blurRadius: 20,
-  //                           offset: const Offset(0, 10),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                     constraints: BoxConstraints(
-  //                       maxHeight: MediaQuery.of(context).size.height * 0.85,
-  //                       maxWidth: 500,
-  //                     ),
-  //                     child: ClipRRect(
-  //                       borderRadius: BorderRadius.circular(20),
-  //                       child: Column(
-  //                         mainAxisSize: MainAxisSize.min,
-  //                         children: [
-  //                           // Modern header with updated gradient
-  //                           Container(
-  //                             decoration: const BoxDecoration(
-  //                               gradient: LinearGradient(
-  //                                 begin: Alignment.topLeft,
-  //                                 end: Alignment.bottomRight,
-  //                                 colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-  //                               ),
-  //                             ),
-  //                             child: Padding(
-  //                               padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
-  //                               child: Row(
-  //                                 children: [
-  //                                   Container(
-  //                                     padding: const EdgeInsets.all(8),
-  //                                     decoration: BoxDecoration(
-  //                                       color: Colors.white.withOpacity(0.2),
-  //                                       borderRadius: BorderRadius.circular(8),
-  //                                     ),
-  //                                     child: const Icon(
-  //                                       Icons.workspace_premium,
-  //                                       color: Colors.white,
-  //                                       size: 24,
-  //                                     ),
-  //                                   ),
-  //                                   const SizedBox(width: 12),
-  //                                   const Expanded(
-  //                                     child: Text(
-  //                                       'Choose Your Plan',
-  //                                       style: TextStyle(
-  //                                         fontSize: 20,
-  //                                         fontWeight: FontWeight.bold,
-  //                                         color: Colors.white,
-  //                                       ),
-  //                                     ),
-  //                                   ),
-  //                                   Material(
-  //                                     color: Colors.transparent,
-  //                                     child: InkWell(
-  //                                       borderRadius: BorderRadius.circular(20),
-  //                                       onTap: () => Navigator.pop(context),
-  //                                       child: Container(
-  //                                         padding: const EdgeInsets.all(6),
-  //                                         decoration: BoxDecoration(
-  //                                           color: Colors.white.withOpacity(0.2),
-  //                                           shape: BoxShape.circle,
-  //                                         ),
-  //                                         child: const Icon(
-  //                                           Icons.close,
-  //                                           color: Colors.white,
-  //                                           size: 18,
-  //                                         ),
-  //                                       ),
-  //                                     ),
-  //                                   ),
-  //                                 ],
-  //                               ),
-  //                             ),
-  //                           ),
-  //                           Flexible(
-  //                             child: Consumer<GetAllPlanProvider>(
-  //                               builder: (context, provider, child) {
-  //                                 if (provider.isLoading) {
-  //                                   return const Center(
-  //                                     child: Column(
-  //                                       mainAxisAlignment: MainAxisAlignment.center,
-  //                                       children: [
-  //                                         SizedBox(
-  //                                           width: 40,
-  //                                           height: 40,
-  //                                           child: CircularProgressIndicator(
-  //                                             color: Color(0xFF6366F1),
-  //                                             strokeWidth: 3,
-  //                                           ),
-  //                                         ),
-  //                                         SizedBox(height: 16),
-  //                                         Text(
-  //                                           'Loading plans...',
-  //                                           style: TextStyle(
-  //                                             color: Color(0xFF6B7280),
-  //                                             fontWeight: FontWeight.w500,
-  //                                           ),
-  //                                         ),
-  //                                       ],
-  //                                     ),
-  //                                   );
-  //                                 }
-
-  //                                 if (provider.error != null) {
-  //                                   return Center(
-  //                                     child: Padding(
-  //                                       padding: const EdgeInsets.all(20.0),
-  //                                       child: Column(
-  //                                         mainAxisAlignment: MainAxisAlignment.center,
-  //                                         children: [
-  //                                           const Icon(
-  //                                             Icons.error_outline,
-  //                                             color: Color(0xFFEF4444),
-  //                                             size: 60,
-  //                                           ),
-  //                                           const SizedBox(height: 16),
-  //                                           const Text(
-  //                                             'Failed to load plans',
-  //                                             style: TextStyle(
-  //                                               fontSize: 18,
-  //                                               fontWeight: FontWeight.bold,
-  //                                               color: Color(0xFFEF4444),
-  //                                             ),
-  //                                           ),
-  //                                           const SizedBox(height: 8),
-  //                                           const Text(
-  //                                             'Please try again later',
-  //                                             style: TextStyle(color: Color(0xFF6B7280)),
-  //                                           ),
-  //                                           const SizedBox(height: 16),
-  //                                           ElevatedButton.icon(
-  //                                             onPressed: () => provider.fetchAllPlans(),
-  //                                             style: ElevatedButton.styleFrom(
-  //                                               backgroundColor: const Color(0xFF6366F1),
-  //                                               foregroundColor: Colors.white,
-  //                                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-  //                                               shape: RoundedRectangleBorder(
-  //                                                 borderRadius: BorderRadius.circular(12),
-  //                                               ),
-  //                                             ),
-  //                                             icon: const Icon(Icons.refresh),
-  //                                             label: const Text('Try Again'),
-  //                                           ),
-  //                                         ],
-  //                                       ),
-  //                                     ),
-  //                                   );
-  //                                 }
-
-  //                                 if (provider.plans.isNotEmpty) {
-  //                                   return AnimatedPlanList(
-  //                                     plans: provider.plans,
-  //                                     onPlanSelected: (plan) {
-  //                                       Navigator.of(context).pop();
-  //                                       Navigator.push(
-  //                                         context,
-  //                                         PageRouteBuilder(
-  //                                           pageBuilder: (context, animation, secondaryAnimation) =>
-  //                                               PlanDetailsAndPaymentScreen(plan: plan),
-  //                                           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-  //                                             const begin = Offset(1.0, 0.0);
-  //                                             const end = Offset.zero;
-  //                                             const curve = Curves.easeOutCubic;
-
-  //                                             var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-  //                                             var offsetAnimation = animation.drive(tween);
-
-  //                                             return SlideTransition(
-  //                                               position: offsetAnimation,
-  //                                               child: FadeTransition(
-  //                                                 opacity: animation,
-  //                                                 child: child,
-  //                                               ),
-  //                                             );
-  //                                           },
-  //                                           transitionDuration: const Duration(milliseconds: 500),
-  //                                         ),
-  //                                       );
-  //                                     },
-  //                                   );
-  //                                 }
-
-  //                                 return const Center(
-  //                                   child: Column(
-  //                                     mainAxisAlignment: MainAxisAlignment.center,
-  //                                     children: [
-  //                                       Icon(
-  //                                         Icons.subscriptions,
-  //                                         size: 60,
-  //                                         color: Color(0xFF9CA3AF),
-  //                                       ),
-  //                                       SizedBox(height: 16),
-  //                                       Text(
-  //                                         'No subscription plans available',
-  //                                         style: TextStyle(
-  //                                           fontSize: 16,
-  //                                           color: Color(0xFF6B7280),
-  //                                         ),
-  //                                       ),
-  //                                     ],
-  //                                   ),
-  //                                 );
-  //                               },
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         );
-  //       },
-  //     );
-  //   }
-
-  // void showSubscriptionModal(BuildContext context) async {
-  //   final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
-
-  //   if (myPlanProvider.isPurchase == true) {
-  //     return;
-  //   }
-
-  //   final hasShownRecently = await ModalPreferences.hasShownSubscriptionModal();
-  //   final shouldShowAgain =
-  //       await ModalPreferences.shouldShowSubscriptionModalAgain(daysBetween: 7);
-
-  //   if (hasShownRecently && !shouldShowAgain) {
-  //     print('Subscription modal shown recently, skipping');
-  //     return;
-  //   }
-
-  //   final planProvider = Provider.of<GetAllPlanProvider>(
-  //     context,
-  //     listen: false,
-  //   );
-  //   if (planProvider.plans.isEmpty && !planProvider.isLoading) {
-  //     planProvider.fetchAllPlans();
-  //   }
-
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: true,
-  //     builder: (context) => Dialog(
-  //       backgroundColor: Colors.transparent,
-  //       child: Container(
-  //         constraints: const BoxConstraints(maxWidth: 400),
-  //         decoration: BoxDecoration(
-  //           color: Colors.white,
-  //           borderRadius: BorderRadius.circular(24),
-  //           boxShadow: [
-  //             BoxShadow(
-  //               color: Colors.black.withOpacity(0.15),
-  //               blurRadius: 30,
-  //               offset: const Offset(0, 10),
-  //             ),
-  //           ],
-  //         ),
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             // Header Section
-  //             Container(
-  //               padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-  //               child: Column(
-  //                 children: [
-  //                   // Close Button
-  //                   Align(
-  //                     alignment: Alignment.topRight,
-  //                     child: GestureDetector(
-  //                       onTap: () => Navigator.pop(context),
-  //                       child: Container(
-  //                         padding: const EdgeInsets.all(6),
-  //                         decoration: BoxDecoration(
-  //                           color: Colors.grey.shade100,
-  //                           shape: BoxShape.circle,
-  //                         ),
-  //                         child: Icon(
-  //                           Icons.close,
-  //                           size: 18,
-  //                           color: Colors.grey.shade600,
-  //                         ),
-  //                       ),
-  //                     ),
-  //                   ),
-
-  //                   const SizedBox(height: 8),
-
-  //                   // Premium Icon
-  //                   Container(
-  //                     width: 70,
-  //                     height: 70,
-  //                     decoration: BoxDecoration(
-  //                       gradient: const LinearGradient(
-  //                         begin: Alignment.topLeft,
-  //                         end: Alignment.bottomRight,
-  //                         colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-  //                       ),
-  //                       borderRadius: BorderRadius.circular(18),
-  //                       boxShadow: [
-  //                         BoxShadow(
-  //                           color: const Color(0xFFFFA500).withOpacity(0.3),
-  //                           blurRadius: 15,
-  //                           offset: const Offset(0, 6),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                     child: const Icon(
-  //                       Icons.workspace_premium_rounded,
-  //                       color: Colors.white,
-  //                       size: 36,
-  //                     ),
-  //                   ),
-
-  //                   const SizedBox(height: 16),
-
-  //                   // Title
-  //                   const Text(
-  //                     'Unlock Premium',
-  //                     style: TextStyle(
-  //                       fontSize: 24,
-  //                       fontWeight: FontWeight.bold,
-  //                       color: Color(0xFF1F2937),
-  //                       letterSpacing: -0.5,
-  //                     ),
-  //                     textAlign: TextAlign.center,
-  //                   ),
-
-  //                   const SizedBox(height: 6),
-
-  //                   // Subtitle
-  //                   Text(
-  //                     'Get unlimited access to all features',
-  //                     style: TextStyle(
-  //                       fontSize: 14,
-  //                       color: Colors.grey.shade600,
-  //                       height: 1.3,
-  //                     ),
-  //                     textAlign: TextAlign.center,
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-
-  //             // Features List
-  //             // Container(
-  //             //   margin: const EdgeInsets.symmetric(horizontal: 20),
-  //             //   padding: const EdgeInsets.all(16),
-  //             //   decoration: BoxDecoration(
-  //             //     color: const Color(0xFFF8FAFC),
-  //             //     borderRadius: BorderRadius.circular(14),
-  //             //     border: Border.all(color: Colors.grey.shade200),
-  //             //   ),
-  //             //   child: Column(
-  //             //     children: [
-  //             //       // _buildCompactFeature('Unlimited Templates'),
-  //             //       // const SizedBox(height: 12),
-  //             //       // _buildCompactFeature('No Watermarks'),
-  //             //       // const SizedBox(height: 12),
-  //             //       // _buildCompactFeature('Priority Support'),
-  //             //       // const SizedBox(height: 12),
-  //             //       // _buildCompactFeature('Regular Updates'),
-  //             //     ],
-  //             //   ),
-  //             // ),
-  //             const SizedBox(height: 20),
-
-  //             // Plans Section
-  //             Container(
-  //               constraints: const BoxConstraints(maxHeight: 280),
-  //               child: Consumer<GetAllPlanProvider>(
-  //                 builder: (context, provider, child) {
-  //                   if (provider.isLoading) {
-  //                     return const Padding(
-  //                       padding: EdgeInsets.all(40.0),
-  //                       child: Center(
-  //                         child: Column(
-  //                           mainAxisSize: MainAxisSize.min,
-  //                           children: [
-  //                             CircularProgressIndicator(
-  //                               color: Color(0xFF6366F1),
-  //                               strokeWidth: 3,
-  //                             ),
-  //                             SizedBox(height: 12),
-  //                             Text(
-  //                               'Loading plans...',
-  //                               style: TextStyle(
-  //                                 color: Color(0xFF6B7280),
-  //                                 fontSize: 13,
-  //                               ),
-  //                             ),
-  //                           ],
-  //                         ),
-  //                       ),
-  //                     );
-  //                   }
-
-  //                   if (provider.error != null) {
-  //                     return Padding(
-  //                       padding: const EdgeInsets.all(24.0),
-  //                       child: Column(
-  //                         mainAxisSize: MainAxisSize.min,
-  //                         children: [
-  //                           Icon(
-  //                             Icons.error_outline_rounded,
-  //                             color: Colors.red.shade400,
-  //                             size: 48,
-  //                           ),
-  //                           const SizedBox(height: 12),
-  //                           const Text(
-  //                             'Unable to Load Plans',
-  //                             style: TextStyle(
-  //                               fontSize: 16,
-  //                               fontWeight: FontWeight.bold,
-  //                               color: Color(0xFF1F2937),
-  //                             ),
-  //                           ),
-  //                           const SizedBox(height: 6),
-  //                           Text(
-  //                             'Please try again',
-  //                             style: TextStyle(
-  //                               color: Colors.grey.shade600,
-  //                               fontSize: 13,
-  //                             ),
-  //                           ),
-  //                           const SizedBox(height: 16),
-  //                           ElevatedButton.icon(
-  //                             onPressed: () => provider.fetchAllPlans(),
-  //                             style: ElevatedButton.styleFrom(
-  //                               backgroundColor: const Color(0xFF6366F1),
-  //                               foregroundColor: Colors.white,
-  //                               padding: const EdgeInsets.symmetric(
-  //                                 horizontal: 20,
-  //                                 vertical: 12,
-  //                               ),
-  //                               shape: RoundedRectangleBorder(
-  //                                 borderRadius: BorderRadius.circular(10),
-  //                               ),
-  //                               elevation: 0,
-  //                             ),
-  //                             icon: const Icon(Icons.refresh_rounded, size: 18),
-  //                             label: const Text(
-  //                               'Try Again',
-  //                               style: TextStyle(
-  //                                 fontSize: 14,
-  //                                 fontWeight: FontWeight.w600,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     );
-  //                   }
-
-  //                   if (provider.plans.isNotEmpty) {
-  //                     return SingleChildScrollView(
-  //                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-  //                       child: AnimatedPlanList(
-  //                         plans: provider.plans,
-  //                         onPlanSelected: (plan) {
-  //                           Navigator.of(context).pop();
-  //                           Navigator.push(
-  //                             context,
-  //                             MaterialPageRoute(
-  //                               builder: (context) =>
-  //                                   PlanDetailsAndPaymentScreen(plan: plan),
-  //                             ),
-  //                           );
-  //                         },
-  //                       ),
-  //                     );
-  //                   }
-
-  //                   return Padding(
-  //                     padding: const EdgeInsets.all(24.0),
-  //                     child: Column(
-  //                       mainAxisSize: MainAxisSize.min,
-  //                       children: [
-  //                         Icon(
-  //                           Icons.shopping_bag_outlined,
-  //                           size: 48,
-  //                           color: Colors.grey.shade400,
-  //                         ),
-  //                         const SizedBox(height: 12),
-  //                         Text(
-  //                           'No Plans Available',
-  //                           style: TextStyle(
-  //                             fontSize: 16,
-  //                             fontWeight: FontWeight.bold,
-  //                             color: Colors.grey.shade700,
-  //                           ),
-  //                         ),
-  //                         const SizedBox(height: 4),
-  //                         Text(
-  //                           'Please check back later',
-  //                           style: TextStyle(
-  //                             color: Colors.grey.shade500,
-  //                             fontSize: 13,
-  //                           ),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   );
-  //                 },
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // void showSubscriptionModal(BuildContext context) async {
-  //   final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
-
-  //   if (myPlanProvider.isPurchase == true) {
-  //     return;
-  //   }
-
-  //   final hasShownRecently = await ModalPreferences.hasShownSubscriptionModal();
-  //   final shouldShowAgain =
-  //       await ModalPreferences.shouldShowSubscriptionModalAgain(daysBetween: 7);
-
-  //   if (hasShownRecently && !shouldShowAgain) {
-  //     print('Subscription modal shown recently, skipping');
-  //     return;
-  //   }
-
-  //   final planProvider = Provider.of<GetAllPlanProvider>(
-  //     context,
-  //     listen: false,
-  //   );
-  //   if (planProvider.plans.isEmpty && !planProvider.isLoading) {
-  //     planProvider.fetchAllPlans();
-  //   }
-
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: true,
-  //     builder: (context) => Dialog(
-  //       backgroundColor: Colors.transparent,
-  //       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-  //       child: Container(
-  //         width: MediaQuery.of(context).size.width * 0.9,
-  //         height: MediaQuery.of(context).size.height * 0.85,
-  //         decoration: BoxDecoration(
-  //           gradient: const LinearGradient(
-  //             begin: Alignment.topLeft,
-  //             end: Alignment.bottomRight,
-  //             colors: [
-  //               Color(0xFF6366F1),
-  //               Color(0xFF8B5CF6),
-  //               Color(0xFFA855F7),
-  //             ],
-  //           ),
-  //           borderRadius: BorderRadius.circular(32),
-  //           boxShadow: [
-  //             BoxShadow(
-  //               color: const Color(0xFF6366F1).withOpacity(0.4),
-  //               blurRadius: 40,
-  //               offset: const Offset(0, 20),
-  //             ),
-  //           ],
-  //         ),
-  //         child: Stack(
-  //           children: [
-  //             // Decorative circles
-  //             Positioned(
-  //               top: -50,
-  //               right: -50,
-  //               child: Container(
-  //                 width: 150,
-  //                 height: 150,
-  //                 decoration: BoxDecoration(
-  //                   shape: BoxShape.circle,
-  //                   color: Colors.white.withOpacity(0.1),
-  //                 ),
-  //               ),
-  //             ),
-  //             Positioned(
-  //               bottom: -30,
-  //               left: -30,
-  //               child: Container(
-  //                 width: 100,
-  //                 height: 100,
-  //                 decoration: BoxDecoration(
-  //                   shape: BoxShape.circle,
-  //                   color: Colors.white.withOpacity(0.1),
-  //                 ),
-  //               ),
-  //             ),
-
-  //             // Main content
-  //             Column(
-  //               children: [
-  //                 // Header with close button
-  //                 Padding(
-  //                   padding: const EdgeInsets.all(20),
-  //                   child: Row(
-  //                     mainAxisAlignment: MainAxisAlignment.end,
-  //                     children: [
-  //                       GestureDetector(
-  //                         onTap: () => Navigator.pop(context),
-  //                         child: Container(
-  //                           padding: const EdgeInsets.all(8),
-  //                           decoration: BoxDecoration(
-  //                             color: Colors.white.withOpacity(0.2),
-  //                             shape: BoxShape.circle,
-  //                           ),
-  //                           child: const Icon(
-  //                             Icons.close,
-  //                             color: Colors.white,
-  //                             size: 20,
-  //                           ),
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-
-  //                 // Crown Icon & Title Section
-  //                 Container(
-  //                   padding: const EdgeInsets.symmetric(horizontal: 32),
-  //                   child: Column(
-  //                     children: [
-  //                       Container(
-  //                         width: 90,
-  //                         height: 90,
-  //                         decoration: BoxDecoration(
-  //                           color: Colors.white.withOpacity(0.2),
-  //                           shape: BoxShape.circle,
-  //                           boxShadow: [
-  //                             BoxShadow(
-  //                               color: Colors.black.withOpacity(0.1),
-  //                               blurRadius: 20,
-  //                               offset: const Offset(0, 10),
-  //                             ),
-  //                           ],
-  //                         ),
-  //                         child: const Icon(
-  //                           Icons.workspace_premium_rounded,
-  //                           color: Colors.white,
-  //                           size: 50,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 24),
-  //                       const Text(
-  //                         'Go Premium',
-  //                         style: TextStyle(
-  //                           fontSize: 32,
-  //                           fontWeight: FontWeight.bold,
-  //                           color: Colors.white,
-  //                           letterSpacing: -1,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 8),
-  //                       Text(
-  //                         'Unlock all features and take your\nexperience to the next level',
-  //                         style: TextStyle(
-  //                           fontSize: 15,
-  //                           color: Colors.white.withOpacity(0.9),
-  //                           height: 1.5,
-  //                         ),
-  //                         textAlign: TextAlign.center,
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-
-  //                 const SizedBox(height: 30),
-
-  //                 // Plans Container
-  //                 Expanded(
-  //                   child: Container(
-  //                     margin: const EdgeInsets.symmetric(horizontal: 20),
-  //                     padding: const EdgeInsets.all(24),
-  //                     decoration: BoxDecoration(
-  //                       color: Colors.white,
-  //                       borderRadius: BorderRadius.circular(24),
-  //                     ),
-  //                     child: Consumer<GetAllPlanProvider>(
-  //                       builder: (context, provider, child) {
-  //                         if (provider.isLoading) {
-  //                           return const Center(
-  //                             child: Column(
-  //                               mainAxisSize: MainAxisSize.min,
-  //                               children: [
-  //                                 CircularProgressIndicator(
-  //                                   color: Color(0xFF6366F1),
-  //                                   strokeWidth: 3,
-  //                                 ),
-  //                                 SizedBox(height: 16),
-  //                                 Text(
-  //                                   'Loading premium plans...',
-  //                                   style: TextStyle(
-  //                                     color: Color(0xFF6B7280),
-  //                                     fontSize: 14,
-  //                                     fontWeight: FontWeight.w500,
-  //                                   ),
-  //                                 ),
-  //                               ],
-  //                             ),
-  //                           );
-  //                         }
-
-  //                         if (provider.error != null) {
-  //                           return Center(
-  //                             child: Column(
-  //                               mainAxisSize: MainAxisSize.min,
-  //                               children: [
-  //                                 Container(
-  //                                   padding: const EdgeInsets.all(16),
-  //                                   decoration: BoxDecoration(
-  //                                     color: Colors.red.shade50,
-  //                                     shape: BoxShape.circle,
-  //                                   ),
-  //                                   child: Icon(
-  //                                     Icons.error_outline_rounded,
-  //                                     color: Colors.red.shade400,
-  //                                     size: 48,
-  //                                   ),
-  //                                 ),
-  //                                 const SizedBox(height: 16),
-  //                                 const Text(
-  //                                   'Oops! Something went wrong',
-  //                                   style: TextStyle(
-  //                                     fontSize: 18,
-  //                                     fontWeight: FontWeight.bold,
-  //                                     color: Color(0xFF1F2937),
-  //                                   ),
-  //                                 ),
-  //                                 const SizedBox(height: 8),
-  //                                 Text(
-  //                                   'Unable to load plans. Please try again.',
-  //                                   style: TextStyle(
-  //                                     color: Colors.grey.shade600,
-  //                                     fontSize: 14,
-  //                                   ),
-  //                                   textAlign: TextAlign.center,
-  //                                 ),
-  //                                 const SizedBox(height: 24),
-  //                                 ElevatedButton(
-  //                                   onPressed: () => provider.fetchAllPlans(),
-  //                                   style: ElevatedButton.styleFrom(
-  //                                     backgroundColor: const Color(0xFF6366F1),
-  //                                     foregroundColor: Colors.white,
-  //                                     padding: const EdgeInsets.symmetric(
-  //                                       horizontal: 32,
-  //                                       vertical: 16,
-  //                                     ),
-  //                                     shape: RoundedRectangleBorder(
-  //                                       borderRadius: BorderRadius.circular(12),
-  //                                     ),
-  //                                     elevation: 0,
-  //                                   ),
-  //                                   child: const Text(
-  //                                     'Try Again',
-  //                                     style: TextStyle(
-  //                                       fontSize: 15,
-  //                                       fontWeight: FontWeight.w600,
-  //                                     ),
-  //                                   ),
-  //                                 ),
-  //                               ],
-  //                             ),
-  //                           );
-  //                         }
-
-  //                         if (provider.plans.isNotEmpty) {
-  //                           return AnimatedPlanList(
-  //                             plans: provider.plans,
-  //                             onPlanSelected: (plan) {
-  //                               Navigator.of(context).pop();
-  //                               Navigator.push(
-  //                                 context,
-  //                                 MaterialPageRoute(
-  //                                   builder: (context) =>
-  //                                       PlanDetailsAndPaymentScreen(plan: plan),
-  //                                 ),
-  //                               );
-  //                             },
-  //                           );
-  //                         }
-
-  //                         return Center(
-  //                           child: Column(
-  //                             mainAxisSize: MainAxisSize.min,
-  //                             children: [
-  //                               Container(
-  //                                 padding: const EdgeInsets.all(16),
-  //                                 decoration: BoxDecoration(
-  //                                   color: Colors.grey.shade100,
-  //                                   shape: BoxShape.circle,
-  //                                 ),
-  //                                 child: Icon(
-  //                                   Icons.shopping_bag_outlined,
-  //                                   size: 48,
-  //                                   color: Colors.grey.shade400,
-  //                                 ),
-  //                               ),
-  //                               const SizedBox(height: 16),
-  //                               Text(
-  //                                 'No Plans Available',
-  //                                 style: TextStyle(
-  //                                   fontSize: 18,
-  //                                   fontWeight: FontWeight.bold,
-  //                                   color: Colors.grey.shade700,
-  //                                 ),
-  //                               ),
-  //                               const SizedBox(height: 8),
-  //                               Text(
-  //                                 'Check back soon for premium options',
-  //                                 style: TextStyle(
-  //                                   color: Colors.grey.shade500,
-  //                                   fontSize: 14,
-  //                                 ),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                         );
-  //                       },
-  //                     ),
-  //                   ),
-  //                 ),
-
-  //                 // Footer with subscription info
-  //                 Container(
-  //                   margin: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-  //                   padding: const EdgeInsets.all(20),
-  //                   decoration: BoxDecoration(
-  //                     color: Colors.white.withOpacity(0.15),
-  //                     borderRadius: BorderRadius.circular(16),
-  //                     border: Border.all(
-  //                       color: Colors.white.withOpacity(0.3),
-  //                       width: 1,
-  //                     ),
-  //                   ),
-  //                   child: Column(
-  //                     children: [
-  //                       Row(
-  //                         children: [
-  //                           Icon(
-  //                             Icons.autorenew_rounded,
-  //                             size: 16,
-  //                             color: Colors.white.withOpacity(0.9),
-  //                           ),
-  //                           const SizedBox(width: 8),
-  //                           Expanded(
-  //                             child: Text(
-  //                               'Auto-renews unless cancelled 24h before period ends',
-  //                               style: TextStyle(
-  //                                 fontSize: 11,
-  //                                 color: Colors.white.withOpacity(0.95),
-  //                                 height: 1.4,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(height: 14),
-  //                       Row(
-  //                         mainAxisAlignment: MainAxisAlignment.center,
-  //                         children: [
-  //                           GestureDetector(
-  //                             onTap: () => _launchURL('https://editezy.onrender.com/privacy-and-policy'),
-  //                             child: Text(
-  //                               'Privacy Policy',
-  //                               style: TextStyle(
-  //                                 fontSize: 12,
-  //                                 color: Colors.white,
-  //                                 fontWeight: FontWeight.w600,
-  //                                 decoration: TextDecoration.underline,
-  //                                 decorationColor: Colors.white,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                           Padding(
-  //                             padding: const EdgeInsets.symmetric(horizontal: 12),
-  //                             child: Text(
-  //                               '•',
-  //                               style: TextStyle(
-  //                                 color: Colors.white.withOpacity(0.7),
-  //                                 fontSize: 12,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                           GestureDetector(
-  //                             onTap: () => _launchURL('https://editezy.onrender.com/terms-and-conditions'),
-  //                             child: Text(
-  //                               'Terms of Use',
-  //                               style: TextStyle(
-  //                                 fontSize: 12,
-  //                                 color: Colors.white,
-  //                                 fontWeight: FontWeight.w600,
-  //                                 decoration: TextDecoration.underline,
-  //                                 decorationColor: Colors.white,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // // Helper method to launch URLs
-  // void _launchURL(String url) async {
-  //   final Uri uri = Uri.parse(url);
-  //   if (await canLaunchUrl(uri)) {
-  //     await launchUrl(uri, mode: LaunchMode.externalApplication);
-  //   }
-  // }
-
-  // // void _showPremiumDialog() {
-  // //   showDialog(
-  // //     context: context,
-  // //     builder: (context) => AlertDialog(
-  // //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-  // //       title: Row(
-  // //         children: [
-  // //           Container(
-  // //             padding: const EdgeInsets.all(8),
-  // //             decoration: BoxDecoration(
-  // //               color: const Color(0xFF6366F1).withOpacity(0.1),
-  // //               shape: BoxShape.circle,
-  // //             ),
-  // //             child: const Icon(
-  // //               Icons.workspace_premium,
-  // //               color: Color(0xFF6366F1),
-  // //               size: 24,
-  // //             ),
-  // //           ),
-  // //           const SizedBox(width: 12),
-  // //           const Text(
-  // //             'Premium Feature',
-  // //             style: TextStyle(
-  // //               fontSize: 18,
-  // //               fontWeight: FontWeight.bold,
-  // //             ),
-  // //           ),
-  // //         ],
-  // //       ),
-  // //       content: const Text(
-  // //         'This template requires a premium subscription. Upgrade now to unlock all premium features and templates!',
-  // //         style: TextStyle(fontSize: 14),
-  // //       ),
-  // //       actions: [
-  // //         TextButton(
-  // //           onPressed: () => Navigator.pop(context),
-  // //           child: const Text(
-  // //             'Cancel',
-  // //             style: TextStyle(color: Color(0xFF6B7280)),
-  // //           ),
-  // //         ),
-  // //         ElevatedButton(
-  // //           onPressed: () {
-  // //             Navigator.pop(context);
-  // //             showSubscriptionModal(context);
-  // //           },
-  // //           style: ElevatedButton.styleFrom(
-  // //             backgroundColor: const Color(0xFF6366F1),
-  // //             foregroundColor: Colors.white,
-  // //             shape: RoundedRectangleBorder(
-  // //               borderRadius: BorderRadius.circular(8),
-  // //             ),
-  // //           ),
-  // //           child: const Text('Upgrade Now'),
-  // //         ),
-  // //       ],
-  // //     ),
-  // //   );
-  // // }
-
   void _showPremiumDialog() {
     showDialog(
       context: context,
@@ -3542,654 +2719,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
-
-  //   void showReferAndEarnModal(BuildContext context) {
-  //     String? userId;
-  //     String? userReferralCode;
-  //     bool isLoading = true;
-  //     String? errorMessage;
-
-  //     showGeneralDialog(
-  //       context: context,
-  //       barrierDismissible: true,
-  //       barrierLabel: 'Refer and Earn',
-  //       barrierColor: Colors.black.withOpacity(0.5),
-  //       transitionDuration: const Duration(milliseconds: 300),
-  //       pageBuilder: (context, animation, secondaryAnimation) {
-  //         return const SizedBox.shrink();
-  //       },
-  //       transitionBuilder: (context, animation, secondaryAnimation, child) {
-  //         return FadeTransition(
-  //           opacity: animation,
-  //           child: ScaleTransition(
-  //             scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-  //               CurvedAnimation(parent: animation, curve: Curves.easeOut),
-  //             ),
-  //             child: Center(
-  //               child: Material(
-  //                 color: Colors.transparent,
-  //                 child: StatefulBuilder(
-  //                   builder: (context, setState) {
-  //                     Future<void> loadUserDataAndFetchReferralCode() async {
-  //                       try {
-  //                         setState(() {
-  //                           isLoading = true;
-  //                           errorMessage = null;
-  //                         });
-
-  //                         final userData = await AuthPreferences.getUserData();
-  //                         if (userData != null && userData.user != null) {
-  //                           userId = userData.user.id;
-
-  //                           if (userId != null) {
-  //                             final response = await http.get(
-  //                               Uri.parse(
-  //                                 'http://194.164.148.244:4061/api/users/refferalcode/$userId',
-  //                               ),
-  //                               headers: {'Content-Type': 'application/json'},
-  //                             );
-
-  //                             if (response.statusCode == 200) {
-  //                               final data = json.decode(response.body);
-  //                               String? fetchedCode =
-  //                                   data['referralCode'] ??
-  //                                   data['refferalCode'] ??
-  //                                   data['code'] ??
-  //                                   data['referral_code'] ??
-  //                                   data['refferal_code'];
-
-  //                               setState(() {
-  //                                 isLoading = false;
-  //                                 userReferralCode = fetchedCode;
-  //                                 errorMessage = fetchedCode == null
-  //                                     ? 'No referral code found'
-  //                                     : null;
-  //                               });
-  //                             } else {
-  //                               setState(() {
-  //                                 userReferralCode = null;
-  //                                 errorMessage = 'Failed to load referral code';
-  //                                 isLoading = false;
-  //                               });
-  //                             }
-  //                           } else {
-  //                             setState(() {
-  //                               userReferralCode = null;
-  //                               errorMessage = 'User ID is null';
-  //                               isLoading = false;
-  //                             });
-  //                           }
-  //                         } else {
-  //                           setState(() {
-  //                             userReferralCode = null;
-  //                             errorMessage = 'User data not found';
-  //                             isLoading = false;
-  //                           });
-  //                         }
-  //                       } catch (e) {
-  //                         setState(() {
-  //                           userReferralCode = null;
-  //                           errorMessage = 'Network error: ${e.toString()}';
-  //                           isLoading = false;
-  //                         });
-  //                       }
-  //                     }
-
-  //                     void shareReferralCode() {
-  //                       if (userReferralCode != null &&
-  //                           userReferralCode!.isNotEmpty) {
-  //                         final shareText =
-  //                             '''
-  // 🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
-
-  // Use my referral code: $userReferralCode
-
-  // You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
-
-  // Download EditEzy now:
-  // https://play.google.com/store/apps/details?id=com.posternova.posternova
-
-  // Don't miss out on this opportunity! 🚀
-  // ''';
-  //                         Share.share(
-  //                           shareText,
-  //                           subject: 'Join EditEzy using my referral code',
-  //                         );
-  //                       }
-  //                     }
-
-  //                     //                     void shareReferralCode() {
-  //                     //                       if (userReferralCode != null &&
-  //                     //                           userReferralCode!.isNotEmpty) {
-  //                     //                         final shareText =
-  //                     //                             '''
-  //                     // 🎉 Join me on our amazing app!
-
-  //                     // Use my referral code: $userReferralCode
-
-  //                     // You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
-
-  //                     // Don't miss out on this opportunity! 🚀
-  //                     // ''';
-  //                     //                         Share.share(
-  //                     //                           shareText,
-  //                     //                           subject: 'Join using my referral code',
-  //                     //                         );
-  //                     //                       }
-  //                     //                     }
-
-  //                     WidgetsBinding.instance.addPostFrameCallback((_) {
-  //                       if (isLoading &&
-  //                           userReferralCode == null &&
-  //                           errorMessage == null) {
-  //                         loadUserDataAndFetchReferralCode();
-  //                       }
-  //                     });
-
-  //                     return Container(
-  //                       margin: const EdgeInsets.symmetric(horizontal: 24),
-  //                       constraints: BoxConstraints(
-  //                         maxHeight: MediaQuery.of(context).size.height * 0.8,
-  //                         maxWidth: 500,
-  //                       ),
-  //                       decoration: BoxDecoration(
-  //                         color: Colors.white,
-  //                         borderRadius: BorderRadius.circular(16),
-  //                         boxShadow: [
-  //                           BoxShadow(
-  //                             color: Colors.black.withOpacity(0.1),
-  //                             blurRadius: 20,
-  //                             offset: const Offset(0, 4),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       child: ClipRRect(
-  //                         borderRadius: BorderRadius.circular(16),
-  //                         child: Column(
-  //                           mainAxisSize: MainAxisSize.min,
-  //                           children: [
-  //                             // Header
-  //                             Container(
-  //                               padding: const EdgeInsets.symmetric(
-  //                                 horizontal: 20,
-  //                                 vertical: 16,
-  //                               ),
-  //                               decoration: BoxDecoration(
-  //                                 color: Colors.grey[50],
-  //                                 border: Border(
-  //                                   bottom: BorderSide(color: Colors.grey[200]!),
-  //                                 ),
-  //                               ),
-  //                               child: Row(
-  //                                 children: [
-  //                                   Container(
-  //                                     padding: const EdgeInsets.all(8),
-  //                                     decoration: BoxDecoration(
-  //                                       color: const Color(
-  //                                         0xFF4F46E5,
-  //                                       ).withOpacity(0.1),
-  //                                       borderRadius: BorderRadius.circular(8),
-  //                                     ),
-  //                                     child: const Icon(
-  //                                       Icons.people_outline,
-  //                                       color: Color(0xFF4F46E5),
-  //                                       size: 24,
-  //                                     ),
-  //                                   ),
-  //                                   const SizedBox(width: 12),
-  //                                   const Expanded(
-  //                                     child: Text(
-  //                                       'Refer & Earn',
-  //                                       style: TextStyle(
-  //                                         fontSize: 20,
-  //                                         fontWeight: FontWeight.w600,
-  //                                         color: Color(0xFF111827),
-  //                                       ),
-  //                                     ),
-  //                                   ),
-  //                                   IconButton(
-  //                                     onPressed: () => Navigator.pop(context),
-  //                                     icon: const Icon(Icons.close, size: 24),
-  //                                     color: Colors.grey[600],
-  //                                     padding: EdgeInsets.zero,
-  //                                     constraints: const BoxConstraints(),
-  //                                   ),
-  //                                 ],
-  //                               ),
-  //                             ),
-
-  //                             // Content
-  //                             Flexible(
-  //                               child: SingleChildScrollView(
-  //                                 padding: const EdgeInsets.all(24),
-  //                                 child: Column(
-  //                                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                                   children: [
-  //                                     // Info Card
-  //                                     Container(
-  //                                       width: double.infinity,
-  //                                       padding: const EdgeInsets.all(16),
-  //                                       decoration: BoxDecoration(
-  //                                         color: const Color(0xFFF0F9FF),
-  //                                         borderRadius: BorderRadius.circular(12),
-  //                                         border: Border.all(
-  //                                           color: const Color(0xFFBAE6FD),
-  //                                         ),
-  //                                       ),
-  //                                       child: Row(
-  //                                         children: [
-  //                                           Container(
-  //                                             padding: const EdgeInsets.all(8),
-  //                                             decoration: BoxDecoration(
-  //                                               color: const Color(0xFF0EA5E9),
-  //                                               borderRadius:
-  //                                                   BorderRadius.circular(8),
-  //                                             ),
-  //                                             child: const Icon(
-  //                                               Icons.info_outline,
-  //                                               color: Colors.white,
-  //                                               size: 20,
-  //                                             ),
-  //                                           ),
-  //                                           const SizedBox(width: 12),
-  //                                           const Expanded(
-  //                                             child: Text(
-  //                                               'Share your referral code with friends and earn rewards when they upgrade.',
-  //                                               style: TextStyle(
-  //                                                 fontSize: 14,
-  //                                                 color: Color(0xFF0C4A6E),
-  //                                                 height: 1.4,
-  //                                               ),
-  //                                             ),
-  //                                           ),
-  //                                         ],
-  //                                       ),
-  //                                     ),
-
-  //                                     const SizedBox(height: 24),
-
-  //                                     // Referral Code Section
-  //                                     const Text(
-  //                                       'Your Referral Code',
-  //                                       style: TextStyle(
-  //                                         fontSize: 14,
-  //                                         fontWeight: FontWeight.w600,
-  //                                         color: Color(0xFF374151),
-  //                                       ),
-  //                                     ),
-  //                                     const SizedBox(height: 12),
-
-  //                                     AnimatedSwitcher(
-  //                                       duration: const Duration(
-  //                                         milliseconds: 300,
-  //                                       ),
-  //                                       child: isLoading
-  //                                           ? Container(
-  //                                               key: const ValueKey('loading'),
-  //                                               padding: const EdgeInsets.all(20),
-  //                                               decoration: BoxDecoration(
-  //                                                 color: Colors.grey[50],
-  //                                                 borderRadius:
-  //                                                     BorderRadius.circular(12),
-  //                                                 border: Border.all(
-  //                                                   color: Colors.grey[200]!,
-  //                                                 ),
-  //                                               ),
-  //                                               child: const Row(
-  //                                                 mainAxisAlignment:
-  //                                                     MainAxisAlignment.center,
-  //                                                 children: [
-  //                                                   SizedBox(
-  //                                                     width: 20,
-  //                                                     height: 20,
-  //                                                     child:
-  //                                                         CircularProgressIndicator(
-  //                                                           strokeWidth: 2,
-  //                                                           color: Color(
-  //                                                             0xFF4F46E5,
-  //                                                           ),
-  //                                                         ),
-  //                                                   ),
-  //                                                   SizedBox(width: 12),
-  //                                                   Text(
-  //                                                     'Loading...',
-  //                                                     style: TextStyle(
-  //                                                       fontSize: 14,
-  //                                                       color: Color(0xFF6B7280),
-  //                                                     ),
-  //                                                   ),
-  //                                                 ],
-  //                                               ),
-  //                                             )
-  //                                           : (errorMessage != null)
-  //                                           ? Container(
-  //                                               key: const ValueKey('error'),
-  //                                               padding: const EdgeInsets.all(16),
-  //                                               decoration: BoxDecoration(
-  //                                                 color: const Color(0xFFFEF2F2),
-  //                                                 borderRadius:
-  //                                                     BorderRadius.circular(12),
-  //                                                 border: Border.all(
-  //                                                   color: const Color(
-  //                                                     0xFFFECACA,
-  //                                                   ),
-  //                                                 ),
-  //                                               ),
-  //                                               child: Column(
-  //                                                 children: [
-  //                                                   Row(
-  //                                                     children: [
-  //                                                       const Icon(
-  //                                                         Icons.error_outline,
-  //                                                         color: Color(
-  //                                                           0xFFEF4444,
-  //                                                         ),
-  //                                                         size: 20,
-  //                                                       ),
-  //                                                       const SizedBox(width: 8),
-  //                                                       Expanded(
-  //                                                         child: Text(
-  //                                                           errorMessage!,
-  //                                                           style:
-  //                                                               const TextStyle(
-  //                                                                 fontSize: 14,
-  //                                                                 color: Color(
-  //                                                                   0xFF991B1B,
-  //                                                                 ),
-  //                                                               ),
-  //                                                         ),
-  //                                                       ),
-  //                                                     ],
-  //                                                   ),
-  //                                                   const SizedBox(height: 12),
-  //                                                   SizedBox(
-  //                                                     width: double.infinity,
-  //                                                     child: OutlinedButton.icon(
-  //                                                       onPressed:
-  //                                                           loadUserDataAndFetchReferralCode,
-  //                                                       style: OutlinedButton.styleFrom(
-  //                                                         foregroundColor:
-  //                                                             const Color(
-  //                                                               0xFFEF4444,
-  //                                                             ),
-  //                                                         side: const BorderSide(
-  //                                                           color: Color(
-  //                                                             0xFFEF4444,
-  //                                                           ),
-  //                                                         ),
-  //                                                         padding:
-  //                                                             const EdgeInsets.symmetric(
-  //                                                               vertical: 12,
-  //                                                             ),
-  //                                                         shape: RoundedRectangleBorder(
-  //                                                           borderRadius:
-  //                                                               BorderRadius.circular(
-  //                                                                 8,
-  //                                                               ),
-  //                                                         ),
-  //                                                       ),
-  //                                                       icon: const Icon(
-  //                                                         Icons.refresh,
-  //                                                         size: 18,
-  //                                                       ),
-  //                                                       label: const Text(
-  //                                                         'Retry',
-  //                                                       ),
-  //                                                     ),
-  //                                                   ),
-  //                                                 ],
-  //                                               ),
-  //                                             )
-  //                                           : Container(
-  //                                               key: const ValueKey('code'),
-  //                                               padding: const EdgeInsets.all(16),
-  //                                               decoration: BoxDecoration(
-  //                                                 color: Colors.grey[50],
-  //                                                 borderRadius:
-  //                                                     BorderRadius.circular(12),
-  //                                                 border: Border.all(
-  //                                                   color: Colors.grey[300]!,
-  //                                                 ),
-  //                                               ),
-  //                                               child: Row(
-  //                                                 children: [
-  //                                                   Expanded(
-  //                                                     child: Column(
-  //                                                       crossAxisAlignment:
-  //                                                           CrossAxisAlignment
-  //                                                               .start,
-  //                                                       children: [
-  //                                                         Text(
-  //                                                           userReferralCode ??
-  //                                                               '--',
-  //                                                           style:
-  //                                                               const TextStyle(
-  //                                                                 fontSize: 24,
-  //                                                                 fontWeight:
-  //                                                                     FontWeight
-  //                                                                         .w700,
-  //                                                                 letterSpacing:
-  //                                                                     2,
-  //                                                                 color: Color(
-  //                                                                   0xFF4F46E5,
-  //                                                                 ),
-  //                                                               ),
-  //                                                         ),
-  //                                                         const SizedBox(
-  //                                                           height: 4,
-  //                                                         ),
-  //                                                         const Text(
-  //                                                           'Tap to copy',
-  //                                                           style: TextStyle(
-  //                                                             fontSize: 12,
-  //                                                             color: Color(
-  //                                                               0xFF6B7280,
-  //                                                             ),
-  //                                                           ),
-  //                                                         ),
-  //                                                       ],
-  //                                                     ),
-  //                                                   ),
-  //                                                   IconButton(
-  //                                                     onPressed: () {
-  //                                                       if (userReferralCode !=
-  //                                                               null &&
-  //                                                           userReferralCode!
-  //                                                               .isNotEmpty) {
-  //                                                         Clipboard.setData(
-  //                                                           ClipboardData(
-  //                                                             text:
-  //                                                                 userReferralCode!,
-  //                                                           ),
-  //                                                         );
-  //                                                         ScaffoldMessenger.of(
-  //                                                           context,
-  //                                                         ).showSnackBar(
-  //                                                           const SnackBar(
-  //                                                             content: Text(
-  //                                                               'Referral code copied to clipboard',
-  //                                                             ),
-  //                                                             behavior:
-  //                                                                 SnackBarBehavior
-  //                                                                     .floating,
-  //                                                             backgroundColor:
-  //                                                                 Color(
-  //                                                                   0xFF10B981,
-  //                                                                 ),
-  //                                                             duration: Duration(
-  //                                                               seconds: 2,
-  //                                                             ),
-  //                                                           ),
-  //                                                         );
-  //                                                       }
-  //                                                     },
-  //                                                     icon: const Icon(
-  //                                                       Icons.copy,
-  //                                                       size: 20,
-  //                                                     ),
-  //                                                     color: const Color(
-  //                                                       0xFF4F46E5,
-  //                                                     ),
-  //                                                     style: IconButton.styleFrom(
-  //                                                       backgroundColor:
-  //                                                           const Color(
-  //                                                             0xFF4F46E5,
-  //                                                           ).withOpacity(0.1),
-  //                                                     ),
-  //                                                   ),
-  //                                                 ],
-  //                                               ),
-  //                                             ),
-  //                                     ),
-
-  //                                     const SizedBox(height: 24),
-
-  //                                     // How It Works
-  //                                     const Text(
-  //                                       'How It Works',
-  //                                       style: TextStyle(
-  //                                         fontSize: 14,
-  //                                         fontWeight: FontWeight.w600,
-  //                                         color: Color(0xFF374151),
-  //                                       ),
-  //                                     ),
-  //                                     const SizedBox(height: 12),
-
-  //                                     _buildSteps(
-  //                                       number: '1',
-  //                                       title: 'Share Your Code',
-  //                                       description:
-  //                                           'Send your referral code to friends via any platform',
-  //                                     ),
-  //                                     const SizedBox(height: 12),
-  //                                     _buildSteps(
-  //                                       number: '2',
-  //                                       title: 'Friend Signs Up',
-  //                                       description:
-  //                                           'They enter your code during registration',
-  //                                     ),
-  //                                     const SizedBox(height: 12),
-  //                                     _buildSteps(
-  //                                       number: '3',
-  //                                       title: 'Earn Rewards',
-  //                                       description:
-  //                                           'Get ₹200 when they upgrade their account',
-  //                                     ),
-
-  //                                     const SizedBox(height: 24),
-
-  //                                     // Action Buttons
-  //                                     Row(
-  //                                       children: [
-  //                                         Expanded(
-  //                                           child: ElevatedButton.icon(
-  //                                             onPressed: () {
-  //                                               if (userReferralCode != null &&
-  //                                                   userReferralCode!
-  //                                                       .isNotEmpty) {
-  //                                                 Clipboard.setData(
-  //                                                   ClipboardData(
-  //                                                     text: userReferralCode!,
-  //                                                   ),
-  //                                                 );
-  //                                                 ScaffoldMessenger.of(
-  //                                                   context,
-  //                                                 ).showSnackBar(
-  //                                                   const SnackBar(
-  //                                                     content: Text(
-  //                                                       'Referral code copied!',
-  //                                                     ),
-  //                                                     behavior: SnackBarBehavior
-  //                                                         .floating,
-  //                                                     backgroundColor: Color(
-  //                                                       0xFF10B981,
-  //                                                     ),
-  //                                                     duration: Duration(
-  //                                                       seconds: 2,
-  //                                                     ),
-  //                                                   ),
-  //                                                 );
-  //                                               } else {
-  //                                                 loadUserDataAndFetchReferralCode();
-  //                                               }
-  //                                             },
-  //                                             icon: const Icon(
-  //                                               Icons.copy,
-  //                                               size: 20,
-  //                                             ),
-  //                                             label: const Text('Copy Code'),
-  //                                             style: ElevatedButton.styleFrom(
-  //                                               backgroundColor: const Color(
-  //                                                 0xFF4F46E5,
-  //                                               ),
-  //                                               foregroundColor: Colors.white,
-  //                                               padding:
-  //                                                   const EdgeInsets.symmetric(
-  //                                                     vertical: 14,
-  //                                                   ),
-  //                                               shape: RoundedRectangleBorder(
-  //                                                 borderRadius:
-  //                                                     BorderRadius.circular(10),
-  //                                               ),
-  //                                               elevation: 0,
-  //                                             ),
-  //                                           ),
-  //                                         ),
-  //                                         const SizedBox(width: 12),
-  //                                         Expanded(
-  //                                           child: ElevatedButton.icon(
-  //                                             onPressed:
-  //                                                 (userReferralCode != null &&
-  //                                                     userReferralCode!
-  //                                                         .isNotEmpty)
-  //                                                 ? shareReferralCode
-  //                                                 : null,
-  //                                             icon: const Icon(
-  //                                               Icons.share,
-  //                                               size: 20,
-  //                                             ),
-  //                                             label: const Text('Share'),
-  //                                             style: ElevatedButton.styleFrom(
-  //                                               backgroundColor: const Color(
-  //                                                 0xFF10B981,
-  //                                               ),
-  //                                               foregroundColor: Colors.white,
-  //                                               disabledBackgroundColor:
-  //                                                   Colors.grey[300],
-  //                                               disabledForegroundColor:
-  //                                                   Colors.grey[500],
-  //                                               padding:
-  //                                                   const EdgeInsets.symmetric(
-  //                                                     vertical: 14,
-  //                                                   ),
-  //                                               shape: RoundedRectangleBorder(
-  //                                                 borderRadius:
-  //                                                     BorderRadius.circular(10),
-  //                                               ),
-  //                                               elevation: 0,
-  //                                             ),
-  //                                           ),
-  //                                         ),
-  //                                       ],
-  //                                     ),
-  //                                   ],
-  //                                 ),
-  //                               ),
-  //                             ),
-  //                           ],
-  //                         ),
-  //                       ),
-  //                     );
-  //                   },
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         );
-  //       },
-  //     );
-  //   }
-
   void showReferAndEarnModal(BuildContext context) {
     String? userId;
     String? userReferralCode;
@@ -4231,7 +2760,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           if (userId != null) {
                             final response = await http.get(
                               Uri.parse(
-                                'http://194.164.148.244:4061/api/users/refferalcode/$userId',
+                                'http://31.97.206.144:4061/api/users/refferalcode/$userId',
                               ),
                               headers: {'Content-Type': 'application/json'},
                             );
@@ -5440,3 +3969,4 @@ Don't miss out on this opportunity! 🚀
     );
   }
 }
+ 

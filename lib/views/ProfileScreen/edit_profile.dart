@@ -26,7 +26,7 @@ class _EditProfileState extends State<EditProfile> {
   String? _email;
   String? _mobile;
   
-  final String _baseUrl = 'http://194.164.148.244:4061/api/users';
+  final String _baseUrl = 'http://31.97.206.144:4061/api/users';
 
   @override
   void initState() {

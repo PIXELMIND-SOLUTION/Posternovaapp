@@ -33,15 +33,17 @@ class SmsService {
     final url = Uri.parse(ApiConstants.verifyOtp);
 
     try {
-print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk");
+      print(
+        "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk",
+      );
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(request.tojson()),
       );
 
-    print('Response status code for OTP: ${response.statusCode}');
-    print('Response body: ${response.body}');
+      print('Response status code for OTP: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       return response;
     } on SocketException {
@@ -57,16 +59,16 @@ print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
   /// Resend OTP request
   Future<LoginResponse?> resendOtp(ResendOtpRequest request) async {
     final url = Uri.parse(ApiConstants.resendOtp);
-      
-    // try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(request.toJson()),
-      );
-              final data = jsonDecode(response.body);
 
-      return LoginResponse.fromJson(data);
+    // try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(request.toJson()),
+    );
+    final data = jsonDecode(response.body);
+
+    return LoginResponse.fromJson(data);
     // } on SocketException {
     //   throw 'Please turn on your internet connection';
     // } catch (e) {
@@ -86,8 +88,6 @@ class ResendOtpRequest {
   ResendOtpRequest({required this.mobile});
 
   Map<String, dynamic> toJson() {
-    return {
-      'mobile': mobile,
-    };
+    return {'mobile': mobile};
   }
 }

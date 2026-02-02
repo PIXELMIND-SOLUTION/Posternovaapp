@@ -19,6 +19,7 @@ class CreateCustomerProvider with ChangeNotifier {
     required String dob,
     required String address,
     required String gender,
+    required String religion,
     required String anniversaryDate,
   }) async {
     _isLoading = true;
@@ -33,6 +34,7 @@ class CreateCustomerProvider with ChangeNotifier {
         dob: dob,
         address: address,
         gender: gender,
+        religion: religion,
         anniversaryDate: anniversaryDate,
       );
 
@@ -90,6 +92,7 @@ class CreateCustomerProvider with ChangeNotifier {
     required String address,
     required String gender,
     required String dob,
+    required String religion,
     required String anniversaryDate,
   }) async {
     _isLoading = true;
@@ -105,6 +108,7 @@ class CreateCustomerProvider with ChangeNotifier {
         dob: dob,
         address: address,
         gender: gender,
+        religion: religion,
         anniversaryDate: anniversaryDate,
       );
 

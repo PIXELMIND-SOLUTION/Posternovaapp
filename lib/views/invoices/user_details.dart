@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +23,8 @@ class _AddUserDataState extends State<UserDetails> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController gstController = TextEditingController();
 
+  final TextEditingController gstRateController = TextEditingController();
+
   String? selectedBusinessType;
   bool _isSaving = false;
   bool _isLoading = true;
@@ -38,6 +41,7 @@ class _AddUserDataState extends State<UserDetails> {
     mobileController.dispose();
     emailController.dispose();
     gstController.dispose();
+    gstRateController.dispose();
     super.dispose();
   }
 
@@ -46,14 +50,31 @@ class _AddUserDataState extends State<UserDetails> {
     if (pickedFile != null) {
       final directory = await getApplicationDocumentsDirectory();
       final fileName = basename(pickedFile.path);
-      final savedImage =
-          await File(pickedFile.path).copy('${directory.path}/$fileName');
+      final savedImage = await File(
+        pickedFile.path,
+      ).copy('${directory.path}/$fileName');
 
       setState(() {
         _imageFile = savedImage;
       });
     }
   }
+
+  // Future<void> _saveData() async {
+  //   setState(() => _isSaving = true);
+  //   final prefs = await SharedPreferences.getInstance();
+  //   await prefs.setString('businessName', businessNameController.text);
+  //   await prefs.setString('mobile', mobileController.text);
+  //   await prefs.setString('email', emailController.text);
+  //   await prefs.setString('gst', gstController.text);
+  //   if (_imageFile != null) {
+  //     await prefs.setString('imagePath', _imageFile!.path);
+  //   }
+  //   if (selectedBusinessType != null) {
+  //     await prefs.setString('businessType', selectedBusinessType!);
+  //   }
+  //   setState(() => _isSaving = false);
+  // }
 
   Future<void> _saveData() async {
     setState(() => _isSaving = true);
@@ -62,6 +83,7 @@ class _AddUserDataState extends State<UserDetails> {
     await prefs.setString('mobile', mobileController.text);
     await prefs.setString('email', emailController.text);
     await prefs.setString('gst', gstController.text);
+    await prefs.setString('gst_rate', gstRateController.text); // Add this
     if (_imageFile != null) {
       await prefs.setString('imagePath', _imageFile!.path);
     }
@@ -71,12 +93,31 @@ class _AddUserDataState extends State<UserDetails> {
     setState(() => _isSaving = false);
   }
 
+  // Future<void> _loadData() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   businessNameController.text = prefs.getString('businessName') ?? '';
+  //   mobileController.text = prefs.getString('mobile') ?? '';
+  //   emailController.text = prefs.getString('email') ?? '';
+  //   gstController.text = prefs.getString('gst') ?? '';
+  //   selectedBusinessType = prefs.getString('businessType');
+
+  //   final imagePath = prefs.getString('imagePath');
+  //   if (imagePath != null && File(imagePath).existsSync()) {
+  //     setState(() {
+  //       _imageFile = File(imagePath);
+  //     });
+  //   }
+
+  //   setState(() => _isLoading = false);
+  // }
+
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     businessNameController.text = prefs.getString('businessName') ?? '';
     mobileController.text = prefs.getString('mobile') ?? '';
     emailController.text = prefs.getString('email') ?? '';
     gstController.text = prefs.getString('gst') ?? '';
+    gstRateController.text = prefs.getString('gst_rate') ?? ''; // Add this
     selectedBusinessType = prefs.getString('businessType');
 
     final imagePath = prefs.getString('imagePath');
@@ -85,14 +126,20 @@ class _AddUserDataState extends State<UserDetails> {
         _imageFile = File(imagePath);
       });
     }
-    
+
     setState(() => _isLoading = false);
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon, BuildContext context) {
+  InputDecoration _inputDecoration(
+    String label,
+    IconData icon,
+    BuildContext context,
+  ) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDarkMode ? const Color(0xFF4A9EFF) : const Color(0xFF3498DB);
-    
+    final accentColor = isDarkMode
+        ? const Color(0xFF4A9EFF)
+        : const Color(0xFF3498DB);
+
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(
@@ -100,19 +147,13 @@ class _AddUserDataState extends State<UserDetails> {
         fontSize: 14,
         fontWeight: FontWeight.w500,
       ),
-      prefixIcon: Icon(
-        icon,
-        color: accentColor.withOpacity(0.7),
-        size: 20,
-      ),
+      prefixIcon: Icon(icon, color: accentColor.withOpacity(0.7), size: 20),
       filled: true,
-      fillColor: isDarkMode 
-          ? const Color(0xFF1E1E1E) 
-          : Colors.grey[50],
+      fillColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[50],
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: isDarkMode 
+          color: isDarkMode
               ? Colors.grey.withOpacity(0.2)
               : Colors.grey.withOpacity(0.3),
           width: 1,
@@ -121,7 +162,7 @@ class _AddUserDataState extends State<UserDetails> {
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: isDarkMode 
+          color: isDarkMode
               ? Colors.grey.withOpacity(0.2)
               : Colors.grey.withOpacity(0.3),
           width: 1,
@@ -129,24 +170,15 @@ class _AddUserDataState extends State<UserDetails> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: accentColor,
-          width: 2,
-        ),
+        borderSide: BorderSide(color: accentColor, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Colors.red,
-          width: 1,
-        ),
+        borderSide: const BorderSide(color: Colors.red, width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Colors.red,
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: Colors.red, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
@@ -156,11 +188,17 @@ class _AddUserDataState extends State<UserDetails> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final backgroundColor = isDarkMode ? const Color(0xFF121212) : const Color(0xFFF5F7FA);
+    final backgroundColor = isDarkMode
+        ? const Color(0xFF121212)
+        : const Color(0xFFF5F7FA);
     final cardColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDarkMode ? Colors.white : const Color(0xFF2C3E50);
-    final secondaryTextColor = isDarkMode ? const Color(0xFFB0B0B0) : const Color(0xFF7F8C8D);
-    final accentColor = isDarkMode ? const Color(0xFF4A9EFF) : const Color(0xFF3498DB);
+    final secondaryTextColor = isDarkMode
+        ? const Color(0xFFB0B0B0)
+        : const Color(0xFF7F8C8D);
+    final accentColor = isDarkMode
+        ? const Color(0xFF4A9EFF)
+        : const Color(0xFF3498DB);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -172,11 +210,7 @@ class _AddUserDataState extends State<UserDetails> {
               color: accentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              Icons.arrow_back,
-              color: accentColor,
-              size: 20,
-            ),
+            child: Icon(Icons.arrow_back, color: accentColor, size: 20),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -265,7 +299,9 @@ class _AddUserDataState extends State<UserDetails> {
                                             child: Icon(
                                               Icons.store,
                                               size: 60,
-                                              color: accentColor.withOpacity(0.5),
+                                              color: accentColor.withOpacity(
+                                                0.5,
+                                              ),
                                             ),
                                           ),
                                   ),
@@ -365,28 +401,34 @@ class _AddUserDataState extends State<UserDetails> {
                               Icons.store_outlined,
                               context,
                             ),
-                            validator: (value) =>
-                                value!.isEmpty ? 'Please enter business name' : null,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 15,
-                            ),
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter business name'
+                                : null,
+                            style: TextStyle(color: textColor, fontSize: 15),
                           ),
                           const SizedBox(height: 16),
                           DropdownButtonFormField<String>(
                             value: selectedBusinessType,
-                            items: ['Gold Shop', 'Retail Store', 'Service Provider', 'Others']
-                                .map((type) => DropdownMenuItem<String>(
-                                      value: type,
-                                      child: Text(
-                                        type,
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontSize: 15,
+                            items:
+                                [
+                                      'Gold Shop',
+                                      'Retail Store',
+                                      'Service Provider',
+                                      'Others',
+                                    ]
+                                    .map(
+                                      (type) => DropdownMenuItem<String>(
+                                        value: type,
+                                        child: Text(
+                                          type,
+                                          style: TextStyle(
+                                            color: textColor,
+                                            fontSize: 15,
+                                          ),
                                         ),
                                       ),
-                                    ))
-                                .toList(),
+                                    )
+                                    .toList(),
                             decoration: _inputDecoration(
                               'Business Type',
                               Icons.category_outlined,
@@ -397,8 +439,9 @@ class _AddUserDataState extends State<UserDetails> {
                                 selectedBusinessType = value;
                               });
                             },
-                            validator: (value) =>
-                                value == null ? 'Please select business type' : null,
+                            validator: (value) => value == null
+                                ? 'Please select business type'
+                                : null,
                             dropdownColor: cardColor,
                             icon: Icon(
                               Icons.arrow_drop_down_rounded,
@@ -432,6 +475,22 @@ class _AddUserDataState extends State<UserDetails> {
                             ],
                           ),
                           const SizedBox(height: 20),
+
+                          // TextFormField(
+                          //   controller: mobileController,
+                          //   decoration: _inputDecoration(
+                          //     'Mobile Number',
+                          //     Icons.phone_outlined,
+                          //     context,
+                          //   ),
+                          //   keyboardType: TextInputType.phone,
+                          //   validator: (value) =>
+                          //       value!.isEmpty ? 'Please enter mobile number' : null,
+                          //   style: TextStyle(
+                          //     color: textColor,
+                          //     fontSize: 15,
+                          //   ),
+                          // ),
                           TextFormField(
                             controller: mobileController,
                             decoration: _inputDecoration(
@@ -440,13 +499,22 @@ class _AddUserDataState extends State<UserDetails> {
                               context,
                             ),
                             keyboardType: TextInputType.phone,
-                            validator: (value) =>
-                                value!.isEmpty ? 'Please enter mobile number' : null,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 15,
-                            ),
+                            maxLength: 10,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter mobile number';
+                              }
+                              if (value.length != 10) {
+                                return 'Mobile number must be exactly 10 digits';
+                              }
+                              return null;
+                            },
+                            style: TextStyle(color: textColor, fontSize: 15),
                           ),
+
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: emailController,
@@ -465,12 +533,21 @@ class _AddUserDataState extends State<UserDetails> {
                               }
                               return null;
                             },
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 15,
-                            ),
+                            style: TextStyle(color: textColor, fontSize: 15),
                           ),
                           const SizedBox(height: 16),
+
+                          // TextFormField(
+                          //   controller: gstController,
+                          //   decoration: _inputDecoration(
+                          //     'GST Number (Optional)',
+                          //     Icons.receipt_long_outlined,
+                          //     context,
+                          //   ),
+                          //   keyboardType: TextInputType.text,
+                          //   textCapitalization: TextCapitalization.characters,
+                          //   style: TextStyle(color: textColor, fontSize: 15),
+                          // ),
                           TextFormField(
                             controller: gstController,
                             decoration: _inputDecoration(
@@ -480,10 +557,30 @@ class _AddUserDataState extends State<UserDetails> {
                             ),
                             keyboardType: TextInputType.text,
                             textCapitalization: TextCapitalization.characters,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 15,
+                            style: TextStyle(color: textColor, fontSize: 15),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: gstRateController,
+                            decoration: _inputDecoration(
+                              'GST Rate % (e.g., 18)',
+                              Icons.percent_outlined,
+                              context,
                             ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            validator: (value) {
+                              if (value != null && value.isNotEmpty) {
+                                final rate = int.tryParse(value);
+                                if (rate == null || rate < 0 || rate > 100) {
+                                  return 'Please enter a valid GST rate (0-100)';
+                                }
+                              }
+                              return null;
+                            },
+                            style: TextStyle(color: textColor, fontSize: 15),
                           ),
                           const SizedBox(height: 32),
                           SizedBox(
@@ -496,7 +593,9 @@ class _AddUserDataState extends State<UserDetails> {
                                       if (_formKey.currentState!.validate()) {
                                         await _saveData();
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
                                               content: Row(
                                                 children: [
@@ -508,16 +607,20 @@ class _AddUserDataState extends State<UserDetails> {
                                                   const Text(
                                                     'Profile saved successfully!',
                                                     style: TextStyle(
-                                                      fontWeight: FontWeight.w600,
+                                                      fontWeight:
+                                                          FontWeight.w600,
                                                     ),
                                                   ),
                                                 ],
                                               ),
-                                              behavior: SnackBarBehavior.floating,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
-                                              backgroundColor: Colors.green[600],
+                                              backgroundColor:
+                                                  Colors.green[600],
                                               margin: const EdgeInsets.all(16),
                                             ),
                                           );
@@ -532,7 +635,8 @@ class _AddUserDataState extends State<UserDetails> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                disabledBackgroundColor: accentColor.withOpacity(0.6),
+                                disabledBackgroundColor: accentColor
+                                    .withOpacity(0.6),
                               ),
                               child: _isSaving
                                   ? const SizedBox(
@@ -544,7 +648,8 @@ class _AddUserDataState extends State<UserDetails> {
                                       ),
                                     )
                                   : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(Icons.save_outlined, size: 20),
                                         SizedBox(width: 8),

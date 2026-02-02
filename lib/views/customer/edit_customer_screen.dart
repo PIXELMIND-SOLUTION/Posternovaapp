@@ -21,6 +21,8 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
   late TextEditingController addressController;
   late TextEditingController dobController;
   late TextEditingController anniversaryController;
+  late TextEditingController religionController;
+
   String? selectedGender;
   bool _isLoading = false;
   String userId = '';
@@ -43,6 +45,10 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
     );
     addressController = TextEditingController(
       text: widget.customer['address'] ?? '',
+    );
+
+    religionController = TextEditingController(
+      text: widget.customer['religion'] ?? '',
     );
     // selectedGender = widget.customer['gender'] ?? '';
 
@@ -806,12 +812,18 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                         // ),
 
                         // commented the validation for address
-                        
                         _buildCustomTextField(
                           controller: addressController,
                           labelText: 'Address',
                           hintText: 'Enter address',
                           prefixIcon: Icons.location_on_outlined,
+                        ),
+
+                        _buildCustomTextField(
+                          controller: religionController,
+                          labelText: 'Religion',
+                          hintText: 'Enter address',
+                          prefixIcon: Icons.church,
                         ),
 
                         const SizedBox(height: 16),
@@ -840,6 +852,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                                               mobile: mobileController.text,
                                               address: addressController.text,
                                               gender: selectedGender ?? '',
+                                              religion: religionController.text,
                                               dob:
                                                   dobApiFormat ??
                                                   'Not Specified',

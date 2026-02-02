@@ -509,6 +509,7 @@ import 'package:posternova/providers/plans/get_all_plan_provider.dart';
 import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/views/createposter/create_poster_screen.dart';
 import 'package:posternova/views/createposter/logo_maker_screen.dart';
+import 'package:posternova/views/logo/logo_category.dart';
 import 'package:posternova/views/logo/logo_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
@@ -1065,16 +1066,31 @@ class _PosterScreenState extends State<PosterScreen>
         ),
         screen: CreatePost(),
       ),
+      // ToolData(
+      //   icon: Icons.wb_sunny_outlined,
+      //   title: 'Logo Designer',
+      //   subtitle: 'Create professional logos',
+      //   gradient: const LinearGradient(
+      //     begin: Alignment.topLeft,
+      //     end: Alignment.bottomRight,
+      //     colors: [Color(0xFF10B981), Color(0xFF059669)],
+      //   ),
+      //   screen: const LogoCategory(),
+
+      //   // screen: const LogoMakingScreen(),
+      // ),
       ToolData(
-        icon: Icons.wb_sunny_outlined,
-        title: 'Logo Designer',
-        subtitle: 'Create professional logos',
+        icon: Icons.brush_outlined,
+        title: 'Customer Logo',
+        subtitle: 'Create Logo for coustomers',
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF10B981), Color(0xFF059669)],
         ),
-        screen: const LogoMakingScreen(),
+        // screen: const LogoMakingScreen(),
+                screen: const LogoCategory(),
+
       ),
     ];
 

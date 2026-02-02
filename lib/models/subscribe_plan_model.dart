@@ -10,6 +10,7 @@ class SubscribePlanModel {
   final DateTime? endDate;   // Made nullable
   final bool isSubscribedPlan;
   final bool isSelected;
+   final bool free7DayTrial;
 
   SubscribePlanModel({
     required this.id,
@@ -22,6 +23,7 @@ class SubscribePlanModel {
     this.endDate,   // Nullable
     required this.isSubscribedPlan,
     this.isSelected = false,
+        this.free7DayTrial = false,
   });
 
   factory SubscribePlanModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,7 @@ class SubscribePlanModel {
         // Use isPurchasedPlan from API response instead of isSubscribedPlan
         isSubscribedPlan: json['isPurchasedPlan'] == true || json['isActive'] == true,
         isSelected: json['isSelected'] == true,
+         free7DayTrial: json['free7DayTrial'] == true ,
       );
     } catch (e) {
       print('❌ Error parsing SubscribePlanModel: $e');
@@ -95,6 +98,7 @@ class SubscribePlanModel {
       'endDate': endDate?.toIso8601String(),
       'isSubscribedPlan': isSubscribedPlan,
       'isSelected': isSelected,
+      'free7DayTrial': free7DayTrial,
     };
   }
 
@@ -110,6 +114,7 @@ class SubscribePlanModel {
     DateTime? endDate,
     bool? isPurchasedPlan,
     bool? isSelected,
+      bool? free7DayTrial,
   }) {
     return SubscribePlanModel(
       id: id ?? this.id,
@@ -122,6 +127,7 @@ class SubscribePlanModel {
       endDate: endDate ?? this.endDate,
       isSubscribedPlan: isPurchasedPlan ?? this.isSubscribedPlan,
       isSelected: isSelected ?? this.isSelected,
+       free7DayTrial: free7DayTrial ?? this.free7DayTrial, //
     );
   }
 

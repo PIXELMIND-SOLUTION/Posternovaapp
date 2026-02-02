@@ -513,22 +513,10 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posternova/models/invoice_model.dart';
 import 'package:posternova/providers/invoices/invoice_provider.dart';
@@ -569,7 +557,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
     'Milliliter',
     'Piece',
     'Pack',
-    'Dozen'
+    'Dozen',
   ];
 
   @override
@@ -648,12 +636,18 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
           });
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logo saved successfully'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Logo saved successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking image: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Error picking image: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -686,14 +680,16 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
       );
       if (available) {
         setState(() => _isListening = true);
-        _speech.listen(onResult: (result) {
-          if (_activeController != null && mounted) {
-            setState(() {
-              _activeController!.text = result.recognizedWords;
-              _syncUserInfoAcrossEntries();
-            });
-          }
-        });
+        _speech.listen(
+          onResult: (result) {
+            if (_activeController != null && mounted) {
+              setState(() {
+                _activeController!.text = result.recognizedWords;
+                _syncUserInfoAcrossEntries();
+              });
+            }
+          },
+        );
       }
     } else {
       setState(() => _isListening = false);
@@ -719,7 +715,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
     for (var e in _productEntries) {
       if (e.unit == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select units for all products'), backgroundColor: Colors.orange),
+          const SnackBar(
+            content: Text('Please select units for all products'),
+            backgroundColor: Colors.orange,
+          ),
         );
         return;
       }
@@ -742,18 +741,27 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
           mobilenumber: _productEntries.first.mobileController.text.trim(),
           address: _productEntries.first.addressController.text.trim(),
           hsn: _productEntries.first.hsnController.text.trim(),
-          wastage: _isGoldShop ? double.tryParse(entry.wastageController.text) ?? 0.0 : 0.0,
+          wastage: _isGoldShop
+              ? double.tryParse(entry.wastageController.text) ?? 0.0
+              : 0.0,
           isGoldItem: _isGoldShop,
           description: entry.descriptionController.text.trim(),
           imagelogo: _logoImageBase64 ?? '',
         );
       }).toList();
 
-      final success = await Provider.of<ProductInvoiceProvider>(context, listen: false).addInvoice(products);
+      final success = await Provider.of<ProductInvoiceProvider>(
+        context,
+        listen: false,
+      ).addInvoice(products);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success ? 'Invoice created successfully' : 'Failed to create invoice'),
+            content: Text(
+              success
+                  ? 'Invoice created successfully'
+                  : 'Failed to create invoice',
+            ),
             backgroundColor: success ? Colors.green : Colors.red,
           ),
         );
@@ -782,20 +790,17 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const AppText(
-          'create_invoice',
+          'Create Invoice',
           style: TextStyle(
             color: Colors.black87,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: false,
+        centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: Colors.grey[200],
-            height: 1,
-          ),
+          child: Container(color: Colors.grey[200], height: 1),
         ),
       ),
       body: SafeArea(
@@ -817,7 +822,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                         decoration: BoxDecoration(
                           color: Colors.blue[50],
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.blue[100]!, width: 2),
+                          border: Border.all(
+                            color: Colors.blue[100]!,
+                            width: 2,
+                          ),
                         ),
                         child: _logoImageBase64 != null
                             ? ClipRRect(
@@ -828,14 +836,18 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                                 ),
                               )
                             : _logoImagePath != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.file(
-                                      File(_logoImagePath!),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Icon(Icons.add_photo_alternate_outlined, color: Colors.blue[300], size: 32),
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.file(
+                                  File(_logoImagePath!),
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Icon(
+                                Icons.add_photo_alternate_outlined,
+                                color: Colors.blue[300],
+                                size: 32,
+                              ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -855,11 +867,18 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                           if (_userMobile.isNotEmpty)
                             Row(
                               children: [
-                                Icon(Icons.phone, size: 14, color: Colors.grey[600]),
+                                Icon(
+                                  Icons.phone,
+                                  size: 14,
+                                  color: Colors.grey[600],
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   _userMobile,
-                                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[700],
+                                  ),
                                 ),
                               ],
                             ),
@@ -867,12 +886,19 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                             const SizedBox(height: 2),
                             Row(
                               children: [
-                                Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                                Icon(
+                                  Icons.location_on,
+                                  size: 14,
+                                  color: Colors.grey[600],
+                                ),
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
                                     _userAddress,
-                                    style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[700],
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -892,7 +918,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
               // Product Entries List
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   itemCount: _productEntries.length,
                   itemBuilder: (context, index) {
                     final entry = _productEntries[index];
@@ -922,12 +951,16 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                         child: OutlinedButton.icon(
                           onPressed: () {
                             setState(() {
-                              final newEntry = ProductEntry()..unit = units.first;
+                              final newEntry = ProductEntry()
+                                ..unit = units.first;
                               if (_productEntries.isNotEmpty) {
                                 final first = _productEntries.first;
-                                newEntry.nameController.text = first.nameController.text;
-                                newEntry.mobileController.text = first.mobileController.text;
-                                newEntry.addressController.text = first.addressController.text;
+                                newEntry.nameController.text =
+                                    first.nameController.text;
+                                newEntry.mobileController.text =
+                                    first.mobileController.text;
+                                newEntry.addressController.text =
+                                    first.addressController.text;
                               }
                               _productEntries.add(newEntry);
                             });
@@ -936,7 +969,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                           label: const AppText('add_more'),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: BorderSide(color: Colors.blue[700]!, width: 1.5),
+                            side: BorderSide(
+                              color: Colors.blue[700]!,
+                              width: 1.5,
+                            ),
                             foregroundColor: Colors.blue[700],
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -955,10 +991,15 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
-                              : const Icon(Icons.check_circle_outline, color: Colors.white),
+                              : const Icon(
+                                  Icons.check_circle_outline,
+                                  color: Colors.white,
+                                ),
                           label: AppText(
                             _isLoading ? 'creating' : 'create',
                             style: const TextStyle(
@@ -1019,7 +1060,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.blue[700],
                     borderRadius: BorderRadius.circular(20),
@@ -1039,7 +1083,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                     onPressed: () {
                       setState(() => _productEntries.removeAt(index));
                     },
-                    icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.red,
+                    ),
                     tooltip: 'Remove item',
                   ),
               ],
@@ -1059,6 +1106,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                     entry.nameController,
                     'customer_name',
                     Icons.person_outline,
+                    inputType: TextInputType.text,
                     onChanged: (v) => _syncUserInfoAcrossEntries(),
                   ),
                   const SizedBox(height: 12),
@@ -1086,6 +1134,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                   entry.productNameController,
                   'product_name',
                   Icons.inventory_2_outlined,
+                  inputType: TextInputType.text,
                 ),
                 const SizedBox(height: 12),
 
@@ -1107,8 +1156,14 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                         isExpanded: true,
                         decoration: InputDecoration(
                           labelText: 'Unit',
-                          labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          labelStyle: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey[300]!),
@@ -1119,15 +1174,25 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+                            borderSide: BorderSide(
+                              color: Colors.blue[700]!,
+                              width: 2,
+                            ),
                           ),
                           filled: true,
                           fillColor: Colors.grey[50],
                         ),
-                        items: units.map((u) => DropdownMenuItem(
-                          value: u, 
-                          child: Text(u, style: const TextStyle(fontSize: 14)),
-                        )).toList(),
+                        items: units
+                            .map(
+                              (u) => DropdownMenuItem(
+                                value: u,
+                                child: Text(
+                                  u,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (v) => setState(() => entry.unit = v),
                       ),
                     ),
@@ -1267,131 +1332,161 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
   //   );
   // }
 
+  //   Widget _buildModernTextField(
+  //   TextEditingController controller,
+  //   String labelKey,
+  //   IconData icon, {
+  //   TextInputType inputType = TextInputType.text,
+  //   int maxLines = 1,
+  //   Function(String)? onChanged,
+  // }) {
+  //   final label = AppText.translate(context, labelKey);
+  //   final theme = Theme.of(context);
+  //   final isDarkMode = theme.brightness == Brightness.dark;
+  //   final textColor = isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Colors.black87;
 
-//   Widget _buildModernTextField(
-//   TextEditingController controller,
-//   String labelKey,
-//   IconData icon, {
-//   TextInputType inputType = TextInputType.text,
-//   int maxLines = 1,
-//   Function(String)? onChanged,
-// }) {
-//   final label = AppText.translate(context, labelKey);
-//   final theme = Theme.of(context);
-//   final isDarkMode = theme.brightness == Brightness.dark;
-//   final textColor = isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Colors.black87;
-  
-//   return TextFormField(
-//     controller: controller,
-//     keyboardType: inputType,
-//     maxLines: maxLines,
-//     onChanged: onChanged,
-//     style: TextStyle(
-//       fontSize: 15,
-//       color: textColor, // Add this line
-//     ),
-//     decoration: InputDecoration(
-//       labelText: label,
-//       labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
-//       prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
-//       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-//       border: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(12),
-//         borderSide: BorderSide(color: Colors.grey[300]!),
-//       ),
-//       enabledBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(12),
-//         borderSide: BorderSide(color: Colors.grey[300]!),
-//       ),
-//       focusedBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(12),
-//         borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
-//       ),
-//       errorBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(12),
-//         borderSide: const BorderSide(color: Colors.red),
-//       ),
-//       focusedErrorBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(12),
-//         borderSide: const BorderSide(color: Colors.red, width: 2),
-//       ),
-//       filled: true,
-//       fillColor: Colors.grey[50],
-//     ),
-//     validator: (value) {
-//       if (value == null || value.trim().isEmpty) {
-//         if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
-//           return 'Please enter $label';
-//         }
-//       }
-//       if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
-//         try {
-//           double.parse(value);
-//         } catch (e) {
-//           return 'Please enter a valid number';
-//         }
-//       }
-//       return null;
-//     },
-//   );
-// }
+  //   return TextFormField(
+  //     controller: controller,
+  //     keyboardType: inputType,
+  //     maxLines: maxLines,
+  //     onChanged: onChanged,
+  //     style: TextStyle(
+  //       fontSize: 15,
+  //       color: textColor, // Add this line
+  //     ),
+  //     decoration: InputDecoration(
+  //       labelText: label,
+  //       labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+  //       prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
+  //       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  //       border: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: BorderSide(color: Colors.grey[300]!),
+  //       ),
+  //       enabledBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: BorderSide(color: Colors.grey[300]!),
+  //       ),
+  //       focusedBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+  //       ),
+  //       errorBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: const BorderSide(color: Colors.red),
+  //       ),
+  //       focusedErrorBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: const BorderSide(color: Colors.red, width: 2),
+  //       ),
+  //       filled: true,
+  //       fillColor: Colors.grey[50],
+  //     ),
+  //     validator: (value) {
+  //       if (value == null || value.trim().isEmpty) {
+  //         if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
+  //           return 'Please enter $label';
+  //         }
+  //       }
+  //       if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
+  //         try {
+  //           double.parse(value);
+  //         } catch (e) {
+  //           return 'Please enter a valid number';
+  //         }
+  //       }
+  //       return null;
+  //     },
+  //   );
+  // }
 
-Widget _buildModernTextField(
-  TextEditingController controller,
-  String labelKey,
-  IconData icon, {
-  TextInputType inputType = TextInputType.text,
-  int maxLines = 1,
-  Function(String)? onChanged,
-  bool isRequired = true, // Add this parameter
-}) {
-  final label = AppText.translate(context, labelKey);
-  final theme = Theme.of(context);
-  final isDarkMode = theme.brightness == Brightness.dark;
-  final textColor = isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Colors.black87;
-  
-  return TextFormField(
-    controller: controller,
-    keyboardType: inputType,
-    maxLines: maxLines,
-    onChanged: onChanged,
-    style: TextStyle(
-      fontSize: 15,
-      color: textColor,
-    ),
-    decoration: InputDecoration(
-      labelText: isRequired ? label : '$label (Optional)', // Add optional indicator
-      labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
-      prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+  Widget _buildModernTextField(
+    TextEditingController controller,
+    String labelKey,
+    IconData icon, {
+    TextInputType inputType = TextInputType.text,
+    int maxLines = 1,
+    Function(String)? onChanged,
+    bool isRequired = true, // Add this parameter
+  }) {
+    final label = AppText.translate(context, labelKey);
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final textColor = isDarkMode
+        ? const Color.fromARGB(255, 0, 0, 0)
+        : Colors.black87;
+    final bool isPhoneField = inputType == TextInputType.phone;
+
+    return TextFormField(
+      controller: controller,
+      keyboardType: inputType,
+      maxLines: maxLines,
+      onChanged: onChanged,
+      style: TextStyle(fontSize: 15, color: textColor),
+      inputFormatters: isPhoneField
+          ? [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ]
+          : null,
+      decoration: InputDecoration(
+        labelText: isRequired
+            ? label
+            : '$label (Optional)', // Add optional indicator
+        labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+        prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey[300]!),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 2),
-      ),
-      filled: true,
-      fillColor: Colors.grey[50],
-    ),
-    validator: (value) {
-      // Skip validation if field is not required
-      if (!isRequired) {
-        // Still validate number format if it's a number field and has a value
-        if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
+      validator: (value) {
+        // Skip validation if field is not required
+        if (!isRequired) {
+          // Still validate number format if it's a number field and has a value
+          if (inputType == TextInputType.number &&
+              value != null &&
+              value.isNotEmpty) {
+            try {
+              double.parse(value);
+            } catch (e) {
+              return 'Please enter a valid number';
+            }
+          }
+          return null;
+        }
+
+        // Original validation for required fields
+        if (value == null || value.trim().isEmpty) {
+          if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
+            return 'Please enter $label';
+          }
+        }
+        if (inputType == TextInputType.number &&
+            value != null &&
+            value.isNotEmpty) {
           try {
             double.parse(value);
           } catch (e) {
@@ -1399,25 +1494,9 @@ Widget _buildModernTextField(
           }
         }
         return null;
-      }
-      
-      // Original validation for required fields
-      if (value == null || value.trim().isEmpty) {
-        if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
-          return 'Please enter $label';
-        }
-      }
-      if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
-        try {
-          double.parse(value);
-        } catch (e) {
-          return 'Please enter a valid number';
-        }
-      }
-      return null;
-    },
-  );
-}
+      },
+    );
+  }
 }
 
 class ProductEntry {

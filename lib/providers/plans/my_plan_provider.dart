@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:posternova/models/subscribe_plan_model.dart';
 import 'package:posternova/services/plan/my_plan_service.dart';
@@ -9,13 +8,13 @@ class MyPlanProvider extends ChangeNotifier {
   SubscribePlanModel? _subscribedPlan;
   bool _isLoading = false;
   bool _isPurchase = false;
-  bool _isActive=false;
+  bool _isActive = false;
   String? _error;
 
   SubscribePlanModel? get subscribedPlan => _subscribedPlan;
   bool get isLoading => _isLoading;
   bool get isPurchase => _isPurchase;
-  bool get isActive=>_isActive;
+  bool get isActive => _isActive;
   String? get error => _error;
 
   Future<void> fetchMyPlan(String userId) async {
@@ -32,29 +31,52 @@ class MyPlanProvider extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-  
-
-
 
     try {
-        // print('gggggggggggggggggggggggggggggggggggggggg${fetchMyPlan(userId)}');
+      // print('gggggggggggggggggggggggggggggggggggggggg${fetchMyPlan(userId)}');
+      // print('🔄 Calling API service...');
+
+      // _subscribedPlan = await _planService.fetchUserPlan(userId);
+
+      // print('📦 Service returned: ${_subscribedPlan != null ? 'Plan found' : 'No plan'}');
+
+      // if (_subscribedPlan != null) {
+      //   _isPurchase = _subscribedPlan!.isSubscribedPlan;
+      //   _isActive=_subscribedPlan!.isSubscribedPlan;
+      //   print('✅ Plan found - isPurchase: $_isPurchase');
+      //    print('✅ Plan foundfffffffffffffffffffffffffffff: $_isActive');
+      //   print('📋 Plan details: ${_subscribedPlan.toString()}');
+      // } else {
+      //   _isPurchase = false;
+      //   print('❌ No plan found, setting _isPurchase to false');
+      // }
+
       print('🔄 Calling API service...');
-    
+
       _subscribedPlan = await _planService.fetchUserPlan(userId);
-      
-      print('📦 Service returned: ${_subscribedPlan != null ? 'Plan found' : 'No plan'}');
-      
+
+      // print('📦 Service returned: ${_subscribedPlan != null ? 'Plan found' : 'No plan'}');
+      //  print('📦 Service returned: ${_subscribedPlan != null ? 'Plan found' : 'No plan'}');
+      // print('✅ isSubscribedPlan: ${_subscribedPlan!.isSubscribedPlan}');
+      // print('🎁 free7DayTrial: ${_subscribedPlan!.free7DayTrial}');
+
       if (_subscribedPlan != null) {
-        _isPurchase = _subscribedPlan!.isSubscribedPlan;
-        _isActive=_subscribedPlan!.isSubscribedPlan;
-        print('✅ Plan found - isPurchase: $_isPurchase');
-         print('✅ Plan foundfffffffffffffffffffffffffffff: $_isActive');
+        final bool isSubscribed = _subscribedPlan!.isSubscribedPlan == true;
+        final bool isFreeTrial = _subscribedPlan!.free7DayTrial == true;
+
+        // User has access if subscribed OR free trial
+        _isPurchase = isSubscribed || isFreeTrial;
+        _isActive = _isPurchase;
+
+        print('✅ isSubscribedPlan: $isSubscribed');
+        print('🎁 free7DayTrial: $isFreeTrial');
+        print('🔓 Final access (_isPurchase): $_isPurchase');
         print('📋 Plan details: ${_subscribedPlan.toString()}');
       } else {
         _isPurchase = false;
-        print('❌ No plan found, setting _isPurchase to false');
+        _isActive = false;
+        print('❌ No plan found, access denied');
       }
-     
     } catch (e) {
       print('❌ Error in fetchMyPlan: $e');
       _error = e.toString();
@@ -80,9 +102,7 @@ class MyPlanProvider extends ChangeNotifier {
   // Set the selection state of the subscribed plan
   void setPlanSelection(bool isSelected) {
     if (_subscribedPlan != null) {
-      _subscribedPlan = _subscribedPlan!.copyWith(
-        isSelected: isSelected,
-      );
+      _subscribedPlan = _subscribedPlan!.copyWith(isSelected: isSelected);
       _isPurchase = isSelected;
       notifyListeners();
     }

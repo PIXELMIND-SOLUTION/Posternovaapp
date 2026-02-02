@@ -19,9 +19,14 @@ class SignupServices {
           'mobile': signupModel.mobile,
           'dob': signupModel.dob,
           'marriageAnniversaryDate': signupModel.marriageAnniversary, 
-          'referralCode': signupModel.referralCode
+          'referralCode': signupModel.referralCode,
+          'fcmToken':signupModel.fcmtoken,
         }),
       );
+
+      print('response status code for registration ${response.statusCode}');
+            print('response bodyyyyyyyyy code for registration ${response.body}');
+
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print('User registered successfully!');

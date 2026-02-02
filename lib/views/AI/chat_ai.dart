@@ -1,176 +1,76 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:posternova/widgets/language_widget.dart';
 import 'dart:convert';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:gal/gal.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 
 class AiScreen extends StatefulWidget {
   const AiScreen({super.key});
 
   @override
-  State<AiScreen> createState() => _ChatScreenState();
+  State<AiScreen> createState() => _AiScreenState();
 }
 
-class _ChatScreenState extends State<AiScreen>
-    with SingleTickerProviderStateMixin {
+class _AiScreenState extends State<AiScreen> {
   final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, String>> _messages = [];
+  final List<Map<String, dynamic>> _messages = [];
   bool _isLoading = false;
   final ScrollController _scrollController = ScrollController();
-  late AnimationController _animationController;
 
-  stt.SpeechToText? _speech;
-  bool _isListening = false;
-  bool _speechAvailable = false;
-  String _lastError = '';
+  File? _logoFile;
+  bool _isImageGenerationMode = false;
 
-  // OpenAI API Configuration
-  static const String apiKey = '';
-  static const String apiUrl = 'https://api.openai.com/v1/chat/completions';
+  // ❌ NOT SAFE – ONLY FOR TESTING - Replace with your actual API key
+  static final String? openAiKey =  dotenv.env['OPEN_AI_KEY'];
+
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat();
-    _prepareSpeech();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      setState(() {});
+      if (mounted) setState(() {});
     });
   }
 
-  Future<void> _prepareSpeech() async {
-    try {
-      final status = await Permission.microphone.status;
-      if (!status.isGranted) {
-        final result = await Permission.microphone.request();
-        if (!result.isGranted) {
-          setState(() {
-            _speechAvailable = false;
-          });
-          return;
-        }
-      }
-
-      _speech ??= stt.SpeechToText();
-      await _initSpeech();
-    } catch (e, st) {
-      debugPrint('Error preparing speech: $e\n$st');
+  Future<void> _pickLogo() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery);
+    if (file != null) {
       setState(() {
-        _lastError = 'Error preparing speech: $e';
-        _speechAvailable = false;
+        _logoFile = File(file.path);
       });
+      _showSnackbar('Logo selected successfully!');
     }
   }
 
-  Future<void> _initSpeech() async {
-    if (_speech == null) {
-      setState(() {
-        _lastError = 'Speech instance not created';
-        _speechAvailable = false;
-      });
-      return;
-    }
-
-    try {
-      final available = await _speech!.initialize(
-        onStatus: (status) {
-          debugPrint('Speech status: $status');
-          if (status == 'done' || status == 'notListening') {
-            if (mounted) setState(() => _isListening = false);
-          }
-        },
-        onError: (errorNotification) {
-          debugPrint('Speech error: ${errorNotification.errorMsg}');
-          if (mounted) {
-            setState(() {
-              _lastError = errorNotification.errorMsg ?? 'Unknown speech error';
-              _isListening = false;
-            });
-          }
-        },
-      );
-
-      if (!mounted) return;
-      setState(() {
-        _speechAvailable = available;
-        if (!available) _lastError = 'Speech recognition not available';
-      });
-    } catch (e, st) {
-      debugPrint('Failed to initialize speech: $e\n$st');
-      if (mounted) {
-        setState(() {
-          _lastError = 'Failed to initialize speech: $e';
-          _speechAvailable = false;
-        });
-      }
-    }
-  }
-
-  void _listen() async {
-    if (_speech == null) {
-      setState(() => _lastError = 'Speech instance not ready. Try again.');
-      return;
-    }
-    if (!_speechAvailable) {
-      setState(
-        () =>
-            _lastError = 'Microphone not available or permission not granted.',
-      );
-      return;
-    }
-
-    if (_isListening) {
-      try {
-        await _speech!.stop();
-      } catch (e) {
-        debugPrint('Error stopping speech: $e');
-      }
-      if (mounted) setState(() => _isListening = false);
-      return;
-    }
-
-    if (mounted)
-      setState(() {
-        _lastError = '';
-        _isListening = true;
-      });
-
-    try {
-      await _speech!.listen(
-        onResult: (result) {
-          if (!mounted) return;
-          setState(() {
-            _messageController.text = result.recognizedWords;
-          });
-        },
-        listenFor: const Duration(seconds: 60),
-        pauseFor: const Duration(seconds: 3),
-        partialResults: true,
-        localeId: null,
-      );
-    } catch (e) {
-      debugPrint('Error starting listen: $e');
-      if (mounted) {
-        setState(() {
-          _isListening = false;
-          _lastError = 'Error starting listen: $e';
-        });
-      }
-    }
+  void _toggleImageGenerationMode() {
+    setState(() {
+      _isImageGenerationMode = !_isImageGenerationMode;
+      _logoFile = null;
+      _messageController.clear();
+    });
   }
 
   Future<void> _sendMessage() async {
     final userMessage = _messageController.text.trim();
     if (userMessage.isEmpty) return;
 
+    if (_isImageGenerationMode) {
+      await _generatePosterWithAI(userMessage);
+    } else {
+      await _sendChatMessage(userMessage);
+    }
+  }
+
+  Future<void> _sendChatMessage(String userMessage) async {
     setState(() {
-      _messages.add({'role': 'user', 'text': userMessage});
+      _messages.add({'role': 'user', 'text': userMessage, 'type': 'text'});
       _isLoading = true;
       _messageController.clear();
     });
@@ -178,19 +78,28 @@ class _ChatScreenState extends State<AiScreen>
     _scrollToBottom();
 
     try {
-      // Build conversation history for OpenAI API
-      List<Map<String, String>> conversationHistory = _messages.map((msg) {
-        return {
-          'role': msg['role'] == 'user' ? 'user' : 'assistant',
-          'content': msg['text']!,
-        };
-      }).toList();
+      final now = DateTime.now();
+      final today =
+          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+      List<Map<String, dynamic>> conversationHistory = [
+        {
+          "role": "system",
+          "content":
+              "You are Chicha AI. Today's date is $today. If user asks about current date/time, always answer using this date.",
+        },
+        ..._messages.where((msg) => msg['type'] == 'text').map((msg) {
+          return {
+            'role': msg['role'] == 'user' ? 'user' : 'assistant',
+            'content': msg['text'],
+          };
+        }).toList(),
+      ];
 
       final response = await http.post(
-        Uri.parse(apiUrl),
+        Uri.parse('https://api.openai.com/v1/chat/completions'),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer $apiKey",
+          "Authorization": "Bearer $openAiKey",
         },
         body: jsonEncode({
           "model": "gpt-4o-mini",
@@ -205,16 +114,16 @@ class _ChatScreenState extends State<AiScreen>
         final botReply = data['choices'][0]['message']['content'];
 
         setState(() {
-          _messages.add({'role': 'bot', 'text': botReply});
+          _messages.add({'role': 'bot', 'text': botReply, 'type': 'text'});
         });
       } else {
-        // Log the actual error for debugging
         debugPrint('API Error: ${response.statusCode} - ${response.body}');
         setState(() {
           _messages.add({
             'role': 'bot',
             'text':
                 'Sorry, I encountered an error (${response.statusCode}). Please try again.',
+            'type': 'text',
           });
         });
       }
@@ -224,15 +133,279 @@ class _ChatScreenState extends State<AiScreen>
         _messages.add({
           'role': 'bot',
           'text': 'Connection issue. Please check your internet and try again.',
+          'type': 'text',
         });
       });
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         _scrollToBottom();
       }
+    }
+  }
+Future<void> _generatePosterWithAI(String userPrompt) async {
+  debugPrint('================= AI POSTER FLOW START =================');
+  debugPrint('[INIT] User prompt: $userPrompt');
+
+  setState(() {
+    _messages.add({'role': 'user', 'text': userPrompt, 'type': 'text'});
+    _isLoading = true;
+    _messageController.clear();
+  });
+
+  _scrollToBottom();
+
+  try {
+    // ======================================================
+    // STEP 1: ENHANCE PROMPT (CHAT COMPLETION)
+    // ======================================================
+    debugPrint('[STEP 1] Enhancing prompt');
+
+    final enhancePayload = {
+      "model": "gpt-4o-mini",
+      "messages": [
+        {
+          "role": "system",
+          "content":
+              "You are a professional prompt engineer. Convert the user's simple request into a detailed, professional image generation prompt. Include colors, style, composition, and specific details. Keep it under 150 words. Only return the enhanced prompt, nothing else.",
+        },
+        {"role": "user", "content": userPrompt},
+      ],
+      "temperature": 0.7,
+      "max_tokens": 200,
+    };
+
+    final enhanceResponse = await http.post(
+      Uri.parse('https://api.openai.com/v1/chat/completions'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $openAiKey",
+      },
+      body: jsonEncode(enhancePayload),
+    );
+
+    debugPrint('[STEP 1] Status: ${enhanceResponse.statusCode}');
+    debugPrint('[STEP 1] Body: ${enhanceResponse.body}');
+
+    if (enhanceResponse.statusCode != 200) {
+      throw Exception('Prompt enhancement failed');
+    }
+
+    final enhanceJson = jsonDecode(enhanceResponse.body);
+    final enhancedPrompt =
+        enhanceJson['choices']?[0]?['message']?['content'];
+
+    if (enhancedPrompt == null || enhancedPrompt.toString().isEmpty) {
+      throw Exception('Enhanced prompt is empty');
+    }
+
+    debugPrint('[STEP 1] Enhanced prompt:\n$enhancedPrompt');
+
+    setState(() {
+      _messages.add({
+        'role': 'bot',
+        'text': '✨ Enhanced prompt:\n\n$enhancedPrompt',
+        'type': 'text',
+      });
+    });
+
+    _scrollToBottom();
+
+    // ======================================================
+    // STEP 2: SHOW LOADING PLACEHOLDER
+    // ======================================================
+    debugPrint('[STEP 2] Showing image loading');
+
+    setState(() {
+      _messages.add({
+        'role': 'bot',
+        'text': 'Generating image...',
+        'type': 'loading',
+      });
+    });
+
+    _scrollToBottom();
+
+    // ======================================================
+    // STEP 3: IMAGE GENERATION / EDIT
+    // ======================================================
+    debugPrint('[STEP 3] Logo present: ${_logoFile != null}');
+
+    if (_logoFile != null) {
+      // ---------------- IMAGE EDIT ----------------
+      debugPrint('[STEP 3A] Using image edit endpoint');
+
+      final finalPrompt = '''
+Create a professional Diwali festival poster.
+Use warm golden, purple and orange colors.
+Place the uploaded company logo at the top center.
+Add diya lamps, lights, fireworks and festive decorations.
+Text style should be modern and clean.
+
+$enhancedPrompt
+''';
+
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://api.openai.com/v1/images/edits'),
+      );
+
+      request.headers['Authorization'] = 'Bearer $openAiKey';
+      request.fields['model'] = 'gpt-image-1';
+      request.fields['prompt'] = finalPrompt;
+      request.fields['size'] = '1024x1024';
+
+      // Detect correct MIME type
+      final ext = _logoFile!.path.split('.').last.toLowerCase();
+      final mimeType = ext == 'png' ? 'png' : 'jpeg';
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          _logoFile!.path,
+          contentType: MediaType('image', mimeType),
+        ),
+      );
+
+      debugPrint('[STEP 3A] Sending image edit request');
+      debugPrint('[STEP 3A] Logo path: ${_logoFile!.path}');
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      debugPrint('[STEP 3A] Status: ${response.statusCode}');
+      debugPrint('[STEP 3A] Body: $responseBody');
+
+      if (response.statusCode != 200) {
+        throw Exception('Image edit failed');
+      }
+
+ final json = jsonDecode(responseBody);
+
+// ✅ Image is BASE64, not URL
+final base64Image = json['data']?[0]?['b64_json'];
+
+if (base64Image == null) {
+  throw Exception('No image data returned from edit API');
+}
+
+final imageBytes = base64Decode(base64Image);
+
+setState(() {
+  _messages.removeLast(); // remove loading
+  _messages.add({
+    'role': 'bot',
+    'type': 'image',
+    'image': imageBytes,
+  });
+});
+
+    } else {
+      // ---------------- IMAGE GENERATION ----------------
+      debugPrint('[STEP 3B] Using image generation endpoint');
+
+      final imagePayload = {
+        "model": "gpt-image-1",
+        "prompt": enhancedPrompt,
+        "size": "1024x1024",
+        "response_format": "b64_json",
+      };
+
+      final imageResponse = await http.post(
+        Uri.parse('https://api.openai.com/v1/images/generations'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $openAiKey",
+        },
+        body: jsonEncode(imagePayload),
+      );
+
+      debugPrint('[STEP 3B] Status: ${imageResponse.statusCode}');
+      debugPrint('[STEP 3B] Body: ${imageResponse.body}');
+
+      if (imageResponse.statusCode != 200) {
+        throw Exception('Image generation failed');
+      }
+
+      final imageJson = jsonDecode(imageResponse.body);
+      final base64Image = imageJson['data']?[0]?['b64_json'];
+
+      if (base64Image == null) {
+        throw Exception('No image data received');
+      }
+
+      final imageBytes = base64Decode(base64Image);
+
+      setState(() {
+        _messages.removeLast();
+        _messages.add({
+          'role': 'bot',
+          'type': 'image',
+          'image': imageBytes,
+        });
+      });
+    }
+
+    debugPrint('================= AI POSTER FLOW SUCCESS =================');
+  } catch (e, stack) {
+    debugPrint('❌ ERROR: $e');
+    debugPrint('STACK TRACE:\n$stack');
+
+    setState(() {
+      if (_messages.isNotEmpty && _messages.last['type'] == 'loading') {
+        _messages.removeLast();
+      }
+      _messages.add({
+        'role': 'bot',
+        'text': 'Failed to generate poster.\n$e',
+        'type': 'text',
+      });
+    });
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
+      _scrollToBottom();
+    }
+  }
+}
+
+
+  Future<void> _downloadImage(Uint8List imageBytes) async {
+    try {
+      // Save to temporary file first
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File(
+        '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+      await tempFile.writeAsBytes(imageBytes);
+
+      // Save to gallery using gal
+      await Gal.putImage(tempFile.path);
+
+      // Delete temp file
+      await tempFile.delete();
+
+      _showSnackbar('Image saved to gallery!');
+    } catch (e) {
+      debugPrint('Error saving image: $e');
+      _showSnackbar('Error saving image: $e');
+    }
+  }
+
+  Future<void> _shareImage(Uint8List imageBytes) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final file = await File(
+        '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.png',
+      ).create();
+      await file.writeAsBytes(imageBytes);
+
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'Check out this poster created with Chicha AI!');
+    } catch (e) {
+      debugPrint('Error sharing image: $e');
+      _showSnackbar('Error sharing image: $e');
     }
   }
 
@@ -250,7 +423,161 @@ class _ChatScreenState extends State<AiScreen>
     }
   }
 
-  Widget _buildMessage(Map<String, String> message) {
+  void _showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Widget _buildMessage(Map<String, dynamic> message) {
+    if (message['type'] == 'loading') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'Generating your image...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF667EEA),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (message['type'] == 'image') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.memory(
+                        message['image'] as Uint8List,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () =>
+                            _downloadImage(message['image'] as Uint8List),
+                        icon: const Icon(Icons.download, size: 18),
+                        label: const Text('Download'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF667EEA),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: () =>
+                            _shareImage(message['image'] as Uint8List),
+                        icon: const Icon(Icons.share, size: 18),
+                        label: const Text('Share'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF667EEA),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final isUser = message['role'] == 'user';
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -389,7 +716,9 @@ class _ChatScreenState extends State<AiScreen>
             ),
             const SizedBox(height: 32),
             Text(
-              'Start chat with Chicha',
+              _isImageGenerationMode
+                  ? 'Create Amazing Posters'
+                  : 'Start chat with Chicha',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -397,45 +726,13 @@ class _ChatScreenState extends State<AiScreen>
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSuggestionChip(String label, IconData icon) {
-    return InkWell(
-      onTap: () {
-        _messageController.text = label;
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[300]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: const Color(0xFF667EEA)),
-            const SizedBox(width: 8),
+            const SizedBox(height: 16),
             Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF2D3748),
-              ),
+              _isImageGenerationMode
+                  ? 'Describe your poster and let AI create it'
+                  : 'Ask me anything!',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -461,11 +758,14 @@ class _ChatScreenState extends State<AiScreen>
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.auto_awesome, size: 18),
+              child: Icon(
+                _isImageGenerationMode ? Icons.image : Icons.auto_awesome,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
-              AppText.translate(context, 'Chat with Chicha'),
+              _isImageGenerationMode ? 'Post with Chicha' : 'Chat with Chicha',
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
             ),
           ],
@@ -482,31 +782,79 @@ class _ChatScreenState extends State<AiScreen>
         ),
         foregroundColor: Colors.white,
         elevation: 0,
+actions: [
+  InkWell(
+    onTap: _toggleImageGenerationMode,
+    borderRadius: BorderRadius.circular(12),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _isImageGenerationMode ? Icons.chat : Icons.image,
+            size: 22,
+            color: Colors.white,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            _isImageGenerationMode ? 'Chat' : 'Poster',
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+],
+
       ),
       body: Column(
         children: [
-          if (_lastError.isNotEmpty)
+          if (_isImageGenerationMode && _logoFile != null)
             Container(
               margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange[50],
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange[200]!),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.orange[700],
-                    size: 20,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      _logoFile!,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
+                  const Expanded(
                     child: Text(
-                      _lastError,
-                      style: TextStyle(color: Colors.orange[900], fontSize: 13),
+                      'Logo selected',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF2D3748),
+                      ),
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => setState(() => _logoFile = null),
+                    color: Colors.grey[600],
                   ),
                 ],
               ),
@@ -545,19 +893,21 @@ class _ChatScreenState extends State<AiScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          const Color(0xFF667EEA),
+                          Color(0xFF667EEA),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'AI analyzing',
+                      _isImageGenerationMode
+                          ? 'Creating magic...'
+                          : 'AI analyzing',
                       style: TextStyle(
                         color: Colors.grey[700],
                         fontSize: 14,
@@ -570,72 +920,96 @@ class _ChatScreenState extends State<AiScreen>
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7FAFC),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.grey[200]!),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _messageController,
-                                textInputAction: TextInputAction.send,
-                                onSubmitted: (_) => _sendMessage(),
-                                decoration: InputDecoration(
-                                  hintText: AppText.translate(
-                                    context,
-                                    'ask_me_anything',
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 14,
-                                  ),
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 15,
-                                  ),
+                    if (_isImageGenerationMode) ...[
+                      // OutlinedButton.icon(
+                      //   onPressed: _pickLogo,
+                      //   icon: const Icon(Icons.image, size: 18),
+                      //   label: Text(
+                      //     _logoFile == null
+                      //         ? 'Add Logo (Optional)'
+                      //         : 'Change Logo',
+                      //     style: const TextStyle(fontSize: 14),
+                      //   ),
+                      //   style: OutlinedButton.styleFrom(
+                      //     foregroundColor: const Color(0xFF667EEA),
+                      //     side: const BorderSide(color: Color(0xFF667EEA)),
+                      //     padding: const EdgeInsets.symmetric(vertical: 12),
+                      //     shape: RoundedRectangleBorder(
+                      //       borderRadius: BorderRadius.circular(12),
+                      //     ),
+                      //   ),
+                      // ),
+                      const SizedBox(height: 12),
+                    ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7FAFC),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: TextField(
+                              controller: _messageController,
+                              textInputAction: TextInputAction.send,
+                              onSubmitted: (_) => _sendMessage(),
+                              decoration: InputDecoration(
+                                hintText: _isImageGenerationMode
+                                    ? 'Describe your poster...'
+                                    : 'Ask me anything...',
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 14,
                                 ),
-                                minLines: 1,
-                                maxLines: 4,
-                                style: const TextStyle(
+                                hintStyle: TextStyle(
+                                  color: Colors.grey[500],
                                   fontSize: 15,
-                                  color: Color(0xFF2D3748),
                                 ),
                               ),
+                              minLines: 1,
+                              maxLines: 4,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF2D3748),
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF667EEA).withOpacity(0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
                           ),
-                        ],
-                      ),
-                      child: IconButton(
-                        onPressed: _sendMessage,
-                        icon: const Icon(Icons.send_rounded, size: 22),
-                        color: Colors.white,
-                        splashRadius: 24,
-                      ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF667EEA).withOpacity(0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            onPressed: _isLoading ? null : _sendMessage,
+                            icon: Icon(
+                              _isImageGenerationMode
+                                  ? Icons.auto_awesome
+                                  : Icons.send_rounded,
+                              size: 22,
+                            ),
+                            color: Colors.white,
+                            splashRadius: 24,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -644,6 +1018,20 @@ class _ChatScreenState extends State<AiScreen>
           ],
         ),
       ),
+      floatingActionButton: _isImageGenerationMode
+    ? FloatingActionButton(
+        onPressed: _pickLogo,
+        backgroundColor: const Color(0xFF667EEA),
+        elevation: 6,
+        tooltip: _logoFile == null ? 'Add Logo' : 'Change Logo',
+        child: Icon(
+          _logoFile == null ? Icons.add_photo_alternate : Icons.edit,
+          color: Colors.white,
+          size: 26,
+        ),
+      )
+    : null,
+
     );
   }
 
@@ -651,8 +1039,6 @@ class _ChatScreenState extends State<AiScreen>
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _animationController.dispose();
-    _speech?.stop();
     super.dispose();
   }
 }

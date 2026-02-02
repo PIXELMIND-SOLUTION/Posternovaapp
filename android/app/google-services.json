@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "31280683326",
+    "project_id": "editezy-94f28",
+    "storage_bucket": "editezy-94f28.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:31280683326:android:98566c95b43da595ef346f",
+        "android_client_info": {
+          "package_name": "com.posternova.posternova"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBleGkxMLYdMldDzuBlJV8GFCxbNjUz0LI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

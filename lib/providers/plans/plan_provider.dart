@@ -29,7 +29,7 @@
     
 // //     try {
 // //       final response = await http.get(
-// //         Uri.parse('${'http://194.164.148.244:4061'}/api/plans'),
+// //         Uri.parse('${'http://31.97.206.144:4061'}/api/plans'),
 // //         headers: {
 // //           'Content-Type': 'application/json',
 // //         },
@@ -64,7 +64,7 @@
 // //     );
     
 // //     final response = await http.post(
-// //       Uri.parse('${'http://194.164.148.244:4061'}/api/users/purchaseplan'),
+// //       Uri.parse('${'http://31.97.206.144:4061'}/api/users/purchaseplan'),
 // //       headers: {
 // //         'Content-Type': 'application/json',
 // //       },
@@ -98,7 +98,7 @@
     
 // //     try {
 // //       final response = await http.get(
-// //         Uri.parse('${'http://194.164.148.244:4061'}/api/payment/status/$merchantOrderId'),
+// //         Uri.parse('${'http://31.97.206.144:4061'}/api/payment/status/$merchantOrderId'),
 // //         headers: {
 // //           'Content-Type': 'application/json',
 // //         },
@@ -130,7 +130,7 @@
     
 // //     try {
 // //       final response = await http.get(
-// //         Uri.parse('${'http://194.164.148.244:4061'}/api/users/subscription/$userId/$planId'),
+// //         Uri.parse('${'http://31.97.206.144:4061'}/api/users/subscription/$userId/$planId'),
 // //         headers: {
 // //           'Content-Type': 'application/json',
 // //         },
@@ -167,7 +167,7 @@
 // //     print('ssssssssssssssssssssssssssssssssssssssssssss$transationId');
 
 // //     final response = await http.post(
-// //       Uri.parse('${'http://194.164.148.244:4061'}/api/payment/phonepe'),
+// //       Uri.parse('${'http://31.97.206.144:4061'}/api/payment/phonepe'),
 // //       headers: {
 // //         'Content-Type': 'application/json',
 // //       },
@@ -264,7 +264,7 @@
     
 //     try {
 //       final response = await http.get(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/plans'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/plans'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -298,7 +298,7 @@
 //       );
       
 //       final response = await http.post(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/users/purchaseplan'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/users/purchaseplan'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -340,7 +340,7 @@
 
 
 //       final response = await http.post(
-//         Uri.parse('http://194.164.148.244:4061/api/payment/purchase-plan'),
+//         Uri.parse('http://31.97.206.144:4061/api/payment/purchase-plan'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -375,7 +375,7 @@
     
 //     try {
 //       final response = await http.get(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/payment/status/$merchantOrderId'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/payment/status/$merchantOrderId'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -407,7 +407,7 @@
     
 //     try {
 //       final response = await http.get(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/users/subscription/$userId/$planId'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/users/subscription/$userId/$planId'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -449,7 +449,7 @@
 //       print('User ID: $userId, Plan ID: $planId, Product ID: $productId');
       
 //       final response = await http.post(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/payment/verify-ios-purchase'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/payment/verify-ios-purchase'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -536,7 +536,7 @@
 //       print('Plan ID: $planId, User ID: $userId, Transaction ID: $transactionId');
 
 //       final response = await http.post(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/payment/phonepe'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/payment/phonepe'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -626,7 +626,7 @@
     
 //     try {
 //       final response = await http.get(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/plans'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/plans'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -661,7 +661,7 @@
 //     );
     
 //     final response = await http.post(
-//       Uri.parse('${'http://194.164.148.244:4061'}/api/users/purchaseplan'),
+//       Uri.parse('${'http://31.97.206.144:4061'}/api/users/purchaseplan'),
 //       headers: {
 //         'Content-Type': 'application/json',
 //       },
@@ -695,7 +695,7 @@
     
 //     try {
 //       final response = await http.get(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/payment/status/$merchantOrderId'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/payment/status/$merchantOrderId'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -727,7 +727,7 @@
     
 //     try {
 //       final response = await http.get(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/users/subscription/$userId/$planId'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/users/subscription/$userId/$planId'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -764,7 +764,7 @@
 //     print('ssssssssssssssssssssssssssssssssssssssssssss$transationId');
 
 //     final response = await http.post(
-//       Uri.parse('${'http://194.164.148.244:4061'}/api/payment/phonepe'),
+//       Uri.parse('${'http://31.97.206.144:4061'}/api/payment/phonepe'),
 //       headers: {
 //         'Content-Type': 'application/json',
 //       },
@@ -861,7 +861,7 @@
     
 //     try {
 //       final response = await http.get(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/plans'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/plans'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -895,7 +895,7 @@
 //       );
       
 //       final response = await http.post(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/users/purchaseplan'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/users/purchaseplan'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -937,7 +937,7 @@
 
 
 //       final response = await http.post(
-//         Uri.parse('http://194.164.148.244:4061/api/payment/purchase-plan'),
+//         Uri.parse('http://31.97.206.144:4061/api/payment/purchase-plan'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -972,7 +972,7 @@
     
 //     try {
 //       final response = await http.get(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/payment/status/$merchantOrderId'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/payment/status/$merchantOrderId'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -1004,7 +1004,7 @@
     
 //     try {
 //       final response = await http.get(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/users/subscription/$userId/$planId'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/users/subscription/$userId/$planId'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -1046,7 +1046,7 @@
 //       print('User ID: $userId, Plan ID: $planId, Product ID: $productId');
       
 //       final response = await http.post(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/payment/verify-ios-purchase'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/payment/verify-ios-purchase'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -1133,7 +1133,7 @@
 //       print('Plan ID: $planId, User ID: $userId, Transaction ID: $transactionId');
 
 //       final response = await http.post(
-//         Uri.parse('${'http://194.164.148.244:4061'}/api/payment/phonepe'),
+//         Uri.parse('${'http://31.97.206.144:4061'}/api/payment/phonepe'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -1220,7 +1220,7 @@
 // /// - PhonePePaymentResponse.fromJson
 // class PlanProvider extends ChangeNotifier {
 //   // === configuration ===
-//   final String _baseUrl = 'http://194.164.148.244:4061';
+//   final String _baseUrl = 'http://31.97.206.144:4061';
 
 //   // === loading / error states ===
 //   bool _isLoading = false;
@@ -1645,7 +1645,7 @@ import 'package:posternova/helper/phone_pe_helper.dart';
 /// - PhonePePaymentResponse.fromJson
 class PlanProvider extends ChangeNotifier {
   // === configuration ===
-  final String _baseUrl = 'http://194.164.148.244:4061';
+  final String _baseUrl = 'http://31.97.206.144:4061';
 
   // === loading / error states ===
   bool _isLoading = false;

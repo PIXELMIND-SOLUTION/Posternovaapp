@@ -52,7 +52,7 @@
 //   Future<void> _fetchBanners() async {
 //     try {
 //       final response = await http.get(
-//         Uri.parse('http://194.164.148.244:4061/api/poster/getbanners'),
+//         Uri.parse('http://31.97.206.144:4061/api/poster/getbanners'),
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
@@ -711,7 +711,7 @@ class _HomeCarouselState extends State<HomeCarousel>
   Future<void> _fetchBanners() async {
     try {
       final response = await http.get(
-        Uri.parse('http://194.164.148.244:4061/api/poster/getbanners'),
+        Uri.parse('http://31.97.206.144:4061/api/poster/getbanners'),
         headers: {
           'Content-Type': 'application/json',
         },

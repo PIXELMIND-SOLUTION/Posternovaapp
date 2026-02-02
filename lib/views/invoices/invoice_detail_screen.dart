@@ -50,6 +50,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   String clientPhone = '';
   String clientEmail = 'varma@email.com';
 
+  String gstNumber = 'Not Available'; // For GST registration number
+  String gstRate = '0';
+
   @override
   void initState() {
     super.initState();
@@ -137,15 +140,32 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   }
 
   // Load user data from SharedPreferences
+  // Future<void> _loadUserData() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   setState(() {
+  //     businessName = prefs.getString('businessName') ?? 'Design Studio';
+  //     clientPhone = prefs.getString('user_mobile') ?? '12345678';
+  //     clientEmail = prefs.getString('email') ?? 'designstudio@email.com';
+  //     // bankAccount = prefs.getString('bankAccount') ?? '1234-5678-9012-3456';
+  //     // bankName = prefs.getString('bankName') ?? 'Bank Transfer';
+  //     gst = prefs.getString('gst') ?? 'Not Available';
+  //     name = prefs.getString('user_name') ?? 'Melvin';
+  //     clientAddress = prefs.getString('user_address') ?? "No address added";
+  //     offerprice = prefs.getString('Offer Price') ?? 'No offerprice';
+  //     description = prefs.getString('Description') ?? 'No description';
+  //     wastage = prefs.getString('Wastage') ?? 'No wastage';
+  //     hsn = prefs.getString('HSN') ?? 'No hsn number';
+  //   });
+  // }
+
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       businessName = prefs.getString('businessName') ?? 'Design Studio';
       clientPhone = prefs.getString('user_mobile') ?? '12345678';
       clientEmail = prefs.getString('email') ?? 'designstudio@email.com';
-      // bankAccount = prefs.getString('bankAccount') ?? '1234-5678-9012-3456';
-      // bankName = prefs.getString('bankName') ?? 'Bank Transfer';
-      gst = prefs.getString('gst') ?? 'Not Available';
+      gstNumber = prefs.getString('gst') ?? 'Not Available'; // GST Number
+      gstRate = prefs.getString('gst_rate') ?? '0'; // GST Rate (percentage)
       name = prefs.getString('user_name') ?? 'Melvin';
       clientAddress = prefs.getString('user_address') ?? "No address added";
       offerprice = prefs.getString('Offer Price') ?? 'No offerprice';
@@ -174,18 +194,28 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       final productTotal =
           (product.offerPrice + wastageAmount) * product.quantity;
 
-      return productTotal;
+      return total + productTotal;
     });
 
+    // double gstRate = 0.0;
+    // if (gst != 'Not Available') {
+    //   // Try to parse the GST value (handle formats like "18%" or "18")
+    //   String gstValue = gst.replaceAll('%', '').trim();
+    //   try {
+    //     gstRate = double.parse(gstValue) / 100; // Convert percentage to decimal
+    //   } catch (e) {
+    //     debugPrint('Error parsing GST rate: $e');
+    //     // Keep default 0.0 if parsing fails
+    //   }
+    // }
+
     double gstRate = 0.0;
-    if (gst != 'Not Available') {
-      // Try to parse the GST value (handle formats like "18%" or "18")
-      String gstValue = gst.replaceAll('%', '').trim();
+    if (this.gstRate != '0' && this.gstRate.isNotEmpty) {
+      String gstValue = this.gstRate.replaceAll('%', '').trim();
       try {
-        gstRate = double.parse(gstValue) / 100; // Convert percentage to decimal
+        gstRate = double.parse(gstValue) / 100;
       } catch (e) {
         debugPrint('Error parsing GST rate: $e');
-        // Keep default 0.0 if parsing fails
       }
     }
 
@@ -664,6 +694,23 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                           ],
                                         ),
                                         const SizedBox(height: 8),
+
+                                        // Row(
+                                        //   mainAxisAlignment:
+                                        //       MainAxisAlignment.spaceBetween,
+                                        //   children: [
+                                        //     const Text(
+                                        //       'GST',
+                                        //       style: TextStyle(fontSize: 14),
+                                        //     ),
+                                        //     Text(
+                                        //       'Tax (${gst != 'Not Available' ? gst : '0%'})',
+                                        //       style: const TextStyle(
+                                        //         fontSize: 14,
+                                        //       ),
+                                        //     ),
+                                        //   ],
+                                        // ),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
@@ -673,13 +720,14 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                               style: TextStyle(fontSize: 14),
                                             ),
                                             Text(
-                                              'Tax (${gst != 'Not Available' ? gst : '0%'})',
+                                              'Tax (${this.gstRate != '0' ? '${this.gstRate}%' : '0%'})',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
                                             ),
                                           ],
                                         ),
+
                                         const SizedBox(height: 8),
                                         const Divider(),
                                         const SizedBox(height: 8),
@@ -919,17 +967,29 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         return total + productTotal + wastageAmount;
       });
 
-      double gstRate = 0.0;
-      if (gst != 'Not Available') {
-        String gstValue = gst.replaceAll('%', '').trim();
+      // double gstRate = 0.0;
+      // if (gst != 'Not Available') {
+      //   String gstValue = gst.replaceAll('%', '').trim();
+      //   try {
+      //     gstRate = double.parse(gstValue) / 100;
+      //   } catch (e) {
+      //     debugPrint('Error parsing GST rate: $e');
+      //   }
+      // }
+
+      double gstRateValue = 0.0;
+      if (gstRate != '0' && gstRate.isNotEmpty) {
+        String gstValue = gstRate.replaceAll('%', '').trim();
         try {
-          gstRate = double.parse(gstValue) / 100;
+          gstRateValue = double.parse(gstValue) / 100;
         } catch (e) {
           debugPrint('Error parsing GST rate: $e');
         }
       }
 
-      final tax = totalAmount * gstRate;
+      // final tax = totalAmount * gstRate;
+      final tax = totalAmount * gstRateValue;
+
       final totalWithTax = totalAmount + tax;
 
       // Create a PDF document
@@ -1339,15 +1399,15 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                       ),
                       pw.SizedBox(height: 8),
                       pw.Text(
-                        '• Payment is due upon receipt of this invoice.',
+                        'Payment is due upon receipt of this invoice.',
                         style: const pw.TextStyle(fontSize: 14),
                       ),
                       pw.Text(
-                        '• Late payments may incur additional charges.',
+                        'Late payments may incur additional charges.',
                         style: const pw.TextStyle(fontSize: 14),
                       ),
                       pw.Text(
-                        '• Please make checks payable to Your Graphic',
+                        ' Please make checks payable to Your Graphic',
                         style: const pw.TextStyle(fontSize: 14),
                       ),
                       pw.Text(
@@ -1377,6 +1437,20 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                         ],
                       ),
                       pw.SizedBox(height: 8),
+
+                      // pw.Row(
+                      //   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      //   children: [
+                      //     pw.Text(
+                      //       'GST',
+                      //       style: const pw.TextStyle(fontSize: 14),
+                      //     ),
+                      //     pw.Text(
+                      //       'Tax (${gst != 'Not Available' ? gst : '0%'})',
+                      //       style: const pw.TextStyle(fontSize: 14),
+                      //     ),
+                      //   ],
+                      // ),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
@@ -1385,7 +1459,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                             style: const pw.TextStyle(fontSize: 14),
                           ),
                           pw.Text(
-                            'Tax (${gst != 'Not Available' ? gst : '0%'})',
+                            'Tax (${gstRate != '0' ? '$gstRate%' : '0%'})',
                             style: const pw.TextStyle(fontSize: 14),
                           ),
                         ],
@@ -1418,7 +1492,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               ],
             ),
             pw.SizedBox(height: 20),
-
+            
             // Payment Information - Navy background
             pw.Container(
               // color: PdfColor.fromHex('0E2945'),
@@ -1544,9 +1618,14 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       await file.writeAsBytes(pdfBytes);
 
       ScaffoldMessenger.of(context).showSnackBar(
+        // SnackBar(
+        //   content: Text('Invoice saved to ${file.path}'),
+        //   action: SnackBarAction(label: 'View', onPressed: () async {}),
+        // ),
         SnackBar(
-          content: Text('Invoice saved to ${file.path}'),
-          action: SnackBarAction(label: 'View', onPressed: () async {}),
+          backgroundColor: Colors.green,
+          content: Text('Invoice saved Successfully', style: TextStyle()),
+          // action: SnackBarAction(label: 'View', onPressed: () async {}),
         ),
       );
     } catch (e) {
