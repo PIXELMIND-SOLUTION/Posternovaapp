@@ -44,6 +44,10 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+			<key>UIBackgroundModes</key>
+		<array>
+			<string>remote-notification</string>
+		</array>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
@@ -56,6 +60,9 @@
 	<array>
     <integer>1</integer>
 	</array>
+
+	<key>FirebaseAppDelegateProxyEnabled</key>
+<true/>
 
 </dict>
 </plist>

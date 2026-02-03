@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:posternova/firebase_options.dart';
 import 'package:posternova/providers/PosterProvider/category_poster_provider.dart';
 import 'package:posternova/providers/PosterProvider/getall_poster_provider.dart';
 import 'package:posternova/providers/PosterProvider/poster_provider.dart';
@@ -35,7 +36,9 @@ void main()async {
     // Initialize Firebase
 
     await LocalNotificationService.init();
-    await Firebase.initializeApp();
+await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,
+);
     print('✅ Firebase initialized successfully');
     
     // Initialize FCM Service
