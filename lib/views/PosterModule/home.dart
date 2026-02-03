@@ -122,13 +122,13 @@ List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
       await _loadUserId(); // Ensure userId is loaded first
       fetchCustomers();
 
-      if (!_hasSpokenGreeting && username != null) {
-        await Future.delayed(
-          const Duration(milliseconds: 800),
-        ); // Small delay for better UX
-        await VoiceGreetingHelper.speakWelcome(username);
-        _hasSpokenGreeting = true;
-      }
+      // if (!_hasSpokenGreeting && username != null) {
+      //   await Future.delayed(
+      //     const Duration(milliseconds: 800),
+      //   ); // Small delay for better UX
+      //   await VoiceGreetingHelper.speakWelcome(username);
+      //   _hasSpokenGreeting = true;
+      // }
       final myPlanProvider = Provider.of<MyPlanProvider>(
         context,
         listen: false,

@@ -66,6 +66,8 @@ class CreateCustomerProvider with ChangeNotifier {
       print("myyyyyyyyyyyyyyyyyyyyyyyy$userId");
       final response = await _apiService.fetchUser(userId);
 
+      print("Response body printing: ${response}");
+
       if (response != null && response['customers'] != null) {
         _customers = List<Map<String, dynamic>>.from(response['customers']);
       } else {

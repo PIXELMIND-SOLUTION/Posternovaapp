@@ -1566,173 +1566,700 @@ Future<void> _loadSavedBusinessName() async {
     }
   }
 
-  Future<void> _showCustomerSelectionDialog() async {
-    final customerProvider = Provider.of<CreateCustomerProvider>(
-      context,
-      listen: false,
+  // Future<void> _showCustomerSelectionDialog() async {
+  //   final customerProvider = Provider.of<CreateCustomerProvider>(
+  //     context,
+  //     listen: false,
+  //   );
+
+  //   // Fetch customers if not already loaded
+  //   if (customerProvider.customers.isEmpty) {
+  //     await customerProvider.fetchUser(userId.toString());
+  //   }
+
+  //   if (customerProvider.customers.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('No customers available. Please add customers first.'),
+  //         backgroundColor: Colors.orange,
+  //       ),
+  //     );
+  //     return;
+  //   }
+
+  //   // Track selected customers
+  //   Set<String> selectedCustomerIds = {};
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => StatefulBuilder(
+  //       builder: (context, setDialogState) => AlertDialog(
+  //         title: Row(
+  //           children: [
+  //             const Icon(Icons.people, color: Colors.deepPurple),
+  //             const SizedBox(width: 8),
+  //             const Text('Share Customers'),
+  //             const Spacer(),
+  //             if (selectedCustomerIds.isNotEmpty)
+  //               Container(
+  //                 padding: const EdgeInsets.symmetric(
+  //                   horizontal: 8,
+  //                   vertical: 4,
+  //                 ),
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.deepPurple,
+  //                   borderRadius: BorderRadius.circular(12),
+  //                 ),
+  //                 // child: Text(
+  //                 //   '${selectedCustomerIds.length}',
+  //                 //   style: const TextStyle(color: Colors.white, fontSize: 12),
+  //                 // ),
+  //               ),
+  //           ],
+  //         ),
+  //         content: SizedBox(
+  //           width: double.maxFinite,
+  //           height: 400,
+  //           child: Column(
+  //             children: [
+  //               // Select All / Deselect All
+  //               CheckboxListTile(
+  //                 title: Text(
+  //                   selectedCustomerIds.length ==
+  //                           customerProvider.customers.length
+  //                       ? 'Deselect All'
+  //                       : 'Select All',
+  //                   style: const TextStyle(fontWeight: FontWeight.bold),
+  //                 ),
+  //                 value:
+  //                     selectedCustomerIds.length ==
+  //                     customerProvider.customers.length,
+  //                 onChanged: (value) {
+  //                   setDialogState(() {
+  //                     if (value == true) {
+  //                       selectedCustomerIds = customerProvider.customers
+  //                           .map((c) => c['_id'] as String)
+  //                           .toSet();
+  //                     } else {
+  //                       selectedCustomerIds.clear();
+  //                     }
+  //                   });
+  //                 },
+  //                 activeColor: Colors.deepPurple,
+  //               ),
+  //               const Divider(),
+
+  //               // Customer List
+  //               Expanded(
+  //                 child: ListView.builder(
+  //                   itemCount: customerProvider.customers.length,
+  //                   itemBuilder: (context, index) {
+  //                     final customer = customerProvider.customers[index];
+  //                     final customerId = customer['_id'] as String;
+  //                     final isSelected = selectedCustomerIds.contains(
+  //                       customerId,
+  //                     );
+
+  //                     return CheckboxListTile(
+  //                       secondary: CircleAvatar(
+  //                         backgroundColor: Colors.deepPurple,
+  //                         child: Text(
+  //                           (customer['name'] ?? 'U')[0].toUpperCase(),
+  //                           style: const TextStyle(color: Colors.white),
+  //                         ),
+  //                       ),
+  //                       title: Text(
+  //                         customer['name'] ?? 'Unknown',
+  //                         style: const TextStyle(fontWeight: FontWeight.w600),
+  //                       ),
+  //                       subtitle: Column(
+  //                         crossAxisAlignment: CrossAxisAlignment.start,
+  //                         children: [
+  //                           if (customer['mobile'] != null)
+  //                             Text(
+  //                               customer['mobile'],
+  //                               style: const TextStyle(fontSize: 12),
+  //                             ),
+  //                           if (customer['email'] != null)
+  //                             Text(
+  //                               customer['email'],
+  //                               style: const TextStyle(fontSize: 11),
+  //                             ),
+  //                         ],
+  //                       ),
+  //                       value: isSelected,
+  //                       onChanged: (value) {
+  //                         setDialogState(() {
+  //                           if (value == true) {
+  //                             selectedCustomerIds.add(customerId);
+  //                           } else {
+  //                             selectedCustomerIds.remove(customerId);
+  //                           }
+  //                         });
+  //                       },
+  //                       activeColor: Colors.deepPurple,
+  //                     );
+  //                   },
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.pop(context),
+  //             child: const Text('Cancel'),
+  //           ),
+  //           ElevatedButton.icon(
+  //             onPressed: selectedCustomerIds.isEmpty
+  //                 ? null
+  //                 : () async {
+  //                     Navigator.pop(context);
+  //                     await _sharePosterWithSelectedCustomers(
+  //                       selectedCustomerIds,
+  //                       customerProvider.customers,
+  //                     );
+  //                   },
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor: Colors.deepPurple,
+  //               foregroundColor: Colors.white,
+  //               disabledBackgroundColor: Colors.grey,
+  //             ),
+  //             icon: const Icon(Icons.share, size: 18),
+  //             label: Text('Share (${selectedCustomerIds.length})'),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+
+Future<void> _showCustomerSelectionDialog() async {
+  final customerProvider = Provider.of<CreateCustomerProvider>(
+    context,
+    listen: false,
+  );
+
+  // Fetch customers if not already loaded
+  if (customerProvider.customers.isEmpty) {
+    await customerProvider.fetchUser(userId.toString());
+  }
+
+  if (customerProvider.customers.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No customers available. Please add customers first.'),
+        backgroundColor: Colors.orange,
+      ),
     );
+    return;
+  }
 
-    // Fetch customers if not already loaded
-    if (customerProvider.customers.isEmpty) {
-      await customerProvider.fetchUser(userId.toString());
+  // Extract unique religions from customers
+List<String> religions = customerProvider.customers
+    .where((customer) =>
+        customer['religion'] != null &&
+        customer['religion'].toString().trim().isNotEmpty)
+    .map((customer) => customer['religion'].toString().trim())
+    .toSet()
+    .toList();
+
+
+  religions.sort();
+  religions.insert(0, 'All');
+
+  // Track selected religion and customers
+  String selectedReligion = 'All';
+  Set<String> selectedCustomerIds = {};
+
+  // Filter customers based on selected religion
+  List<Map<String, dynamic>> filteredCustomers() {
+    if (selectedReligion == 'All') {
+      return customerProvider.customers;
+    } else {
+      return customerProvider.customers
+          .where((customer) =>
+              customer['religion']?.toString() == selectedReligion)
+          .toList();
     }
+  }
 
-    if (customerProvider.customers.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No customers available. Please add customers first.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+  // Responsive sizing
+  final screenW = MediaQuery.sizeOf(context).width;
+  final screenH = MediaQuery.sizeOf(context).height;
+  final bool isSmall = screenW < 400;
+  final double dialogWidth = screenW < 600 ? screenW * 0.92 : 520.0;
+  final double dialogMaxH = screenH * 0.82;
 
-    // Track selected customers
-    Set<String> selectedCustomerIds = {};
+  showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) {
+        final filtered = filteredCustomers();
+        final bool allSelected = filtered.isNotEmpty &&
+            selectedCustomerIds.length == filtered.length &&
+            filtered
+                .every((c) => selectedCustomerIds.contains(c['_id'] as String));
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Row(
-            children: [
-              const Icon(Icons.people, color: Colors.deepPurple),
-              const SizedBox(width: 8),
-              const Text('Share Customers'),
-              const Spacer(),
-              if (selectedCustomerIds.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  // child: Text(
-                  //   '${selectedCustomerIds.length}',
-                  //   style: const TextStyle(color: Colors.white, fontSize: 12),
-                  // ),
-                ),
-            ],
+        return Dialog(
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: isSmall ? 10 : 24,
+            vertical: 32,
           ),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 400,
+          shape: const RoundedRectangleBorder(
+            // borderRadius: BorderRadius.circular(20),
+          ),
+          clipBehavior: Clip.antiAliasWithSaveLayer,
+          backgroundColor: Colors.white,
+          child: SizedBox(
+            width: dialogWidth,
+            height: dialogMaxH,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Select All / Deselect All
-                CheckboxListTile(
-                  title: Text(
-                    selectedCustomerIds.length ==
-                            customerProvider.customers.length
-                        ? 'Deselect All'
-                        : 'Select All',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                // ──────────── HEADER ────────────
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF6366F1), Color(0xFF818CF8)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
                   ),
-                  value:
-                      selectedCustomerIds.length ==
-                      customerProvider.customers.length,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      if (value == true) {
-                        selectedCustomerIds = customerProvider.customers
-                            .map((c) => c['_id'] as String)
-                            .toSet();
-                      } else {
-                        selectedCustomerIds.clear();
-                      }
-                    });
-                  },
-                  activeColor: Colors.deepPurple,
-                ),
-                const Divider(),
-
-                // Customer List
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: customerProvider.customers.length,
-                    itemBuilder: (context, index) {
-                      final customer = customerProvider.customers[index];
-                      final customerId = customer['_id'] as String;
-                      final isSelected = selectedCustomerIds.contains(
-                        customerId,
-                      );
-
-                      return CheckboxListTile(
-                        secondary: CircleAvatar(
-                          backgroundColor: Colors.deepPurple,
+                  padding: const EdgeInsets.only(
+                    left: 20,
+                    right: 12,
+                    top: 18,
+                    bottom: 16,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.people_rounded,
+                          color: Colors.white, size: 24),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Share Customers',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (selectedCustomerIds.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           child: Text(
-                            (customer['name'] ?? 'U')[0].toUpperCase(),
-                            style: const TextStyle(color: Colors.white),
+                            '${selectedCustomerIds.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                        title: Text(
-                          customer['name'] ?? 'Unknown',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (customer['mobile'] != null)
-                              Text(
-                                customer['mobile'],
-                                style: const TextStyle(fontSize: 12),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded,
+                            color: Colors.white, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ──────────── RELIGION FILTER CHIPS ────────────
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: SizedBox(
+                    height: 36,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: religions.length,
+                      itemBuilder: (_, index) {
+                        final r = religions[index];
+                        final bool isActive = r == selectedReligion;
+                        return Padding(
+                          padding: EdgeInsets.only(
+                              right: index < religions.length - 1 ? 8 : 0),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeInOut,
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? const Color(0xFF6366F1)
+                                  : const Color(0xFFF1F1FF),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(18),
+                              onTap: () {
+                                setDialogState(() {
+                                  selectedReligion = r;
+                                  selectedCustomerIds.clear();
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 6),
+                                child: Text(
+                                  r,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isActive
+                                        ? Colors.white
+                                        : const Color(0xFF6366F1),
+                                  ),
+                                ),
                               ),
-                            if (customer['email'] != null)
-                              Text(
-                                customer['email'],
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                          ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                // ──────────── INFO ROW ────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${filtered.length} customer${filtered.length != 1 ? 's' : ''}',
+                        style: const TextStyle(
+                          color: Color(0xFF6366F1),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
-                        value: isSelected,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            if (value == true) {
-                              selectedCustomerIds.add(customerId);
-                            } else {
-                              selectedCustomerIds.remove(customerId);
-                            }
-                          });
-                        },
-                        activeColor: Colors.deepPurple,
-                      );
-                    },
+                      ),
+                      const Spacer(),
+                      if (filtered.isNotEmpty)
+                        InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              if (allSelected) {
+                                selectedCustomerIds.clear();
+                              } else {
+                                selectedCustomerIds = filtered
+                                    .map((c) => c['_id'] as String)
+                                    .toSet();
+                              }
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  allSelected
+                                      ? Icons.deselect
+                                      : Icons.select_all,
+                                  size: 18,
+                                  color: const Color(0xFF6366F1),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  allSelected ? 'Deselect All' : 'Select All',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF6366F1),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // ──────────── CUSTOMER LIST ────────────
+                Expanded(
+                  child: filtered.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.group_off_rounded,
+                                  size: 52, color: Color(0xFFD1D5DB)),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'No customers found',
+                                style: TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              if (selectedReligion != 'All')
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'in "$selectedReligion"',
+                                    style: const TextStyle(
+                                      color: Color(0xFF9CA3AF),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 8),
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final customer = filtered[index];
+                            final customerId = customer['_id'] as String;
+                            final bool isSelected =
+                                selectedCustomerIds.contains(customerId);
+                            final String name =
+                                customer['name']?.toString() ?? 'Unknown';
+                            final String? mobile =
+                                customer['mobile']?.toString();
+                            final String? email =
+                                customer['email']?.toString();
+                            final String? religion =
+                                customer['religion']?.toString();
+                            final String initial =
+                                name.isNotEmpty ? name[0].toUpperCase() : 'U';
+
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeInOut,
+                              margin: const EdgeInsets.only(bottom: 4),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFFEEEFFF)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF6366F1)
+                                      : const Color(0xFFE8E8F0),
+                                  width: isSelected ? 1.5 : 1,
+                                ),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  setDialogState(() {
+                                    if (isSelected) {
+                                      selectedCustomerIds.remove(customerId);
+                                    } else {
+                                      selectedCustomerIds.add(customerId);
+                                    }
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      // Checkbox
+                                      SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: Checkbox(
+                                          value: isSelected,
+                                          onChanged: (_) {
+                                            setDialogState(() {
+                                              if (isSelected) {
+                                                selectedCustomerIds
+                                                    .remove(customerId);
+                                              } else {
+                                                selectedCustomerIds
+                                                    .add(customerId);
+                                              }
+                                            });
+                                          },
+                                          activeColor: const Color(0xFF6366F1),
+                                          side: const BorderSide(
+                                              color: Color(0xFFB0B0C0)),
+                                          // materialColor: Colors.transparent,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+
+                                      // Avatar
+                                      CircleAvatar(
+                                        radius: 22,
+                                        backgroundColor:
+                                            const Color(0xFF6366F1),
+                                        child: Text(
+                                          initial,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+
+                                      // Name + contact info
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              name,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF1E1B4B),
+                                              ),
+                                              maxLines: 1,
+                                              overflow:
+                                                  TextOverflow.ellipsis,
+                                            ),
+                                            if (mobile != null ||
+                                                email != null)
+                                              const SizedBox(height: 2),
+                                            if (mobile != null)
+                                              Text(
+                                                mobile,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF6B7280),
+                                                ),
+                                              ),
+                                            if (email != null)
+                                              Text(
+                                                email,
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Color(0xFF9CA3AF),
+                                                ),
+                                                maxLines: 1,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // Religion tag
+                                      if (religion != null)
+                                        Container(
+                                          padding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF1F1FF),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            religion,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Color(0xFF6366F1),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+
+                // ──────────── FOOTER ────────────
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmall ? 12 : 16,
+                    vertical: 14,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF9FAFB),
+                    border: Border(
+                      top: BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF6B7280),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: isSmall ? 12 : 16, vertical: 10),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const Spacer(),
+                      AnimatedOpacity(
+                        opacity: selectedCustomerIds.isNotEmpty ? 1.0 : 0.45,
+                        duration: const Duration(milliseconds: 200),
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6366F1),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: const Color(0xFFACAFE8),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: isSmall ? 16 : 22, vertical: 10),
+                            // borderRadius: BorderRadius.circular(10),
+                            elevation: 0,
+                          ),
+                          onPressed: selectedCustomerIds.isEmpty
+                              ? null
+                              : () async {
+                                  Navigator.pop(context);
+                                  await _sharePosterWithSelectedCustomers(
+                                    selectedCustomerIds,
+                                    filteredCustomers(),
+                                  );
+                                },
+                          icon: const Icon(Icons.share_rounded, size: 18),
+                          label: Text(
+                            'Share (${selectedCustomerIds.length})',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 14),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton.icon(
-              onPressed: selectedCustomerIds.isEmpty
-                  ? null
-                  : () async {
-                      Navigator.pop(context);
-                      await _sharePosterWithSelectedCustomers(
-                        selectedCustomerIds,
-                        customerProvider.customers,
-                      );
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.grey,
-              ),
-              icon: const Icon(Icons.share, size: 18),
-              label: Text('Share (${selectedCustomerIds.length})'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
+
+  
 
   // Future<void> _sharePosterWithSelectedCustomers(
   //   Set<String> selectedCustomerIds,
