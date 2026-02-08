@@ -56,6 +56,38 @@ class SmsService {
     }
   }
 
+Future<http.Response> verifyFirebaseToken(
+    String firebaseToken, String fcmToken) async {
+
+  final url = Uri.parse("http://31.97.206.144:4061/api/users/verify-firebase-otp");
+
+  // ✅ Payload
+  final payload = {
+    "idToken": firebaseToken,
+    "fcmToken": fcmToken,
+  };
+
+  // ✅ Print payload
+  print("📤 VERIFY FIREBASE OTP PAYLOAD:");
+    print(url);
+
+  print(jsonEncode(payload));
+
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode(payload),
+  );
+
+  // ✅ Print response
+  print("📥 VERIFY FIREBASE OTP RESPONSE:");
+  print("Status Code: ${response.statusCode}");
+  print("Body: ${response.body}");
+
+  return response;
+}
+
+
   /// Resend OTP request
   Future<LoginResponse?> resendOtp(ResendOtpRequest request) async {
     final url = Uri.parse(ApiConstants.resendOtp);

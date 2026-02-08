@@ -13,6 +13,8 @@ class ApiConstants {
   static String deleteCustomer(String userId, String customerId) =>
       '$baseUrl/delete-customers/$userId/$customerId';
 
+      static const String verifyFirebaseOtp = '$baseUrl/auth/verify-firebase-otp';
+
   static String updateCustomer(String userId, String customerId) =>
       '$baseUrl/update-customers/$userId/$customerId';
 
@@ -53,6 +55,7 @@ class ApiConstants {
   static const String singlePlan = 'http://31.97.206.144:4061/api/users/plans/singleplan';
 
   static const String verifyOtp = '$baseUrl/verify-otp';
+
 
   static const String resendOtp = '$baseUrl/resend-otp';
 
