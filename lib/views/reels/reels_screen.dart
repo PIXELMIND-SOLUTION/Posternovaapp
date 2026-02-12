@@ -685,6 +685,7 @@
 import 'package:flutter/material.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/providers/reels/reels_provider.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:share_plus/share_plus.dart';
@@ -730,8 +731,8 @@ class _ReelsScreenState extends State<ReelsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'Reels',
+        title: const AppText(
+          'reels',
           style: TextStyle(
             color: Colors.white,
             fontSize: 24,
@@ -1191,8 +1192,8 @@ class _ReelItemState extends State<ReelItem> {
                 const SizedBox(height: 12),
 
                 // Caption
-                const Text(
-                  'Amazing video by Editezy! Check this out🔥',
+                const AppText(
+                  'amazing_video_editezy',
                   style: TextStyle(color: Colors.white, fontSize: 14),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

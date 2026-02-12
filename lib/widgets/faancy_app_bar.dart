@@ -1318,11 +1318,15 @@
 //   }
 // }
 
+
+
 import 'package:flutter/material.dart';
 import 'package:posternova/views/AI/chat_ai.dart';
 import 'dart:math' as math;
 import 'package:posternova/views/ProfileScreen/profile_screen.dart';
-import 'package:posternova/views/referearn/referearn_screen.dart'; // Add your Refer & Earn screen import
+import 'package:posternova/views/referearn/referearn_screen.dart';
+import 'package:posternova/widgets/language_widget.dart';
+import 'package:provider/provider.dart';
 
 class FancyAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String? username;
@@ -1595,72 +1599,197 @@ class _FancyAppBarState extends State<FancyAppBar>
                   ),
                 ),
               ),
+
+              // Add this widget to your FancyAppBar actions (before the AI and Refer & Earn icons)
+
+Padding(
+  padding: const EdgeInsets.all(8.0),
+  child: GestureDetector(
+    onTap: () => _showLanguageSelector(context),
+    child: Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [
+            Colors.blue.withOpacity(0.4),
+            Colors.lightBlue.withOpacity(0.2),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.4),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: const Icon(
+        Icons.language,
+        color: Colors.white,
+        size: 24,
+      ),
+    ),
+  ),
+),
               const SizedBox(width: 8),
             ],
+
+
             title: Transform.scale(
-              scale: _pulseAnimation.value,
-              child: ShaderMask(
-                shaderCallback: (bounds) {
-                  return LinearGradient(
-                    colors: const [
-                      Colors.white,
-                      Color(0xFFE0E7FF),
-                      Colors.white,
-                      Color(0xFFE0E7FF),
-                    ],
-                    stops: [
-                      0.0,
-                      _shimmerAnimation.value / 2,
-                      _shimmerAnimation.value,
-                      1.0,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ).createShader(bounds);
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Welcome back!',
-                      style: TextStyle(
-                        fontFamily: 'Serif',
-                        fontWeight: FontWeight.w400,
-                        fontSize: 14,
-                        letterSpacing: 1.5,
-                        color: Colors.white.withOpacity(0.9),
-                        shadows: const [
-                          Shadow(
-                            color: Colors.black26,
-                            offset: Offset(1, 1),
-                            blurRadius: 3,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.username ?? 'User',
-                      style: const TextStyle(
-                        fontFamily: 'Cursive',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 24,
-                        letterSpacing: 1.5,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black26,
-                            offset: Offset(2, 2),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+  scale: _pulseAnimation.value,
+  child: ShaderMask(
+    shaderCallback: (bounds) {
+      return LinearGradient(
+        colors: const [
+          Colors.white,
+          Color(0xFFE0E7FF),
+          Colors.white,
+          Color(0xFFE0E7FF),
+        ],
+        stops: [
+          0.0,
+          _shimmerAnimation.value / 2,
+          _shimmerAnimation.value,
+          1.0,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(bounds);
+    },
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // OLD CODE - REPLACE THIS:
+        // Text(
+        //   'Welcome back!',
+        //   style: TextStyle(
+        //     fontFamily: 'Serif',
+        //     fontWeight: FontWeight.w400,
+        //     fontSize: 14,
+        //     letterSpacing: 1.5,
+        //     color: Colors.white.withOpacity(0.9),
+        //     shadows: const [
+        //       Shadow(
+        //         color: Colors.black26,
+        //         offset: Offset(1, 1),
+        //         blurRadius: 3,
+        //       ),
+        //     ],
+        //   ),
+        // ),
+        
+        // NEW CODE - WITH THIS:
+        Consumer<LanguageProvider>(
+          builder: (context, languageProvider, child) {
+            return Text(
+              LocalizationService.translate('welcome_back', languageProvider.locale.languageCode),
+              style: TextStyle(
+                fontFamily: 'Serif',
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+                letterSpacing: 1.5,
+                color: Colors.white.withOpacity(0.9),
+                shadows: const [
+                  Shadow(
+                    color: Colors.black26,
+                    offset: Offset(1, 1),
+                    blurRadius: 3,
+                  ),
+                ],
               ),
-            ),
+            );
+          },
+        ),
+        const SizedBox(height: 2),
+        Text(
+          widget.username ?? 'User',
+          style: const TextStyle(
+            fontFamily: 'Cursive',
+            fontWeight: FontWeight.w900,
+            fontSize: 24,
+            letterSpacing: 1.5,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                offset: Offset(2, 2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  ),
+),
+            // title: Transform.scale(
+            //   scale: _pulseAnimation.value,
+            //   child: ShaderMask(
+            //     shaderCallback: (bounds) {
+            //       return LinearGradient(
+            //         colors: const [
+            //           Colors.white,
+            //           Color(0xFFE0E7FF),
+            //           Colors.white,
+            //           Color(0xFFE0E7FF),
+            //         ],
+            //         stops: [
+            //           0.0,
+            //           _shimmerAnimation.value / 2,
+            //           _shimmerAnimation.value,
+            //           1.0,
+            //         ],
+            //         begin: Alignment.topLeft,
+            //         end: Alignment.bottomRight,
+            //       ).createShader(bounds);
+            //     },
+            //     child: Column(
+            //       mainAxisAlignment: MainAxisAlignment.center,
+            //       children: [
+            //         Text(
+            //           'Welcome back!',
+            //           style: TextStyle(
+            //             fontFamily: 'Serif',
+            //             fontWeight: FontWeight.w400,
+            //             fontSize: 14,
+            //             letterSpacing: 1.5,
+            //             color: Colors.white.withOpacity(0.9),
+            //             shadows: const [
+            //               Shadow(
+            //                 color: Colors.black26,
+            //                 offset: Offset(1, 1),
+            //                 blurRadius: 3,
+            //               ),
+            //             ],
+            //           ),
+            //         ),
+            //         const SizedBox(height: 2),
+            //         Text(
+            //           widget.username ?? 'User',
+            //           style: const TextStyle(
+            //             fontFamily: 'Cursive',
+            //             fontWeight: FontWeight.w900,
+            //             fontSize: 24,
+            //             letterSpacing: 1.5,
+            //             color: Colors.white,
+            //             shadows: [
+            //               Shadow(
+            //                 color: Colors.black26,
+            //                 offset: Offset(2, 2),
+            //                 blurRadius: 4,
+            //               ),
+            //             ],
+            //           ),
+            //           overflow: TextOverflow.ellipsis,
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
             flexibleSpace: Stack(
               children: [
                 // Main gradient background
@@ -1751,4 +1880,150 @@ class _FancyAppBarState extends State<FancyAppBar>
       },
     );
   }
+
+void _showLanguageSelector(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select Language',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildLanguageOption(
+                context,
+                dialogContext,
+                'English',
+                'en',
+                Icons.language,
+              ),
+              const SizedBox(height: 12),
+              _buildLanguageOption(
+                context,
+                dialogContext,
+                'हिंदी',
+                'hi',
+                Icons.translate,
+              ),
+              const SizedBox(height: 12),
+              _buildLanguageOption(
+                context,
+                dialogContext,
+                'తెలుగు',
+                'te',
+                Icons.g_translate,
+              ),
+              const SizedBox(height: 12),
+              _buildLanguageOption(
+                context,
+                dialogContext,
+                'தமிழ்',
+                'ta',
+                Icons.language_rounded,
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Widget _buildLanguageOption(
+  BuildContext context,
+  BuildContext dialogContext,
+  String languageName,
+  String languageCode,
+  IconData icon,
+) {
+  final languageProvider = Provider.of<LanguageProvider>(
+    context,
+    listen: true, // Changed to true to rebuild when language changes
+  );
+  final isSelected = languageProvider.locale.languageCode == languageCode;
+
+  return InkWell(
+    onTap: () async {
+      // Change the language
+      await languageProvider.setLocale(Locale(languageCode));
+      
+      // Close the dialog
+      Navigator.pop(dialogContext);
+      
+      // Show confirmation
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            LocalizationService.translate('language_switched', languageCode),
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: const Color(0xFF10B981),
+        ),
+      );
+      
+      // Force rebuild of the entire app
+      // This ensures all widgets update with the new language
+    },
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? Colors.white.withOpacity(0.3)
+            : Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? Colors.white : Colors.white.withOpacity(0.3),
+          width: isSelected ? 2 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: Colors.white,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            languageName,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+          const Spacer(),
+          if (isSelected)
+            const Icon(
+              Icons.check_circle,
+              color: Colors.white,
+              size: 20,
+            ),
+        ],
+      ),
+    ),
+  );
+}
 }

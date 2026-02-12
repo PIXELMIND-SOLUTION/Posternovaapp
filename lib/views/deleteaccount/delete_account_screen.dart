@@ -5,6 +5,7 @@ import 'package:posternova/helper/storage_helper.dart';
 import 'dart:convert';
 
 import 'package:posternova/views/AuthModule/auth_screen.dart';
+import 'package:posternova/widgets/language_widget.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});
@@ -149,8 +150,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Delete Account',
+        title: const AppText(
+          'delete_account',
           
           style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
         ),
@@ -169,15 +170,15 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Section
-              Text(
-                'Delete Account',
+              AppText(
+                'delete_account',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'wre sorry to see you go. Please review the information below before proceeding.',
+              AppText(
+                'sorry_to_see_you_go',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.textTheme.bodySmall?.color,
                 ),
@@ -208,8 +209,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Warning',
+                          AppText(
+                            'warning',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -217,8 +218,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            'This action is permanent and cannot be undone.',
+                          AppText(
+                            'action_permanent.',
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],
@@ -274,8 +275,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                           size: 20,
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          'Before you go',
+                        AppText(
+                          'before_you_go',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -315,8 +316,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                         },
                   contentPadding: EdgeInsets.zero,
                   controlAffinity: ListTileControlAffinity.leading,
-                  title: Text(
-                    'I understand that deleting my account is permanent and all my data will be lost.',
+                  title: AppText(
+                    'I understand that deleting my account is permanent and all my data will be lost',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
@@ -384,8 +385,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
-                          'Delete Account',
+                      : const AppText(
+                          'delete_account',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

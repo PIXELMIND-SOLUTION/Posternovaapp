@@ -535,6 +535,7 @@ import 'package:flutter/material.dart';
 import 'package:posternova/models/create_poster_model.dart';
 import 'package:posternova/views/NavBar/navbar_screen.dart';
 import 'package:posternova/views/createposter/poster_maker_screen.dart';
+import 'package:posternova/widgets/language_widget.dart';
 
 class CreatePost extends StatefulWidget {
   const CreatePost({super.key});
@@ -664,8 +665,8 @@ class _CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Choose Canvas Size',
+            AppText(
+              'choose_canvas_size',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -673,8 +674,8 @@ class _CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
               ),
             ),
             SizedBox(height: 2),
-            Text(
-              'Select the perfect size for your design',
+            AppText(
+              'select_perfect_size',
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFF64748B),

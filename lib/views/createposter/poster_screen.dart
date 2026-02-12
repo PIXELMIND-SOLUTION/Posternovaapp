@@ -514,6 +514,7 @@ import 'package:posternova/views/logo/logo_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -989,8 +990,8 @@ class _PosterScreenState extends State<PosterScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Design Studio',
+                          AppText(
+                            'design_studio',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -999,8 +1000,8 @@ class _PosterScreenState extends State<PosterScreen>
                             ),
                           ),
                           SizedBox(height: 4),
-                          Text(
-                            'Create amazing content',
+                          AppText(
+                            'create_amazing_content',
                             style: TextStyle(
                               fontSize: 14,
                               color: Color(0xFF64748B),
@@ -1031,8 +1032,8 @@ class _PosterScreenState extends State<PosterScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              const Text(
-                'What do you want to create?',
+              const AppText(
+                'what_do_you_want_create',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -1040,8 +1041,8 @@ class _PosterScreenState extends State<PosterScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Choose a tool to get started',
+              const AppText(
+                'choose_tool_get_started',
                 style: TextStyle(fontSize: 15, color: Color(0xFF64748B)),
               ),
               const SizedBox(height: 28),
@@ -1057,8 +1058,8 @@ class _PosterScreenState extends State<PosterScreen>
     final tools = [
       ToolData(
         icon: Icons.collections,
-        title: 'Poster Maker',
-        subtitle: 'Design beautiful posters',
+        title: 'poster_maker_title',
+        subtitle: 'design_beautiful_posters',
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1081,8 +1082,8 @@ class _PosterScreenState extends State<PosterScreen>
       // ),
       ToolData(
         icon: Icons.brush_outlined,
-        title: 'Customer Logo',
-        subtitle: 'Create Logo for coustomers',
+        title: 'customer_logo',
+        subtitle: 'create_logo_customers',
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1251,7 +1252,7 @@ class _PosterScreenState extends State<PosterScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        AppText(
                           tool.title,
                           style: const TextStyle(
                             fontSize: 17,
@@ -1261,7 +1262,7 @@ class _PosterScreenState extends State<PosterScreen>
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        AppText(
                           tool.subtitle,
                           style: const TextStyle(
                             fontSize: 14,

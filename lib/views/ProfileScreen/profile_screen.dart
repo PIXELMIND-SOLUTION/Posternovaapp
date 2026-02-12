@@ -1810,11 +1810,6 @@
 //   }
 // }
 
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:posternova/helper/sub_modal_helper.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
@@ -1834,6 +1829,7 @@ import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
 import 'package:posternova/views/textremovalmodule/image_editor_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1994,7 +1990,7 @@ class ProfileScreen extends StatelessWidget {
                               // ),
                               _buildMenuItem(
                                 icon: Icons.policy,
-                                title: 'Privacy & Policy',
+                                title: 'privacy_policy',
                                 onTap: () async {
                                   final Uri url = Uri.parse(
                                     'https://editezy.onrender.com/privacy-and-policy',
@@ -2003,8 +1999,7 @@ class ProfileScreen extends StatelessWidget {
                                     if (await canLaunchUrl(url)) {
                                       await launchUrl(
                                         url,
-                                        mode: LaunchMode
-                                            .externalApplication, 
+                                        mode: LaunchMode.externalApplication,
                                       );
                                     } else {
                                       if (context.mounted) {
@@ -2029,7 +2024,7 @@ class ProfileScreen extends StatelessWidget {
 
                               _buildMenuItem(
                                 icon: Icons.person,
-                                title: 'Settings',
+                                title: 'settings',
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -2043,7 +2038,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _buildMenuItem(
                                 icon: Icons.info_outline,
-                                title: 'About',
+                                title: 'about',
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -2074,7 +2069,7 @@ class ProfileScreen extends StatelessWidget {
                               // ),
                               _buildMenuItem(
                                 icon: Icons.request_page,
-                                title: 'Invoice',
+                                title: 'invoice',
                                 onTap: () {
                                   if (myPlanProvider.isPurchase == true) {
                                     Navigator.push(
@@ -2093,7 +2088,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _buildMenuItem(
                                 icon: Icons.chat_bubble_outline,
-                                title: 'Chicha AI',
+                                title: 'chicha_ai',
                                 onTap: () {
                                   if (myPlanProvider.isPurchase == true) {
                                     Navigator.push(
@@ -2110,15 +2105,16 @@ class ProfileScreen extends StatelessWidget {
                                 isPurchased: myPlanProvider.isPurchase ?? false,
                               ),
 
-                               _buildMenuItem(
+                              _buildMenuItem(
                                 icon: Icons.design_services_outlined,
-                                title: 'Text Remover',
+                                title: 'text_remover',
                                 onTap: () {
                                   if (myPlanProvider.isPurchase == true) {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => ImageEditorScreen(),
+                                        builder: (context) =>
+                                            ImageEditorScreen(),
                                       ),
                                     );
                                   } else {
@@ -2149,7 +2145,7 @@ class ProfileScreen extends StatelessWidget {
                               // ),
                               _buildMenuItem(
                                 icon: Icons.delete,
-                                title: 'Delete Account',
+                                title: 'delete_account',
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -2162,7 +2158,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _buildMenuItem(
                                 icon: Icons.redeem,
-                                title: 'Refer Earn',
+                                title: 'refer_earn',
                                 onTap: () {
                                   if (myPlanProvider.isPurchase == true) {
                                     Navigator.push(
@@ -2179,8 +2175,8 @@ class ProfileScreen extends StatelessWidget {
                                 isPurchased: myPlanProvider.isPurchase ?? false,
                               ),
                               _buildMenuItem(
-                              icon: Icons.crop,
-                                title: 'Remove Background',
+                                icon: Icons.crop,
+                                title: 'remove_background',
                                 onTap: () {
                                   if (myPlanProvider.isPurchase == true) {
                                     Navigator.push(
@@ -2199,7 +2195,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               _buildMenuItem(
                                 icon: Icons.logout,
-                                title: 'Logout',
+                                title: 'logout',
                                 onTap: () =>
                                     _handleLogout(context, authProvider),
                                 isDestructive: true,
@@ -2230,7 +2226,10 @@ class ProfileScreen extends StatelessWidget {
       primaryButtonText: "Upgrade Now",
       secondaryButtonText: "Cancel",
       onPrimaryPressed: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context)=>SubscriptionPlansPage()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => SubscriptionPlansPage()),
+        );
         // showSubscriptionModal(context);
       },
       onSecondaryPressed: () => Navigator.of(context).pop(),
@@ -2775,7 +2774,7 @@ class ProfileScreen extends StatelessWidget {
               size: 24,
             ),
           ),
-          title: Text(
+          title: AppText(
             title,
             style: TextStyle(
               color: isDestructive

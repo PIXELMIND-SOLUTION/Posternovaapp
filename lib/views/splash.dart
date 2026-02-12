@@ -582,7 +582,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 opacity: _fadeAnimation,
                 child: Center(
                   child: Text(
-                    'Powered by Innovation',
+                    'Powered by Pixelmindsolutions',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,

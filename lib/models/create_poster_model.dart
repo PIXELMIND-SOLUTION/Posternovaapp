@@ -23,4 +23,16 @@ class PosterSize {
     }
     return [0, 0];
   }
+
+
+   double get width {
+    final dimensions = getDimensions();
+    return dimensions[0];
+  }
+
+  // Add height getter
+  double get height {
+    final dimensions = getDimensions();
+    return dimensions[1];
+  }
 }

@@ -4,6 +4,7 @@ import 'package:posternova/providers/invoices/invoice_provider.dart';
 import 'package:posternova/views/invoices/add_invoice_data.dart';
 import 'package:posternova/views/invoices/invoice_detail_screen.dart';
 import 'package:posternova/views/invoices/user_details.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -75,8 +76,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
               child: Icon(Icons.receipt_long, color: accentColor, size: 24),
             ),
             const SizedBox(width: 12),
-            Text(
-              'Invoices',
+            AppText(
+              'invoices',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 20,
@@ -147,8 +148,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        Text(
-                          'No Invoices Yet',
+                        AppText(
+                          'no_invoices_yet',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w600,
@@ -158,8 +159,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                         const SizedBox(height: 12),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 48),
-                          child: Text(
-                            'Start creating professional invoices',
+                          child: AppText(
+                            'start_creating_invoices',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 15,
@@ -185,8 +186,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'All Invoices',
+                              AppText(
+                                'all_invoices',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -409,8 +410,8 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
           ).then((_) => _loadInvoices());
         },
         icon: const Icon(Icons.add, color: Colors.white, size: 22),
-        label: const Text(
-          'Create New Invoice',
+        label: const AppText(
+          'create_new_invoice',
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 15,

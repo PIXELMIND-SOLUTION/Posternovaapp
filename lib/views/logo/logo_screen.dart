@@ -501,7 +501,9 @@
 import 'package:flutter/material.dart';
 import 'package:posternova/models/logo_model.dart';
 import 'package:posternova/providers/logo/logo_provider.dart';
+import 'package:posternova/views/logo/create_post.dart';
 import 'package:posternova/views/logo/make_logo.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
 
 class LogoMakingScreen extends StatefulWidget {
@@ -608,8 +610,8 @@ class _LogoMakingScreenState extends State<LogoMakingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Logo Templates',
+                AppText(
+                  'logo_templates',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -618,8 +620,8 @@ class _LogoMakingScreenState extends State<LogoMakingScreen> {
                   ),
                 ),
                 SizedBox(height: 2),
-                Text(
-                  'Choose your perfect design',
+                AppText(
+                  'choose_perfect_design',
                   style: TextStyle(
                     fontSize: 13,
                     color: Color(0xFF718096),
@@ -883,10 +885,16 @@ class _ModernLogoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => MakeLogo(image: logo.image,id: logo.id,),
+        //   ),
+        // );
+         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MakeLogo(image: logo.image,id: logo.id,),
+            builder: (context) => SizeScreen(image: logo.image,categoryId: logo.id,),
           ),
         );
       },

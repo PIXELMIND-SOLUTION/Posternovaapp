@@ -1,66 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-
-// class LanguageProvider extends ChangeNotifier {
-//   Locale _locale = const Locale('en');
-
-//   Locale get locale => _locale;
-
-//   LanguageProvider() {
-//     _loadLanguagePreference();
-//   }
-
-//   // Load saved language from SharedPreferences
-//   Future<void> _loadLanguagePreference() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     final String languageCode = prefs.getString('language_code') ?? 'en';
-
-//     _locale = Locale(languageCode);
-//     notifyListeners();
-//   }
-
-//   // Change and save the language
-//   Future<void> setLanguage(String languageCode) async {
-//     final prefs = await SharedPreferences.getInstance();
-//     await prefs.setString('language_code', languageCode);
-
-//     _locale = Locale(languageCode);
-//     notifyListeners();
-//   }
-// }
-
-// lib/providers/language_provider.dart
-// import 'package:flutter/material.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-
-// class LanguageProvider extends ChangeNotifier {
-//   Locale _locale = const Locale('en');
-
-//   Locale get locale => _locale;
-
-//   LanguageProvider() {
-//     _loadSavedLanguage();
-//   }
-
-//   Future<void> _loadSavedLanguage() async {
-//     final prefs = await SharedPreferences.getInstance();
-//     final String languageCode = prefs.getString('language_code') ?? 'en';
-
-//     setLocale(Locale(languageCode));
-//   }
-
-//   Future<void> setLocale(Locale newLocale) async {
-//     if (_locale == newLocale) return;
-
-//     _locale = newLocale;
-
-//     final prefs = await SharedPreferences.getInstance();
-//     await prefs.setString('language_code', newLocale.languageCode);
-
-//     notifyListeners();
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -94,114 +31,6 @@ class LanguageProvider extends ChangeNotifier {
   }
 }
 
-// 2. Create a localization service (services/localization_service.dart)
-// class LocalizationService {
-//   static final Map<String, Map<String, String>> _localizedStrings = {
-//     'en': {
-//       'app_title': 'Poster Maker',
-//       'search_placeholder': 'Search Poster by Topic',
-//       'upcoming_festivals': 'Upcoming Festivals',
-//       'festivals': 'Festivals',
-//       'new_poster': 'New Poster',
-//       'no_festivals_found': 'No Festivals Found',
-//       'try_different_date': 'Try selecting a different date',
-//       'check_other_dates': 'Check Other Dates',
-//       'no_new_posters': 'No New posters available',
-//       'view_all': 'View All',
-//       'select_language': 'Select Language',
-//       'language_switched': 'Language switched successfully!',
-//       'ugadi': 'Ugadi',
-//       'clothing': 'Clothing',
-//       'beauty': 'Beauty',
-//       'chemical': 'Chemical',
-//       'subscription_plans': 'Subscription Plans',
-//       'choose_plan': 'Choose Your Plan',
-//       'payment_options': 'Payment Options',
-//       'free': 'Free',
-//       'activate_plan': 'ACTIVATE PLAN',
-//       'pay_now': 'PAY NOW',
-//     },
-//     'te': {
-//       'app_title': 'పోస్టర్ మేకర్',
-//       'search_placeholder': 'విషయం ద్వారా పోస్టర్ వెతకండి',
-//       'upcoming_festivals': 'రాబోయే పండుగలు',
-//       'festivals': 'పండుగలు',
-//       'new_poster': 'కొత్త పోస్టర్',
-//       'no_festivals_found': 'పండుగలు కనుగొనబడలేదు',
-//       'try_different_date': 'వేరే తేదీని ఎంచుకోవడానికి ప్రయత్నించండి',
-//       'check_other_dates': 'ఇతర తేదీలను తనిఖీ చేయండి',
-//       'no_new_posters': 'కొత్త పోస్టర్లు అందుబాటులో లేవు',
-//       'view_all': 'అన్నీ చూడండి',
-//       'select_language': 'భాషను ఎంచుకోండి',
-//       'language_switched': 'భాష విజయవంతంగా మార్చబడింది!',
-//       'ugadi': 'ఉగాది',
-//       'clothing': 'వస్త్రాలు',
-//       'beauty': 'అందం',
-//       'chemical': 'రసాయనిక',
-//       'subscription_plans': 'సబ్‌స్క్రిప్షన్ ప్లాన్‌లు',
-//       'choose_plan': 'మీ ప్లాన్‌ను ఎంచుకోండి',
-//       'payment_options': 'చెల్లింపు ఎంపికలు',
-//       'free': 'ఉచితం',
-//       'activate_plan': 'ప్లాన్ యాక్టివేట్ చేయండి',
-//       'pay_now': 'ఇప్పుడు చెల్లించండి',
-//     },
-//     'hi': {
-//       'app_title': 'पोस्टर मेकर',
-//       'search_placeholder': 'विषय के द्वారा पोस्टर खोजें',
-//       'upcoming_festivals': 'आगामी त्योहार',
-//       'festivals': 'त्योहार',
-//       'new_poster': 'नया पोस्टर',
-//       'no_festivals_found': 'कोई त्योहार नहीं मिला',
-//       'try_different_date': 'अलग तारीख चुनने की कोशिश करें',
-//       'check_other_dates': 'अन्य तारीखें जांचें',
-//       'no_new_posters': 'कोई नए पोस्टर उपलब्ध नहीं',
-//       'view_all': 'सभी देखें',
-//       'select_language': 'भाषा चुनें',
-//       'language_switched': 'भाषा सफलतापूर्वक बदल गई!',
-//       'ugadi': 'उगादी',
-//       'clothing': 'कपड़े',
-//       'beauty': 'सुंदरता',
-//       'chemical': 'रासायनिक',
-//       'subscription_plans': 'सब्सक्रिप्शन प्लान',
-//       'choose_plan': 'अपना प्लान चुनें',
-//       'payment_options': 'भुगतान विकल्प',
-//       'free': 'मुफ्त',
-//       'activate_plan': 'प्लान सक्रिय करें',
-//       'pay_now': 'अभी भुगतान करें',
-//     },
-//     'ta': {
-//       'app_title': 'போஸ்டர் மேக்கர்',
-//       'search_placeholder': 'தலைப்பின் மூலம் போஸ்டரைத் தேடுங்கள்',
-//       'upcoming_festivals': 'வரவிருக்கும் திருவிழாக்கள்',
-//       'festivals': 'திருவிழாக்கள்',
-//       'new_poster': 'புதிய போஸ்டர்',
-//       'no_festivals_found': 'திருவிழாக்கள் எதுவும் கிடைக்கவில்லை',
-//       'try_different_date': 'வேறு தேதியைத் தேர்ந்தெடுக்க முயற்சிக்கவும்',
-//       'check_other_dates': 'மற்ற தேதிகளைச் சரிபார்க்கவும்',
-//       'no_new_posters': 'புதிய போஸ்டர்கள் எதுவும் கிடைக்கவில்லை',
-//       'view_all': 'அனைத்தையும் பார்க்கவும்',
-//       'select_language': 'மொழியைத் தேர்ந்தெடுக்கவும்',
-//       'language_switched': 'மொழி வெற்றிகரமாக மாற்றப்பட்டது!',
-//       'ugadi': 'உகாதி',
-//       'clothing': 'ஆடைகள்',
-//       'beauty': 'அழகு',
-//       'chemical': 'இரசாயன',
-//       'subscription_plans': 'சந்தா திட்டங்கள்',
-//       'choose_plan': 'உங்கள் திட்டத்தைத் தேர்ந்தெடுக்கவும்',
-//       'payment_options': 'கட்டண விருப்பங்கள்',
-//       'free': 'இலவசம்',
-//       'activate_plan': 'திட்டத்தை செயல்படுத்தவும்',
-//       'pay_now': 'இப்போது செலுத்தவும்',
-//     },
-//   };
-
-//   static String translate(String key, String languageCode) {
-//     return _localizedStrings[languageCode]?[key] ??
-//            _localizedStrings['en']?[key] ??
-//            key;
-//   }
-// }
-
 class LocalizationService {
   static final Map<String, Map<String, String>> _localizedStrings = {
     'en': {
@@ -227,6 +56,14 @@ class LocalizationService {
       'free': 'Free',
       'activate_plan': 'ACTIVATE PLAN',
       'pay_now': 'PAY NOW',
+      'welcome_back': 'Welcome back!',
+      'design_studio': 'Design Studio',
+
+      'online_punchang': 'Online Punchang',
+      'invoices': 'Invoices',
+
+      'choose_canvas_size': 'Choose Canvas Size',
+      'select_perfect_size': 'Select the perfect size for your design',
 
       // NEW KEYS
       'categories': 'Categories',
@@ -305,6 +142,23 @@ class LocalizationService {
       'date_of_birth': 'Date of Birth',
       'date_of_anniversary': 'Date of Anniversary',
       'edit_poster': 'Edit Poster',
+      'marriage_anniversary': 'Marriage Anniversary',
+
+      'poster': 'Poster',
+      'reels': 'Reels',
+      'customer': 'Customer',
+
+      'create_story': 'Create Story',
+      'new_story': 'New Story',
+      'create_your_story': 'Create Your Story',
+      'share_story_prompt':
+          'Share a photo or video to let your\nfriends know what you\'re up to',
+      'add_photo': 'Add Photo',
+      'story_visible_24h':
+          'Stories are visible for 24 hours and can be viewed by your friends',
+      'add_caption': 'Add a caption',
+      'story_disappear_24h': 'Your story will disappear after 24 hours',
+      'additional_information': 'Additional Information',
 
       'background': 'Background',
       'profile': 'Profile',
@@ -314,6 +168,39 @@ class LocalizationService {
       'stickers': 'Stickers',
       'contact': 'Contact',
       'save': 'Save',
+      'explore_templates': 'Explore Templates',
+      'browse_or_voice_search': 'Browse categories or search with voice',
+      'edit_profile': 'Edit Profile',
+      'tap_change_photo': 'Tap to change photo',
+      'personal_information': 'Personal Information',
+
+      'new_customer': 'New Customer',
+      'fill_customer_details': 'Fill in customer details',
+      'basic_information': 'Basic Information',
+
+      'seasonal_celebrations': 'Seasonal Celebrations',
+      'never_miss_celebration': 'Never miss a celebration',
+      'celebration_templates': 'Celebration Templates',
+      'perfect_every_occasion': 'Perfect for every occasion',
+      'weekly_templates': 'Weekly Templates',
+      'fresh_designs_everyday': 'Fresh designs for every day',
+
+      'share_referral_earn':
+          'Share your referral code with friends and earn rewards when they upgrade',
+      'your_referral_code': 'Your Referral Code',
+      'how_it_works': 'How It Works',
+      'send_referral_any_platform':
+          'Send your referral code to friends via any platform',
+      'share_your_code': 'Share Your Code',
+      'friend_signs_up': 'Friend Signs Up',
+      'enter_code_during_signup': 'They enter your code during registration',
+      'earn_rewards': 'Earn Rewards',
+      'get_200_on_upgrade': 'Get ₹200 when they upgrade their account',
+
+      'text_remover': 'Text Remover',
+      'remove_text_ai':
+          'Remove unwanted text from your images with AI precision',
+      'select_image': 'Select Image',
 
       //new ones
       'plan_details': 'Plan Details',
@@ -344,9 +231,23 @@ class LocalizationService {
       'ask_me_anything': 'Ask me anything',
       'privacy_policy': 'Privacy Policy',
       'terms_and_conditions': 'Terms & Conditions',
+      'logo_categories': 'Logo Categories',
+      'logo_templates': 'Logo Templates',
 
       'create_business_post': 'Create Business Post',
       'add_business_logo': 'Add Business Logo',
+
+      'invite_friend': 'Invite a friend',
+      'share_code_button': 'Share your code using the Share button.',
+      'enter_code_signup_settings':
+          'They enter your code during signup or in settings',
+      'both_get_rewards': 'Both get rewards',
+      'credits_after_purchase':
+          'Credits are added after successful first purchase',
+
+      'about': 'About',
+      'chicha_ai': 'Chicha AI',
+      'text_remover': 'Text Remover',
 
       'owner_name': 'Owner Name',
       'designation': 'Designation',
@@ -354,6 +255,15 @@ class LocalizationService {
       'whatsapp_number': 'WhatsApp Number',
       'email_address': 'Email Address',
       'website': 'Website',
+      'choose_perfect_design': 'Choose your perfect design',
+
+      'poster_making': 'Poster Making',
+      'add_filter': 'Add Filter',
+      'add_color': 'Add Color',
+
+      'no_invoices_yet': 'No Invoices Yet',
+      'start_creating_invoices': 'Start creating professional invoices',
+      'all_invoices': 'All Invoices',
 
       'gst_number': 'GST Number',
       'add_supporting_image': 'Add Supporting Image',
@@ -391,6 +301,11 @@ class LocalizationService {
       'save_details': 'Save Details',
       'bank_details_saved': 'Bank details saved successfully!',
 
+      'customers': 'Customers',
+      'no_customers_yet': 'No customers yet',
+      'add_first_customer_start': 'Add your first customer to get started',
+      'adjust_search': 'Try adjusting your search',
+
       'total_earning': 'Total Earning till date',
       'current_balance': 'Current Balance',
       'redeem_now': 'Redeem Now',
@@ -398,8 +313,7 @@ class LocalizationService {
       'introduce_friend': 'Introduce a Friend & Get 30 Credit INSTANTLY!',
       'bonus_credit': 'Bonus! Get 50 Credit More When They Make a Purchase!',
       'earn_now': 'Earn Now',
-      'referral_info':
-          'You can earn monthly subscription by refering 3 friends',
+      'referral_info': 'You can earn yearly subscription by refering 3 friends',
 
       'bday_anniversary': "B'day Anniversary Greetings",
       'add_customer_details': 'Add Customer\nDetails',
@@ -416,6 +330,27 @@ class LocalizationService {
       'anniversary_date': 'Anniversary Date',
       'upload_profile_photo': 'Upload Profile Photo',
       'submit': 'Submit',
+      'featured': 'Featured',
+
+      'sorry_to_see_you_go':
+          'We are sorry to see you go. Please review the information below before proceeding.',
+      'warning': 'Warning',
+      'action_permanent': 'This action is permanent and cannot be undone',
+      'before_you_go': 'Before you go',
+      'delete_confirm_understand':
+          'I understand that deleting my account is permanent and all my data will be lost',
+
+      'about_us': 'About Us',
+      'create_stunning': 'Create stunning posters & logos effortlessly',
+      'about_editezy': 'About Editezy',
+      'about_description':
+          'PosterNova is your all-in-one creative studio for designing stunning posters, logos, and promotional content...',
+      'custom_templates': 'Custom Templates',
+      'choose_thousands':
+          'Choose from thousands of templates designed for every purpose.',
+      'easy_sharing': 'Easy Sharing',
+      'share_instantly': 'Share your designs instantly on social media.',
+      'version_made': 'Version 1.0.0\nMade with ❤️ by Editezy Team',
 
       'notifications': 'Notifications',
       'dark_mode': 'Dark Mode',
@@ -425,6 +360,21 @@ class LocalizationService {
           'Feel free to reach out with any questions or feedback.',
       'message': 'Message',
       'send_message': 'Send Message',
+
+      'create_amazing_content': 'Create amazing content',
+      'what_do_you_want_create': 'What do you want to create?',
+      'choose_tool_get_started': 'Choose a tool to get started',
+      'poster_maker_title': 'Poster Maker',
+      'design_beautiful_posters': 'Design beautiful posters',
+      'customer_logo': 'Customer Logo',
+      'create_logo_customers': 'Create logo for customers',
+
+      'reels': 'Reels',
+      'amazing_video_editezy': 'Amazing video by Editezy! Check this out',
+
+      'background_remover': 'Background Remover',
+      'no_image_selected': 'No image selected',
+      'tap_gallery_camera': 'Tap the gallery or camera button below to start',
 
       'user': 'User',
       'search_poster_by_topic': 'Search Poster by Topic',
@@ -465,6 +415,119 @@ class LocalizationService {
       'free': 'ఉచితం',
       'activate_plan': 'ప్లాన్ యాక్టివేట్ చేయండి',
       'pay_now': 'ఇప్పుడు చెల్లించండి',
+      'welcome_back': 'తిరిగి స్వాగతం!',
+
+      'logo_categories': 'లోగో వర్గాలు',
+      'logo_templates': 'లోగో టెంప్లేట్లు',
+      'choose_perfect_design': 'మీకు సరైన డిజైన్‌ను ఎంచుకోండి',
+
+      'online_punchang': 'ఆన్‌లైన్ పంచాంగం',
+      'edit_poster': 'పోస్టర్ సవరించండి',
+      'invoices': 'ఇన్వాయిస్‌లు',
+      'background_remover': 'నేపథ్యం తొలగింపు',
+      'explore_templates': 'టెంప్లేట్లను చూడండి',
+      'choose_canvas_size': 'క్యాన్వాస్ పరిమాణాన్ని ఎంచుకోండి',
+      'select_perfect_size': 'మీ డిజైన్‌కు సరైన పరిమాణాన్ని ఎంచుకోండి',
+
+      'new_customer': 'కొత్త కస్టమర్',
+      'fill_customer_details': 'కస్టమర్ వివరాలను నమోదు చేయండి',
+      'basic_information': 'ప్రాథమిక సమాచారం',
+
+      'additional_information': 'అదనపు సమాచారం',
+
+      'no_invoices_yet': 'ఇంకా ఇన్వాయిసులు లేవు',
+      'start_creating_invoices':
+          'ప్రొఫెషనల్ ఇన్వాయిసులు సృష్టించడం ప్రారంభించండి',
+      'all_invoices': 'అన్ని ఇన్వాయిసులు',
+
+      'home': 'హోమ్',
+      'category': 'వర్గం',
+      'poster': 'పోస్టర్',
+      'reels': 'రీల్స్',
+      'customer': 'కస్టమర్',
+
+      'delete_account': 'ఖాతాను తొలగించండి',
+      'sorry_to_see_you_go':
+          'మీరు వెళ్తుండటం మాకు బాధగా ఉంది. ముందుకు సాగేముందు దయచేసి క్రింది సమాచారాన్ని పరిశీలించండి.',
+      'warning': 'హెచ్చరిక',
+      'action_permanent': 'ఈ చర్య శాశ్వతమైనది మరియు తిరిగి మార్చలేము',
+      'before_you_go': 'మీరు వెళ్లే ముందు',
+      'delete_confirm_understand':
+          'నా ఖాతాను తొలగించడం శాశ్వతమని మరియు నా మొత్తం డేటా కోల్పోతానని నేను అర్థం చేసుకున్నాను',
+
+      'seasonal_celebrations': 'కాలానుగుణ వేడుకలు',
+      'never_miss_celebration': 'ఏ వేడుకను కూడా కోల్పోకండి',
+      'celebration_templates': 'వేడుక టెంప్లేట్లు',
+      'perfect_every_occasion': 'ప్రతి సందర్భానికి పర్ఫెక్ట్',
+      'weekly_templates': 'వారపు టెంప్లేట్లు',
+      'fresh_designs_everyday': 'ప్రతి రోజు కొత్త డిజైన్లు',
+      'design_studio': 'డిజైన్ స్టూడియో',
+      'reels': 'రీల్స్',
+      'amazing_video_editezy': 'Editezy యొక్క అద్భుతమైన వీడియో! చూడండి',
+      'share_referral_earn':
+          'మీ రిఫరల్ కోడ్‌ను స్నేహితులతో పంచుకుని, వారు అప్‌గ్రేడ్ చేసినప్పుడు బహుమతులు పొందండి',
+      'your_referral_code': 'మీ రిఫరల్ కోడ్',
+      'how_it_works': 'ఇది ఎలా పనిచేస్తుంది',
+      'send_referral_any_platform':
+          'ఏ ప్లాట్‌ఫారమ్ ద్వారా అయినా మీ రిఫరల్ కోడ్‌ను స్నేహితులకు పంపండి',
+      'share_your_code': 'మీ కోడ్‌ను పంచుకోండి',
+      'friend_signs_up': 'స్నేహితుడు సైన్ అప్ చేస్తాడు',
+      'enter_code_during_signup':
+          'రిజిస్ట్రేషన్ సమయంలో వారు మీ కోడ్‌ను నమోదు చేస్తారు',
+      'earn_rewards': 'బహుమతులు పొందండి',
+      'get_200_on_upgrade':
+          'వారు తమ ఖాతాను అప్‌గ్రేడ్ చేసినప్పుడు ₹200 పొందండి',
+
+      'edit_profile': 'ప్రొఫైల్‌ను సవరించండి',
+      'tap_change_photo': 'ఫోటో మార్చడానికి ట్యాప్ చేయండి',
+      'personal_information': 'వ్యక్తిగత సమాచారం',
+      'marriage_anniversary': 'వివాహ వార్షికోత్సవం',
+
+      'invite_friend': 'స్నేహితుడిని ఆహ్వానించండి',
+      'share_code_button': 'షేర్ బటన్ ఉపయోగించి మీ కోడ్‌ను పంచుకోండి.',
+      'enter_code_signup_settings':
+          'వారు సైన్ అప్ సమయంలో లేదా సెట్టింగ్స్‌లో మీ కోడ్‌ను నమోదు చేస్తారు',
+      'both_get_rewards': 'ఇద్దరికీ బహుమతులు లభిస్తాయి',
+      'credits_after_purchase':
+          'మొదటి విజయవంతమైన కొనుగోలు తర్వాత క్రెడిట్లు జోడించబడతాయి',
+
+      'remove_text_ai':
+          'AI ఖచ్చితత్వంతో మీ చిత్రాల నుండి అవసరం లేని టెక్స్ట్‌ను తొలగించండి',
+      'select_image': 'చిత్రాన్ని ఎంచుకోండి',
+
+      'about': 'గురించి',
+      'text_remover': 'టెక్స్ట్ తొలగింపు',
+      'chicha_ai': 'Chicha AI',
+      'featured': 'ప్రత్యేకం',
+
+      'about_us': 'మా గురించి',
+      'create_stunning': 'సులభంగా అద్భుతమైన పోస్టర్లు & లోగోలు సృష్టించండి',
+      'about_editezy': 'Editezy గురించి',
+      'about_description':
+          'PosterNova అద్భుతమైన పోస్టర్లు, లోగోలు మరియు ప్రమోషనల్ కంటెంట్ రూపొందించడానికి మీ ఆల్-ఇన్-వన్ క్రియేటివ్ స్టూడియో. మీరు వ్యాపార యజమాని, ఇన్‌ఫ్లుయెన్సర్ లేదా డిజైనర్ అయినా, PosterMaker సిద్ధంగా ఉన్న టెంప్లేట్లు మరియు శక్తివంతమైన ఎడిటింగ్ టూల్స్‌తో మీ ఆలోచనలను నిజం చేయడంలో సహాయపడుతుంది.',
+      'custom_templates': 'కస్టమ్ టెంప్లేట్లు',
+      'choose_thousands':
+          'ప్రతి అవసరానికి రూపొందించిన వేలాది టెంప్లేట్లలోంచి ఎంచుకోండి.',
+      'easy_sharing': 'సులభమైన షేరింగ్',
+      'share_instantly': 'మీ డిజైన్లను వెంటనే సోషల్ మీడియాలో పంచుకోండి.',
+      'version_made': 'వెర్షన్ 1.0.0\nEditezy టీమ్ నుండి ❤️తో రూపొందించబడింది',
+      'no_image_selected': 'ఏ చిత్రం ఎంపిక చేయబడలేదు',
+      'tap_gallery_camera':
+          'ప్రారంభించడానికి క్రింద గ్యాలరీ లేదా కెమెరా బటన్‌ను ట్యాప్ చేయండి',
+      'poster_making': 'పోస్టర్ తయారీ',
+      'add_filter': 'ఫిల్టర్ జోడించండి',
+      'add_color': 'రంగు జోడించండి',
+
+      'create_story': 'స్టోరీ సృష్టించండి',
+      'new_story': 'కొత్త స్టోరీ',
+      'create_your_story': 'మీ స్టోరీ సృష్టించండి',
+      'share_story_prompt':
+          'మీరు ఏమి చేస్తున్నారో మీ\nస్నేహితులకు తెలియజేయడానికి ఫోటో లేదా వీడియోను పంచుకోండి',
+      'add_photo': 'ఫోటో జోడించండి',
+      'story_visible_24h':
+          'స్టోరీ 24 గంటలు కనిపిస్తుంది మరియు మీ స్నేహితులు దాన్ని చూడగలరు',
+      'add_caption': 'క్యాప్షన్ జోడించండి',
+      'story_disappear_24h': 'మీ స్టోరీ 24 గంటల తర్వాత మాయమవుతుంది',
 
       // NEW KEYS
       'categories': 'వర్గాలు',
@@ -542,7 +605,6 @@ class LocalizationService {
       'gender': 'లింగం',
       'date_of_birth': 'పుట్టిన తేది',
       'date_of_anniversary': 'వివాహ వార్షికోత్సవ తేది',
-      'edit_poster': 'పోస్టర్‌ను సవరించండి',
       'background': 'నేపథ్యం',
       'profile': 'ప్రొఫైల్',
       'filter': 'ఫిల్టర్',
@@ -551,6 +613,22 @@ class LocalizationService {
       'stickers': 'స్టిక్కర్లు',
       'contact': 'సంప్రదించండి',
       'save': 'సేవ్ చేయండి',
+
+      'customers': 'కస్టమర్లు',
+      'no_customers_yet': 'ఇంకా కస్టమర్లు లేరు',
+      'add_first_customer_start':
+          'ప్రారంభించడానికి మీ మొదటి కస్టమర్‌ను జోడించండి',
+      'adjust_search': 'మీ శోధనను మార్చి ప్రయత్నించండి',
+
+      'browse_or_voice_search': 'వర్గాలను చూడండి లేదా వాయిస్‌తో వెతకండి',
+
+      'create_amazing_content': 'అద్భుతమైన కంటెంట్ సృష్టించండి',
+      'what_do_you_want_create': 'మీరు ఏమి సృష్టించాలనుకుంటున్నారు?',
+      'choose_tool_get_started': 'ప్రారంభించడానికి ఒక టూల్ ఎంచుకోండి',
+      'poster_maker_title': 'పోస్టర్ మేకర్',
+      'design_beautiful_posters': 'అందమైన పోస్టర్లు డిజైన్ చేయండి',
+      'customer_logo': 'కస్టమర్ లోగో',
+      'create_logo_customers': 'కస్టమర్ల కోసం లోగో సృష్టించండి',
 
       //
       'plan_details': 'ప్లాన్ వివరాలు',
@@ -705,6 +783,139 @@ class LocalizationService {
       'free': 'मुफ्त',
       'activate_plan': 'प्लान सक्रिय करें',
       'pay_now': 'अभी भुगतान करें',
+      'welcome_back': 'वापस स्वागत है!',
+      'explore_templates': 'टेम्पलेट्स देखें',
+      'choose_canvas_size': 'कैनवास आकार चुनें',
+      'select_perfect_size': 'अपने डिज़ाइन के लिए सही आकार चुनें',
+
+      'text_remover': 'टेक्स्ट हटाने वाला',
+      'remove_text_ai': 'AI की सटीकता से अपनी छवियों से अनचाहा टेक्स्ट हटाएं',
+      'select_image': 'छवि चुनें',
+
+      'home': 'होम',
+      'category': 'श्रेणी',
+      'poster': 'पोस्टर',
+      'reels': 'रील्स',
+      'customer': 'ग्राहक',
+
+      'invoices': 'इनवॉइस',
+      'no_invoices_yet': 'अभी तक कोई इनवॉइस नहीं',
+      'start_creating_invoices': 'पेशेवर इनवॉइस बनाना शुरू करें',
+      'all_invoices': 'सभी इनवॉइस',
+
+      'background_remover': 'बैकग्राउंड हटाने वाला',
+      'no_image_selected': 'कोई छवि चयनित नहीं',
+      'tap_gallery_camera':
+          'शुरू करने के लिए नीचे गैलरी या कैमरा बटन पर टैप करें',
+
+      'new_customer': 'नया ग्राहक',
+      'fill_customer_details': 'ग्राहक विवरण भरें',
+      'basic_information': 'मूल जानकारी',
+
+      'additional_information': 'अतिरिक्त जानकारी',
+
+      'edit_profile': 'प्रोफ़ाइल संपादित करें',
+      'tap_change_photo': 'फोटो बदलने के लिए टैप करें',
+      'personal_information': 'व्यक्तिगत जानकारी',
+      'marriage_anniversary': 'विवाह वर्षगांठ',
+      'poster_making': 'पोस्टर बनाना',
+      'add_filter': 'फ़िल्टर जोड़ें',
+      'add_color': 'रंग जोड़ें',
+
+      'how_it_works': 'यह कैसे काम करता है',
+      'invite_friend': 'दोस्त को आमंत्रित करें',
+      'share_code_button': 'शेयर बटन का उपयोग करके अपना कोड साझा करें।',
+      'friend_signs_up': 'दोस्त साइन अप करता है',
+      'enter_code_signup_settings':
+          'वे साइनअप के दौरान या सेटिंग्स में आपका कोड दर्ज करते हैं',
+      'both_get_rewards': 'दोनों को इनाम मिलता है',
+      'credits_after_purchase':
+          'पहली सफल खरीद के बाद क्रेडिट जोड़ दिए जाते हैं',
+
+      'logo_categories': 'लोगो श्रेणियाँ',
+      'logo_templates': 'लोगो टेम्पलेट्स',
+      'choose_perfect_design': 'अपना परफेक्ट डिज़ाइन चुनें',
+
+      'delete_account': 'खाता हटाएं',
+      'sorry_to_see_you_go':
+          'आपको जाते हुए देखकर हमें खेद है। कृपया आगे बढ़ने से पहले नीचे दी गई जानकारी देखें।',
+      'warning': 'चेतावनी',
+      'action_permanent': 'यह कार्रवाई स्थायी है और इसे वापस नहीं लिया जा सकता',
+      'before_you_go': 'जाने से पहले',
+      'delete_confirm_understand':
+          'मैं समझता/समझती हूँ कि मेरा खाता हटाना स्थायी है और मेरा सारा डेटा खो जाएगा',
+
+      'create_story': 'स्टोरी बनाएं',
+      'new_story': 'नई स्टोरी',
+      'create_your_story': 'अपनी स्टोरी बनाएं',
+      'share_story_prompt':
+          'फोटो या वीडियो शेयर करें ताकि आपके\nदोस्त जान सकें कि आप क्या कर रहे हैं',
+      'add_photo': 'फोटो जोड़ें',
+      'story_visible_24h':
+          'स्टोरी 24 घंटे तक दिखाई देती है और आपके दोस्त इसे देख सकते हैं',
+      'add_caption': 'कैप्शन जोड़ें',
+      'story_disappear_24h': 'आपकी स्टोरी 24 घंटे बाद गायब हो जाएगी',
+
+      'about_us': 'हमारे बारे में',
+      'create_stunning': 'आसानी से शानदार पोस्टर और लोगो बनाएं',
+      'about_editezy': 'Editezy के बारे में',
+      'about_description':
+          'PosterNova शानदार पोस्टर, लोगो और प्रमोशनल कंटेंट बनाने के लिए आपका ऑल-इन-वन क्रिएटिव स्टूडियो है। चाहे आप बिज़नेस ओनर, इंफ्लुएंसर या डिज़ाइनर हों, PosterMaker तैयार टेम्पलेट्स और शक्तिशाली एडिटिंग टूल्स के साथ आपके आइडियाज़ को हकीकत में बदलने में मदद करता है।',
+      'custom_templates': 'कस्टम टेम्पलेट्स',
+      'choose_thousands':
+          'हर जरूरत के लिए बनाए गए हजारों टेम्पलेट्स में से चुनें।',
+      'easy_sharing': 'आसान शेयरिंग',
+      'share_instantly': 'अपने डिज़ाइनों को तुरंत सोशल मीडिया पर शेयर करें।',
+      'version_made': 'संस्करण 1.0.0\nEditezy टीम द्वारा ❤️ से बनाया गया',
+
+      'about': 'हमारे बारे में',
+      'text_remover': 'टेक्स्ट हटाएं',
+      'chicha_ai': 'Chicha AI',
+      'featured': 'प्रमुख',
+
+      'online_punchang': 'ऑनलाइन पंचांग',
+      'edit_poster': 'पोस्टर संपादित करें',
+      'invoices': 'इनवॉइस',
+      'background_remover': 'बैकग्राउंड रिमूवर',
+      'browse_or_voice_search': 'श्रेणियाँ ब्राउज़ करें या आवाज़ से खोजें',
+
+      'seasonal_celebrations': 'मौसमी उत्सव',
+      'never_miss_celebration': 'कोई भी उत्सव न चूकें',
+      'celebration_templates': 'उत्सव टेम्पलेट',
+      'perfect_every_occasion': 'हर अवसर के लिए परफेक्ट',
+      'weekly_templates': 'साप्ताहिक टेम्पलेट',
+      'fresh_designs_everyday': 'हर दिन नए डिज़ाइन',
+      'design_studio': 'डिज़ाइन स्टूडियो',
+
+      'share_referral_earn':
+          'दोस्तों के साथ अपना रेफरल कोड साझा करें और उनके अपग्रेड करने पर इनाम पाएं',
+      'your_referral_code': 'आपका रेफरल कोड',
+      'how_it_works': 'यह कैसे काम करता है',
+      'send_referral_any_platform':
+          'किसी भी प्लेटफ़ॉर्म के जरिए अपना रेफरल कोड दोस्तों को भेजें',
+      'share_your_code': 'अपना कोड साझा करें',
+      'friend_signs_up': 'दोस्त साइन अप करता है',
+      'enter_code_during_signup':
+          'वे रजिस्ट्रेशन के दौरान आपका कोड दर्ज करते हैं',
+      'earn_rewards': 'इनाम पाएं',
+      'get_200_on_upgrade': 'उनके अकाउंट अपग्रेड करने पर ₹200 पाएं',
+
+      'customers': 'ग्राहक',
+      'no_customers_yet': 'अभी तक कोई ग्राहक नहीं',
+      'no_customers_found': 'कोई ग्राहक नहीं मिला',
+      'add_first_customer_start': 'शुरू करने के लिए अपना पहला ग्राहक जोड़ें',
+      'adjust_search': 'अपनी खोज में बदलाव करके देखें',
+
+      'create_amazing_content': 'शानदार कंटेंट बनाएं',
+      'what_do_you_want_create': 'आप क्या बनाना चाहते हैं?',
+      'choose_tool_get_started': 'शुरू करने के लिए एक टूल चुनें',
+      'poster_maker_title': 'पोस्टर मेकर',
+      'design_beautiful_posters': 'सुंदर पोस्टर डिज़ाइन करें',
+      'customer_logo': 'ग्राहक लोगो',
+      'create_logo_customers': 'ग्राहकों के लिए लोगो बनाएं',
+
+      'reels': 'रील्स',
+      'amazing_video_editezy': 'Editezy का शानदार वीडियो! इसे देखें',
 
       // NEW KEYS
       'categories': 'श्रेणियाँ',
@@ -717,7 +928,6 @@ class LocalizationService {
       'create_first_invoice': 'अपना पहला इनवॉइस बनाएं!',
       'create_new_invoice': 'नया इनवॉइस बनाएं',
       'add_customers': 'ग्राहक जोड़ें',
-      'no_customers_found': 'कोई ग्राहक नहीं मिला',
       'add_first_customer': 'शुरू करने के लिए पहला ग्राहक जोड़ें',
       'add_new_customer': 'नया ग्राहक जोड़ें',
       'chooose_plan': 'अपना प्लान चुनें',
@@ -782,7 +992,6 @@ class LocalizationService {
       'gender': 'लिंग',
       'date_of_birth': 'जन्म तिथि',
       'date_of_anniversary': 'विवाह वर्षगांठ की तिथि',
-      'edit_poster': 'पोस्टर संपादित करें',
       'background': 'पृष्ठभूमि',
       'profile': 'प्रोफ़ाइल',
       'filter': 'फ़िल्टर',
@@ -942,6 +1151,113 @@ class LocalizationService {
       'free': 'இலவசம்',
       'activate_plan': 'திட்டத்தை செயல்படுத்தவும்',
       'pay_now': 'இப்போது செலுத்தவும்',
+      'welcome_back': 'மீண்டும் வரவேற்கிறோம்!',
+      'choose_canvas_size': 'கேன்வாஸ் அளவைத் தேர்வுசெய்க',
+      'select_perfect_size':
+          'உங்கள் வடிவமைப்புக்கு பொருத்தமான அளவைத் தேர்வுசெய்க',
+      'logo_categories': 'லோகோ வகைகள்',
+      'logo_templates': 'லோகோ டெம்ப்ளேட்கள்',
+
+      'seasonal_celebrations': 'பருவகால கொண்டாட்டங்கள்',
+      'never_miss_celebration': 'எந்த கொண்டாட்டத்தையும் தவறவிடாதீர்கள்',
+      'celebration_templates': 'கொண்டாட்ட டெம்ப்ளேட்கள்',
+      'perfect_every_occasion': 'ஒவ்வொரு நிகழ்விற்கும் சரியானது',
+      'weekly_templates': 'வாரந்தோறும் டெம்ப்ளேட்கள்',
+      'fresh_designs_everyday': 'ஒவ்வொரு நாளும் புதிய வடிவமைப்புகள்',
+
+      'explore_templates': 'டெம்ப்ளேட்களை பார்க்கவும்',
+      'design_studio': 'டிசைன் ஸ்டூடியோ',
+
+      'home': 'முகப்பு',
+      'category': 'வகை',
+      'poster': 'போஸ்டர்',
+      'reels': 'ரீல்ஸ்',
+      'customer': 'வாடிக்கையாளர்',
+
+      'invoices': 'விலைப்பட்டியல்கள்',
+      'no_invoices_yet': 'இன்னும் விலைப்பட்டியல்கள் இல்லை',
+      'start_creating_invoices':
+          'தொழில்முறை விலைப்பட்டியல்கள் உருவாக்கத் தொடங்குங்கள்',
+      'all_invoices': 'அனைத்து விலைப்பட்டியல்கள்',
+
+      'customers': 'வாடிக்கையாளர்கள்',
+      'no_customers_yet': 'இன்னும் வாடிக்கையாளர்கள் இல்லை',
+      'no_customers_found': 'வாடிக்கையாளர்கள் எவரும் கிடைக்கவில்லை',
+      'add_first_customer_start':
+          'தொடங்க உங்கள் முதல் வாடிக்கையாளரை சேர்க்கவும்',
+      'adjust_search': 'உங்கள் தேடலை மாற்றி முயற்சிக்கவும்',
+
+      'new_customer': 'புதிய வாடிக்கையாளர்',
+      'fill_customer_details': 'வாடிக்கையாளர் விவரங்களை நிரப்பவும்',
+      'basic_information': 'அடிப்படை தகவல்',
+
+      'share_referral_earn':
+          'உங்கள் பரிந்துரை குறியீட்டை நண்பர்களுடன் பகிர்ந்து, அவர்கள் மேம்படுத்தும் போது பரிசுகளை பெறுங்கள்',
+      'your_referral_code': 'உங்கள் பரிந்துரை குறியீடு',
+      'how_it_works': 'இது எப்படி செயல்படுகிறது',
+      'send_referral_any_platform':
+          'எந்த தளத்தின் மூலமாகவும் உங்கள் பரிந்துரை குறியீட்டை நண்பர்களுக்கு அனுப்புங்கள்',
+      'share_your_code': 'உங்கள் குறியீட்டை பகிருங்கள்',
+      'friend_signs_up': 'நண்பர் பதிவு செய்கிறார்',
+      'enter_code_during_signup':
+          'பதிவு செய்யும் போது அவர்கள் உங்கள் குறியீட்டை உள்ளிடுகிறார்கள்',
+      'earn_rewards': 'பரிசுகளைப் பெறுங்கள்',
+      'get_200_on_upgrade': 'அவர்கள் கணக்கை மேம்படுத்தும் போது ₹200 பெறுங்கள்',
+      'featured': 'சிறப்பு',
+      'additional_information': 'கூடுதல் தகவல்',
+
+      'background_remover': 'பின்னணி நீக்கி',
+      'no_image_selected': 'எந்த படமும் தேர்வு செய்யப்படவில்லை',
+      'tap_gallery_camera':
+          'தொடங்க கீழே உள்ள கேலரி அல்லது கேமரா பொத்தானை தட்டவும்',
+
+      'about_us': 'எங்களை பற்றி',
+      'create_stunning': 'எளிதாக அழகான போஸ்டர்கள் & லோகோக்களை உருவாக்குங்கள்',
+      'about_editezy': 'Editezy பற்றி',
+      'about_description':
+          'PosterNova அழகான போஸ்டர்கள், லோகோக்கள் மற்றும் விளம்பர உள்ளடக்கங்களை வடிவமைக்க உங்கள் அனைத்தும்-ஒரே-இடத்தில் கிடைக்கும் கிரியேட்டிவ் ஸ்டூடியோ. நீங்கள் வணிக உரிமையாளர், இன்ஃப்ளூயன்சர் அல்லது டிசைனர் எவராக இருந்தாலும், PosterMaker தயார் டெம்ப்ளேட்கள் மற்றும் சக்திவாய்ந்த எடிட்டிங் கருவிகளால் உங்கள் யோசனைகளை நனவாக்க உதவுகிறது.',
+      'custom_templates': 'தனிப்பயன் டெம்ப்ளேட்கள்',
+      'choose_thousands':
+          'ஒவ்வொரு தேவைக்கும் வடிவமைக்கப்பட்ட ஆயிரக்கணக்கான டெம்ப்ளேட்களில் இருந்து தேர்வு செய்யுங்கள்.',
+      'easy_sharing': 'எளிய பகிர்வு',
+      'share_instantly':
+          'உங்கள் வடிவமைப்புகளை உடனே சமூக ஊடகங்களில் பகிருங்கள்.',
+      'version_made':
+          'பதிப்பு 1.0.0\nEditezy குழுவினரால் ❤️ உடன் உருவாக்கப்பட்டது',
+      'edit_profile': 'சுயவிவரத்தைத் திருத்தவும்',
+      'tap_change_photo': 'புகைப்படத்தை மாற்ற தட்டவும்',
+      'personal_information': 'தனிப்பட்ட தகவல்',
+      'marriage_anniversary': 'திருமண ஆண்டு விழா',
+      'poster_making': 'போஸ்டர் உருவாக்கம்',
+      'add_filter': 'வடிகட்டி சேர்க்கவும்',
+      'add_color': 'நிறம் சேர்க்கவும்',
+
+      'text_remover': 'உரை நீக்கி',
+      'remove_text_ai':
+          'AI துல்லியத்துடன் உங்கள் படங்களில் இருந்து தேவையற்ற உரையை நீக்குங்கள்',
+      'select_image': 'படத்தைத் தேர்ந்தெடுக்கவும்',
+
+      'invite_friend': 'நண்பரை அழைக்கவும்',
+      'share_code_button':
+          'பகிர்வு பொத்தானைப் பயன்படுத்தி உங்கள் குறியீட்டை பகிருங்கள்.',
+      'enter_code_signup_settings':
+          'அவர்கள் பதிவு செய்யும் போது அல்லது அமைப்புகளில் உங்கள் குறியீட்டை உள்ளிடுகிறார்கள்',
+      'both_get_rewards': 'இருவரும் பரிசுகளைப் பெறுவர்',
+      'credits_after_purchase':
+          'முதல் வெற்றிகரமான கொள்முதல் பிறகு கிரெடிட்கள் சேர்க்கப்படும்',
+
+      'create_story': 'ஸ்டோரி உருவாக்கவும்',
+      'new_story': 'புதிய ஸ்டோரி',
+      'create_your_story': 'உங்கள் ஸ்டோரியை உருவாக்கவும்',
+      'share_story_prompt':
+          'நீங்கள் என்ன செய்கிறீர்கள் என்பதை உங்கள்\nநண்பர்கள் அறிய புகைப்படம் அல்லது வீடியோவை பகிருங்கள்',
+      'add_photo': 'புகைப்படம் சேர்க்கவும்',
+      'story_visible_24h':
+          'ஸ்டோரி 24 மணி நேரம் தெரியும் மற்றும் உங்கள் நண்பர்கள் பார்க்கலாம்',
+      'add_caption': 'விளக்கத்தைச் சேர்க்கவும்',
+      'story_disappear_24h': 'உங்கள் ஸ்டோரி 24 மணி நேரத்திற்கு பிறகு மறையும்',
+      'choose_perfect_design':
+          'உங்களுக்கு பொருத்தமான வடிவமைப்பைத் தேர்ந்தெடுக்கவும்',
 
       // NEW KEYS
       'categories': 'வகைகள்',
@@ -954,7 +1270,6 @@ class LocalizationService {
       'create_first_invoice': 'உங்கள் முதல் விலைப்பட்டியலை உருவாக்குங்கள்!',
       'create_new_invoice': 'புதிய விலைப்பட்டியல் உருவாக்குங்கள்',
       'add_customers': 'வாடிக்கையாளர்களைச் சேர்க்கவும்',
-      'no_customers_found': 'வாடிக்கையாளர்கள் ஏதுமில்லை',
       'add_first_customer': 'தொடங்க உங்கள் முதல் வாடிக்கையாளரைச் சேர்க்கவும்',
       'add_new_customer': 'புதிய வாடிக்கையாளரைச் சேர்க்கவும்',
       'chooose_plan': 'உங்கள் திட்டத்தைத் தேர்ந்தெடுக்கவும்',
@@ -1028,6 +1343,33 @@ class LocalizationService {
       'stickers': 'ஸ்டிக்கர்கள்',
       'contact': 'தொடர்புக்கு',
       'save': 'சேமிக்கவும்',
+      'browse_or_voice_search': 'வகைகளை பார்க்கவும் அல்லது குரல் மூலம் தேடவும்',
+      'reels': 'ரீல்ஸ்',
+      'amazing_video_editezy': 'Editezy வழங்கும் அற்புதமான வீடியோ! பாருங்கள்',
+
+      'online_punchang': 'ஆன்லைன் பஞ்சாங்கம்',
+      'invoices': 'விலைப்பட்டியல்கள்',
+      'background_remover': 'பின்னணி நீக்கி',
+
+      'create_amazing_content': 'அற்புதமான உள்ளடக்கத்தை உருவாக்குங்கள்',
+      'what_do_you_want_create': 'நீங்கள் என்ன உருவாக்க விரும்புகிறீர்கள்?',
+      'choose_tool_get_started': 'தொடங்க ஒரு கருவியைத் தேர்ந்தெடுக்கவும்',
+      'poster_maker_title': 'போஸ்டர் மேக்கர்',
+      'design_beautiful_posters': 'அழகான போஸ்டர்களை வடிவமைக்கவும்',
+      'customer_logo': 'வாடிக்கையாளர் லோகோ',
+      'create_logo_customers': 'வாடிக்கையாளர்களுக்கான லோகோ உருவாக்கவும்',
+      'about': 'பற்றி',
+      'text_remover': 'உரை நீக்கி',
+      'chicha_ai': 'Chicha AI',
+
+      'delete_account': 'கணக்கை நீக்கவும்',
+      'sorry_to_see_you_go':
+          'நீங்கள் விலகுவது எங்களுக்கு வருத்தமாக உள்ளது. தொடர்வதற்கு முன் கீழே உள்ள தகவலைப் பாருங்கள்.',
+      'warning': 'எச்சரிக்கை',
+      'action_permanent': 'இந்த செயல் நிரந்தரமானது மற்றும் மாற்ற முடியாது',
+      'before_you_go': 'நீங்கள் செல்லும் முன்',
+      'delete_confirm_understand':
+          'என் கணக்கை நீக்குவது நிரந்தரமானது மற்றும் என் அனைத்து தரவும் இழக்கப்படும் என்பதை நான் புரிந்துகொள்கிறேன்',
 
       //new
       'plan_details': 'திட்ட விவரங்கள்',
@@ -1189,17 +1531,23 @@ class AppText extends StatelessWidget {
   }) : super(key: key);
 
   static String translate(BuildContext context, String key) {
-    final languageProvider =
-        Provider.of<LanguageProvider>(context, listen: false);
+    final languageProvider = Provider.of<LanguageProvider>(
+      context,
+      listen: false,
+    );
     return LocalizationService.translate(
-        key, languageProvider.locale.languageCode);
+      key,
+      languageProvider.locale.languageCode,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final translatedText = LocalizationService.translate(
-        textKey, languageProvider.locale.languageCode);
+      textKey,
+      languageProvider.locale.languageCode,
+    );
 
     return Text(
       translatedText,

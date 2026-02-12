@@ -2142,8 +2142,8 @@ class _AddnewCustomersState extends State<AddCustomer> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'New Customer',
+                              AppText(
+                                'new_customer',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -2151,8 +2151,8 @@ class _AddnewCustomersState extends State<AddCustomer> {
                                 ),
                               ),
                               SizedBox(height: 4),
-                              Text(
-                                'Fill in customer details',
+                              AppText(
+                                'fill_customer_details',
                                 style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
@@ -2168,8 +2168,8 @@ class _AddnewCustomersState extends State<AddCustomer> {
                   const SizedBox(height: 32),
 
                   // Basic Information
-                  const Text(
-                    'Basic Information',
+                  const AppText(
+                    'basic_information',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -2261,8 +2261,8 @@ class _AddnewCustomersState extends State<AddCustomer> {
                   const SizedBox(height: 32),
 
                   // Additional Information
-                  const Text(
-                    'Additional Information',
+                  const AppText(
+                    'additional_information',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

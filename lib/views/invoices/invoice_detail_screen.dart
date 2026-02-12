@@ -172,6 +172,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       description = prefs.getString('Description') ?? 'No description';
       wastage = prefs.getString('Wastage') ?? 'No wastage';
       hsn = prefs.getString('HSN') ?? 'No hsn number';
+      gstNumber = prefs.getString('gst') ?? 'Not Available'; // GST Number
     });
   }
 
@@ -346,6 +347,11 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                                     ),
                                     Text(
                                       'Email: $clientEmail',
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+
+                                    Text(
+                                      'GST Number: $gstNumber',
                                       style: const TextStyle(fontSize: 14),
                                     ),
                                   ],
@@ -1127,7 +1133,9 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
                         'Email: $clientEmail',
                         style: const pw.TextStyle(fontSize: 14),
                       ),
+                      pw.Text('GST Number: $gstNumber',style: const pw.TextStyle(fontSize: 14))
                     ],
+                    
                   ),
                 ),
                 pw.Expanded(
@@ -1492,7 +1500,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
               ],
             ),
             pw.SizedBox(height: 20),
-            
+
             // Payment Information - Navy background
             pw.Container(
               // color: PdfColor.fromHex('0E2945'),

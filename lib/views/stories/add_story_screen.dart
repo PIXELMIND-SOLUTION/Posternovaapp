@@ -642,6 +642,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posternova/providers/story/story_provider.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
 
 class AddStoryScreen extends StatefulWidget {
@@ -876,8 +877,8 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
         onPressed: () => Navigator.pop(context),
         icon: const Icon(Icons.close, color: Colors.black87),
       ),
-      title: Text(
-        _image == null ? 'Create Story' : 'New Story',
+      title: AppText(
+        _image == null ? 'create_story' : 'new_story',
         style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -941,8 +942,8 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
-              'Create Your Story',
+            const AppText(
+              'create_your_story',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
@@ -950,8 +951,8 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Text(
-              'Share a photo or video to let your\nfriends know what you\'re up to',
+            AppText(
+              'share_story_prompt',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -965,8 +966,8 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
               child: ElevatedButton.icon(
                 onPressed: _showImageSourceDialog,
                 icon: const Icon(Icons.add_photo_alternate),
-                label: const Text(
-                  'Add Photo',
+                label: const AppText(
+                  'add_photo',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -1000,8 +1001,8 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Stories are visible for 24 hours and can be viewed by your friends',
+                    child: AppText(
+                      'story_visible_24h',
                       style: TextStyle(
                         color: Colors.grey[700],
                         fontSize: 13,
@@ -1067,8 +1068,8 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Add a caption',
+                const AppText(
+                  'add_caption',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -1130,8 +1131,8 @@ class _AddStoryScreenState extends State<AddStoryScreen> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          'Your story will disappear after 24 hours',
+                        child: AppText(
+                          'story_disappear_24h',
                           style: TextStyle(
                             color: Colors.amber[900],
                             fontSize: 13,

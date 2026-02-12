@@ -3670,7 +3670,7 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
           icon: Icon(Icons.arrow_back),
         ),
         title: AppText(
-          'Poster Making',
+          'poster_making',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -4400,22 +4400,22 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
                 children: [
                   _buildToolButton(
                     icon: Icons.add_a_photo,
-                    label: 'Image',
+                    label: 'image',
                     onPressed: _pickPosterImage,
                   ),
                   _buildToolButton(
                     icon: Icons.filter_list,
-                    label: 'Addfilter',
+                    label: 'add_filter',
                     onPressed: _applyImageFilter,
                   ),
                   _buildToolButton(
                     icon: Icons.color_lens_rounded,
-                    label: 'AddColor',
+                    label: 'add_color',
                     onPressed: _changeBackgroundColor,
                   ),
                   _buildToolButton(
                     icon: Icons.text_snippet_sharp,
-                    label: 'Text',
+                    label: 'text',
                     onPressed: _addNewText,
                   ),
                   _buildToolButton(

@@ -1975,7 +1975,7 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
                 },
               )
             : AppText(
-                'Customers',
+                'customers',
                 style: TextStyle(
                   color: textColor,
                   fontSize: 20,
@@ -2160,7 +2160,7 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
         onPressed: _handleAddCustomer,
         backgroundColor: primaryColor,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const AppText('Add Customer', style: TextStyle(color: Colors.white)),
+        label: const AppText('add_customers', style: TextStyle(color: Colors.white)),
       ),
     );
   }
@@ -2353,10 +2353,10 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
                 color: subtextColor,
               ),
               const SizedBox(height: 24),
-              Text(
+              AppText(
                 _searchQuery.isNotEmpty
-                    ? 'No customers found'
-                    : 'No customers yet',
+                    ? 'no_customers_found'
+                    : 'no_customers_yet',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
@@ -2364,10 +2364,10 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
+              AppText(
                 _searchQuery.isNotEmpty
-                    ? 'Try adjusting your search'
-                    : 'Add your first customer to get started',
+                    ? 'adjust_search'
+                    : 'add_first_customer_start',
                 style: TextStyle(
                   fontSize: 14,
                   color: subtextColor,

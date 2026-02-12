@@ -132,7 +132,7 @@
 //       setState(() {
 //         _images.add(_EditableImage(
 //           imageFile: File(pickedFile.path),
-//           offset: const Offset(100, 100), 
+//           offset: const Offset(100, 100),
 //           size: const Size(150, 150),
 //         ));
 //       });
@@ -194,7 +194,7 @@
 //         _selectedText = text;
 //         _selectedShape = null;
 //         _selectedElement = null;
-//         _selectedImage = null; 
+//         _selectedImage = null;
 //       }
 //     });
 //   }
@@ -203,12 +203,12 @@
 //   void _selectShape(_EditableShape shape) {
 //     setState(() {
 //       if (_selectedShape == shape) {
-//         _selectedShape = null; 
+//         _selectedShape = null;
 //       } else {
 //         _selectedShape = shape;
 //         _selectedText = null;
 //         _selectedElement = null;
-//         _selectedImage = null; 
+//         _selectedImage = null;
 //       }
 //     });
 //   }
@@ -216,12 +216,12 @@
 //   void _selectElement(_EditableElement element) {
 //     setState(() {
 //       if (_selectedElement == element) {
-//         _selectedElement = null; 
+//         _selectedElement = null;
 //       } else {
 //         _selectedElement = element;
 //         _selectedText = null;
 //         _selectedShape = null;
-//         _selectedImage = null; 
+//         _selectedImage = null;
 //       }
 //     });
 //   }
@@ -265,7 +265,7 @@
 //       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 //       final userId = authProvider.user?.user.id;
 //       // Get this from your auth state
-   
+
 //     } finally {
 //       setState(() {
 //         _isLoading = false;
@@ -498,8 +498,7 @@
 //                     }),
 //                   ],
 //                 ),
-               
-                
+
 //                 // Size slider
 //                 const SizedBox(height: 16),
 //                 const Text('Size:'),
@@ -1162,7 +1161,7 @@
 //               color: const ui.Color.fromARGB(255, 249, 212, 144),
 //               borderRadius: BorderRadius.circular(30),
 //               border: Border.all(color: const ui.Color.fromARGB(255, 249, 212, 144)),
-              
+
 //             ),
 //             child: Icon(icon, color: Colors.white),
 //           ),
@@ -1570,19 +1569,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -1594,20 +1580,37 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:math' as math;
 import 'package:photo_manager/photo_manager.dart';
 import 'package:posternova/helper/storage_helper.dart';
+import 'package:posternova/models/create_poster_model.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:provider/provider.dart';
 
 class MakeLogo extends StatefulWidget {
-  final String?editedImage;
-  final String image;
-  final String?id;
-  const MakeLogo({super.key, required this.image,this.id,this.editedImage});
+  // final String?editedImage;
+  // final String image;
+  // final String?id;
+
+  final String? editedImage;
+  final String? image; // Make this optional
+  final String? id;
+  final String? categoryId; // Add categoryId
+  final PosterSize? posterSize;
+  // const MakeLogo({super.key, required this.image,this.id,this.editedImage});
+
+  const MakeLogo({
+    super.key,
+    this.image,
+    this.id,
+    this.editedImage,
+    this.categoryId,
+    this.posterSize,
+  });
 
   @override
   State<MakeLogo> createState() => _EditLogoState();
 }
 
-class _EditLogoState extends State<MakeLogo> with SingleTickerProviderStateMixin {
+class _EditLogoState extends State<MakeLogo>
+    with SingleTickerProviderStateMixin {
   final List<_EditableImage> _images = [];
   final List<_EditableText> _texts = [];
   final List<_EditableShape> _shapes = [];
@@ -1651,102 +1654,107 @@ class _EditLogoState extends State<MakeLogo> with SingleTickerProviderStateMixin
     _fabAnimationController.dispose();
     super.dispose();
   }
-Future<void> _saveLogoToServer() async {
-  setState(() {
-    _isSaving = true;
-  });
 
-  try {
-    // Capture the edited canvas as image
-    final Uint8List? logoImage = await _captureCanvasAsImage();
+  Future<void> _saveLogoToServer() async {
+    setState(() {
+      _isSaving = true;
+    });
 
-    if (logoImage == null) {
-      throw Exception('Failed to capture the canvas');
-    }
+    try {
+      // Capture the edited canvas as image
+      final Uint8List? logoImage = await _captureCanvasAsImage();
 
-    // Get userId from AuthPreferences
-    final userData = await AuthPreferences.getUserData();
-    final userId = userData?.user.id;
+      if (logoImage == null) {
+        throw Exception('Failed to capture the canvas');
+      }
 
-    if (userId == null) {
-      throw Exception('User not logged in');
-    }
+      // Get userId from AuthPreferences
+      final userData = await AuthPreferences.getUserData();
+      final userId = userData?.user.id;
 
-    // Check if widget.id is available
-    if (widget.id == null || widget.id!.isEmpty) {
-      throw Exception('Logo ID is missing');
-    }
+      if (userId == null) {
+        throw Exception('User not logged in');
+      }
 
-    // Create multipart request
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('http://31.97.206.144:4061/api/users/user-history'),
-    );
+      // Check if widget.id is available
+      if (widget.id == null || widget.id!.isEmpty) {
+        throw Exception('Logo ID is missing');
+      }
 
-    // Add fields
-    request.fields['userId'] = userId;
-    request.fields['logoId'] = widget.id!; // Use the passed id
+      // Create multipart request
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://31.97.206.144:4061/api/users/user-history'),
+      );
 
-    // Add file
-    request.files.add(
-      http.MultipartFile.fromBytes(
-        'editedImage',
-        logoImage,
-        filename: 'logo_${DateTime.now().millisecondsSinceEpoch}.png',
-      ),
-    );
+      // Add fields
+      request.fields['userId'] = userId;
+      request.fields['logoId'] = widget.id!; // Use the passed id
 
-    // Send request
-    final response = await request.send();
-    
-    // Read response body
-    final responseBody = await response.stream.bytesToString();
-    
-    print('Response status: ${response.statusCode}');
-    print('Response body: $responseBody');
+      // Add file
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'editedImage',
+          logoImage,
+          filename: 'logo_${DateTime.now().millisecondsSinceEpoch}.png',
+        ),
+      );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
+      // Send request
+      final response = await request.send();
+
+      // Read response body
+      final responseBody = await response.stream.bytesToString();
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: $responseBody');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text('Logo saved successfully!'),
+              ],
+            ),
+            backgroundColor: Colors.green[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      } else {
+        throw Exception('Server error: ${response.statusCode} - $responseBody');
+      }
+    } catch (e) {
+      print('Error saving logo: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Logo saved successfully!'),
+              const Icon(Icons.error, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(child: Text('Failed to save: ${e.toString()}')),
             ],
           ),
-          backgroundColor: Colors.green[600],
+          backgroundColor: Colors.red[600],
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           margin: const EdgeInsets.all(16),
         ),
       );
-    } else {
-      throw Exception('Server error: ${response.statusCode} - $responseBody');
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
     }
-  } catch (e) {
-    print('Error saving logo: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text('Failed to save: ${e.toString()}')),
-          ],
-        ),
-        backgroundColor: Colors.red[600],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  } finally {
-    setState(() {
-      _isSaving = false;
-    });
   }
-}
 
   Future<void> _saveLogoToGallery() async {
     setState(() {
@@ -1754,7 +1762,8 @@ Future<void> _saveLogoToServer() async {
     });
 
     try {
-      final PermissionState result = await PhotoManager.requestPermissionExtend();
+      final PermissionState result =
+          await PhotoManager.requestPermissionExtend();
       if (result.isAuth) {
         final Uint8List? logoImage = await _captureCanvasAsImage();
 
@@ -1777,7 +1786,9 @@ Future<void> _saveLogoToServer() async {
                 ),
                 backgroundColor: Colors.green[600],
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 margin: const EdgeInsets.all(16),
               ),
             );
@@ -1802,7 +1813,9 @@ Future<void> _saveLogoToServer() async {
           ),
           backgroundColor: Colors.red[600],
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           margin: const EdgeInsets.all(16),
         ),
       );
@@ -1817,16 +1830,18 @@ Future<void> _saveLogoToServer() async {
     try {
       await Future.delayed(const Duration(milliseconds: 20));
 
-      final RenderRepaintBoundary? boundary = _canvasKey.currentContext
-          ?.findRenderObject() as RenderRepaintBoundary?;
+      final RenderRepaintBoundary? boundary =
+          _canvasKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
 
       if (boundary == null) {
         debugPrint('Render boundary is null');
         return null;
       }
       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      final ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
 
       if (byteData != null) {
         return byteData.buffer.asUint8List();
@@ -1849,35 +1864,41 @@ Future<void> _saveLogoToServer() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _images.add(_EditableImage(
-          imageFile: File(pickedFile.path),
-          offset: const Offset(100, 100),
-          size: const Size(150, 150),
-        ));
+        _images.add(
+          _EditableImage(
+            imageFile: File(pickedFile.path),
+            offset: const Offset(100, 100),
+            size: const Size(150, 150),
+          ),
+        );
       });
     }
   }
 
   void _addShape(ShapeType shapeType) {
     setState(() {
-      _shapes.add(_EditableShape(
-        shapeType: shapeType,
-        color: const Color(0xFF6C63FF),
-        size: const Size(80, 80),
-        offset: const Offset(100, 100),
-      ));
+      _shapes.add(
+        _EditableShape(
+          shapeType: shapeType,
+          color: const Color(0xFF6C63FF),
+          size: const Size(80, 80),
+          offset: const Offset(100, 100),
+        ),
+      );
     });
   }
 
   void _addElement(Map<String, dynamic> elementData) {
     setState(() {
-      _elements.add(_EditableElement(
-        icon: elementData['icon'],
-        name: elementData['name'],
-        color: const Color(0xFF6C63FF),
-        size: const Size(60, 60),
-        offset: const Offset(100, 100),
-      ));
+      _elements.add(
+        _EditableElement(
+          icon: elementData['icon'],
+          name: elementData['name'],
+          color: const Color(0xFF6C63FF),
+          size: const Size(60, 60),
+          offset: const Offset(100, 100),
+        ),
+      );
     });
   }
 
@@ -1988,118 +2009,134 @@ Future<void> _saveLogoToServer() async {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Edit Image',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3142),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Edit Image',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3142),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                Row(
-                  children: [
-                    Icon(Icons.photo_size_select_large, color: Colors.grey[600], size: 20),
-                    const SizedBox(width: 8),
-                    const Text('Size', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SliderTheme(
-                  data: SliderThemeData(
-                    activeTrackColor: const Color(0xFF6C63FF),
-                    inactiveTrackColor: Colors.grey[200],
-                    thumbColor: const Color(0xFF6C63FF),
-                    overlayColor: const Color(0xFF6C63FF).withOpacity(0.2),
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.photo_size_select_large,
+                        color: Colors.grey[600],
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Size',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
-                  child: Slider(
-                    value: selectedSize,
-                    min: 50,
-                    max: 300,
-                    divisions: 25,
-                    label: selectedSize.round().toString(),
-                    onChanged: (value) {
-                      setModalState(() {
-                        selectedSize = value;
-                      });
-                    },
+                  const SizedBox(height: 8),
+                  SliderTheme(
+                    data: SliderThemeData(
+                      activeTrackColor: const Color(0xFF6C63FF),
+                      inactiveTrackColor: Colors.grey[200],
+                      thumbColor: const Color(0xFF6C63FF),
+                      overlayColor: const Color(0xFF6C63FF).withOpacity(0.2),
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 10,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 20,
+                      ),
+                    ),
+                    child: Slider(
+                      value: selectedSize,
+                      min: 50,
+                      max: 300,
+                      divisions: 25,
+                      label: selectedSize.round().toString(),
+                      onChanged: (value) {
+                        setModalState(() {
+                          selectedSize = value;
+                        });
+                      },
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _images.remove(editableImage);
-                            _selectedImage = null;
-                          });
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text('Delete'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red[600],
-                          side: BorderSide(color: Colors.red[200]!),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _images.remove(editableImage);
+                              _selectedImage = null;
+                            });
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Delete'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red[600],
+                            side: BorderSide(color: Colors.red[200]!),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            editableImage.size = Size(selectedSize, selectedSize);
-                          });
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.check),
-                        label: const Text('Apply'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6C63FF),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              editableImage.size = Size(
+                                selectedSize,
+                                selectedSize,
+                              );
+                            });
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.check),
+                          label: const Text('Apply'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6C63FF),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        });
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -2112,155 +2149,202 @@ Future<void> _saveLogoToServer() async {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Edit Shape',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3142),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Edit Shape',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3142),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                Row(
-                  children: [
-                    Icon(Icons.palette, color: Colors.grey[600], size: 20),
-                    const SizedBox(width: 8),
-                    const Text('Color', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  children: [
-                    _modernColorPicker(const Color(0xFF6C63FF), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFFFF6B6B), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFF4ECDC4), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFFFFA502), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFF95E1D3), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFFF38181), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                      _modernColorPicker(const ui.Color.fromARGB(255, 0, 0, 0), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Icon(Icons.photo_size_select_large, color: Colors.grey[600], size: 20),
-                    const SizedBox(width: 8),
-                    const Text('Size', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SliderTheme(
-                  data: SliderThemeData(
-                    activeTrackColor: const Color(0xFF6C63FF),
-                    inactiveTrackColor: Colors.grey[200],
-                    thumbColor: const Color(0xFF6C63FF),
-                    overlayColor: const Color(0xFF6C63FF).withOpacity(0.2),
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+                  Row(
+                    children: [
+                      Icon(Icons.palette, color: Colors.grey[600], size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Color',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
-                  child: Slider(
-                    value: selectedSize,
-                    min: 20,
-                    max: 200,
-                    divisions: 18,
-                    label: selectedSize.round().toString(),
-                    onChanged: (value) {
-                      setModalState(() {
-                        selectedSize = value;
-                      });
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _shapes.remove(editableShape);
-                            _selectedShape = null;
-                          });
-                          Navigator.pop(context);
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    children: [
+                      _modernColorPicker(
+                        const Color(0xFF6C63FF),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
                         },
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text('Delete'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red[600],
-                          side: BorderSide(color: Colors.red[200]!),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFFFF6B6B),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFF4ECDC4),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFFFFA502),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFF95E1D3),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFFF38181),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const ui.Color.fromARGB(255, 0, 0, 0),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.photo_size_select_large,
+                        color: Colors.grey[600],
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Size',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SliderTheme(
+                    data: SliderThemeData(
+                      activeTrackColor: const Color(0xFF6C63FF),
+                      inactiveTrackColor: Colors.grey[200],
+                      thumbColor: const Color(0xFF6C63FF),
+                      overlayColor: const Color(0xFF6C63FF).withOpacity(0.2),
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 10,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 20,
+                      ),
+                    ),
+                    child: Slider(
+                      value: selectedSize,
+                      min: 20,
+                      max: 200,
+                      divisions: 18,
+                      label: selectedSize.round().toString(),
+                      onChanged: (value) {
+                        setModalState(() {
+                          selectedSize = value;
+                        });
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _shapes.remove(editableShape);
+                              _selectedShape = null;
+                            });
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Delete'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red[600],
+                            side: BorderSide(color: Colors.red[200]!),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            editableShape.color = selectedColor;
-                            editableShape.size = Size(selectedSize, selectedSize);
-                          });
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.check),
-                        label: const Text('Apply'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6C63FF),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              editableShape.color = selectedColor;
+                              editableShape.size = Size(
+                                selectedSize,
+                                selectedSize,
+                              );
+                            });
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.check),
+                          label: const Text('Apply'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6C63FF),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        });
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -2273,155 +2357,202 @@ Future<void> _saveLogoToServer() async {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Edit ${editableElement.name}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3142),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Edit ${editableElement.name}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3142),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                Row(
-                  children: [
-                    Icon(Icons.palette, color: Colors.grey[600], size: 20),
-                    const SizedBox(width: 8),
-                    const Text('Color', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  children: [
-                    _modernColorPicker(const Color(0xFF6C63FF), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFFFF6B6B), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFF4ECDC4), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFFFFA502), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFF95E1D3), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                    _modernColorPicker(const Color(0xFFF38181), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                         _modernColorPicker(const ui.Color.fromARGB(255, 0, 0, 0), selectedColor, (color) {
-                      setModalState(() => selectedColor = color);
-                    }),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Icon(Icons.photo_size_select_large, color: Colors.grey[600], size: 20),
-                    const SizedBox(width: 8),
-                    const Text('Size', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SliderTheme(
-                  data: SliderThemeData(
-                    activeTrackColor: const Color(0xFF6C63FF),
-                    inactiveTrackColor: Colors.grey[200],
-                    thumbColor: const Color(0xFF6C63FF),
-                    overlayColor: const Color(0xFF6C63FF).withOpacity(0.2),
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+                  Row(
+                    children: [
+                      Icon(Icons.palette, color: Colors.grey[600], size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Color',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
-                  child: Slider(
-                    value: selectedSize,
-                    min: 20,
-                    max: 200,
-                    divisions: 18,
-                    label: selectedSize.round().toString(),
-                    onChanged: (value) {
-                      setModalState(() {
-                        selectedSize = value;
-                      });
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _elements.remove(editableElement);
-                            _selectedElement = null;
-                          });
-                          Navigator.pop(context);
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    children: [
+                      _modernColorPicker(
+                        const Color(0xFF6C63FF),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
                         },
-                        icon: const Icon(Icons.delete_outline),
-                        label: const Text('Delete'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red[600],
-                          side: BorderSide(color: Colors.red[200]!),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFFFF6B6B),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFF4ECDC4),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFFFFA502),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFF95E1D3),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const Color(0xFFF38181),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                      _modernColorPicker(
+                        const ui.Color.fromARGB(255, 0, 0, 0),
+                        selectedColor,
+                        (color) {
+                          setModalState(() => selectedColor = color);
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.photo_size_select_large,
+                        color: Colors.grey[600],
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Size',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SliderTheme(
+                    data: SliderThemeData(
+                      activeTrackColor: const Color(0xFF6C63FF),
+                      inactiveTrackColor: Colors.grey[200],
+                      thumbColor: const Color(0xFF6C63FF),
+                      overlayColor: const Color(0xFF6C63FF).withOpacity(0.2),
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 10,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 20,
+                      ),
+                    ),
+                    child: Slider(
+                      value: selectedSize,
+                      min: 20,
+                      max: 200,
+                      divisions: 18,
+                      label: selectedSize.round().toString(),
+                      onChanged: (value) {
+                        setModalState(() {
+                          selectedSize = value;
+                        });
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _elements.remove(editableElement);
+                              _selectedElement = null;
+                            });
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Delete'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red[600],
+                            side: BorderSide(color: Colors.red[200]!),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            editableElement.color = selectedColor;
-                            editableElement.size = Size(selectedSize, selectedSize);
-                          });
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.check),
-                        label: const Text('Apply'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6C63FF),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              editableElement.color = selectedColor;
+                              editableElement.size = Size(
+                                selectedSize,
+                                selectedSize,
+                              );
+                            });
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.check),
+                          label: const Text('Apply'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6C63FF),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        });
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -2437,261 +2568,348 @@ Future<void> _saveLogoToServer() async {
     showDialog(
       context: context,
       builder: (_) {
-        return StatefulBuilder(builder: (context, setDialogState) {
-          return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 500),
-              padding: const EdgeInsets.all(24),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Add Text',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2D3142),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    TextField(
-                      controller: textController,
-                      decoration: InputDecoration(
-                        labelText: 'Enter your text',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 500),
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Add Text',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2D3142),
                         ),
                       ),
-                      autofocus: true,
-                      onChanged: (value) => setDialogState(() {}),
-                    ),
+                      const SizedBox(height: 24),
 
-                    const SizedBox(height: 24),
-                    const Text('Font Family', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(12),
+                      TextField(
+                        controller: textController,
+                        decoration: InputDecoration(
+                          labelText: 'Enter your text',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF6C63FF),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        autofocus: true,
+                        onChanged: (value) => setDialogState(() {}),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: selectedFontFamily,
-                          isExpanded: true,
-                          items: _fontFamilies.map((font) {
-                            return DropdownMenuItem<String>(
-                              value: font,
-                              child: Text(font, style: TextStyle(fontFamily: font)),
-                            );
-                          }).toList(),
+
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Font Family',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedFontFamily,
+                            isExpanded: true,
+                            items: _fontFamilies.map((font) {
+                              return DropdownMenuItem<String>(
+                                value: font,
+                                child: Text(
+                                  font,
+                                  style: TextStyle(fontFamily: font),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedFontFamily = value!;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          const Text(
+                            'Font Size',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6C63FF).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${selectedFontSize.round()}',
+                              style: const TextStyle(
+                                color: Color(0xFF6C63FF),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SliderTheme(
+                        data: SliderThemeData(
+                          activeTrackColor: const Color(0xFF6C63FF),
+                          inactiveTrackColor: Colors.grey[200],
+                          thumbColor: const Color(0xFF6C63FF),
+                          overlayColor: const Color(
+                            0xFF6C63FF,
+                          ).withOpacity(0.2),
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 10,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 20,
+                          ),
+                        ),
+                        child: Slider(
+                          value: selectedFontSize,
+                          min: 10,
+                          max: 48,
+                          divisions: 38,
                           onChanged: (value) {
                             setDialogState(() {
-                              selectedFontFamily = value!;
+                              selectedFontSize = value;
                             });
                           },
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        const Text('Font Size', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF6C63FF).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${selectedFontSize.round()}',
-                            style: const TextStyle(
-                              color: Color(0xFF6C63FF),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SliderTheme(
-                      data: SliderThemeData(
-                        activeTrackColor: const Color(0xFF6C63FF),
-                        inactiveTrackColor: Colors.grey[200],
-                        thumbColor: const Color(0xFF6C63FF),
-                        overlayColor: const Color(0xFF6C63FF).withOpacity(0.2),
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
-                      ),
-                      child: Slider(
-                        value: selectedFontSize,
-                        min: 10,
-                        max: 48,
-                        divisions: 38,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            selectedFontSize = value;
-                          });
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-                    const Text('Font Style', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _styleToggleButton(
-                            label: 'Bold',
-                            icon: Icons.format_bold,
-                            isSelected: isBold,
-                            onTap: () {
-                              setDialogState(() {
-                                isBold = !isBold;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _styleToggleButton(
-                            label: 'Italic',
-                            icon: Icons.format_italic,
-                            isSelected: isItalic,
-                            onTap: () {
-                              setDialogState(() {
-                                isItalic = !isItalic;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                    const Text('Color', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      children: [
-                        _modernColorPicker(const Color(0xFF2D3142), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFFFF6B6B), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFF6C63FF), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFF4ECDC4), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFFFFA502), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFF95E1D3), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                    const Text('Preview', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey[50],
-                      ),
-                      child: Center(
-                        child: Text(
-                          textController.text.isEmpty ? 'Sample Text' : textController.text,
-                          style: TextStyle(
-                            color: selectedColor,
-                            fontSize: selectedFontSize,
-                            fontFamily: selectedFontFamily,
-                            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                            fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
-                          ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Font Style',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              side: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            child: const Text('Cancel'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (textController.text.isNotEmpty) {
-                                setState(() {
-                                  _texts.add(_EditableText(
-                                    text: textController.text,
-                                    color: selectedColor,
-                                    fontSize: selectedFontSize,
-                                    fontFamily: selectedFontFamily,
-                                    isBold: isBold,
-                                    isItalic: isItalic,
-                                    offset: const Offset(100, 100),
-                                  ));
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _styleToggleButton(
+                              label: 'Bold',
+                              icon: Icons.format_bold,
+                              isSelected: isBold,
+                              onTap: () {
+                                setDialogState(() {
+                                  isBold = !isBold;
                                 });
-                                Navigator.pop(context);
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6C63FF),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              },
                             ),
-                            child: const Text('Add Text'),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _styleToggleButton(
+                              label: 'Italic',
+                              icon: Icons.format_italic,
+                              isSelected: isItalic,
+                              onTap: () {
+                                setDialogState(() {
+                                  isItalic = !isItalic;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Color',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        children: [
+                          _modernColorPicker(
+                            const Color(0xFF2D3142),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFFFF6B6B),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFF6C63FF),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFF4ECDC4),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFFFFA502),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFF95E1D3),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Preview',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey[50],
+                        ),
+                        child: Center(
+                          child: Text(
+                            textController.text.isEmpty
+                                ? 'Sample Text'
+                                : textController.text,
+                            style: TextStyle(
+                              color: selectedColor,
+                              fontSize: selectedFontSize,
+                              fontFamily: selectedFontFamily,
+                              fontWeight: isBold
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              fontStyle: isItalic
+                                  ? FontStyle.italic
+                                  : FontStyle.normal,
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                side: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (textController.text.isNotEmpty) {
+                                  setState(() {
+                                    _texts.add(
+                                      _EditableText(
+                                        text: textController.text,
+                                        color: selectedColor,
+                                        fontSize: selectedFontSize,
+                                        fontFamily: selectedFontFamily,
+                                        isBold: isBold,
+                                        isItalic: isItalic,
+                                        offset: const Offset(100, 100),
+                                      ),
+                                    );
+                                  });
+                                  Navigator.pop(context);
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6C63FF),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text('Add Text'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     );
   }
 
   void _showEditTextPopup(_EditableText editableText) {
-    final TextEditingController textController = TextEditingController(text: editableText.text);
+    final TextEditingController textController = TextEditingController(
+      text: editableText.text,
+    );
     Color selectedColor = editableText.color;
     String selectedFontFamily = editableText.fontFamily;
     double selectedFontSize = editableText.fontSize;
@@ -2701,262 +2919,345 @@ Future<void> _saveLogoToServer() async {
     showDialog(
       context: context,
       builder: (_) {
-        return StatefulBuilder(builder: (context, setDialogState) {
-          return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 500),
-              padding: const EdgeInsets.all(24),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Edit Text',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2D3142),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    TextField(
-                      controller: textController,
-                      decoration: InputDecoration(
-                        labelText: 'Enter your text',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 500),
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Edit Text',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2D3142),
                         ),
                       ),
-                      autofocus: true,
-                      onChanged: (value) => setDialogState(() {}),
-                    ),
+                      const SizedBox(height: 24),
 
-                    const SizedBox(height: 24),
-                    const Text('Font Family', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(12),
+                      TextField(
+                        controller: textController,
+                        decoration: InputDecoration(
+                          labelText: 'Enter your text',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF6C63FF),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        autofocus: true,
+                        onChanged: (value) => setDialogState(() {}),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: selectedFontFamily,
-                          isExpanded: true,
-                          items: _fontFamilies.map((font) {
-                            return DropdownMenuItem<String>(
-                              value: font,
-                              child: Text(font, style: TextStyle(fontFamily: font)),
-                            );
-                          }).toList(),
+
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Font Family',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedFontFamily,
+                            isExpanded: true,
+                            items: _fontFamilies.map((font) {
+                              return DropdownMenuItem<String>(
+                                value: font,
+                                child: Text(
+                                  font,
+                                  style: TextStyle(fontFamily: font),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedFontFamily = value!;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          const Text(
+                            'Font Size',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6C63FF).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${selectedFontSize.round()}',
+                              style: const TextStyle(
+                                color: Color(0xFF6C63FF),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SliderTheme(
+                        data: SliderThemeData(
+                          activeTrackColor: const Color(0xFF6C63FF),
+                          inactiveTrackColor: Colors.grey[200],
+                          thumbColor: const Color(0xFF6C63FF),
+                          overlayColor: const Color(
+                            0xFF6C63FF,
+                          ).withOpacity(0.2),
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 10,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 20,
+                          ),
+                        ),
+                        child: Slider(
+                          value: selectedFontSize,
+                          min: 10,
+                          max: 48,
+                          divisions: 38,
                           onChanged: (value) {
                             setDialogState(() {
-                              selectedFontFamily = value!;
+                              selectedFontSize = value;
                             });
                           },
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        const Text('Font Size', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF6C63FF).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Font Style',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _styleToggleButton(
+                              label: 'Bold',
+                              icon: Icons.format_bold,
+                              isSelected: isBold,
+                              onTap: () {
+                                setDialogState(() {
+                                  isBold = !isBold;
+                                });
+                              },
+                            ),
                           ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _styleToggleButton(
+                              label: 'Italic',
+                              icon: Icons.format_italic,
+                              isSelected: isItalic,
+                              onTap: () {
+                                setDialogState(() {
+                                  isItalic = !isItalic;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Color',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        children: [
+                          _modernColorPicker(
+                            const Color(0xFF2D3142),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFFFF6B6B),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFF6C63FF),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFF4ECDC4),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFFFFA502),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                          _modernColorPicker(
+                            const Color(0xFF95E1D3),
+                            selectedColor,
+                            (color) {
+                              setDialogState(() => selectedColor = color);
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Preview',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey[50],
+                        ),
+                        child: Center(
                           child: Text(
-                            '${selectedFontSize.round()}',
-                            style: const TextStyle(
-                              color: Color(0xFF6C63FF),
-                              fontWeight: FontWeight.bold,
+                            textController.text.isEmpty
+                                ? 'Sample Text'
+                                : textController.text,
+                            style: TextStyle(
+                              color: selectedColor,
+                              fontSize: selectedFontSize,
+                              fontFamily: selectedFontFamily,
+                              fontWeight: isBold
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              fontStyle: isItalic
+                                  ? FontStyle.italic
+                                  : FontStyle.normal,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SliderTheme(
-                      data: SliderThemeData(
-                        activeTrackColor: const Color(0xFF6C63FF),
-                        inactiveTrackColor: Colors.grey[200],
-                        thumbColor: const Color(0xFF6C63FF),
-                        overlayColor: const Color(0xFF6C63FF).withOpacity(0.2),
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
                       ),
-                      child: Slider(
-                        value: selectedFontSize,
-                        min: 10,
-                        max: 48,
-                        divisions: 38,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            selectedFontSize = value;
-                          });
-                        },
-                      ),
-                    ),
 
-                    const SizedBox(height: 24),
-                    const Text('Font Style', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _styleToggleButton(
-                            label: 'Bold',
-                            icon: Icons.format_bold,
-                            isSelected: isBold,
-                            onTap: () {
-                              setDialogState(() {
-                                isBold = !isBold;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _styleToggleButton(
-                            label: 'Italic',
-                            icon: Icons.format_italic,
-                            isSelected: isItalic,
-                            onTap: () {
-                              setDialogState(() {
-                                isItalic = !isItalic;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                    const Text('Color', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      children: [
-                        _modernColorPicker(const Color(0xFF2D3142), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFFFF6B6B), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFF6C63FF), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFF4ECDC4), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFFFFA502), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                        _modernColorPicker(const Color(0xFF95E1D3), selectedColor, (color) {
-                          setDialogState(() => selectedColor = color);
-                        }),
-                     
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                    const Text('Preview', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey[50],
-                      ),
-                      child: Center(
-                        child: Text(
-                          textController.text.isEmpty ? 'Sample Text' : textController.text,
-                          style: TextStyle(
-                            color: selectedColor,
-                            fontSize: selectedFontSize,
-                            fontFamily: selectedFontFamily,
-                            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                            fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                _texts.remove(editableText);
-                                _selectedText = null;
-                              });
-                              Navigator.pop(context);
-                            },
-                            icon: const Icon(Icons.delete_outline),
-                            label: const Text('Delete'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red[600],
-                              side: BorderSide(color: Colors.red[200]!),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              if (textController.text.isNotEmpty) {
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
                                 setState(() {
-                                  editableText.text = textController.text;
-                                  editableText.color = selectedColor;
-                                  editableText.fontSize = selectedFontSize;
-                                  editableText.fontFamily = selectedFontFamily;
-                                  editableText.isBold = isBold;
-                                  editableText.isItalic = isItalic;
+                                  _texts.remove(editableText);
+                                  _selectedText = null;
                                 });
                                 Navigator.pop(context);
-                              }
-                            },
-                            icon: const Icon(Icons.check),
-                            label: const Text('Save'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6C63FF),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              },
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('Delete'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red[600],
+                                side: BorderSide(color: Colors.red[200]!),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                if (textController.text.isNotEmpty) {
+                                  setState(() {
+                                    editableText.text = textController.text;
+                                    editableText.color = selectedColor;
+                                    editableText.fontSize = selectedFontSize;
+                                    editableText.fontFamily =
+                                        selectedFontFamily;
+                                    editableText.isBold = isBold;
+                                    editableText.isItalic = isItalic;
+                                  });
+                                  Navigator.pop(context);
+                                }
+                              },
+                              icon: const Icon(Icons.check),
+                              label: const Text('Save'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6C63FF),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     );
   }
@@ -3001,7 +3302,11 @@ Future<void> _saveLogoToServer() async {
     );
   }
 
-  Widget _modernColorPicker(Color color, Color selectedColor, Function(Color) onTap) {
+  Widget _modernColorPicker(
+    Color color,
+    Color selectedColor,
+    Function(Color) onTap,
+  ) {
     final bool isSelected = color == selectedColor;
     return GestureDetector(
       onTap: () => onTap(color),
@@ -3046,7 +3351,11 @@ Future<void> _saveLogoToServer() async {
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF2D3142), size: 18),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Color(0xFF2D3142),
+              size: 18,
+            ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -3071,7 +3380,11 @@ Future<void> _saveLogoToServer() async {
                   color: Colors.red[50],
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.delete_outline, color: Colors.red[600], size: 20),
+                child: Icon(
+                  Icons.delete_outline,
+                  color: Colors.red[600],
+                  size: 20,
+                ),
               ),
               onPressed: _deleteSelectedItem,
             ),
@@ -3091,26 +3404,26 @@ Future<void> _saveLogoToServer() async {
                       color: const Color(0xFF6C63FF).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.file_download_outlined, color: Color(0xFF6C63FF), size: 20),
+                    child: const Icon(
+                      Icons.file_download_outlined,
+                      color: Color(0xFF6C63FF),
+                      size: 20,
+                    ),
                   ),
             onPressed: _isSaving ? null : _saveLogoToGallery,
           ),
           const SizedBox(width: 8),
 
-
           TextButton(
-  onPressed: _isSaving ? null : _saveLogoToServer,
-  child: _isSaving
-      ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        )
-      : const Text(
-          'Save Logo',
-          style: TextStyle(color: Colors.blue),
-        ),
-),
+            onPressed: _isSaving ? null : _saveLogoToServer,
+            child: _isSaving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Save Logo', style: TextStyle(color: Colors.blue)),
+          ),
 
           // TextButton(onPressed: (){
 
@@ -3130,41 +3443,83 @@ Future<void> _saveLogoToServer() async {
           : Column(
               children: [
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: RepaintBoundary(
-                        key: _canvasKey,
-                        child: GestureDetector(
-                          onTap: _deselectAll,
-                          child: Container(
-                            width: double.infinity,
-                            height: double.infinity,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: NetworkImage(widget.image),
-                                fit: BoxFit.cover,
+                  child: Center(
+                    child: Container(
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: RepaintBoundary(
+                          key: _canvasKey,
+                          child: GestureDetector(
+                            onTap: _deselectAll,
+                            child: Container(
+                              width: widget.posterSize?.width.toDouble() ?? 400,
+                              height:
+                                  widget.posterSize?.height.toDouble() ?? 400,
+                              decoration: BoxDecoration(color: Colors.white),
+                              child: Stack(
+                                children: [
+                                  // Background logo template image
+                                  if (widget.image != null &&
+                                      widget.image!.isNotEmpty)
+                                    Positioned.fill(
+                                      child: Image.network(
+                                        widget.image!,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value:
+                                                  loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return const Center(
+                                                child: Icon(
+                                                  Icons.error_outline,
+                                                  size: 48,
+                                                ),
+                                              );
+                                            },
+                                      ),
+                                    ),
+                                  // Editable elements on top
+                                  ..._images.map(
+                                    (image) => _buildEditableImage(image),
+                                  ),
+                                  ..._texts.map(
+                                    (text) => _buildEditableText(text),
+                                  ),
+                                  ..._shapes.map(
+                                    (shape) => _buildEditableShape(shape),
+                                  ),
+                                  ..._elements.map(
+                                    (element) => _buildEditableElement(element),
+                                  ),
+                                ],
                               ),
-                            ),
-                            child: Stack(
-                              children: [
-                                ..._images.map((image) => _buildEditableImage(image)),
-                                ..._texts.map((text) => _buildEditableText(text)),
-                                ..._shapes.map((shape) => _buildEditableShape(shape)),
-                                ..._elements.map((element) => _buildEditableElement(element)),
-                              ],
                             ),
                           ),
                         ),
@@ -3173,11 +3528,81 @@ Future<void> _saveLogoToServer() async {
                   ),
                 ),
 
+                // Expanded(
+                //   child: Container(
+                //     width:
+                //         widget.posterSize?.width.toDouble() ?? double.infinity,
+                //     height:
+                //         widget.posterSize?.height.toDouble() ?? double.infinity,
+                //     decoration: BoxDecoration(
+                //       color: Colors.white, // Default background if no image
+                //       image: widget.image != null
+                //           ? DecorationImage(
+                //               image: NetworkImage(widget.image!),
+                //               fit: BoxFit.cover,
+                //             )
+                //           : null,
+                //     ),
+                //     child: Stack(
+                //       children: [
+                //         ..._images.map((image) => _buildEditableImage(image)),
+                //         ..._texts.map((text) => _buildEditableText(text)),
+                //         ..._shapes.map((shape) => _buildEditableShape(shape)),
+                //         ..._elements.map(
+                //           (element) => _buildEditableElement(element),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                //   // child: Container(
+                //   //   margin: const EdgeInsets.all(16),
+                //   //   decoration: BoxDecoration(
+                //   //     color: Colors.white,
+                //   //     borderRadius: BorderRadius.circular(20),
+                //   //     boxShadow: [
+                //   //       BoxShadow(
+                //   //         color: Colors.black.withOpacity(0.08),
+                //   //         blurRadius: 20,
+                //   //         offset: const Offset(0, 4),
+                //   //       ),
+                //   //     ],
+                //   //   ),
+                //   //   child: ClipRRect(
+                //   //     borderRadius: BorderRadius.circular(20),
+                //   //     child: RepaintBoundary(
+                //   //       key: _canvasKey,
+                //   //       child: GestureDetector(
+                //   //         onTap: _deselectAll,
+                //   //         child: Container(
+                //   //           width: double.infinity,
+                //   //           height: double.infinity,
+                //   //           decoration: BoxDecoration(
+                //   //             image: DecorationImage(
+                //   //               image: NetworkImage(widget.image),
+                //   //               fit: BoxFit.cover,
+                //   //             ),
+                //   //           ),
+                //   //           child: Stack(
+                //   //             children: [
+                //   //               ..._images.map((image) => _buildEditableImage(image)),
+                //   //               ..._texts.map((text) => _buildEditableText(text)),
+                //   //               ..._shapes.map((shape) => _buildEditableShape(shape)),
+                //   //               ..._elements.map((element) => _buildEditableElement(element)),
+                //   //             ],
+                //   //           ),
+                //   //         ),
+                //   //       ),
+                //   //     ),
+                //   //   ),
+                //   // ),
+                // ),
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.05),
@@ -3319,10 +3744,26 @@ Future<void> _saveLogoToServer() async {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildModernShapeOption(ShapeType.circle, Icons.circle_outlined, 'Circle'),
-                _buildModernShapeOption(ShapeType.rectangle, Icons.crop_square_rounded, 'Square'),
-                _buildModernShapeOption(ShapeType.triangle, Icons.change_history, 'Triangle'),
-                _buildModernShapeOption(ShapeType.star, Icons.star_outline, 'Star'),
+                _buildModernShapeOption(
+                  ShapeType.circle,
+                  Icons.circle_outlined,
+                  'Circle',
+                ),
+                _buildModernShapeOption(
+                  ShapeType.rectangle,
+                  Icons.crop_square_rounded,
+                  'Square',
+                ),
+                _buildModernShapeOption(
+                  ShapeType.triangle,
+                  Icons.change_history,
+                  'Triangle',
+                ),
+                _buildModernShapeOption(
+                  ShapeType.star,
+                  Icons.star_outline,
+                  'Star',
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -3332,7 +3773,11 @@ Future<void> _saveLogoToServer() async {
     );
   }
 
-  Widget _buildModernShapeOption(ShapeType shapeType, IconData icon, String label) {
+  Widget _buildModernShapeOption(
+    ShapeType shapeType,
+    IconData icon,
+    String label,
+  ) {
     return GestureDetector(
       onTap: () {
         _addShape(shapeType);
@@ -3508,10 +3953,7 @@ Future<void> _saveLogoToServer() async {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.file(
-              editableImage.imageFile,
-              fit: BoxFit.cover,
-            ),
+            child: Image.file(editableImage.imageFile, fit: BoxFit.cover),
           ),
         ),
       ),
@@ -3531,7 +3973,9 @@ Future<void> _saveLogoToServer() async {
           });
         },
         child: Container(
-          padding: _selectedText == editableText ? const EdgeInsets.all(8) : null,
+          padding: _selectedText == editableText
+              ? const EdgeInsets.all(8)
+              : null,
           decoration: _selectedText == editableText
               ? BoxDecoration(
                   border: Border.all(color: const Color(0xFF6C63FF), width: 2),
@@ -3545,8 +3989,12 @@ Future<void> _saveLogoToServer() async {
               color: editableText.color,
               fontSize: editableText.fontSize,
               fontFamily: editableText.fontFamily,
-              fontWeight: editableText.isBold ? FontWeight.bold : FontWeight.normal,
-              fontStyle: editableText.isItalic ? FontStyle.italic : FontStyle.normal,
+              fontWeight: editableText.isBold
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+              fontStyle: editableText.isItalic
+                  ? FontStyle.italic
+                  : FontStyle.normal,
             ),
           ),
         ),
@@ -3616,10 +4064,7 @@ Future<void> _saveLogoToServer() async {
     switch (shape.shapeType) {
       case ShapeType.circle:
         return Container(
-          decoration: BoxDecoration(
-            color: shape.color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: shape.color, shape: BoxShape.circle),
         );
       case ShapeType.rectangle:
         return Container(
@@ -3634,10 +4079,7 @@ Future<void> _saveLogoToServer() async {
           size: shape.size,
         );
       case ShapeType.star:
-        return CustomPaint(
-          painter: StarPainter(shape.color),
-          size: shape.size,
-        );
+        return CustomPaint(painter: StarPainter(shape.color), size: shape.size);
     }
   }
 }

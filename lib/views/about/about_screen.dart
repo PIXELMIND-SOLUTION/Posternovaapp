@@ -184,6 +184,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:posternova/widgets/language_widget.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({Key? key}) : super(key: key);
@@ -200,8 +201,8 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text(
-          "About Us",
+        title: AppText(
+          "about_us",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: textColor,
@@ -252,8 +253,8 @@ class AboutScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 6),
-                  Text(
-                    "Create stunning posters & logos effortlessly",
+                  AppText(
+                    "create_stunning",
                     style: TextStyle(fontSize: 16, color: Colors.white70),
                     textAlign: TextAlign.center,
                   ),
@@ -276,8 +277,8 @@ class AboutScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      Text(
-                        "About Editezy",
+                      AppText(
+                        "about_editezy",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -285,8 +286,8 @@ class AboutScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        "PosterNova is your all-in-one creative studio for designing stunning posters, logos, and promotional content. Whether you are a business owner, influencer, or designer, PosterMaker helps you bring your ideas to life with ready-made templates and powerful editing tools.",
+                      AppText(
+                        "about_description",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 15,
@@ -310,18 +311,18 @@ class AboutScreen extends StatelessWidget {
                   _featureCard(
                     context: context,
                     icon: Icons.palette,
-                    title: "Custom Templates",
+                    title: "custom_templates",
                     description:
-                        "Choose from thousands of templates designed for every purpose.",
+                        "choose_thousands",
                     cardColor: cardColor,
                     textColor: textColor,
                   ),
                   _featureCard(
                     context: context,
                     icon: Icons.share,
-                    title: "Easy Sharing",
+                    title: "easy_sharing",
                     description:
-                        "Share your designs instantly on social media.",
+                        "share_instantly",
                     cardColor: cardColor,
                     textColor: textColor,
                   ),
@@ -334,8 +335,8 @@ class AboutScreen extends StatelessWidget {
             // Footer Section
             Padding(
               padding: const EdgeInsets.only(bottom: 30),
-              child: Text(
-                "Version 1.0.0\nMade with ❤️ by Editezy Team",
+              child: AppText(
+                "version_made",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -368,7 +369,7 @@ class AboutScreen extends StatelessWidget {
           backgroundColor: Colors.purple.shade400,
           child: Icon(icon, color: Colors.blue.shade400, size: 26),
         ),
-        title: Text(
+        title: AppText(
           title,
           style: TextStyle(
             fontSize: 16,
@@ -376,7 +377,7 @@ class AboutScreen extends StatelessWidget {
             color: textColor,
           ),
         ),
-        subtitle: Text(
+        subtitle: AppText(
           description,
           style: TextStyle(
             fontSize: 14,

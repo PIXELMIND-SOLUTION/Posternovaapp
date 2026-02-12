@@ -1088,7 +1088,7 @@ Don't miss out on this opportunity! 🚀
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Refer & Earn', style: titleTextStyle),
+        title: AppText('refer_earn', style: titleTextStyle),
         centerTitle: true,
       ),
       body: RefreshIndicator(
@@ -1438,18 +1438,18 @@ class _HowItWorks extends StatelessWidget {
     final steps = [
       _HowItWorksItem(
         icon: Icons.person_add_alt_1,
-        title: 'Invite a friend',
-        subtitle: 'Share your code using the Share button.',
+        title: 'invite_friend',
+        subtitle: 'share_code_button',
       ),
       _HowItWorksItem(
         icon: Icons.edit_note,
-        title: 'Friend signs up',
-        subtitle: 'They enter your code during signup or in settings.',
+        title: 'friend_signs_up',
+        subtitle: 'enter_code_signup_settings',
       ),
       _HowItWorksItem(
         icon: Icons.volunteer_activism,
-        title: 'Both get rewards',
-        subtitle: 'Credits are added after successful first purchase.',
+        title: 'both_get_rewards',
+        subtitle: 'credits_after_purchase.',
       ),
     ];
 
@@ -1462,8 +1462,8 @@ class _HowItWorks extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'How it works',
+            AppText(
+              'how_it_works',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -1511,7 +1511,7 @@ class _HowItWorksItem extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              AppText(
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
@@ -1520,7 +1520,7 @@ class _HowItWorksItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
+              AppText(
                 subtitle,
                 style: TextStyle(
                   fontSize: 12,

@@ -1115,6 +1115,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:posternova/widgets/recent_search_helper.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:posternova/helper/sub_modal_helper.dart';
@@ -1571,8 +1572,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Explore Templates',
+                  AppText(
+                    'explore_templates',
                     style: TextStyle(
                       fontSize: isTablet ? 28 : 24,
                       fontWeight: FontWeight.w700,
@@ -1583,8 +1584,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Browse categories or search with voice',
+                  AppText(
+                    'browse_or_voice_search',
                     style: TextStyle(
                       fontSize: isTablet ? 15 : 14,
                       color: const Color(0xFF6B7280),
@@ -2019,8 +2020,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'View All',
+                        const AppText(
+                          'view_all',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

@@ -208,8 +208,8 @@ class _StoriesWidgetState extends State<StoriesWidget> {
               ],
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Your Story',
+            const AppText(
+              'your_story',
               style: TextStyle(fontSize: 12, color: Colors.black),
             ),
           ],

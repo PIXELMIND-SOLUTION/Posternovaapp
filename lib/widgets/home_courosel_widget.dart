@@ -656,6 +656,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
@@ -860,8 +861,8 @@ class _HomeCarouselState extends State<HomeCarousel>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Featured',
+                      const AppText(
+                        'featured',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,

@@ -98,9 +98,8 @@ import 'package:posternova/views/PosterModule/home.dart';
 import 'package:posternova/views/category/category_screen.dart';
 import 'package:posternova/views/createposter/poster_screen.dart';
 import 'package:posternova/views/customer/customer_screen.dart';
-import 'package:posternova/views/horrorscope/horror_scope.dart';
-import 'package:posternova/views/onlinepunchang/online_punchang_screen.dart';
 import 'package:posternova/views/reels/reels_screen.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:upgrader/upgrader.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -118,8 +117,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const CategoryScreen(),
     const PosterScreen(),
     const ReelsScreen(),
-        // const OnlinePunchangScreen(),
-
+    // const OnlinePunchangScreen(),
 
     // const HoroscopeScreen(),
     // const ProfileScreen(),
@@ -167,41 +165,69 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               fontSize: 12,
             ),
             unselectedLabelStyle: const TextStyle(fontSize: 12),
-            items: const [
+
+            // items: const [
+            //   BottomNavigationBarItem(
+            //     icon: Icon(Icons.home_outlined, size: 28),
+            //     activeIcon: Icon(Icons.home, size: 28),
+            //     label: 'Home',
+            //   ),
+            //   BottomNavigationBarItem(
+            //     icon: Icon(Icons.grid_view_rounded, size: 28),
+            //     activeIcon: Icon(Icons.grid_view, size: 28),
+            //     label: 'Category',
+            //   ),
+            //   BottomNavigationBarItem(
+            //     icon: Icon(Icons.edit_outlined, size: 28),
+            //     activeIcon: Icon(Icons.edit, size: 28),
+            //     label: 'Poster',
+            //   ),
+            //   // BottomNavigationBarItem(
+            //   //   icon: Icon(Icons.calendar_month, size: 28),
+            //   //   activeIcon: Icon(Icons.calendar_month, size: 28),
+            //   //   label: 'Punchang',
+            //   // ),
+            //   BottomNavigationBarItem(
+            //     icon: Icon(Icons.video_library, size: 28),
+            //     activeIcon: Icon(Icons.video_library, size: 28),
+            //     label: 'Reels',
+            //   ),
+            //   //     BottomNavigationBarItem(
+            //   //   icon: Icon(Icons.calendar_month, size: 28),
+            //   //   activeIcon: Icon(Icons.calendar_month, size: 28),
+            //   //   label: 'Punchang',
+            //   // ),
+            //   BottomNavigationBarItem(
+            //     icon: Icon(Icons.group_outlined, size: 28),
+            //     activeIcon: Icon(Icons.group, size: 28),
+            //     label: 'Customer',
+            //   ),
+            // ],
+            items: [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home_outlined, size: 28),
                 activeIcon: Icon(Icons.home, size: 28),
-                label: 'Home',
+                label: AppText.translate(context, 'home'),
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.grid_view_rounded, size: 28),
                 activeIcon: Icon(Icons.grid_view, size: 28),
-                label: 'Category',
+                label: AppText.translate(context, 'category'),
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.edit_outlined, size: 28),
                 activeIcon: Icon(Icons.edit, size: 28),
-                label: 'Poster',
+                label: AppText.translate(context, 'poster'),
               ),
-              // BottomNavigationBarItem(
-              //   icon: Icon(Icons.calendar_month, size: 28),
-              //   activeIcon: Icon(Icons.calendar_month, size: 28),
-              //   label: 'Punchang',
-              // ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.video_library, size: 28),
                 activeIcon: Icon(Icons.video_library, size: 28),
-                label: 'Reels',
+                label: AppText.translate(context, 'reels'),
               ),
-              //     BottomNavigationBarItem(
-              //   icon: Icon(Icons.calendar_month, size: 28),
-              //   activeIcon: Icon(Icons.calendar_month, size: 28),
-              //   label: 'Punchang',
-              // ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.group_outlined, size: 28),
                 activeIcon: Icon(Icons.group, size: 28),
-                label: 'Customer',
+                label: AppText.translate(context, 'customer'),
               ),
             ],
           ),

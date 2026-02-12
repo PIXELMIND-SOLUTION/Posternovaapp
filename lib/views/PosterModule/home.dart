@@ -30,6 +30,7 @@ import 'package:posternova/views/textremovalmodule/image_editor_screen.dart';
 import 'package:posternova/widgets/date_selctor_widget.dart';
 import 'package:posternova/widgets/faancy_app_bar.dart';
 import 'package:posternova/widgets/home_courosel_widget.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:posternova/widgets/premium_widget.dart';
 import 'package:posternova/widgets/voice_assistant_widget.dart';
 import 'package:provider/provider.dart';
@@ -63,9 +64,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Map<String, dynamic> birthdayData = {};
   Map<String, dynamic> anniversaryData = {};
 
-
   Map<String, List<dynamic>> weeklyPosters = {};
-List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  List<String> weekDays = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
 
   List<dynamic> customers = [];
   bool isLoadingCustomers = false;
@@ -112,7 +120,7 @@ List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
   @override
   void initState() {
     super.initState();
-      _fetchWeeklyPosters();
+    _fetchWeeklyPosters();
     _initializeAnimations();
     _fetchnewposters();
     _loadUserData();
@@ -223,28 +231,27 @@ List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
     });
   }
 
-
-
   Future<void> _fetchWeeklyPosters() async {
-  try {
-    final response = await http.get(
-      Uri.parse('http://31.97.206.144:4061/api/poster/weeklyposters'),
-    );
-   
-  print('response status code for weekly posters ${response.statusCode}');
-    print('response bodyyyyyyyyyyyyyy for weekly posters ${response.body}');
+    try {
+      final response = await http.get(
+        Uri.parse('http://31.97.206.144:4061/api/poster/weeklyposters'),
+      );
 
+      print('response status code for weekly posters ${response.statusCode}');
+      print('response bodyyyyyyyyyyyyyy for weekly posters ${response.body}');
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      setState(() {
-        weeklyPosters = data.map((key, value) => MapEntry(key, List<dynamic>.from(value)));
-      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        setState(() {
+          weeklyPosters = data.map(
+            (key, value) => MapEntry(key, List<dynamic>.from(value)),
+          );
+        });
+      }
+    } catch (e) {
+      print('Error fetching weekly posters: $e');
     }
-  } catch (e) {
-    print('Error fetching weekly posters: $e');
   }
-}
 
   Future<void> _loadUserId() async {
     try {
@@ -349,18 +356,17 @@ List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
     }
   }
 
-
   List<String> _getOrderedDaysFromToday() {
-  final today = DateFormat('EEEE').format(DateTime.now());
-  final todayIndex = weekDays.indexOf(today);
-  
-  if (todayIndex == -1) return weekDays;
-  
-  return [
-    ...weekDays.sublist(todayIndex),
-    ...weekDays.sublist(0, todayIndex),
-  ];
-}
+    final today = DateFormat('EEEE').format(DateTime.now());
+    final todayIndex = weekDays.indexOf(today);
+
+    if (todayIndex == -1) return weekDays;
+
+    return [
+      ...weekDays.sublist(todayIndex),
+      ...weekDays.sublist(0, todayIndex),
+    ];
+  }
 
   void _initializeAnimations() {
     _headerAnimationController = AnimationController(
@@ -520,7 +526,7 @@ List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
               context.read<DateTimeProvider>().selectedDate,
             );
             await _fetchnewposters();
-             await _fetchWeeklyPosters(); 
+            await _fetchWeeklyPosters();
           },
           color: const Color(0xFF6366F1),
           child: CustomScrollView(
@@ -536,12 +542,12 @@ List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
                       const SizedBox(height: 32),
                       _buildFestivalPostersSection(),
                       const SizedBox(height: 32),
-                        _buildSectionHeader(
-                      title: 'Weekly Templates',
-                      subtitle: 'Fresh designs for every day',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildWeeklyPostersSection(),
+                      _buildSectionHeader(
+                        titleKey: 'weekly_templates',
+                        subtitleKey: 'fresh_designs_everyday',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildWeeklyPostersSection(),
                       // _buildPremiumTemplatesSection(),
                       const SizedBox(height: 100),
                     ],
@@ -555,314 +561,312 @@ List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
     );
   }
 
+  //   Widget _buildWeeklyPostersSection() {
+  //   if (weeklyPosters.isEmpty) return const SizedBox();
 
+  //   final orderedDays = _getOrderedDaysFromToday();
+  //   final today = DateFormat('EEEE').format(DateTime.now());
 
+  //   return Column(
+  //     children: orderedDays.map((day) {
+  //       final posters = weeklyPosters[day] ?? [];
+  //       if (posters.isEmpty) return const SizedBox();
 
+  //       final isToday = day == today;
 
-//   Widget _buildWeeklyPostersSection() {
-//   if (weeklyPosters.isEmpty) return const SizedBox();
-  
-//   final orderedDays = _getOrderedDaysFromToday();
-//   final today = DateFormat('EEEE').format(DateTime.now());
-  
-//   return Column(
-//     children: orderedDays.map((day) {
-//       final posters = weeklyPosters[day] ?? [];
-//       if (posters.isEmpty) return const SizedBox();
-      
-//       final isToday = day == today;
-      
-//       return Column(
-//         children: [
-//           Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-//             child: Row(
-//               children: [
-//                 Container(
-//                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-//                   decoration: BoxDecoration(
-//                     gradient: isToday
-//                         ? const LinearGradient(
-//                             colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-//                           )
-//                         : null,
-//                     color: isToday ? null : Colors.grey.shade100,
-//                     borderRadius: BorderRadius.circular(8),
-//                   ),
-//                   child: Row(
-//                     children: [
-//                       Icon(
-//                         isToday ? Icons.today : Icons.calendar_today_outlined,
-//                         size: 18,
-//                         color: isToday ? Colors.white : const Color(0xFF6B7280),
-//                       ),
-//                       const SizedBox(width: 8),
-//                       Text(
-//                         isToday ? 'Today - $day' : day,
-//                         style: TextStyle(
-//                           fontSize: 16,
-//                           fontWeight: FontWeight.bold,
-//                           color: isToday ? Colors.white : const Color(0xFF111827),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//                 const Spacer(),
-//                 Text(
-//                   '${posters.length} templates',
-//                   style: const TextStyle(
-//                     fontSize: 14,
-//                     color: Color(0xFF6B7280),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Container(
-//             height: 220,
-//             child: ListView.builder(
-//               scrollDirection: Axis.horizontal,
-//               padding: const EdgeInsets.symmetric(horizontal: 20),
-//               itemCount: posters.length,
-//               itemBuilder: (context, index) {
-//                 final poster = posters[index];
-//                 return _buildWeeklyPosterCard(poster, index);
-//               },
-//             ),
-//           ),
-//           const SizedBox(height: 24),
-//         ],
-//       );
-//     }).toList(),
-//   );
-// }
+  //       return Column(
+  //         children: [
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  //             child: Row(
+  //               children: [
+  //                 Container(
+  //                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  //                   decoration: BoxDecoration(
+  //                     gradient: isToday
+  //                         ? const LinearGradient(
+  //                             colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+  //                           )
+  //                         : null,
+  //                     color: isToday ? null : Colors.grey.shade100,
+  //                     borderRadius: BorderRadius.circular(8),
+  //                   ),
+  //                   child: Row(
+  //                     children: [
+  //                       Icon(
+  //                         isToday ? Icons.today : Icons.calendar_today_outlined,
+  //                         size: 18,
+  //                         color: isToday ? Colors.white : const Color(0xFF6B7280),
+  //                       ),
+  //                       const SizedBox(width: 8),
+  //                       Text(
+  //                         isToday ? 'Today - $day' : day,
+  //                         style: TextStyle(
+  //                           fontSize: 16,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: isToday ? Colors.white : const Color(0xFF111827),
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //                 const Spacer(),
+  //                 Text(
+  //                   '${posters.length} templates',
+  //                   style: const TextStyle(
+  //                     fontSize: 14,
+  //                     color: Color(0xFF6B7280),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           Container(
+  //             height: 220,
+  //             child: ListView.builder(
+  //               scrollDirection: Axis.horizontal,
+  //               padding: const EdgeInsets.symmetric(horizontal: 20),
+  //               itemCount: posters.length,
+  //               itemBuilder: (context, index) {
+  //                 final poster = posters[index];
+  //                 return _buildWeeklyPosterCard(poster, index);
+  //               },
+  //             ),
+  //           ),
+  //           const SizedBox(height: 24),
+  //         ],
+  //       );
+  //     }).toList(),
+  //   );
+  // }
 
+  Widget _buildWeeklyPostersSection() {
+    if (weeklyPosters.isEmpty) return const SizedBox();
 
-Widget _buildWeeklyPostersSection() {
-  if (weeklyPosters.isEmpty) return const SizedBox();
-  
-  final orderedDays = _getOrderedDaysFromToday();
-  final today = DateFormat('EEEE').format(DateTime.now());
-  
-  return Column(
-    children: orderedDays.map((day) {
-      final posters = weeklyPosters[day] ?? [];
-      // Remove this condition - show all days even if empty
-      // if (posters.isEmpty) return const SizedBox();
-      
-      final isToday = day == today;
-      
-      return Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    gradient: isToday
-                        ? const LinearGradient(
-                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                          )
-                        : null,
-                    color: isToday ? null : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isToday ? Icons.today : Icons.calendar_today_outlined,
-                        size: 18,
-                        color: isToday ? Colors.white : const Color(0xFF6B7280),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        isToday ? 'Today - $day' : day,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isToday ? Colors.white : const Color(0xFF111827),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  posters.isEmpty ? 'No templates' : '${posters.length} templates',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: posters.isEmpty ? Colors.grey.shade400 : const Color(0xFF6B7280),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Show message if no posters, otherwise show the list
-          if (posters.isEmpty)
-            Container(
-              height: 120,
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Center(
-                child: Text(
-                  'No templates available for $day',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-              ),
-            )
-          else
-            Container(
-              height: 220,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: posters.length,
-                itemBuilder: (context, index) {
-                  final poster = posters[index];
-                  return _buildWeeklyPosterCard(poster, index);
-                },
-              ),
-            ),
-          const SizedBox(height: 24),
-        ],
-      );
-    }).toList(),
-  );
-}
+    final orderedDays = _getOrderedDaysFromToday();
+    final today = DateFormat('EEEE').format(DateTime.now());
 
+    return Column(
+      children: orderedDays.map((day) {
+        final posters = weeklyPosters[day] ?? [];
+        // Remove this condition - show all days even if empty
+        // if (posters.isEmpty) return const SizedBox();
 
+        final isToday = day == today;
 
-Widget _buildWeeklyPosterCard(dynamic poster, int index) {
-
-      return Consumer<MyPlanProvider>(
-        builder: (context, myplanprovider, child) {
-           return  Container(
-        width: 160,
-        margin: EdgeInsets.only(right: 16, left: index == 0 ? 0 : 0),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-
-              if(myplanprovider.isPurchase==true){
-                Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SamplePosterScreen(
-                    posterId: poster['_id'] ?? poster['id'],
-                  ),
-                ),
-              );
-              }else{
-                _showPremiumDialog();
-              }
-        
-              
-              // if(myplanprovider.isPurchase==true){
-                 
-              // }else{
-              //     _showPremiumDialog();
-              // }
-             
-            },
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
                 children: [
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(16),
-                        ),
-                        color: Color(0xFFF3F4F6),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16),
-                        ),
-                        child: Image.network(
-                          poster['images']?[0] ?? '',
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              color: const Color(0xFFF3F4F6),
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFF6366F1),
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: const Color(0xFFF3F4F6),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.image_not_supported_outlined,
-                                  color: Color(0xFF9CA3AF),
-                                  size: 32,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    decoration: BoxDecoration(
+                      gradient: isToday
+                          ? const LinearGradient(
+                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                            )
+                          : null,
+                      color: isToday ? null : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
                       children: [
+                        Icon(
+                          isToday ? Icons.today : Icons.calendar_today_outlined,
+                          size: 18,
+                          color: isToday
+                              ? Colors.white
+                              : const Color(0xFF6B7280),
+                        ),
+                        const SizedBox(width: 8),
                         Text(
-                          poster['categoryName'] ?? poster['name'] ?? 'Poster',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF374151),
+                          isToday ? 'Today - $day' : day,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isToday
+                                ? Colors.white
+                                : const Color(0xFF111827),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
+                  const Spacer(),
+                  Text(
+                    posters.isEmpty
+                        ? 'No templates'
+                        : '${posters.length} templates',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: posters.isEmpty
+                          ? Colors.grey.shade400
+                          : const Color(0xFF6B7280),
+                    ),
+                  ),
                 ],
               ),
             ),
+            // Show message if no posters, otherwise show the list
+            if (posters.isEmpty)
+              Container(
+                height: 120,
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Center(
+                  child: Text(
+                    'No templates available for $day',
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                  ),
+                ),
+              )
+            else
+              Container(
+                height: 220,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: posters.length,
+                  itemBuilder: (context, index) {
+                    final poster = posters[index];
+                    return _buildWeeklyPosterCard(poster, index);
+                  },
+                ),
+              ),
+            const SizedBox(height: 24),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildWeeklyPosterCard(dynamic poster, int index) {
+    return Consumer<MyPlanProvider>(
+      builder: (context, myplanprovider, child) {
+        return Container(
+          width: 160,
+          margin: EdgeInsets.only(right: 16, left: index == 0 ? 0 : 0),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (myplanprovider.isPurchase == true) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SamplePosterScreen(
+                        posterId: poster['_id'] ?? poster['id'],
+                      ),
+                    ),
+                  );
+                } else {
+                  _showPremiumDialog();
+                }
+
+                // if(myplanprovider.isPurchase==true){
+
+                // }else{
+                //     _showPremiumDialog();
+                // }
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(16),
+                          ),
+                          color: Color(0xFFF3F4F6),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16),
+                          ),
+                          child: Image.network(
+                            poster['images']?[0] ?? '',
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: const Color(0xFFF3F4F6),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF6366F1),
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: const Color(0xFFF3F4F6),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.image_not_supported_outlined,
+                                    color: Color(0xFF9CA3AF),
+                                    size: 32,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            poster['categoryName'] ??
+                                poster['name'] ??
+                                'Poster',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF374151),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-            );
-        },
-      
-      );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildWishesSection() {
     if (birthdayData['wishes'] == null || birthdayData['wishes'].isEmpty) {
@@ -929,6 +933,7 @@ Widget _buildWeeklyPosterCard(dynamic poster, int index) {
       ),
     );
   }
+
   Widget _buildCustomerCelebrationsSection() {
     List<String> celebrations = [];
 
@@ -1095,8 +1100,6 @@ Widget _buildWeeklyPosterCard(dynamic poster, int index) {
     );
   }
 
- 
-
   Widget _buildFeaturedCarousel() {
     return Column(
       children: [
@@ -1115,180 +1118,267 @@ Widget _buildWeeklyPosterCard(dynamic poster, int index) {
     );
   }
 
+  // Add this method to your _HomeScreenState class
 
+  // Widget _buildCategoriesSection() {
+  //   final categories = [
 
+  //      {
+  //       'name': 'Online Punchang',
+  //       'icon': Icons.calendar_month,
+  //       'color': Color(0xFFF59E0B),
+  //       'screen': OnlinePunchangScreen(),
+  //     },
+  //     {
+  //       'name': 'Edit Poster',
+  //       'icon': Icons.text_fields_outlined,
+  //       'color': Color(0xFF8B5CF6),
+  //       'screen': ImageEditorScreen(),
+  //     },
+  //     {
+  //       'name': 'Categories',
+  //       'icon': Icons.category_outlined,
+  //       'color': Color(0xFF10B981),
+  //       'screen': CategoryScreen(),
+  //     },
+  //     {
+  //       'name': 'Invoices',
+  //       'icon': Icons.receipt_long_outlined,
+  //       'color': Color(0xFFEF4444),
+  //       'screen': AddInvoiceData(),
+  //     },
+  //     {
+  //       'name': 'Background Remover',
+  //       'icon': Icons.edit_outlined,
+  //       'color': Color(0xFFF59E0B),
+  //       'screen': BackgroundRemoverScreen(),
+  //     },
+  //     //  {
+  //     //   'name': 'Online Punchang',
+  //     //   'icon': Icons.calendar_month,
+  //     //   'color': Color(0xFFF59E0B),
+  //     //   'screen': OnlinePunchangScreen(),
+  //     // },
+  //   ];
 
-  
-// Add this method to your _HomeScreenState class
+  //   return Column(
+  //     children: [
+  //       Padding(
+  //         padding: const EdgeInsets.symmetric(horizontal: 20),
+  //         child: Row(
+  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //           children: [
+  //             const AppText(
+  //               'categories',
+  //               style: TextStyle(
+  //                 fontSize: 20,
+  //                 fontWeight: FontWeight.bold,
+  //                 color: Color(0xFF111827),
+  //               ),
+  //             ),
+  //             // TextButton(
+  //             //   onPressed: () {
+  //             //     Navigator.push(
+  //             //       context,
+  //             //       MaterialPageRoute(
+  //             //         builder: (context) => const CategoryScreen(),
+  //             //       ),
+  //             //     );
+  //             //   },
+  //             //   child: const Text(
+  //             //     'View All',
+  //             //     style: TextStyle(
+  //             //       color: Color(0xFF6366F1),
+  //             //       fontWeight: FontWeight.w600,
+  //             //     ),
+  //             //   ),
+  //             // ),
+  //           ],
+  //         ),
+  //       ),
+  //       const SizedBox(height: 16),
+  //       Container(
+  //         height: 100,
+  //         child: ListView.builder(
+  //           scrollDirection: Axis.horizontal,
+  //           padding: const EdgeInsets.symmetric(horizontal: 20),
+  //           itemCount: categories.length,
+  //           itemBuilder: (context, index) {
+  //             final category = categories[index];
+  //             return _buildCategoryCard(
+  //               name: category['name'] as String,
+  //               icon: category['icon'] as IconData,
+  //               color: category['color'] as Color,
+  //               onTap: () {
+  //                 Navigator.push(
+  //                   context,
+  //                   MaterialPageRoute(
+  //                     builder: (context) => category['screen'] as Widget,
+  //                   ),
+  //                 );
+  //               },
+  //             );
+  //           },
+  //         ),
+  //       ),
+  //       const SizedBox(height: 32),
+  //     ],
+  //   );
+  // }
 
-Widget _buildCategoriesSection() {
-  final categories = [
-    {
-      'name': 'Edit Poster',
-      'icon': Icons.text_fields_outlined,
-      'color': Color(0xFF8B5CF6),
-      'screen': ImageEditorScreen(),
-    },
-    {
-      'name': 'Categories',
-      'icon': Icons.category_outlined,
-      'color': Color(0xFF10B981),
-      'screen': CategoryScreen(),
-    },
-    {
-      'name': 'Invoices',
-      'icon': Icons.receipt_long_outlined,
-      'color': Color(0xFFEF4444),
-      'screen': AddInvoiceData(),
-    },
-    {
-      'name': 'Background Remover',
-      'icon': Icons.edit_outlined,
-      'color': Color(0xFFF59E0B),
-      'screen': BackgroundRemoverScreen(),
-    },
-     {
-      'name': 'Online Punchang',
-      'icon': Icons.calendar_month,
-      'color': Color(0xFFF59E0B),
-      'screen': OnlinePunchangScreen(),
-    },
-  ];
+  Widget _buildCategoriesSection() {
+    final categories = [
+      {
+        'nameKey': 'online_punchang',
+        'icon': Icons.calendar_month,
+        'color': Color(0xFFF59E0B),
+        'screen': OnlinePunchangScreen(),
+      },
+      {
+        'nameKey': 'edit_poster',
+        'icon': Icons.text_fields_outlined,
+        'color': Color(0xFF8B5CF6),
+        'screen': ImageEditorScreen(),
+      },
+      {
+        'nameKey': 'categories',
+        'icon': Icons.category_outlined,
+        'color': Color(0xFF10B981),
+        'screen': CategoryScreen(),
+      },
+      {
+        'nameKey': 'invoices',
+        'icon': Icons.receipt_long_outlined,
+        'color': Color(0xFFEF4444),
+        'screen': AddInvoiceData(),
+      },
+      {
+        'nameKey': 'background_remover',
+        'icon': Icons.edit_outlined,
+        'color': Color(0xFFF59E0B),
+        'screen': BackgroundRemoverScreen(),
+      },
+    ];
 
-  return Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Categories',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF111827),
-              ),
-            ),
-            // TextButton(
-            //   onPressed: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (context) => const CategoryScreen(),
-            //       ),
-            //     );
-            //   },
-            //   child: const Text(
-            //     'View All',
-            //     style: TextStyle(
-            //       color: Color(0xFF6366F1),
-            //       fontWeight: FontWeight.w600,
-            //     ),
-            //   ),
-            // ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 16),
-      Container(
-        height: 100,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
+    return Column(
+      children: [
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final category = categories[index];
-            return _buildCategoryCard(
-              name: category['name'] as String,
-              icon: category['icon'] as IconData,
-              color: category['color'] as Color,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => category['screen'] as Widget,
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ),
-      const SizedBox(height: 32),
-    ],
-  );
-}
-
-Widget _buildCategoryCard({
-  required String name,
-  required IconData icon,
-  required Color color,
-  required VoidCallback onTap,
-}) {
-  return Container(
-    width: 100,
-    margin: const EdgeInsets.only(right: 12),
-    child: Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: color.withOpacity(0.2),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  name,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              // Use AppText for the section title too
+              AppText(
+                'categories',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    ),
-  );
-}
+        const SizedBox(height: 16),
+        Container(
+          height: 100,
+          child: Consumer<LanguageProvider>(
+            builder: (context, languageProvider, child) {
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  // Translate the category name using the key
+                  final translatedName = LocalizationService.translate(
+                    category['nameKey'] as String,
+                    languageProvider.locale.languageCode,
+                  );
 
- 
+                  return _buildCategoryCard(
+                    name: translatedName,
+                    icon: category['icon'] as IconData,
+                    color: category['color'] as Color,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => category['screen'] as Widget,
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 32),
+      ],
+    );
+  }
+
+  Widget _buildCategoryCard({
+    required String name,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: 100,
+      margin: const EdgeInsets.only(right: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: color, size: 28),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF374151),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildUpcomingFestivalsSection() {
     return Padding(
@@ -1297,11 +1387,11 @@ Widget _buildCategoryCard({
         children: [
           StoriesWidget(),
           const SizedBox(height: 16), // Add spacing
-        _buildCategoriesSection(), 
+          _buildCategoriesSection(),
 
           _buildSectionHeader(
-            title: 'Seasonal Celebrations',
-            subtitle: 'Never miss a celebration',
+            titleKey: 'seasonal_celebrations',
+            subtitleKey: 'never_miss_celebration',
           ),
           const SizedBox(height: 16),
           Consumer<DateTimeProvider>(
@@ -1324,8 +1414,8 @@ Widget _buildCategoryCard({
     return Column(
       children: [
         _buildSectionHeader(
-          title: 'Celebration Templates',
-          subtitle: 'Perfect for every occasion',
+          titleKey: 'celebration_templates',
+          subtitleKey: 'perfect_every_occasion',
           showViewAll: true,
           onViewAll: () {
             Navigator.push(
@@ -1356,7 +1446,6 @@ Widget _buildCategoryCard({
         ),
       );
     }
-
 
     if (festivaldata.isEmpty) {
       return AnimatedContainer(
@@ -1922,66 +2011,144 @@ Widget _buildCategoryCard({
     );
   }
 
+  // Widget _buildSectionHeader({
+  //   required String title,
+  //   required String subtitle,
+  //   bool showViewAll = false,
+  //   VoidCallback? onViewAll,
+  // }) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 20),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //       children: [
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Text(
+  //                 title,
+  //                 style: const TextStyle(
+  //                   fontSize: 20,
+  //                   fontWeight: FontWeight.bold,
+  //                   color: Color(0xFF111827),
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 4),
+  //               Text(
+  //                 subtitle,
+  //                 style: const TextStyle(
+  //                   fontSize: 14,
+  //                   color: Color(0xFF6B7280),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         if (showViewAll && onViewAll != null)
+  //           TextButton(
+  //             onPressed: onViewAll,
+  //             style: TextButton.styleFrom(
+  //               foregroundColor: const Color(0xFF6366F1),
+  //               padding: const EdgeInsets.symmetric(
+  //                 horizontal: 12,
+  //                 vertical: 8,
+  //               ),
+  //             ),
+  //             child: Row(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: const [
+  //                 // Text(
+  //                 //   'View All',
+  //                 //   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+  //                 // ),
+  //                 // SizedBox(width: 4),
+  //                 // Icon(Icons.arrow_forward_ios, size: 14),
+  //               ],
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildSectionHeader({
-    required String title,
-    required String subtitle,
+    required String titleKey, // Changed from 'title' to 'titleKey'
+    required String subtitleKey, // Changed from 'subtitle' to 'subtitleKey'
     bool showViewAll = false,
     VoidCallback? onViewAll,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
+    return Consumer<LanguageProvider>(
+      builder: (context, languageProvider, child) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      LocalizationService.translate(
+                        titleKey,
+                        languageProvider.locale.languageCode,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      LocalizationService.translate(
+                        subtitleKey,
+                        languageProvider.locale.languageCode,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (showViewAll && onViewAll != null)
+                TextButton(
+                  onPressed: onViewAll,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF6366F1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        LocalizationService.translate(
+                          'view_all',
+                          languageProvider.locale.languageCode,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.arrow_forward_ios, size: 14),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
-          if (showViewAll && onViewAll != null)
-            TextButton(
-              onPressed: onViewAll,
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF6366F1),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  // Text(
-                  //   'View All',
-                  //   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  // ),
-                  // SizedBox(width: 4),
-                  // Icon(Icons.arrow_forward_ios, size: 14),
-                ],
-              ),
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
+
   void _showPremiumDialog() {
     showDialog(
       context: context,
@@ -2719,6 +2886,7 @@ Widget _buildCategoryCard({
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
+
   void showReferAndEarnModal(BuildContext context) {
     String? userId;
     String? userReferralCode;
@@ -2901,8 +3069,8 @@ Don't miss out on this opportunity! 🚀
                                       ),
                                       const SizedBox(width: 12),
                                       const Expanded(
-                                        child: Text(
-                                          'Refer & Earn',
+                                        child: AppText(
+                                          'refer_earn',
                                           style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.w600,
@@ -2963,8 +3131,8 @@ Don't miss out on this opportunity! 🚀
                                               ),
                                               const SizedBox(width: 12),
                                               const Expanded(
-                                                child: Text(
-                                                  'Share your referral code with friends and earn rewards when they upgrade.',
+                                                child: AppText(
+                                                  'share_referral_earn',
                                                   style: TextStyle(
                                                     fontSize: 14,
                                                     color: Color(0xFF0C4A6E),
@@ -2979,8 +3147,8 @@ Don't miss out on this opportunity! 🚀
                                         const SizedBox(height: 24),
 
                                         // Referral Code Section
-                                        const Text(
-                                          'Your Referral Code',
+                                        const AppText(
+                                          'your_referral_code',
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
@@ -3244,8 +3412,8 @@ Don't miss out on this opportunity! 🚀
                                         const SizedBox(height: 24),
 
                                         // How It Works
-                                        const Text(
-                                          'How It Works',
+                                        const AppText(
+                                          'how_it_works',
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
@@ -3256,23 +3424,23 @@ Don't miss out on this opportunity! 🚀
 
                                         _buildSteps(
                                           number: '1',
-                                          title: 'Share Your Code',
+                                          title: 'share_your_code',
                                           description:
-                                              'Send your referral code to friends via any platform',
+                                              'send_referral_any_platform',
                                         ),
                                         const SizedBox(height: 12),
                                         _buildSteps(
                                           number: '2',
-                                          title: 'Friend Signs Up',
+                                          title: 'friend_signs_up',
                                           description:
-                                              'They enter your code during registration',
+                                              'enter_code_during_signup',
                                         ),
                                         const SizedBox(height: 12),
                                         _buildSteps(
                                           number: '3',
-                                          title: 'Earn Rewards',
+                                          title: 'earn_rewards',
                                           description:
-                                              'Get ₹200 when they upgrade their account',
+                                              'get_200_on_upgrade',
                                         ),
 
                                         const SizedBox(height: 24),
@@ -3428,7 +3596,7 @@ Don't miss out on this opportunity! 🚀
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              AppText(
                 title,
                 style: const TextStyle(
                   fontSize: 14,
@@ -3437,7 +3605,7 @@ Don't miss out on this opportunity! 🚀
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
+              AppText(
                 description,
                 style: const TextStyle(
                   fontSize: 13,
@@ -3969,4 +4137,3 @@ Don't miss out on this opportunity! 🚀
     );
   }
 }
- 

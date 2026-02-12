@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
 
@@ -200,7 +201,7 @@ class _EditProfileState extends State<EditProfile> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Edit Profile',style: TextStyle(fontWeight: FontWeight.bold),),
+        title: const AppText('edit_profile',style: TextStyle(fontWeight: FontWeight.bold),),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.deepPurple,
@@ -299,8 +300,8 @@ class _EditProfileState extends State<EditProfile> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            isUploading ? 'Uploading...' : 'Tap to change photo',
+          AppText(
+            isUploading ? 'Uploading...' : 'tap_change_photo',
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
               fontSize: 14,
@@ -320,22 +321,22 @@ class _EditProfileState extends State<EditProfile> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionTitle('Personal Information'),
+            _buildSectionTitle('personal_information'),
             const SizedBox(height: 16),
             _buildReadOnlyField(
-              label: 'Business Name',
+              label: 'business_name',
               value: _name ?? '',
               icon: Icons.person_outline,
             ),
             const SizedBox(height: 16),
             _buildReadOnlyField(
-              label: 'Email',
+              label: 'email',
               value: _email ?? '',
               icon: Icons.email_outlined,
             ),
             const SizedBox(height: 16),
             _buildReadOnlyField(
-              label: 'Mobile Number',
+              label: 'mobile_number',
               value: _mobile ?? '',
               icon: Icons.phone_outlined,
             ),
@@ -344,13 +345,13 @@ class _EditProfileState extends State<EditProfile> {
             const SizedBox(height: 16),
             _buildDateField(
               controller: _dobController,
-              label: 'Date of Birth',
+              label: 'date_of_birth',
               icon: Icons.cake_outlined,
             ),
             const SizedBox(height: 16),
             _buildDateField(
               controller: _anniversaryController,
-              label: 'Marriage Anniversary',
+              label: 'marriage_anniversary',
               icon: Icons.favorite_outline,
             ),
             const SizedBox(height: 32),
@@ -393,7 +394,7 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
+    return AppText(
       title,
       style: const TextStyle(
         fontSize: 18,
@@ -416,7 +417,7 @@ class _EditProfileState extends State<EditProfile> {
       ),
       child: ListTile(
         leading: Icon(icon, color: Colors.grey[600]),
-        title: Text(
+        title: AppText(
           label,
           style: TextStyle(
             fontSize: 12,
@@ -424,7 +425,7 @@ class _EditProfileState extends State<EditProfile> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        subtitle: Text(
+        subtitle: AppText(
           value,
           style: const TextStyle(
             fontSize: 16,
@@ -441,37 +442,71 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
+  // Widget _buildDateField({
+  //   required TextEditingController controller,
+  //   required String label,
+  //   required IconData icon,
+  // }) {
+  //   return TextFormField(
+  //     controller: controller,
+  //     readOnly: true,
+  //     onTap: () => _selectDate(controller),
+  //     decoration: InputDecoration(
+  //       labelText: label,
+  //       prefixIcon: Icon(icon, color: Colors.deepPurple),
+  //       suffixIcon: const Icon(Icons.calendar_today, color: Colors.deepPurple),
+  //       border: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: BorderSide(color: Colors.grey[300]!),
+  //       ),
+  //       enabledBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: BorderSide(color: Colors.grey[300]!),
+  //       ),
+  //       focusedBorder: OutlineInputBorder(
+  //         borderRadius: BorderRadius.circular(12),
+  //         borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+  //       ),
+  //       filled: true,
+  //       fillColor: Colors.white,
+  //       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  //     ),
+  //   );
+  // }
+
+
   Widget _buildDateField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-  }) {
-    return TextFormField(
-      controller: controller,
-      readOnly: true,
-      onTap: () => _selectDate(controller),
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Colors.deepPurple),
-        suffixIcon: const Icon(Icons.calendar_today, color: Colors.deepPurple),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  required TextEditingController controller,
+  required String label, // this is the key
+  required IconData icon,
+}) {
+  return TextFormField(
+    controller: controller,
+    readOnly: true,
+    onTap: () => _selectDate(controller),
+    decoration: InputDecoration(
+      labelText: AppText.translate(context, label), // 👈 translate here
+      prefixIcon: Icon(icon, color: Colors.deepPurple),
+      suffixIcon: const Icon(Icons.calendar_today, color: Colors.deepPurple),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
       ),
-    );
-  }
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    ),
+  );
+}
+
 
   @override
   void dispose() {

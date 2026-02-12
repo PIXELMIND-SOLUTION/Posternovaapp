@@ -10,7 +10,6 @@
 // import 'package:share_plus/share_plus.dart';
 // import 'package:http/http.dart' as http;
 
-
 // class BackgroundRemoverScreen extends StatefulWidget {
 //   const BackgroundRemoverScreen({super.key});
 
@@ -234,8 +233,6 @@
 //     );
 //   }
 
-  
-
 //   Widget _buildImageCanvas(BoxConstraints constraints) {
 //     final width = constraints.maxWidth;
 //     final leftWidth = width * _split;
@@ -287,7 +284,6 @@
 //                             height: 360,
 //                             child: Stack(children: [
 //                               if (true)
-                             
 
 //                               Positioned.fill(
 //                                 child: Image.memory(_processedImage!, fit: BoxFit.cover),
@@ -317,7 +313,6 @@
 //               ),
 //             ),
 
-          
 //           ]),
 //         ),
 //       ),
@@ -409,7 +404,6 @@
 //         child: Padding(
 //           padding: const EdgeInsets.all(16.0),
 //           child: Column(children: [
-            
 
 //             const SizedBox(height: 16),
 
@@ -431,14 +425,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -448,6 +434,7 @@ import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
@@ -456,7 +443,8 @@ class BackgroundRemoverScreen extends StatefulWidget {
   const BackgroundRemoverScreen({super.key});
 
   @override
-  State<BackgroundRemoverScreen> createState() => _BackgroundRemoverScreenState();
+  State<BackgroundRemoverScreen> createState() =>
+      _BackgroundRemoverScreenState();
 }
 
 class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
@@ -568,65 +556,66 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
   //   }
   // }
 
-
-
   Future<Uint8List?> _removeBackgroundUsingAPI(String imagePath) async {
-  try {
-    var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
 
-    request.headers.addAll({
-      "X-Api-Key": apiKey, // Changed from "X-API-Key" to "X-Api-Key"
-    });
+      request.headers.addAll({
+        "X-Api-Key": apiKey, // Changed from "X-API-Key" to "X-Api-Key"
+      });
 
-    request.files.add(await http.MultipartFile.fromPath(
-      "image_file", 
-      imagePath,
-      // Add content type explicitly
-      contentType: MediaType('image', 'jpeg'),
-    ));
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          "image_file",
+          imagePath,
+          // Add content type explicitly
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
 
-    request.fields['size'] = 'auto';
-    request.fields['format'] = 'png';
+      request.fields['size'] = 'auto';
+      request.fields['format'] = 'png';
 
-    final response = await request.send().timeout(
-      const Duration(seconds: 30), // Add timeout
-      onTimeout: () {
-        throw Exception('Request timeout - check your internet connection');
-      },
-    );
+      final response = await request.send().timeout(
+        const Duration(seconds: 30), // Add timeout
+        onTimeout: () {
+          throw Exception('Request timeout - check your internet connection');
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final bytes = await response.stream.toBytes();
-      return Uint8List.fromList(bytes);
-    } else {
-      final errorBody = await response.stream.bytesToString();
-      String errorMessage = 'Failed to remove background';
-      try {
-        final errorJson = json.decode(errorBody);
-        if (errorJson['errors'] != null && errorJson['errors'].isNotEmpty) {
-          errorMessage = errorJson['errors'][0]['title'] ?? errorMessage;
+      if (response.statusCode == 200) {
+        final bytes = await response.stream.toBytes();
+        return Uint8List.fromList(bytes);
+      } else {
+        final errorBody = await response.stream.bytesToString();
+        String errorMessage = 'Failed to remove background';
+        try {
+          final errorJson = json.decode(errorBody);
+          if (errorJson['errors'] != null && errorJson['errors'].isNotEmpty) {
+            errorMessage = errorJson['errors'][0]['title'] ?? errorMessage;
+          }
+        } catch (_) {
+          errorMessage = 'Error ${response.statusCode}: $errorBody';
         }
-      } catch (_) {
-        errorMessage = 'Error ${response.statusCode}: $errorBody';
+        throw Exception(errorMessage);
       }
-      throw Exception(errorMessage);
+    } on SocketException {
+      throw Exception('No internet connection');
+    } on TimeoutException {
+      throw Exception('Request timeout - check your internet connection');
+    } catch (e) {
+      throw Exception('Network error: ${e.toString()}');
     }
-  } on SocketException {
-    throw Exception('No internet connection');
-  } on TimeoutException {
-    throw Exception('Request timeout - check your internet connection');
-  } catch (e) {
-    throw Exception('Network error: ${e.toString()}');
   }
-}
 
   Future<void> _removeBackground() async {
     if (_selectedImage == null) return;
 
     setState(() => _isProcessing = true);
     try {
-      final processedBytes =
-          await _removeBackgroundUsingAPI(_selectedImage!.path);
+      final processedBytes = await _removeBackgroundUsingAPI(
+        _selectedImage!.path,
+      );
 
       if (processedBytes != null) {
         setState(() {
@@ -686,7 +675,9 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
       final filePath = '${dir.path}/bg_removed_$timestamp.png';
       final file = File(filePath);
       await file.writeAsBytes(_processedImage!);
-      await Share.shareXFiles([XFile(filePath)], text: 'Background removed image');
+      await Share.shareXFiles([
+        XFile(filePath),
+      ], text: 'Background removed image');
     } catch (e) {
       _showErrorSnackBar('Failed to share image: $e');
     }
@@ -694,7 +685,7 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
 
   void _openPreview() {
     if (_processedImage == null) return;
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -708,19 +699,35 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [Icon(Icons.error_outline), SizedBox(width: 8), Expanded(child: Text(message))]),
-      backgroundColor: Colors.red.shade600,
-      behavior: SnackBarBehavior.floating,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error_outline),
+            SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [Icon(Icons.check_circle_outline), SizedBox(width: 8), Expanded(child: Text(message))]),
-      backgroundColor: Colors.green.shade700,
-      behavior: SnackBarBehavior.floating,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle_outline),
+            SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Widget _buildTopBar() {
@@ -729,7 +736,10 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
       backgroundColor: Colors.transparent,
       foregroundColor: Colors.black87,
       centerTitle: true,
-      title: const Text('Background Remover', style: TextStyle(fontWeight: FontWeight.w700)),
+      title: const AppText(
+        'background_remover',
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
     );
   }
 
@@ -749,99 +759,110 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
         child: Container(
           height: 360,
           color: Colors.grey.shade100,
-          child: Stack(children: [
-            // Original (full) at the back
-            Positioned.fill(
-              child: _selectedImage != null
-                  ? Image.file(_selectedImage!, fit: BoxFit.cover)
-                  : _placeholderCanvas(),
-            ),
-
-            // Processed on top, clipped by split
-            if (_processedImage != null)
-              Positioned(
-                left: leftWidth,
-                right: 0,
-                top: 0,
-                bottom: 0,
-                child: FadeTransition(
-                  opacity: _fade,
-                  child: Container(),
-                ),
-              ),
-
-            if (_processedImage != null)
+          child: Stack(
+            children: [
+              // Original (full) at the back
               Positioned.fill(
-                child: ClipRect(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: 1.0,
-                    child: SizedBox(
-                      width: width,
-                      child: Row(children: [
-                        SizedBox(width: leftWidth),
-                        Expanded(
-                          child: Container(
-                            height: 360,
-                            child: Stack(children: [
-                              Positioned.fill(
-                                child: Image.memory(_processedImage!, fit: BoxFit.cover),
+                child: _selectedImage != null
+                    ? Image.file(_selectedImage!, fit: BoxFit.cover)
+                    : _placeholderCanvas(),
+              ),
+
+              // Processed on top, clipped by split
+              if (_processedImage != null)
+                Positioned(
+                  left: leftWidth,
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: FadeTransition(opacity: _fade, child: Container()),
+                ),
+
+              if (_processedImage != null)
+                Positioned.fill(
+                  child: ClipRect(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: 1.0,
+                      child: SizedBox(
+                        width: width,
+                        child: Row(
+                          children: [
+                            SizedBox(width: leftWidth),
+                            Expanded(
+                              child: Container(
+                                height: 360,
+                                child: Stack(
+                                  children: [
+                                    Positioned.fill(
+                                      child: Image.memory(
+                                        _processedImage!,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ]),
-                          ),
+                            ),
+                          ],
                         ),
-                      ]),
-                    ),
-                  ),
-                ),
-              ),
-
-            // Vertical draggable handle
-            if (_processedImage != null)
-              Positioned(
-                left: leftWidth - 12,
-                top: 0,
-                bottom: 0,
-                child: Container(
-                  width: 24,
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 4,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(4),
-                      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
-                    ),
-                  ),
-                ),
-              ),
-
-            // Preview hint overlay
-            if (_isBackgroundRemoved)
-              Positioned(
-                bottom: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.fullscreen, color: Colors.white, size: 16),
-                      SizedBox(width: 6),
-                      Text(
-                        'Tap for preview',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-          ]),
+
+              // Vertical draggable handle
+              if (_processedImage != null)
+                Positioned(
+                  left: leftWidth - 12,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 24,
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 4,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black26, blurRadius: 8),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Preview hint overlay
+              if (_isBackgroundRemoved)
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.fullscreen, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'Tap for preview',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -851,132 +872,191 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.photo_size_select_actual_outlined, size: 72, color: Colors.grey.shade400),
-          const SizedBox(height: 12),
-          Text('No image selected', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
-          const SizedBox(height: 8),
-          Text('Tap the gallery or camera button below to start', style: TextStyle(color: Colors.grey.shade500)),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.photo_size_select_actual_outlined,
+              size: 72,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 12),
+            AppText(
+              'no_image_selected',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            AppText(
+              'tap_gallery_camera',
+              style: TextStyle(color: Colors.grey.shade500),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildControls() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SizedBox(height: 12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 12),
 
-      // Action buttons
-      Row(children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => _pickImage(ImageSource.gallery),
-            icon: Icon(Icons.photo_library_outlined),
-            label: Text('Gallery'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => _pickImage(ImageSource.camera),
-            icon: Icon(Icons.camera_alt_outlined, color: Colors.white),
-            label: Text('Camera', style: TextStyle(color: Colors.white)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 30, 175, 188),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ),
-      ]),
-
-      const SizedBox(height: 12),
-
-      Row(children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: (_selectedImage != null && !_isProcessing) ? _removeBackground : null,
-            icon: _isProcessing
-                ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : Icon(Icons.auto_fix_high_outlined, color: Colors.white),
-            label: Text(_isProcessing ? 'Processing...' : 'Remove Background', style: TextStyle(color: Colors.white)),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              backgroundColor: Colors.green.shade700,
-            ),
-          ),
-        ),
-      ]),
-
-      const SizedBox(height: 12),
-
-      if (_isBackgroundRemoved)
-        Row(children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _openPreview,
-              icon: Icon(Icons.preview_outlined),
-              label: Text('Preview'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => _pickImage(ImageSource.gallery),
+                icon: Icon(Icons.photo_library_outlined),
+                label: Text('Gallery'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _saveImage,
-              icon: Icon(Icons.download_outlined),
-              label: Text('Save'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => _pickImage(ImageSource.camera),
+                icon: Icon(Icons.camera_alt_outlined, color: Colors.white),
+                label: Text('Camera', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 30, 175, 188),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _shareImage,
-              icon: Icon(Icons.share_outlined),
-              label: Text('Share'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: (_selectedImage != null && !_isProcessing)
+                    ? _removeBackground
+                    : null,
+                icon: _isProcessing
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(Icons.auto_fix_high_outlined, color: Colors.white),
+                label: Text(
+                  _isProcessing ? 'Processing...' : 'Remove Background',
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: Colors.green.shade700,
+                ),
               ),
             ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        if (_isBackgroundRemoved)
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _openPreview,
+                  icon: Icon(Icons.preview_outlined),
+                  label: Text('Preview'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _saveImage,
+                  icon: Icon(Icons.download_outlined),
+                  label: Text('Save'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _shareImage,
+                  icon: Icon(Icons.share_outlined),
+                  label: Text('Share'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ]),
-    ]);
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      appBar: PreferredSize(preferredSize: Size.fromHeight(kToolbarHeight), child: _buildTopBar()),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: _buildTopBar(),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(children: [
-            const SizedBox(height: 16),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
 
-            // Image canvas
-            Expanded(child: LayoutBuilder(builder: (context, constraints) {
-              return _buildImageCanvas(constraints);
-            })),
+              // Image canvas
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return _buildImageCanvas(constraints);
+                  },
+                ),
+              ),
 
-            const SizedBox(height: 12),
-            _buildControls(),
-            const SizedBox(height: 8),
-            const SizedBox(height: 6),
-          ]),
+              const SizedBox(height: 12),
+              _buildControls(),
+              const SizedBox(height: 8),
+              const SizedBox(height: 6),
+            ],
+          ),
         ),
       ),
     );
@@ -1002,7 +1082,8 @@ class ImagePreviewScreen extends StatefulWidget {
 
 class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   bool _showControls = true;
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
 
   @override
   void dispose() {
@@ -1034,10 +1115,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                 transformationController: _transformationController,
                 minScale: 0.5,
                 maxScale: 4.0,
-                child: Image.memory(
-                  widget.imageBytes,
-                  fit: BoxFit.contain,
-                ),
+                child: Image.memory(widget.imageBytes, fit: BoxFit.contain),
               ),
             ),
           ),
@@ -1053,10 +1131,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                 ),
               ),
               child: SafeArea(
@@ -1070,7 +1145,10 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                   ),
                   title: Text(
                     'Preview',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   actions: [
                     IconButton(
@@ -1095,10 +1173,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                 ),
               ),
               child: SafeArea(

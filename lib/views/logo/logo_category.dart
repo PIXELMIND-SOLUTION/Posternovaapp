@@ -4,6 +4,7 @@ import 'package:posternova/views/logo/logo_history.dart';
 import 'dart:convert';
 
 import 'package:posternova/views/logo/logo_screen.dart';
+import 'package:posternova/widgets/language_widget.dart';
 
 class LogoCategory extends StatefulWidget {
   const LogoCategory({super.key});
@@ -93,8 +94,8 @@ class _LogoCategoryState extends State<LogoCategory> {
                 ),
                 style: const TextStyle(color: Colors.black87, fontSize: 18),
               )
-            : const Text(
-                'Logo Categories',
+            : const AppText(
+                'logo_categories',
                 style: TextStyle(
                   color: Colors.black87,
                   fontWeight: FontWeight.bold,
@@ -130,83 +131,83 @@ class _LogoCategoryState extends State<LogoCategory> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.blue))
           : errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          errorMessage!,
-                          style: TextStyle(color: Colors.grey[700], fontSize: 16),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            isLoading = true;
-                            errorMessage = null;
-                          });
-                          fetchCategories();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      errorMessage!,
+                      style: TextStyle(color: Colors.grey[700], fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                )
-              : filteredCategories.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No categories found',
-                            style: TextStyle(
-                              color: Colors.grey[700],
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: () async {
-                        setState(() {
-                          isLoading = true;
-                        });
-                        await fetchCategories();
-                      },
-                      child: GridView.builder(
-                        padding: const EdgeInsets.all(16),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.85,
-                        ),
-                        itemCount: filteredCategories.length,
-                        itemBuilder: (context, index) {
-                          final category = filteredCategories[index];
-                          return CategoryCard(category: category);
-                        },
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        isLoading = true;
+                        errorMessage = null;
+                      });
+                      fetchCategories();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
                       ),
                     ),
+                  ),
+                ],
+              ),
+            )
+          : filteredCategories.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No categories found',
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  isLoading = true;
+                });
+                await fetchCategories();
+              },
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.85,
+                ),
+                itemCount: filteredCategories.length,
+                itemBuilder: (context, index) {
+                  final category = filteredCategories[index];
+                  return CategoryCard(category: category);
+                },
+              ),
+            ),
     );
   }
 }
@@ -272,7 +273,7 @@ class CategoryCard extends StatelessWidget {
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
                                 ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
+                                      loadingProgress.expectedTotalBytes!
                                 : null,
                             strokeWidth: 2,
                           ),
