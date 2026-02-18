@@ -2182,7 +2182,7 @@ class _AddnewCustomersState extends State<AddCustomer> {
                     controller: _nameController,
                     label: AppText.translate(context, 'name'),
                     icon: Icons.person_rounded,
-                    hint: 'Enter full name',
+                    hint: AppText.translate(context, 'enter_full_name'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a name';
@@ -2213,7 +2213,7 @@ class _AddnewCustomersState extends State<AddCustomer> {
                     controller: _mobileController,
                     label: AppText.translate(context, 'mobile_number'),
                     icon: Icons.phone_rounded,
-                    hint: 'Enter mobile number',
+                    hint: AppText.translate(context, 'enter_mobile_number'),
                     keyboardType: TextInputType.phone,
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly, // only numbers
@@ -2236,7 +2236,8 @@ class _AddnewCustomersState extends State<AddCustomer> {
                     controller: _emailController,
                     label: '${AppText.translate(context, 'email_optional')}',
                     icon: Icons.email_rounded,
-                    hint: 'Enter email address (optional)',
+                    hint:
+                        '${AppText.translate(context, 'enter_email_optional')}',
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value != null && value.isNotEmpty) {
@@ -2302,7 +2303,8 @@ class _AddnewCustomersState extends State<AddCustomer> {
                     label:
                         '${AppText.translate(context, 'address')} (Optional)',
                     icon: Icons.location_on_rounded,
-                    hint: 'Enter address (optional)',
+                    hint:
+                        '${AppText.translate(context, 'enter_address_optional')} (Optional)',
                   ),
 
                   const SizedBox(height: 32),

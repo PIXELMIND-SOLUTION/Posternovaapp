@@ -507,8 +507,9 @@ import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
 
 class LogoMakingScreen extends StatefulWidget {
-  final String categoryId; // Made required
-  const LogoMakingScreen({super.key, required this.categoryId});
+  final String categoryId;
+  final String?userId;// Made required
+  const LogoMakingScreen({super.key, required this.categoryId,this.userId});
 
   @override
   State<LogoMakingScreen> createState() => _LogoMakingScreenState();
@@ -523,7 +524,7 @@ class _LogoMakingScreenState extends State<LogoMakingScreen> {
     super.initState();
     Future.microtask(() =>
         Provider.of<LogoProvider>(context, listen: false)
-            .fetchLogos(logoCategoryId: widget.categoryId));
+            .fetchLogos(logoCategoryId: widget.categoryId,userId: widget.userId.toString()));
 
     _searchController.addListener(() {
       setState(() {
@@ -795,7 +796,7 @@ class _LogoMakingScreenState extends State<LogoMakingScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => provider.fetchLogos(logoCategoryId: widget.categoryId),
+                onPressed: () => provider.fetchLogos(logoCategoryId: widget.categoryId,userId: widget.userId.toString()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF667EEA),
                   foregroundColor: Colors.white,

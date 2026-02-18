@@ -1964,7 +1964,7 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
                 autofocus: true,
                 style: TextStyle(color: textColor),
                 decoration: InputDecoration(
-                  hintText: 'Search customers...',
+                  hintText: AppText.translate(context, 'search_customers'),
                   hintStyle: TextStyle(color: subtextColor),
                   border: InputBorder.none,
                 ),
@@ -2111,10 +2111,10 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            AppText(
                               _selectedReligionFilter != null 
                                   ? '$_selectedReligionFilter Customers'
-                                  : 'Total Customers',
+                                  : 'total_customers',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: subtextColor,

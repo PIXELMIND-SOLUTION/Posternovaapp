@@ -78,4 +78,51 @@ class Authservice {
       return null;
     }
   }
+
+
+//   Future<Map<String, dynamic>?> updateProfile({
+//   required String userId,
+//   required String name,
+//   required String email,
+//   required String mobile,
+//   String? dob,
+//   String? marriageAnniversaryDate,
+// }) async {
+//   try {
+//     print('Updating profile for user: $userId');
+    
+//     final response = await http.put(
+//       Uri.parse(ApiConstants.updateProfile(userId)),
+//       headers: {'Content-Type': 'application/json'},
+//       body: jsonEncode({
+//         'name': name,
+//         'email': email,
+//         'mobile': mobile,
+//         'dob': dob ?? '',
+//         'marriageAnniversaryDate': marriageAnniversaryDate ?? '',
+//       }),
+//     );
+
+//     print('Update profile status code: ${response.statusCode}');
+//     print('Update profile response body: ${response.body}');
+
+//     if (response.statusCode == 200) {
+//       final data = jsonDecode(response.body);
+//       print('Profile updated successfully: $data');
+//       return data;
+//     } else {
+//       final errorData = jsonDecode(response.body);
+//       throw Exception(errorData['message'] ?? 'Failed to update profile');
+//     }
+//   } on SocketException catch (e) {
+//     print('No internet connection: $e');
+//     throw 'Please turn on your internet connection';
+//   } catch (e) {
+//     print('Error updating profile: $e');
+//     if (NetworkHelper.isNoInternetError(e)) {
+//       throw 'Please turn on your internet connection';
+//     }
+//     throw 'Failed to update profile: ${e.toString()}';
+//   }
+// }
 }

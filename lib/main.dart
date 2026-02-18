@@ -114,20 +114,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -139,6 +125,7 @@ import 'package:posternova/providers/PosterProvider/poster_provider.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/providers/auth/otp_provider.dart';
 import 'package:posternova/providers/auth/register_provider.dart';
+import 'package:posternova/providers/chat/chat_provider.dart';
 import 'package:posternova/providers/customer/customer_provider.dart';
 import 'package:posternova/providers/festivals/date_time_provider.dart';
 import 'package:posternova/providers/festivals/festival_provider.dart';
@@ -154,6 +141,8 @@ import 'package:posternova/providers/story/report_provider.dart';
 import 'package:posternova/providers/story/story_provider.dart';
 import 'package:posternova/services/FCM/fcm_service.dart';
 import 'package:posternova/services/FCM/local_notification_service.dart';
+import 'package:posternova/services/language/restart_lan_service.dart';
+import 'package:posternova/views/NavBar/navbar_screen.dart';
 import 'package:posternova/views/splash.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
@@ -179,7 +168,12 @@ void main() async {
     // App will continue to run even if Firebase initialization fails
   }
 
-  runApp(const MyApp());
+  runApp(
+    AppRestartWrapper(
+      key: AppRestartService.key,
+      child: MyApp(), // your existing root widget
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -217,6 +211,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => MyPlanProvider()),
         ChangeNotifierProvider(create: (_) => RedeemProvider()),
         ChangeNotifierProvider(create: (_) => ReelProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
+
         // ChangeNotifierProvider(create: (_) => PanchangProvider()),
       ],
       child: Consumer<LanguageProvider>(
@@ -242,7 +238,9 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.light,
               scaffoldBackgroundColor: Colors.white,
               primarySwatch: Colors.deepPurple,
-              textTheme: ThemeData.light().textTheme.apply(fontFamily: 'Poppins'),
+              textTheme: ThemeData.light().textTheme.apply(
+                fontFamily: 'Poppins',
+              ),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: Colors.deepPurple,
                 brightness: Brightness.light,
@@ -251,13 +249,19 @@ class MyApp extends StatelessWidget {
             darkTheme: ThemeData(
               brightness: Brightness.dark,
               scaffoldBackgroundColor: Colors.white,
-              textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'Poppins'),
+              textTheme: ThemeData.dark().textTheme.apply(
+                fontFamily: 'Poppins',
+              ),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: Colors.deepPurple,
                 brightness: Brightness.dark,
               ),
             ),
-            home: SplashScreen(),
+
+            // home: SplashScreen(),
+            home: AppRestartService.skipSplash
+                ? const MainNavigationScreen()
+                : SplashScreen(),
             debugShowCheckedModeBanner: false,
           );
         },

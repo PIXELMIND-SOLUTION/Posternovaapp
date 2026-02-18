@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:posternova/services/language/language_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LanguageProvider extends ChangeNotifier {
   Locale _locale = const Locale('en');
+  String? _userId; // Add this to store userId
 
   Locale get locale => _locale;
 
   LanguageProvider() {
     _loadSavedLanguage();
+  }
+
+  // Add method to set userId
+  void setUserId(String? userId) {
+    _userId = userId;
   }
 
   Future<void> _loadSavedLanguage() async {
@@ -18,9 +25,23 @@ class LanguageProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setLocale(Locale locale) async {
-    if (_locale == locale) return;
+  Future<bool> setLocale(Locale locale) async {
+    if (_locale == locale) return true;
 
+    // Call API first if userId is available
+    if (_userId != null) {
+      final success = await ApiService.updateUserLanguage(
+        _userId!,
+        locale.languageCode,
+      );
+
+      if (!success) {
+        print('Failed to update language on server');
+        return false;
+      }
+    }
+
+    // Update local state only after successful API call
     _locale = locale;
 
     // Save to SharedPreferences
@@ -28,8 +49,38 @@ class LanguageProvider extends ChangeNotifier {
     await prefs.setString('language_code', locale.languageCode);
 
     notifyListeners();
+    return true;
   }
 }
+
+// class LanguageProvider extends ChangeNotifier {
+//   Locale _locale = const Locale('en');
+
+//   Locale get locale => _locale;
+
+//   LanguageProvider() {
+//     _loadSavedLanguage();
+//   }
+
+//   Future<void> _loadSavedLanguage() async {
+//     final prefs = await SharedPreferences.getInstance();
+//     final String languageCode = prefs.getString('language_code') ?? 'en';
+//     _locale = Locale(languageCode);
+//     notifyListeners();
+//   }
+
+//   Future<void> setLocale(Locale locale) async {
+//     if (_locale == locale) return;
+
+//     _locale = locale;
+
+//     // Save to SharedPreferences
+//     final prefs = await SharedPreferences.getInstance();
+//     await prefs.setString('language_code', locale.languageCode);
+
+//     notifyListeners();
+//   }
+// }
 
 class LocalizationService {
   static final Map<String, Map<String, String>> _localizedStrings = {
@@ -61,6 +112,7 @@ class LocalizationService {
 
       'online_punchang': 'Online Punchang',
       'invoices': 'Invoices',
+      'update_profile': 'Update Profile', // English
 
       'choose_canvas_size': 'Choose Canvas Size',
       'select_perfect_size': 'Select the perfect size for your design',
@@ -144,9 +196,13 @@ class LocalizationService {
       'edit_poster': 'Edit Poster',
       'marriage_anniversary': 'Marriage Anniversary',
 
+      'select_contact': 'Select Contact',
+      'save_logo': 'Save Logo',
+
       'poster': 'Poster',
       'reels': 'Reels',
       'customer': 'Customer',
+      'total_customers': 'Total Customers',
 
       'create_story': 'Create Story',
       'new_story': 'New Story',
@@ -234,6 +290,18 @@ class LocalizationService {
       'logo_categories': 'Logo Categories',
       'logo_templates': 'Logo Templates',
 
+      'chat': 'Chat',
+
+      'chat_with_chicha': 'Chat with Chicha',
+      'start_chat_with_chicha': 'Start Chat with Chicha',
+
+      'enter_full_name': 'Enter full name',
+      'enter_mobile_number': 'Enter mobile number',
+      'enter_email_optional': 'Enter email address (optional)',
+      'select_gender': 'Select gender',
+      'select_religion': 'Select religion',
+      'enter_address_optional': 'Enter address (optional)',
+
       'create_business_post': 'Create Business Post',
       'add_business_logo': 'Add Business Logo',
 
@@ -244,6 +312,7 @@ class LocalizationService {
       'both_get_rewards': 'Both get rewards',
       'credits_after_purchase':
           'Credits are added after successful first purchase',
+          'logo_history': 'Logo History',
 
       'about': 'About',
       'chicha_ai': 'Chicha AI',
@@ -301,10 +370,15 @@ class LocalizationService {
       'save_details': 'Save Details',
       'bank_details_saved': 'Bank details saved successfully!',
 
+      'no_celebration_found': 'No Celebration Found',
+      'try_select_different_date': 'Try to select a different date',
+
       'customers': 'Customers',
       'no_customers_yet': 'No customers yet',
       'add_first_customer_start': 'Add your first customer to get started',
       'adjust_search': 'Try adjusting your search',
+
+      'search_customers': 'Search Customers',
 
       'total_earning': 'Total Earning till date',
       'current_balance': 'Current Balance',
@@ -331,6 +405,22 @@ class LocalizationService {
       'upload_profile_photo': 'Upload Profile Photo',
       'submit': 'Submit',
       'featured': 'Featured',
+
+      'Monday': 'Monday',
+      'Tuesday': 'Tuesday',
+      'Wednesday': 'Wednesday',
+      'Thursday': 'Thursday',
+      'Friday': 'Friday',
+      'Saturday': 'Saturday',
+      'Sunday': 'Sunday',
+      'today_prefix': 'Today',
+
+      'happy_birthday': 'Happy Birthday',
+      'happy_anniversary': 'Happy Anniversary',
+      'loading_wishes': 'Loading wishes...',
+      'loading_celebrations': 'Loading celebrations...',
+
+      'today': 'Today',
 
       'sorry_to_see_you_go':
           'We are sorry to see you go. Please review the information below before proceeding.',
@@ -361,6 +451,10 @@ class LocalizationService {
       'message': 'Message',
       'send_message': 'Send Message',
 
+      'save_poster': 'Save Poster',
+      'share_poster': 'Share Poster',
+      'share_to_customers': 'Share to Customers',
+
       'create_amazing_content': 'Create amazing content',
       'what_do_you_want_create': 'What do you want to create?',
       'choose_tool_get_started': 'Choose a tool to get started',
@@ -368,6 +462,8 @@ class LocalizationService {
       'design_beautiful_posters': 'Design beautiful posters',
       'customer_logo': 'Customer Logo',
       'create_logo_customers': 'Create logo for customers',
+      'search_categories': 'Search categories',
+
 
       'reels': 'Reels',
       'amazing_video_editezy': 'Amazing video by Editezy! Check this out',
@@ -391,6 +487,7 @@ class LocalizationService {
 
       'join_content_creator': 'Join Us As A Content Creator',
       'join_product_dealer': 'Join Us As A Product Dealer',
+      'important_dates': 'Important Dates',
     },
     'te': {
       'app_title': 'పోస్టర్ మేకర్',
@@ -398,6 +495,8 @@ class LocalizationService {
       'upcoming_festivals': 'రాబోయే పండుగలు',
       'festivals': 'పండుగలు',
       'new_poster': 'కొత్త పోస్టర్',
+      'important_dates': 'ముఖ్యమైన తేదీలు',
+
       'no_festivals_found': 'పండుగలు కనుగొనబడలేదు',
       'try_different_date': 'వేరే తేదీని ఎంచుకోవడానికి ప్రయత్నించండి',
       'check_other_dates': 'ఇతర తేదీలను తనిఖీ చేయండి',
@@ -417,9 +516,22 @@ class LocalizationService {
       'pay_now': 'ఇప్పుడు చెల్లించండి',
       'welcome_back': 'తిరిగి స్వాగతం!',
 
+      'today': 'ఈ రోజు',
+
       'logo_categories': 'లోగో వర్గాలు',
       'logo_templates': 'లోగో టెంప్లేట్లు',
       'choose_perfect_design': 'మీకు సరైన డిజైన్‌ను ఎంచుకోండి',
+
+      'enter_full_name': 'పూర్తి పేరు నమోదు చేయండి',
+      'enter_mobile_number': 'మొబైల్ నంబర్ నమోదు చేయండి',
+      'enter_email_optional': 'ఇమెయిల్ చిరునామా నమోదు చేయండి (ఐచ్చికం)',
+      'select_gender': 'లింగాన్ని ఎంచుకోండి',
+      'select_religion': 'మతాన్ని ఎంచుకోండి',
+      'enter_address_optional': 'చిరునామా నమోదు చేయండి (ఐచ్చికం)',
+
+      'chat': 'చాట్',
+
+      'save_logo': 'లోగోను సేవ్ చేయండి',
 
       'online_punchang': 'ఆన్‌లైన్ పంచాంగం',
       'edit_poster': 'పోస్టర్ సవరించండి',
@@ -433,18 +545,43 @@ class LocalizationService {
       'fill_customer_details': 'కస్టమర్ వివరాలను నమోదు చేయండి',
       'basic_information': 'ప్రాథమిక సమాచారం',
 
+      'search_customers': 'గ్రాహకులను వెతకండి',
+
+      'select_contact': 'సంప్రదింపును ఎంచుకోండి',
+
       'additional_information': 'అదనపు సమాచారం',
+
+      'logo_history': 'లోగో చరిత్ర',
+
+      'search_categories': 'వర్గాలను వెతకండి',
+
+
 
       'no_invoices_yet': 'ఇంకా ఇన్వాయిసులు లేవు',
       'start_creating_invoices':
           'ప్రొఫెషనల్ ఇన్వాయిసులు సృష్టించడం ప్రారంభించండి',
       'all_invoices': 'అన్ని ఇన్వాయిసులు',
 
+      'no_celebration_found': 'ఎలాంటి వేడుకలు కనుగొనబడలేదు',
+      'try_select_different_date': 'దయచేసి వేరే తేదీని ఎంచుకోండి',
+
+      'chat_with_chicha': 'చిచాతో చాట్ చేయండి',
+      'start_chat_with_chicha': 'చిచాతో చాట్ ప్రారంభించండి',
+      'ask_me_anything': 'ఏదైనా అడగండి',
+      'poster': 'పోస్టర్',
+
+      'text': 'పాఠ్యం',
+      'image': 'చిత్రం',
+      'shapes': 'ఆకారాలు',
+      'elements': 'అంశాలు',
+
       'home': 'హోమ్',
       'category': 'వర్గం',
       'poster': 'పోస్టర్',
       'reels': 'రీల్స్',
       'customer': 'కస్టమర్',
+
+      'update_profile': 'ప్రొఫైల్‌ను నవీకరించండి',
 
       'delete_account': 'ఖాతాను తొలగించండి',
       'sorry_to_see_you_go':
@@ -454,6 +591,11 @@ class LocalizationService {
       'before_you_go': 'మీరు వెళ్లే ముందు',
       'delete_confirm_understand':
           'నా ఖాతాను తొలగించడం శాశ్వతమని మరియు నా మొత్తం డేటా కోల్పోతానని నేను అర్థం చేసుకున్నాను',
+
+      'save_poster': 'పోస్టర్‌ను సేవ్ చేయండి',
+      'share_poster': 'పోస్టర్‌ను పంచుకోండి',
+      'share_to_customers': 'గ్రాహకులతో పంచుకోండి',
+      'total_customers': 'మొత్తం గ్రాహకులు',
 
       'seasonal_celebrations': 'కాలానుగుణ వేడుకలు',
       'never_miss_celebration': 'ఏ వేడుకను కూడా కోల్పోకండి',
@@ -706,6 +848,11 @@ class LocalizationService {
       'save_details': 'వివరాలు సేవ్ చేయండి',
       'bank_details_saved': 'బ్యాంక్ వివరాలు విజయవంతంగా సేవ్ చేయబడ్డాయి!',
 
+      'happy_birthday': 'పుట్టినరోజు శుభాకాంక్షలు',
+      'happy_anniversary': 'వివాహ వార్షికోత్సవ శుభాకాంక్షలు',
+      'loading_wishes': 'శుభాకాంక్షలు లోడ్ అవుతున్నాయి...',
+      'loading_celebrations': 'వేడుకలు లోడ్ అవుతున్నాయి...',
+
       'total_earning': 'ఇప్పటివరకు సంపాదించిన మొత్తం',
       'current_balance': 'ప్రస్తుత బ్యాలెన్స్',
       'redeem_now': 'ఇప్పుడు రీడీమ్ చేయండి',
@@ -729,6 +876,15 @@ class LocalizationService {
       'anniversary_captions': 'వివాహ వార్షికోత్సవ క్యాప్షన్లు',
       'change': 'మార్చు',
       'message_with_image': 'ఈ సందేశం మీ చిత్రంతో\nకలిపి పంపబడుతుంది.',
+
+      'Monday': 'సోమవారం',
+      'Tuesday': 'మంగళవారం',
+      'Wednesday': 'బుధవారం',
+      'Thursday': 'గురువారం',
+      'Friday': 'శుక్రవారం',
+      'Saturday': 'శనివారం',
+      'Sunday': 'ఆదివారం',
+      'today_prefix': 'ఈ రోజు',
 
       'birth_date': 'పుట్టిన తేది',
       'anniversary_date': 'వివాహ వార్షికోత్సవ తేది',
@@ -788,15 +944,66 @@ class LocalizationService {
       'choose_canvas_size': 'कैनवास आकार चुनें',
       'select_perfect_size': 'अपने डिज़ाइन के लिए सही आकार चुनें',
 
+      'save_logo': 'लोगो सहेजें',
+
+      'today': 'आज',
+'search_categories': 'श्रेणियाँ खोजें',
+
+      'happy_birthday': 'जन्मदिन मुबारक',
+      'happy_anniversary': 'सालगिरह मुबारक',
+      'loading_wishes': 'शुभकामनाएं लोड हो रही हैं...',
+      'loading_celebrations': 'उत्सव लोड हो रहे हैं...',
+
+      'chat_with_chicha': 'चिचा के साथ चैट करें',
+      'start_chat_with_chicha': 'चिचा के साथ चैट शुरू करें',
+      'ask_me_anything': 'मुझसे कुछ भी पूछें',
+      'poster': 'पोस्टर',
+
+      'text': 'टेक्स्ट',
+      'image': 'छवि',
+      'shapes': 'आकृतियाँ',
+      'elements': 'तत्व',
+
+      'Monday': 'सोमवार',
+      'Tuesday': 'मंगलवार',
+      'Wednesday': 'बुधवार',
+      'Thursday': 'गुरुवार',
+      'Friday': 'शुक्रवार',
+      'Saturday': 'शनिवार',
+      'Sunday': 'रविवार',
+      'today_prefix': 'आज',
+
+      'logo_history': 'लोगो इतिहास',
+
+
+      'important_dates': 'महत्वपूर्ण तिथियाँ',
+
+      'delete_confirm_understand': 'मैं समझता/समझती हूँ कि मेरा खाता हटाना स्थायी है और मेरा सारा डेटा खो जाएगा',
+
+
       'text_remover': 'टेक्स्ट हटाने वाला',
       'remove_text_ai': 'AI की सटीकता से अपनी छवियों से अनचाहा टेक्स्ट हटाएं',
       'select_image': 'छवि चुनें',
+
+      'enter_full_name': 'पूरा नाम दर्ज करें',
+      'enter_mobile_number': 'मोबाइल नंबर दर्ज करें',
+      'enter_email_optional': 'ईमेल पता दर्ज करें (वैकल्पिक)',
+      'select_gender': 'लिंग चुनें',
+      'select_religion': 'धर्म चुनें',
+      'enter_address_optional': 'पता दर्ज करें (वैकल्पिक)',
 
       'home': 'होम',
       'category': 'श्रेणी',
       'poster': 'पोस्टर',
       'reels': 'रील्स',
       'customer': 'ग्राहक',
+
+      'chat': 'चैट',
+
+      'search_customers': 'ग्राहकों को खोजें',
+
+      'no_celebration_found': 'कोई उत्सव नहीं मिला',
+      'try_select_different_date': 'कृपया कोई दूसरी तारीख चुनें',
 
       'invoices': 'इनवॉइस',
       'no_invoices_yet': 'अभी तक कोई इनवॉइस नहीं',
@@ -813,6 +1020,16 @@ class LocalizationService {
       'basic_information': 'मूल जानकारी',
 
       'additional_information': 'अतिरिक्त जानकारी',
+
+      'total_customers': 'कुल ग्राहक',
+
+      'select_contact': 'संपर्क चुनें',
+
+      'save_poster': 'पोस्टर सहेजें',
+      'share_poster': 'पोस्टर साझा करें',
+      'share_to_customers': 'ग्राहकों को साझा करें',
+
+      'update_profile': 'प्रोफ़ाइल अपडेट करें',
 
       'edit_profile': 'प्रोफ़ाइल संपादित करें',
       'tap_change_photo': 'फोटो बदलने के लिए टैप करें',
@@ -870,7 +1087,7 @@ class LocalizationService {
 
       'about': 'हमारे बारे में',
       'text_remover': 'टेक्स्ट हटाएं',
-      'chicha_ai': 'Chicha AI',
+      'chicha_ai': 'चिचा एआई',
       'featured': 'प्रमुख',
 
       'online_punchang': 'ऑनलाइन पंचांग',
@@ -1083,8 +1300,8 @@ class LocalizationService {
       'introduce_friend': 'एक दोस्त को आमंत्रित करें और तुरंत 30 क्रेडिट पाएं!',
       'bonus_credit': 'बोनस! उनके खरीदारी करने पर अतिरिक्त 50 क्रेडिट पाएं!',
       'earn_now': 'अभी कमाएँ',
-      'referral_info':
-          'क्या आप जानते हैं कि आप एक महीने में 10 दोस्तों को रेफर करके\nAED 3000 तक कमा सकते हैं?\nयह एक महीने की सदस्यता के बराबर है।',
+   'referral_info': 'आप 3 दोस्तों को रेफ़र करके वार्षिक सदस्यता कमा सकते हैं',
+
 
       'bday_anniversary': 'जन्मदिन और वर्षगांठ शुभकामनाएँ',
       'add_customer_details': 'ग्राहक\nविवरण जोड़ें',
@@ -1168,11 +1385,50 @@ class LocalizationService {
       'explore_templates': 'டெம்ப்ளேட்களை பார்க்கவும்',
       'design_studio': 'டிசைன் ஸ்டூடியோ',
 
+      'today': 'இன்று',
+
+      'important_dates': 'முக்கியமான தேதிகள்',
+
+      'chat_with_chicha': 'சிச்சாவுடன் அரட்டை அடிக்கவும்',
+      'start_chat_with_chicha': 'சிச்சாவுடன் அரட்டை தொடங்கவும்',
+      'ask_me_anything': 'என்ன வேண்டுமானாலும் கேளுங்கள்',
+      'poster': 'போஸ்டர்',
+
+      'no_celebration_found': 'எந்த கொண்டாட்டமும் கிடைக்கவில்லை',
+      'try_select_different_date': 'வேறு தேதியைத் தேர்ந்தெடுக்கவும்',
+
+      'save_poster': 'போஸ்டரை சேமிக்கவும்',
+      'share_poster': 'போஸ்டரை பகிரவும்',
+      'share_to_customers': 'வாடிக்கையாளர்களுடன் பகிரவும்',
+
+      'enter_full_name': 'முழு பெயரை உள்ளிடவும்',
+      'enter_mobile_number': 'மொபைல் எண்ணை உள்ளிடவும்',
+      'enter_email_optional': 'மின்னஞ்சல் முகவரியை உள்ளிடவும் (விருப்பம்)',
+      'select_gender': 'பாலினத்தைத் தேர்வுசெய்க',
+      'select_religion': 'மதத்தைத் தேர்வுசெய்க',
+      'enter_address_optional': 'முகவரியை உள்ளிடவும் (விருப்பம்)',
+
+      'Monday': 'திங்கள்',
+      'Tuesday': 'செவ்வாய்',
+      'Wednesday': 'புதன்',
+      'Thursday': 'வியாழன்',
+      'Friday': 'வெள்ளி',
+      'Saturday': 'சனி',
+      'Sunday': 'ஞாயிறு',
+      'today_prefix': 'இன்று',
+
       'home': 'முகப்பு',
       'category': 'வகை',
       'poster': 'போஸ்டர்',
       'reels': 'ரீல்ஸ்',
       'customer': 'வாடிக்கையாளர்',
+
+      'save_logo': 'லோகோவை சேமிக்கவும்',
+
+      'happy_birthday': 'பிறந்தநாள் வாழ்த்துக்கள்',
+      'happy_anniversary': 'திருமண நாள் வாழ்த்துக்கள்',
+      'loading_wishes': 'வாழ்த்துக்கள் ஏற்றப்படுகின்றன...',
+      'loading_celebrations': 'கொண்டாட்டங்கள் ஏற்றப்படுகின்றன...',
 
       'invoices': 'விலைப்பட்டியல்கள்',
       'no_invoices_yet': 'இன்னும் விலைப்பட்டியல்கள் இல்லை',
@@ -1206,6 +1462,15 @@ class LocalizationService {
       'featured': 'சிறப்பு',
       'additional_information': 'கூடுதல் தகவல்',
 
+      'chat': 'அரட்டை',
+
+      'text': 'உரை',
+      'image': 'படம்',
+      'shapes': 'வடிவங்கள்',
+      'elements': 'உறுப்புகள்',
+
+      'update_profile': 'சுயவிவரத்தை புதுப்பிக்கவும்',
+
       'background_remover': 'பின்னணி நீக்கி',
       'no_image_selected': 'எந்த படமும் தேர்வு செய்யப்படவில்லை',
       'tap_gallery_camera':
@@ -1231,6 +1496,10 @@ class LocalizationService {
       'poster_making': 'போஸ்டர் உருவாக்கம்',
       'add_filter': 'வடிகட்டி சேர்க்கவும்',
       'add_color': 'நிறம் சேர்க்கவும்',
+
+      'search_customers': 'வாடிக்கையாளர்களை தேடுங்கள்',
+
+      'select_contact': 'தொடர்பைத் தேர்ந்தெடுக்கவும்',
 
       'text_remover': 'உரை நீக்கி',
       'remove_text_ai':
@@ -1258,6 +1527,7 @@ class LocalizationService {
       'story_disappear_24h': 'உங்கள் ஸ்டோரி 24 மணி நேரத்திற்கு பிறகு மறையும்',
       'choose_perfect_design':
           'உங்களுக்கு பொருத்தமான வடிவமைப்பைத் தேர்ந்தெடுக்கவும்',
+      'total_customers': 'மொத்த வாடிக்கையாளர்கள்',
 
       // NEW KEYS
       'categories': 'வகைகள்',

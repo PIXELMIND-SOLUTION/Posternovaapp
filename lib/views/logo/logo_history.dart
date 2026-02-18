@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/views/logo/make_logo.dart';
+import 'package:posternova/widgets/language_widget.dart';
 
 class LogoHistory extends StatefulWidget {
   const LogoHistory({super.key});
@@ -47,8 +48,19 @@ class _LogoHistoryState extends State<LogoHistory> {
         },
       );
 
+      // if (response.statusCode == 200) {
+      //   final List<dynamic> data = jsonDecode(response.body);
+      //   setState(() {
+      //     _historyItems = data
+      //         .map((item) => LogoHistoryItem.fromJson(item))
+      //         .toList();
+      //     _isLoading = false;
+      //   });
+      // }
+
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final List<dynamic> data = responseData['history'] ?? [];
         setState(() {
           _historyItems = data
               .map((item) => LogoHistoryItem.fromJson(item))
@@ -142,8 +154,8 @@ class _LogoHistoryState extends State<LogoHistory> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Logo History',
+        title: const AppText(
+          'logo_history',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.white,

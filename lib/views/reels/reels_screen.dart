@@ -682,6 +682,8 @@
 //   }
 // }
 
+
+
 import 'package:flutter/material.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/providers/reels/reels_provider.dart';
@@ -1179,7 +1181,7 @@ class _ReelItemState extends State<ReelItem> {
                             ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
+                    AppText(
                       _username,
                       style: const TextStyle(
                         color: Colors.white,

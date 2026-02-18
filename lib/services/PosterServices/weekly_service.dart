@@ -6,10 +6,10 @@ class NewCanvasPosterService {
   static const String baseUrl = 'http://31.97.206.144:4061/api/poster';
 
   // Fetch weekly posters from the API
-  Future<List<CanvasPosterModel>> fetchWeeklyPosters() async {
+  Future<List<CanvasPosterModel>> fetchWeeklyPosters(String userId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/weeklyposters'),
+        Uri.parse('$baseUrl/weeklyposters/$userId'),
         headers: {
           'Content-Type': 'application/json',
         },

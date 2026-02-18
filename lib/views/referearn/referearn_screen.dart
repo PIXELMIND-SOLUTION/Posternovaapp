@@ -1244,8 +1244,8 @@ class _HeaderCard extends StatelessWidget {
                 ),
                 elevation: 0,
               ),
-              child: const Text(
-                'Redeem Now',
+              child: const AppText(
+                'redeem_now',
                 style: TextStyle(
                   color: Color(0xFF6E62FF),
                   fontWeight: FontWeight.w700,

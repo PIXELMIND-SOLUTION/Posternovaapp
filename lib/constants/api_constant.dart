@@ -27,6 +27,10 @@ class ApiConstants {
 
   static const String getLogos = 'http://31.97.206.144:4061/api/admin/getlogos';
 
+
+  // In your api_constant.dart file
+static String updateProfile(String userId) => '$baseUrl/users/update-user/$userId';
+
   static String getMyPlan(String userId) => 'http://31.97.206.144:4061/api/users/myplan/$userId';
 
   // static String canvaPosters = 'http://31.97.206.144:4061/api/poster/canvasposters';
@@ -35,7 +39,7 @@ class ApiConstants {
     static String canvaPosters = 'http://31.97.206.144:4061/api/poster/weeklyposters';
 
 
-  static String getAllPosters = 'http://31.97.206.144:4061/api/poster/getallposter';
+  static String getAllPosters = 'http://31.97.206.144:4061/api/poster/getallposter/:userId';
 
   static const String purchasePlan = '$baseUrl/api/payment/phonepe';
 

@@ -21,6 +21,8 @@ import 'package:posternova/views/PosterModule/poster_listing_screen.dart';
 import 'package:posternova/views/PosterModule/poster_making_screen.dart';
 import 'package:posternova/views/backgroundremover/background_remover.dart';
 import 'package:posternova/views/category/category_screen.dart';
+import 'package:posternova/views/chat/chat_module.dart';
+import 'package:posternova/views/chat/customer_list.dart';
 import 'package:posternova/views/invoices/add_invoice_data.dart';
 import 'package:posternova/views/onlinepunchang/online_punchang_screen.dart';
 import 'package:posternova/views/stories/story_widget_screen.dart';
@@ -36,6 +38,7 @@ import 'package:posternova/widgets/voice_assistant_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:posternova/widgets/premium_widget.dart'; // Add this line
 
@@ -52,6 +55,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       "https://fntarizona.com/wp-content/uploads/2017/05/shutterstock_624472886.jpg";
 
   bool serchValue = false;
+
+  bool _showWishesSection = true;
+  bool _showCustomerCelebrationsSection = true;
 
   int _currentIndex = 0;
   String? posterId;
@@ -100,6 +106,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<dynamic> _filteredCategories = [];
   List<dynamic> _filteredNewposters = [];
 
+  static bool _hasClosedWishesSection = false;
+static bool _hasClosedCelebrationsSection = false;
+
+
   // late final CategoryProviderr categoryprovider;
   late final CanvaPosterProvider canvaPosterProvider;
   Map<String, List<Map<String, dynamic>>> _categorizedPosters = {};
@@ -117,12 +127,38 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
+  Future<void> _saveWishesSectionPreference(bool show) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('show_wishes_section', show);
+  }
+
+  Future<void> _saveCustomerCelebrationsPreference(bool show) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('show_customer_celebrations', show);
+  }
+
+
+Future<void> _loadSectionPreferences() async {
+  final prefs = await SharedPreferences.getInstance();
+  setState(() {
+    // Only load from preferences if not manually closed in this session
+    if (!_hasClosedWishesSection) {
+      _showWishesSection = prefs.getBool('show_wishes_section') ?? true;
+    }
+    if (!_hasClosedCelebrationsSection) {
+      _showCustomerCelebrationsSection =
+          prefs.getBool('show_customer_celebrations') ?? true;
+    }
+  });
+}
+
   @override
   void initState() {
     super.initState();
-    _fetchWeeklyPosters();
+    // _fetchWeeklyPosters();
     _initializeAnimations();
     _fetchnewposters();
+
     _loadUserData();
     _loadUserId();
     _initializeUser();
@@ -234,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> _fetchWeeklyPosters() async {
     try {
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/poster/weeklyposters'),
+        Uri.parse('http://31.97.206.144:4061/api/poster/weeklyposters/$currentUserId'),
       );
 
       print('response status code for weekly posters ${response.statusCode}');
@@ -261,6 +297,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           username = userData.user.name;
           currentUserId = userData.user.id;
         });
+
+              await _fetchWeeklyPosters(); 
 
         final response = await http.get(
           Uri.parse(
@@ -518,7 +556,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final posters = posterProvider.posters;
 
     return Scaffold(
-      appBar: FancyAppBar(username: username, profileImageUrl: userImage),
+      appBar: FancyAppBar(userId: userId,),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -640,114 +678,226 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   //   );
   // }
 
+  // Widget _buildWeeklyPostersSection() {
+  //   if (weeklyPosters.isEmpty) return const SizedBox();
+
+  //   final orderedDays = _getOrderedDaysFromToday();
+  //   final today = DateFormat('EEEE').format(DateTime.now());
+
+  //   return Column(
+  //     children: orderedDays.map((day) {
+  //       final posters = weeklyPosters[day] ?? [];
+  //       // Remove this condition - show all days even if empty
+  //       // if (posters.isEmpty) return const SizedBox();
+
+  //       final isToday = day == today;
+
+  //       return Column(
+  //         children: [
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  //             child: Row(
+  //               children: [
+  //                 Container(
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 12,
+  //                     vertical: 6,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     gradient: isToday
+  //                         ? const LinearGradient(
+  //                             colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+  //                           )
+  //                         : null,
+  //                     color: isToday ? null : Colors.grey.shade100,
+  //                     borderRadius: BorderRadius.circular(8),
+  //                   ),
+  //                   child: Row(
+  //                     children: [
+  //                       Icon(
+  //                         isToday ? Icons.today : Icons.calendar_today_outlined,
+  //                         size: 18,
+  //                         color: isToday
+  //                             ? Colors.white
+  //                             : const Color(0xFF6B7280),
+  //                       ),
+  //                       const SizedBox(width: 8),
+  //                       Text(
+  //                         isToday ? 'Today - $day' : day,
+  //                         style: TextStyle(
+  //                           fontSize: 16,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: isToday
+  //                               ? Colors.white
+  //                               : const Color(0xFF111827),
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //                 const Spacer(),
+  //                 Text(
+  //                   posters.isEmpty
+  //                       ? 'No templates'
+  //                       : '${posters.length} templates',
+  //                   style: TextStyle(
+  //                     fontSize: 14,
+  //                     color: posters.isEmpty
+  //                         ? Colors.grey.shade400
+  //                         : const Color(0xFF6B7280),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           // Show message if no posters, otherwise show the list
+  //           if (posters.isEmpty)
+  //             Container(
+  //               height: 120,
+  //               margin: const EdgeInsets.symmetric(horizontal: 20),
+  //               decoration: BoxDecoration(
+  //                 color: Colors.grey.shade50,
+  //                 borderRadius: BorderRadius.circular(12),
+  //                 border: Border.all(color: Colors.grey.shade200),
+  //               ),
+  //               child: Center(
+  //                 child: Text(
+  //                   'No templates available for $day',
+  //                   style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+  //                 ),
+  //               ),
+  //             )
+  //           else
+  //             Container(
+  //               height: 220,
+  //               child: ListView.builder(
+  //                 scrollDirection: Axis.horizontal,
+  //                 padding: const EdgeInsets.symmetric(horizontal: 20),
+  //                 itemCount: posters.length,
+  //                 itemBuilder: (context, index) {
+  //                   final poster = posters[index];
+  //                   return _buildWeeklyPosterCard(poster, index);
+  //                 },
+  //               ),
+  //             ),
+  //           const SizedBox(height: 24),
+  //         ],
+  //       );
+  //     }).toList(),
+  //   );
+  // }
+
+
+
   Widget _buildWeeklyPostersSection() {
-    if (weeklyPosters.isEmpty) return const SizedBox();
+  if (weeklyPosters.isEmpty) return const SizedBox();
 
-    final orderedDays = _getOrderedDaysFromToday();
-    final today = DateFormat('EEEE').format(DateTime.now());
+  final orderedDays = _getOrderedDaysFromToday();
+  final today = DateFormat('EEEE').format(DateTime.now());
 
-    return Column(
-      children: orderedDays.map((day) {
-        final posters = weeklyPosters[day] ?? [];
-        // Remove this condition - show all days even if empty
-        // if (posters.isEmpty) return const SizedBox();
+  return Consumer<LanguageProvider>(
+    builder: (context, languageProvider, child) {
+      final langCode = languageProvider.locale.languageCode;
 
-        final isToday = day == today;
+      return Column(
+        children: orderedDays.map((day) {
+          final posters = weeklyPosters[day] ?? [];
+          final isToday = day == today;
 
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: isToday
-                          ? const LinearGradient(
-                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                            )
-                          : null,
-                      color: isToday ? null : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isToday ? Icons.today : Icons.calendar_today_outlined,
-                          size: 18,
-                          color: isToday
-                              ? Colors.white
-                              : const Color(0xFF6B7280),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isToday ? 'Today - $day' : day,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: isToday
-                                ? Colors.white
-                                : const Color(0xFF111827),
+          final translatedDay = LocalizationService.translate(day, langCode);
+          final todayPrefix = LocalizationService.translate('today_prefix', langCode);
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: isToday
+                            ? const LinearGradient(
+                                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                              )
+                            : null,
+                        color: isToday ? null : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isToday ? Icons.today : Icons.calendar_today_outlined,
+                            size: 18,
+                            color: isToday ? Colors.white : const Color(0xFF6B7280),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Text(
+                            isToday ? '$todayPrefix - $translatedDay' : translatedDay,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: isToday ? Colors.white : const Color(0xFF111827),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    posters.isEmpty
-                        ? 'No templates'
-                        : '${posters.length} templates',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: posters.isEmpty
-                          ? Colors.grey.shade400
-                          : const Color(0xFF6B7280),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Show message if no posters, otherwise show the list
-            if (posters.isEmpty)
-              Container(
-                height: 120,
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Center(
-                  child: Text(
-                    'No templates available for $day',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-                  ),
-                ),
-              )
-            else
-              Container(
-                height: 220,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: posters.length,
-                  itemBuilder: (context, index) {
-                    final poster = posters[index];
-                    return _buildWeeklyPosterCard(poster, index);
-                  },
+                    const Spacer(),
+                    // Text(
+                    //   posters.isEmpty
+                    //       ? LocalizationService.translate('no_templates', langCode)
+                    //       : '${posters.length} ${LocalizationService.translate('templates', langCode)}',
+                    //   style: TextStyle(
+                    //     fontSize: 14,
+                    //     color: posters.isEmpty
+                    //         ? Colors.grey.shade400
+                    //         : const Color(0xFF6B7280),
+                    //   ),
+                    // ),
+                  ],
                 ),
               ),
-            const SizedBox(height: 24),
-          ],
-        );
-      }).toList(),
-    );
-  }
+              if (posters.isEmpty)
+                Container(
+                  height: 120,
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${LocalizationService.translate('no_templates_available', langCode)} $translatedDay',
+                      style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                    ),
+                  ),
+                )
+              else
+                SizedBox(
+                  height: 220,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: posters.length,
+                    itemBuilder: (context, index) {
+                      final poster = posters[index];
+                      return _buildWeeklyPosterCard(poster, index);
+                    },
+                  ),
+                ),
+              const SizedBox(height: 24),
+            ],
+          );
+        }).toList(),
+      );
+    },
+  );
+}
 
   Widget _buildWeeklyPosterCard(dynamic poster, int index) {
     return Consumer<MyPlanProvider>(
@@ -868,20 +1018,85 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  // Widget _buildWishesSection() {
+  //   if (birthdayData['wishes'] == null || birthdayData['wishes'].isEmpty) {
+  //     return const SizedBox();
+  //   }
+
+  //   return Container(
+  //     margin: const EdgeInsets.symmetric(horizontal: 20),
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       gradient: const LinearGradient(
+  //         colors: [
+  //           Color(0xFFE0F7FA),
+  //           Color.fromARGB(255, 236, 178, 242),
+  //         ], // light cyan gradient
+  //         begin: Alignment.topLeft,
+  //         end: Alignment.bottomRight,
+  //       ),
+  //       borderRadius: BorderRadius.circular(20),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: const Color.fromRGBO(103, 58, 183, 1).withOpacity(0.5),
+  //           blurRadius: 10,
+  //           offset: const Offset(0, 4),
+  //         ),
+  //       ],
+  //       border: Border.all(color: const Color(0xFF80DEEA), width: 1.2),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Container(
+  //           padding: const EdgeInsets.all(10),
+  //           decoration: BoxDecoration(
+  //             color: const Color(0xFF00838F),
+  //             borderRadius: BorderRadius.circular(10),
+  //           ),
+  //           child: const Icon(Icons.celebration, color: Colors.white, size: 22),
+  //         ),
+  //         const SizedBox(width: 14),
+  //         Expanded(
+  //           child: SizedBox(
+  //             height: 26,
+  //             child: Marquee(
+  //               text: birthdayData['wishes'].join("  •  "),
+  //               style: const TextStyle(
+  //                 fontSize: 15,
+  //                 fontWeight: FontWeight.w600,
+  //                 color: Color(0xFF004D40),
+  //               ),
+  //               scrollAxis: Axis.horizontal,
+  //               crossAxisAlignment: CrossAxisAlignment.center,
+  //               blankSpace: 40.0,
+  //               velocity: 35.0,
+  //               pauseAfterRound: Duration(seconds: 2),
+  //               startPadding: 10.0,
+  //               accelerationDuration: Duration(seconds: 1),
+  //               accelerationCurve: Curves.easeInOut,
+  //               decelerationDuration: Duration(milliseconds: 600),
+  //               decelerationCurve: Curves.easeOut,
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildWishesSection() {
-    if (birthdayData['wishes'] == null || birthdayData['wishes'].isEmpty) {
+    if (!_showWishesSection ||
+        birthdayData['wishes'] == null ||
+        birthdayData['wishes'].isEmpty) {
       return const SizedBox();
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFFE0F7FA),
-            Color.fromARGB(255, 236, 178, 242),
-          ], // light cyan gradient
+          colors: [Color(0xFFE0F7FA), Color.fromARGB(255, 236, 178, 242)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -929,38 +1144,212 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
           ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _showWishesSection = false;
+                 _hasClosedWishesSection = true;
+              });
+              _saveWishesSectionPreference(false);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close,
+                color: Color(0xFF00838F),
+                size: 18,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
+  // Widget _buildCustomerCelebrationsSection() {
+  //   List<String> celebrations = [];
+
+  //   print('=== Customer Celebrations Debug ===');
+  //   print('Total customers: ${customers.length}');
+  //   print('Is loading: $isLoadingCustomers');
+
+  //   if (customers.isNotEmpty) {
+  //     final today = DateTime.now();
+  //     print('Today: ${today.year}-${today.month}-${today.day}');
+
+  //     for (var customer in customers) {
+  //       print('\nChecking customer: ${customer['name']}');
+
+  //       // Check for birthday
+  //       if (customer['dob'] != null && customer['dob'].isNotEmpty) {
+  //         try {
+  //           final dob = DateTime.parse(customer['dob']);
+  //           print('  DOB: ${dob.year}-${dob.month}-${dob.day}');
+  //           print(
+  //             '  Match: month=${dob.month == today.month}, day=${dob.day == today.day}',
+  //           );
+
+  //           if (dob.month == today.month && dob.day == today.day) {
+  //             final age = today.year - dob.year;
+
+  //             // Determine suffix (st, nd, rd, th)
+  //             String suffix;
+  //             if (age % 10 == 1 && age != 11) {
+  //               suffix = 'st';
+  //             } else if (age % 10 == 2 && age != 12) {
+  //               suffix = 'nd';
+  //             } else if (age % 10 == 3 && age != 13) {
+  //               suffix = 'rd';
+  //             } else {
+  //               suffix = 'th';
+  //             }
+
+  //             final celebration = age > 0
+  //                 ? "🎂 Happy ${age}${suffix} Birthday ${customer['name']}!"
+  //                 : "🎂 Happy Birthday ${customer['name']}!";
+
+  //             celebrations.add(celebration);
+  //             print('  ✅ Birthday celebration added: $celebration');
+  //           }
+  //         } catch (e) {
+  //           print('  ❌ Error parsing DOB for ${customer['name']}: $e');
+  //         }
+  //       } else {
+  //         print('  No DOB data');
+  //       }
+
+  //       // Check for anniversary
+  //       if (customer['anniversaryDate'] != null &&
+  //           customer['anniversaryDate'].isNotEmpty) {
+  //         try {
+  //           final anniversary = DateTime.parse(customer['anniversaryDate']);
+  //           print(
+  //             '  Anniversary: ${anniversary.year}-${anniversary.month}-${anniversary.day}',
+  //           );
+  //           print(
+  //             '  Match: month=${anniversary.month == today.month}, day=${anniversary.day == today.day}',
+  //           );
+
+  //           if (anniversary.month == today.month &&
+  //               anniversary.day == today.day) {
+  //             final years = today.year - anniversary.year;
+
+  //             String suffix;
+  //             if (years % 10 == 1 && years != 11) {
+  //               suffix = 'st';
+  //             } else if (years % 10 == 2 && years != 12) {
+  //               suffix = 'nd';
+  //             } else if (years % 10 == 3 && years != 13) {
+  //               suffix = 'rd';
+  //             } else {
+  //               suffix = 'th';
+  //             }
+
+  //             final celebration = years > 0
+  //                 ? "💐 Happy ${years}${suffix} Anniversary ${customer['name']}!"
+  //                 : "💐 Happy Anniversary ${customer['name']}!";
+
+  //             celebrations.add(celebration);
+  //             print('  ✅ Anniversary celebration added: $celebration');
+  //           }
+  //         } catch (e) {
+  //           print('  ❌ Error parsing anniversary for ${customer['name']}: $e');
+  //         }
+  //       } else {
+  //         print('  No anniversary data');
+  //       }
+  //     }
+  //   } else {
+  //     print('No customers available');
+  //   }
+
+  //   print('\nTotal celebrations found: ${celebrations.length}');
+  //   if (celebrations.isNotEmpty) {
+  //     print('Celebrations: $celebrations');
+  //   }
+  //   print('=== End Debug ===\n');
+
+  //   // If no celebrations to display, return empty widget
+  //   if (celebrations.isEmpty) {
+  //     return const SizedBox();
+  //   }
+
+  //   return Container(
+  //     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       gradient: const LinearGradient(
+  //         colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+  //         begin: Alignment.topLeft,
+  //         end: Alignment.bottomRight,
+  //       ),
+  //       borderRadius: BorderRadius.circular(20),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: const Color(0xFFFF6F00).withOpacity(0.3),
+  //           blurRadius: 10,
+  //           offset: const Offset(0, 4),
+  //         ),
+  //       ],
+  //       border: Border.all(color: const Color(0xFFFFB74D), width: 1.2),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Container(
+  //           padding: const EdgeInsets.all(10),
+  //           decoration: BoxDecoration(
+  //             color: const Color(0xFFE65100),
+  //             borderRadius: BorderRadius.circular(10),
+  //           ),
+  //           child: const Icon(Icons.cake, color: Colors.white, size: 22),
+  //         ),
+  //         const SizedBox(width: 14),
+  //         Expanded(
+  //           child: SizedBox(
+  //             height: 26,
+  //             child: Marquee(
+  //               text: celebrations.join("  •  "),
+  //               style: const TextStyle(
+  //                 fontSize: 15,
+  //                 fontWeight: FontWeight.w600,
+  //                 color: Color(0xFFBF360C),
+  //               ),
+  //               scrollAxis: Axis.horizontal,
+  //               crossAxisAlignment: CrossAxisAlignment.center,
+  //               blankSpace: 40.0,
+  //               velocity: 35.0,
+  //               pauseAfterRound: const Duration(seconds: 2),
+  //               startPadding: 10.0,
+  //               accelerationDuration: const Duration(seconds: 1),
+  //               accelerationCurve: Curves.easeInOut,
+  //               decelerationDuration: const Duration(milliseconds: 600),
+  //               decelerationCurve: Curves.easeOut,
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildCustomerCelebrationsSection() {
     List<String> celebrations = [];
 
-    print('=== Customer Celebrations Debug ===');
-    print('Total customers: ${customers.length}');
-    print('Is loading: $isLoadingCustomers');
-
     if (customers.isNotEmpty) {
       final today = DateTime.now();
-      print('Today: ${today.year}-${today.month}-${today.day}');
 
       for (var customer in customers) {
-        print('\nChecking customer: ${customer['name']}');
-
-        // Check for birthday
+        // Birthday check
         if (customer['dob'] != null && customer['dob'].isNotEmpty) {
           try {
             final dob = DateTime.parse(customer['dob']);
-            print('  DOB: ${dob.year}-${dob.month}-${dob.day}');
-            print(
-              '  Match: month=${dob.month == today.month}, day=${dob.day == today.day}',
-            );
-
             if (dob.month == today.month && dob.day == today.day) {
               final age = today.year - dob.year;
-
-              // Determine suffix (st, nd, rd, th)
               String suffix;
               if (age % 10 == 1 && age != 11) {
                 suffix = 'st';
@@ -971,37 +1360,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               } else {
                 suffix = 'th';
               }
-
               final celebration = age > 0
                   ? "🎂 Happy ${age}${suffix} Birthday ${customer['name']}!"
                   : "🎂 Happy Birthday ${customer['name']}!";
-
               celebrations.add(celebration);
-              print('  ✅ Birthday celebration added: $celebration');
             }
           } catch (e) {
-            print('  ❌ Error parsing DOB for ${customer['name']}: $e');
+            print('Error parsing DOB: $e');
           }
-        } else {
-          print('  No DOB data');
         }
 
-        // Check for anniversary
+        // Anniversary check
         if (customer['anniversaryDate'] != null &&
             customer['anniversaryDate'].isNotEmpty) {
           try {
             final anniversary = DateTime.parse(customer['anniversaryDate']);
-            print(
-              '  Anniversary: ${anniversary.year}-${anniversary.month}-${anniversary.day}',
-            );
-            print(
-              '  Match: month=${anniversary.month == today.month}, day=${anniversary.day == today.day}',
-            );
-
             if (anniversary.month == today.month &&
                 anniversary.day == today.day) {
               final years = today.year - anniversary.year;
-
               String suffix;
               if (years % 10 == 1 && years != 11) {
                 suffix = 'st';
@@ -1012,33 +1388,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               } else {
                 suffix = 'th';
               }
-
               final celebration = years > 0
                   ? "💐 Happy ${years}${suffix} Anniversary ${customer['name']}!"
                   : "💐 Happy Anniversary ${customer['name']}!";
-
               celebrations.add(celebration);
-              print('  ✅ Anniversary celebration added: $celebration');
             }
           } catch (e) {
-            print('  ❌ Error parsing anniversary for ${customer['name']}: $e');
+            print('Error parsing anniversary: $e');
           }
-        } else {
-          print('  No anniversary data');
         }
       }
-    } else {
-      print('No customers available');
     }
 
-    print('\nTotal celebrations found: ${celebrations.length}');
-    if (celebrations.isNotEmpty) {
-      print('Celebrations: $celebrations');
-    }
-    print('=== End Debug ===\n');
-
-    // If no celebrations to display, return empty widget
-    if (celebrations.isEmpty) {
+    if (!_showCustomerCelebrationsSection || celebrations.isEmpty) {
       return const SizedBox();
     }
 
@@ -1095,6 +1457,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
           ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _showCustomerCelebrationsSection = false;
+                 _hasClosedCelebrationsSection = true;
+              });
+              _saveCustomerCelebrationsPreference(false);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close,
+                color: Color(0xFFE65100),
+                size: 18,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1105,15 +1489,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       children: [
         SizedBox(height: 20),
 
-        _buildWishesSection(),
-        _buildCustomerCelebrationsSection(),
+        // _buildWishesSection(),
+        // _buildCustomerCelebrationsSection(),
 
         // _buildSectionHeader(
         //   title: 'Featured Templates',
         //   subtitle: 'Trending designs for you',
         // ),
         const SizedBox(height: 16),
-        const HomeCarousel(),
+        // const HomeCarousel(),
       ],
     );
   }
@@ -1233,6 +1617,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         'icon': Icons.calendar_month,
         'color': Color(0xFFF59E0B),
         'screen': OnlinePunchangScreen(),
+      },
+      {
+        'nameKey': 'chat',
+        'icon': Icons.chat,
+        'color': Color.fromRGBO(11, 245, 124, 1),
+        'screen': CustomerList(),
       },
       {
         'nameKey': 'edit_poster',
@@ -1389,6 +1779,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           const SizedBox(height: 16), // Add spacing
           _buildCategoriesSection(),
 
+          // const SizedBox(height: 16),
+          // _buildWishesSection(), // Add this
+          // _buildCustomerCelebrationsSection(), // Add this
+          // const SizedBox(height: 16),
+
           _buildSectionHeader(
             titleKey: 'seasonal_celebrations',
             subtitleKey: 'never_miss_celebration',
@@ -1514,8 +1909,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'No Celebration Found',
+                              AppText(
+                                'no_celebration_found',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -1523,8 +1918,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
-                                'Try to select  different date ',
+                              AppText(
+                                'try_select_different_date',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey.shade600,
@@ -2073,8 +2468,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // }
 
   Widget _buildSectionHeader({
-    required String titleKey, // Changed from 'title' to 'titleKey'
-    required String subtitleKey, // Changed from 'subtitle' to 'subtitleKey'
+    required String titleKey, 
+    required String subtitleKey, 
     bool showViewAll = false,
     VoidCallback? onViewAll,
   }) {
@@ -3439,8 +3834,7 @@ Don't miss out on this opportunity! 🚀
                                         _buildSteps(
                                           number: '3',
                                           title: 'earn_rewards',
-                                          description:
-                                              'get_200_on_upgrade',
+                                          description: 'get_200_on_upgrade',
                                         ),
 
                                         const SizedBox(height: 24),

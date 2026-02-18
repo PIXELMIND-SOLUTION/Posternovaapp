@@ -14,6 +14,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/providers/customer/customer_provider.dart';
+import 'package:posternova/views/chat/chat_module.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1135,7 +1137,23 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
     super.initState();
     _loadPosterFromApi();
     _loadUserData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+    languageProvider.addListener(_onLanguageChanged);
+  });
+
+    
   }
+
+
+  void _onLanguageChanged() {
+  // Refresh customer data when language changes
+  final customerProvider = Provider.of<CreateCustomerProvider>(context, listen: false);
+  if (userId != null) {
+    customerProvider.fetchUser(userId.toString());
+  }
+}
 
   Future<void> _loadUserData() async {
     final userData = await AuthPreferences.getUserData();
@@ -1318,6 +1336,16 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
       ),
     );
   }
+
+
+  @override
+void dispose() {
+  // Remove the language listener
+  final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+  languageProvider.removeListener(_onLanguageChanged);
+  
+  super.dispose();
+}
 
   // Helper method to get contrast color (add this if not present)
   Color _getContrastColor(Color backgroundColor) {
@@ -1814,6 +1842,8 @@ Future<void> _showCustomerSelectionDialog() async {
     );
     return;
   }
+
+  
 
   // Extract unique religions from customers
 List<String> religions = customerProvider.customers
@@ -2438,8 +2468,10 @@ List<String> religions = customerProvider.customers
   //   }
   // }
 
-  // Updated method to share poster with selected customers via WhatsApp
-Future<void> _sharePosterWithSelectedCustomers(
+
+
+
+  Future<void> _sharePosterWithSelectedCustomers(
   Set<String> selectedCustomerIds,
   List<Map<String, dynamic>> allCustomers,
 ) async {
@@ -2553,81 +2585,17 @@ Future<void> _sharePosterWithSelectedCustomers(
 
     if (shouldProceed != true) return;
 
-    // Share with each customer one by one
-    int currentIndex = 0;
-
-    for (var customer in selectedCustomers) {
-      currentIndex++;
-      final mobile = customer['mobile']?.toString() ?? '';
-      final name = customer['name']?.toString() ?? 'Customer';
-
-      if (mobile.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No mobile number for $name'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        continue;
-      }
-
-      try {
-        // Clean phone number
-        String cleanNumber = mobile.replaceAll(RegExp(r'[^\d+]'), '');
-        if (!cleanNumber.startsWith('+')) {
-          if (cleanNumber.length == 10) {
-            cleanNumber = '+91$cleanNumber';
-          }
-        }
-
-        // Show progress
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sharing with $name ($currentIndex/${selectedCustomers.length})'),
-            backgroundColor: Colors.blue,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // Share via WhatsApp with the specific phone number
-        final result = await Share.shareXFiles(
-          [XFile(file.path)],
-          text: 'Hi $name, check out this poster!',
-        );
-
-        // Add delay between shares to allow user to send each one
-        if (currentIndex < selectedCustomers.length) {
-          await Future.delayed(const Duration(seconds: 2));
-        }
-
-      } catch (e) {
-        debugPrint('Error sharing with $name: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error sharing with $name: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-
-    // Show completion message
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Sharing process completed for ${selectedCustomers.length} customers'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-          action: SnackBarAction(
-            label: 'OK',
-            textColor: Colors.white,
-            onPressed: () {},
-          ),
+    // Navigate to ChatModule screen with the poster and customer data
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatModule(
+          posterImagePath: file.path,
+          selectedCustomers: selectedCustomers, 
         ),
-      );
-    }
+      ),
+    );
+
   } catch (e) {
     if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
@@ -2644,6 +2612,213 @@ Future<void> _sharePosterWithSelectedCustomers(
     }
   }
 }
+
+  // Updated method to share poster with selected customers via WhatsApp
+// Future<void> _sharePosterWithSelectedCustomers(
+//   Set<String> selectedCustomerIds,
+//   List<Map<String, dynamic>> allCustomers,
+// ) async {
+//   try {
+//     showDialog(
+//       context: context,
+//       barrierDismissible: false,
+//       builder: (context) => const AlertDialog(
+//         content: Row(
+//           children: [
+//             CircularProgressIndicator(),
+//             SizedBox(width: 16),
+//             Text('Preparing poster...'),
+//           ],
+//         ),
+//       ),
+//     );
+
+//     // Generate poster image
+//     RenderRepaintBoundary boundary =
+//         _canvasKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+//     ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+//     ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+//     Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+//     final directory = await getTemporaryDirectory();
+//     final file = File(
+//       '${directory.path}/poster_share_${DateTime.now().millisecondsSinceEpoch}.png',
+//     );
+//     await file.writeAsBytes(pngBytes);
+
+//     Navigator.of(context).pop(); // Close loading dialog
+
+//     // Get selected customers
+//     final selectedCustomers = allCustomers
+//         .where((c) => selectedCustomerIds.contains(c['_id']))
+//         .toList();
+
+//     if (selectedCustomers.isEmpty) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//           content: Text('No customers selected'),
+//           backgroundColor: Colors.orange,
+//         ),
+//       );
+//       return;
+//     }
+
+//     // Show confirmation dialog with customer list
+//     final shouldProceed = await showDialog<bool>(
+//       context: context,
+//       builder: (context) => AlertDialog(
+//         title: const Text('Share Poster'),
+//         content: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Text(
+//               'Share poster with ${selectedCustomers.length} customer${selectedCustomers.length != 1 ? 's' : ''}?',
+//               style: const TextStyle(fontWeight: FontWeight.bold),
+//             ),
+//             const SizedBox(height: 16),
+//             const Text(
+//               'The poster will be shared via WhatsApp. You\'ll need to send it to each customer individually.',
+//               style: TextStyle(fontSize: 12, color: Colors.grey),
+//             ),
+//             const SizedBox(height: 16),
+//             Container(
+//               constraints: const BoxConstraints(maxHeight: 200),
+//               child: SingleChildScrollView(
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: selectedCustomers.map((customer) {
+//                     return Padding(
+//                       padding: const EdgeInsets.symmetric(vertical: 4),
+//                       child: Row(
+//                         children: [
+//                           const Icon(Icons.person, size: 16, color: Colors.deepPurple),
+//                           const SizedBox(width: 8),
+//                           Expanded(
+//                             child: Text(
+//                               '${customer['name']} - ${customer['mobile']}',
+//                               style: const TextStyle(fontSize: 13),
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     );
+//                   }).toList(),
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context, false),
+//             child: const Text('Cancel'),
+//           ),
+//           ElevatedButton(
+//             onPressed: () => Navigator.pop(context, true),
+//             style: ElevatedButton.styleFrom(
+//               backgroundColor: Colors.deepPurple,
+//               foregroundColor: Colors.white,
+//             ),
+//             child: const Text('Continue'),
+//           ),
+//         ],
+//       ),
+//     );
+
+//     if (shouldProceed != true) return;
+
+//     // Share with each customer one by one
+//     int currentIndex = 0;
+
+//     for (var customer in selectedCustomers) {
+//       currentIndex++;
+//       final mobile = customer['mobile']?.toString() ?? '';
+//       final name = customer['name']?.toString() ?? 'Customer';
+
+//       if (mobile.isEmpty) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('No mobile number for $name'),
+//             backgroundColor: Colors.orange,
+//             duration: const Duration(seconds: 2),
+//           ),
+//         );
+//         continue;
+//       }
+
+//       try {
+//         // Clean phone number
+//         String cleanNumber = mobile.replaceAll(RegExp(r'[^\d+]'), '');
+//         if (!cleanNumber.startsWith('+')) {
+//           if (cleanNumber.length == 10) {
+//             cleanNumber = '+91$cleanNumber';
+//           }
+//         }
+
+//         // Show progress
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('Sharing with $name ($currentIndex/${selectedCustomers.length})'),
+//             backgroundColor: Colors.blue,
+//             duration: const Duration(seconds: 2),
+//           ),
+//         );
+
+//         // Share via WhatsApp with the specific phone number
+//         final result = await Share.shareXFiles(
+//           [XFile(file.path)],
+//           text: 'Hi $name, check out this poster!',
+//         );
+
+//         // Add delay between shares to allow user to send each one
+//         if (currentIndex < selectedCustomers.length) {
+//           await Future.delayed(const Duration(seconds: 2));
+//         }
+
+//       } catch (e) {
+//         debugPrint('Error sharing with $name: $e');
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('Error sharing with $name: $e'),
+//             backgroundColor: Colors.red,
+//             duration: const Duration(seconds: 3),
+//           ),
+//         );
+//       }
+//     }
+
+//     // Show completion message
+//     if (mounted) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text('Sharing process completed for ${selectedCustomers.length} customers'),
+//           backgroundColor: Colors.green,
+//           duration: const Duration(seconds: 3),
+//           action: SnackBarAction(
+//             label: 'OK',
+//             textColor: Colors.white,
+//             onPressed: () {},
+//           ),
+//         ),
+//       );
+//     }
+//   } catch (e) {
+//     if (Navigator.of(context).canPop()) {
+//       Navigator.of(context).pop();
+//     }
+
+//     if (mounted) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text('Error preparing poster: $e'),
+//           backgroundColor: Colors.red,
+//           duration: const Duration(seconds: 4),
+//         ),
+//       );
+//     }
+//   }
+// }
 
   void _selectTextElement(TextElement element) {
     setState(() {
@@ -4214,7 +4389,7 @@ Future<void> _sharePosterWithSelectedCustomers(
           ),
           TextButton(
             onPressed: _pickLogoImage,
-            child: const Text("Logo", style: TextStyle(color: Colors.white)),
+            child: const AppText("logo", style: TextStyle(color: Colors.white)),
           ),
           // CHANGE THIS CONDITION:
           if (_selectedTextElement != null ||
@@ -4272,7 +4447,7 @@ Future<void> _sharePosterWithSelectedCustomers(
                   children: [
                     Icon(Icons.image, color: Colors.black),
                     SizedBox(width: 8),
-                    Text('Save Poster'),
+                    AppText('save_poster'),
                   ],
                 ),
               ),
@@ -4282,7 +4457,7 @@ Future<void> _sharePosterWithSelectedCustomers(
                   children: [
                     Icon(Icons.share, color: Colors.black),
                     SizedBox(width: 8),
-                    Text('Share Poster'),
+                    AppText('share_poster'),
                   ],
                 ),
               ),
@@ -4292,7 +4467,7 @@ Future<void> _sharePosterWithSelectedCustomers(
                   children: [
                     Icon(Icons.people, color: Colors.deepPurple),
                     SizedBox(width: 8),
-                    Text('Share to Customers'),
+                    AppText('share_to_customers'),
                   ],
                 ),
               ),

@@ -9,6 +9,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/models/create_poster_model.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
+import 'package:posternova/providers/customer/customer_provider.dart';
+import 'package:posternova/views/chat/chat_module.dart';
 import 'package:posternova/views/createposter/create_poster_screen.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +28,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactBottomBar extends StatelessWidget {
   final String email;
@@ -176,6 +179,8 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
   String? _imageBase64;
   String? profileImage;
 
+  String? userId;
+
   final List<Color> _presetColors = [
     Colors.black,
     Colors.white,
@@ -245,6 +250,7 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
         phoneNumber = userData.user.mobile ?? phoneNumber;
         email = userData.user.email ?? email;
         name = userData.user.name ?? name;
+        userId = userData.user.id ?? userId;
 
         // Update text controllers
         _emailInfoController.text = email.toString();
@@ -261,6 +267,946 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
       }
     }
   }
+
+  Future<void> _showCustomerSelectionDialog() async {
+    final customerProvider = Provider.of<CreateCustomerProvider>(
+      context,
+      listen: false,
+    );
+
+    if (customerProvider.customers.isEmpty) {
+      await customerProvider.fetchUser(userId.toString());
+    }
+
+    if (customerProvider.customers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No customers available. Please add customers first.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    List<String> religions = customerProvider.customers
+        .where(
+          (customer) =>
+              customer['religion'] != null &&
+              customer['religion'].toString().trim().isNotEmpty,
+        )
+        .map((customer) => customer['religion'].toString().trim())
+        .toSet()
+        .toList();
+
+    religions.sort();
+    religions.insert(0, 'All');
+
+    String selectedReligion = 'All';
+    Set<String> selectedCustomerIds = {};
+
+    List<Map<String, dynamic>> filteredCustomers() {
+      if (selectedReligion == 'All') {
+        return customerProvider.customers;
+      } else {
+        return customerProvider.customers
+            .where(
+              (customer) =>
+                  customer['religion']?.toString() == selectedReligion,
+            )
+            .toList();
+      }
+    }
+
+    final screenW = MediaQuery.sizeOf(context).width;
+    final screenH = MediaQuery.sizeOf(context).height;
+    final bool isSmall = screenW < 400;
+    final double dialogWidth = screenW < 600 ? screenW * 0.92 : 520.0;
+    final double dialogMaxH = screenH * 0.82;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final filtered = filteredCustomers();
+          final bool allSelected =
+              filtered.isNotEmpty &&
+              selectedCustomerIds.length == filtered.length &&
+              filtered.every(
+                (c) => selectedCustomerIds.contains(c['_id'] as String),
+              );
+
+          return Dialog(
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: isSmall ? 10 : 24,
+              vertical: 32,
+            ),
+            shape: const RoundedRectangleBorder(),
+            clipBehavior: Clip.antiAliasWithSaveLayer,
+            backgroundColor: Colors.white,
+            child: SizedBox(
+              width: dialogWidth,
+              height: dialogMaxH,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF6366F1), Color(0xFF818CF8)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                    ),
+                    padding: const EdgeInsets.only(
+                      left: 20,
+                      right: 12,
+                      top: 18,
+                      bottom: 16,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.people_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Share Customers',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (selectedCustomerIds.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Text(
+                              '${selectedCustomerIds.length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Religion filter chips
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    child: SizedBox(
+                      height: 36,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: religions.length,
+                        itemBuilder: (_, index) {
+                          final r = religions[index];
+                          final bool isActive = r == selectedReligion;
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: index < religions.length - 1 ? 8 : 0,
+                            ),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeInOut,
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? const Color(0xFF6366F1)
+                                    : const Color(0xFFF1F1FF),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(18),
+                                onTap: () {
+                                  setDialogState(() {
+                                    selectedReligion = r;
+                                    selectedCustomerIds.clear();
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
+                                  child: Text(
+                                    r,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: isActive
+                                          ? Colors.white
+                                          : const Color(0xFF6366F1),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // Info row with select all
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${filtered.length} customer${filtered.length != 1 ? 's' : ''}',
+                          style: const TextStyle(
+                            color: Color(0xFF6366F1),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (filtered.isNotEmpty)
+                          InkWell(
+                            onTap: () {
+                              setDialogState(() {
+                                if (allSelected) {
+                                  selectedCustomerIds.clear();
+                                } else {
+                                  selectedCustomerIds = filtered
+                                      .map((c) => c['_id'] as String)
+                                      .toSet();
+                                }
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    allSelected
+                                        ? Icons.deselect
+                                        : Icons.select_all,
+                                    size: 18,
+                                    color: const Color(0xFF6366F1),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    allSelected ? 'Deselect All' : 'Select All',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF6366F1),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Customer list
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.group_off_rounded,
+                                  size: 52,
+                                  color: Color(0xFFD1D5DB),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'No customers found',
+                                  style: TextStyle(
+                                    color: Color(0xFF6B7280),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                if (selectedReligion != 'All')
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'in "$selectedReligion"',
+                                      style: const TextStyle(
+                                        color: Color(0xFF9CA3AF),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final customer = filtered[index];
+                              final customerId = customer['_id'] as String;
+                              final bool isSelected = selectedCustomerIds
+                                  .contains(customerId);
+                              final String name =
+                                  customer['name']?.toString() ?? 'Unknown';
+                              final String? mobile = customer['mobile']
+                                  ?.toString();
+                              final String? email = customer['email']
+                                  ?.toString();
+                              final String? religion = customer['religion']
+                                  ?.toString();
+                              final String initial = name.isNotEmpty
+                                  ? name[0].toUpperCase()
+                                  : 'U';
+
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.easeInOut,
+                                margin: const EdgeInsets.only(bottom: 4),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0xFFEEEFFF)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0xFF6366F1)
+                                        : const Color(0xFFE8E8F0),
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: InkWell(
+                                  onTap: () {
+                                    setDialogState(() {
+                                      if (isSelected) {
+                                        selectedCustomerIds.remove(customerId);
+                                      } else {
+                                        selectedCustomerIds.add(customerId);
+                                      }
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: Checkbox(
+                                            value: isSelected,
+                                            onChanged: (_) {
+                                              setDialogState(() {
+                                                if (isSelected) {
+                                                  selectedCustomerIds.remove(
+                                                    customerId,
+                                                  );
+                                                } else {
+                                                  selectedCustomerIds.add(
+                                                    customerId,
+                                                  );
+                                                }
+                                              });
+                                            },
+                                            activeColor: const Color(
+                                              0xFF6366F1,
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFFB0B0C0),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        CircleAvatar(
+                                          radius: 22,
+                                          backgroundColor: const Color(
+                                            0xFF6366F1,
+                                          ),
+                                          child: Text(
+                                            initial,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                name,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF1E1B4B),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              if (mobile != null ||
+                                                  email != null)
+                                                const SizedBox(height: 2),
+                                              if (mobile != null)
+                                                Text(
+                                                  mobile,
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Color(0xFF6B7280),
+                                                  ),
+                                                ),
+                                              if (email != null)
+                                                Text(
+                                                  email,
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    color: Color(0xFF9CA3AF),
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (religion != null)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF1F1FF),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Text(
+                                              religion,
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Color(0xFF6366F1),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+
+                  // Footer
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmall ? 12 : 16,
+                      vertical: 14,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF9FAFB),
+                      border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+                    ),
+                    child: Row(
+                      children: [
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF6B7280),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmall ? 12 : 16,
+                              vertical: 10,
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        const Spacer(),
+                        AnimatedOpacity(
+                          opacity: selectedCustomerIds.isNotEmpty ? 1.0 : 0.45,
+                          duration: const Duration(milliseconds: 200),
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6366F1),
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: const Color(0xFFACAFE8),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isSmall ? 16 : 22,
+                                vertical: 10,
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: selectedCustomerIds.isEmpty
+                                ? null
+                                : () async {
+                                    Navigator.pop(context);
+                                    await _sharePosterWithSelectedCustomers(
+                                      selectedCustomerIds,
+                                      filteredCustomers(),
+                                    );
+                                  },
+                            icon: const Icon(Icons.share_rounded, size: 18),
+                            label: Text(
+                              'Share (${selectedCustomerIds.length})',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Future<void> _sharePosterWithSelectedCustomers(
+  //   Set<String> selectedCustomerIds,
+  //   List<Map<String, dynamic>> allCustomers,
+  // ) async {
+  //   try {
+  //     showDialog(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (context) => const AlertDialog(
+  //         content: Row(
+  //           children: [
+  //             CircularProgressIndicator(),
+  //             SizedBox(width: 16),
+  //             Text('Preparing poster...'),
+  //           ],
+  //         ),
+  //       ),
+  //     );
+
+  //     // Generate poster image
+  //     RenderRepaintBoundary boundary =
+  //         _posterKey.currentContext!.findRenderObject()
+  //             as RenderRepaintBoundary;
+  //     ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+  //     ByteData? byteData = await image.toByteData(
+  //       format: ui.ImageByteFormat.png,
+  //     );
+  //     Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+  //     final directory = await getTemporaryDirectory();
+  //     final file = File(
+  //       '${directory.path}/poster_share_${DateTime.now().millisecondsSinceEpoch}.png',
+  //     );
+  //     await file.writeAsBytes(pngBytes);
+
+  //     Navigator.of(context).pop(); // Close loading dialog
+
+  //     final selectedCustomers = allCustomers
+  //         .where((c) => selectedCustomerIds.contains(c['_id']))
+  //         .toList();
+
+  //     if (selectedCustomers.isEmpty) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('No customers selected'),
+  //           backgroundColor: Colors.orange,
+  //         ),
+  //       );
+  //       return;
+  //     }
+
+  //     // Share to each customer
+  //     for (int i = 0; i < selectedCustomers.length; i++) {
+  //       final customer = selectedCustomers[i];
+  //       final mobile = customer['mobile']?.toString() ?? '';
+  //       final name = customer['name']?.toString() ?? 'Customer';
+
+  //       if (mobile.isEmpty) {
+  //         continue;
+  //       }
+
+  //       try {
+  //         String cleanNumber = mobile.replaceAll(RegExp(r'[^\d+]'), '');
+  //         if (!cleanNumber.startsWith('+')) {
+  //           if (cleanNumber.length == 10) {
+  //             cleanNumber = '+91$cleanNumber';
+  //           }
+  //         }
+
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text(
+  //               'Sharing with $name (${i + 1}/${selectedCustomers.length})',
+  //             ),
+  //             backgroundColor: Colors.blue,
+  //             duration: const Duration(seconds: 1),
+  //           ),
+  //         );
+
+  //         final whatsappUrl =
+  //             'whatsapp://send?phone=$cleanNumber&text=${Uri.encodeComponent("Hi $name, check out this poster!")}';
+
+  //         if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
+  //           await launchUrl(
+  //             Uri.parse(whatsappUrl),
+  //             mode: LaunchMode.externalApplication,
+  //           );
+
+  //           await Future.delayed(const Duration(milliseconds: 1500));
+
+  //           await Share.shareXFiles([
+  //             XFile(file.path),
+  //           ], text: 'Hi $name, check out this poster!');
+  //         } else {
+  //           await Share.shareXFiles([
+  //             XFile(file.path),
+  //           ], text: 'Hi $name, check out this poster!');
+  //         }
+
+  //         if (i < selectedCustomers.length - 1) {
+  //           await Future.delayed(const Duration(seconds: 2));
+  //         }
+  //       } catch (e) {
+  //         debugPrint('Error sharing with $name: $e');
+  //       }
+  //     }
+
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             'Poster sharing completed for ${selectedCustomers.length} customer${selectedCustomers.length != 1 ? 's' : ''}',
+  //           ),
+  //           backgroundColor: Colors.green,
+  //           duration: const Duration(seconds: 3),
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     if (Navigator.of(context).canPop()) {
+  //       Navigator.of(context).pop();
+  //     }
+
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Error: $e'),
+  //           backgroundColor: Colors.red,
+  //           duration: const Duration(seconds: 4),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
+
+  // Future<void> _sharePosterWithSelectedCustomers(
+  //   Set<String> selectedCustomerIds,
+  //   List<Map<String, dynamic>> allCustomers,
+  // ) async {
+  //   try {
+  //     showDialog(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (context) => const AlertDialog(
+  //         content: Row(
+  //           children: [
+  //             CircularProgressIndicator(),
+  //             SizedBox(width: 16),
+  //             Text('Preparing poster...'),
+  //           ],
+  //         ),
+  //       ),
+  //     );
+
+  //     // Generate poster image
+  //     RenderRepaintBoundary boundary =
+  //         _posterKey.currentContext!.findRenderObject()
+  //             as RenderRepaintBoundary;
+  //     ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+  //     ByteData? byteData = await image.toByteData(
+  //       format: ui.ImageByteFormat.png,
+  //     );
+  //     Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+  //     final directory = await getTemporaryDirectory();
+  //     final file = File(
+  //       '${directory.path}/poster_share_${DateTime.now().millisecondsSinceEpoch}.png',
+  //     );
+  //     await file.writeAsBytes(pngBytes);
+
+  //     Navigator.of(context).pop(); // Close loading dialog
+
+  //     final selectedCustomers = allCustomers
+  //         .where((c) => selectedCustomerIds.contains(c['_id']))
+  //         .toList();
+
+  //     if (selectedCustomers.isEmpty) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('No customers selected'),
+  //           backgroundColor: Colors.orange,
+  //         ),
+  //       );
+  //       return;
+  //     }
+
+  //     // Share to each customer
+  //     for (int i = 0; i < selectedCustomers.length; i++) {
+  //       final customer = selectedCustomers[i];
+  //       final mobile = customer['mobile']?.toString() ?? '';
+  //       final name = customer['name']?.toString() ?? 'Customer';
+
+  //       if (mobile.isEmpty) {
+  //         continue;
+  //       }
+
+  //       try {
+  //         String cleanNumber = mobile.replaceAll(RegExp(r'[^\d+]'), '');
+  //         if (!cleanNumber.startsWith('+')) {
+  //           if (cleanNumber.length == 10) {
+  //             cleanNumber = '+91$cleanNumber';
+  //           }
+  //         }
+
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text(
+  //               'Sharing with $name (${i + 1}/${selectedCustomers.length})',
+  //             ),
+  //             backgroundColor: Colors.blue,
+  //             duration: const Duration(seconds: 1),
+  //           ),
+  //         );
+
+  //         // Share directly with image
+  //         await Share.shareXFiles([
+  //           XFile(file.path),
+  //         ], text: 'Hi $name, check out this poster!');
+
+  //         // Wait before sharing to next customer
+  //         if (i < selectedCustomers.length - 1) {
+  //           await Future.delayed(const Duration(seconds: 2));
+  //         }
+  //       } catch (e) {
+  //         debugPrint('Error sharing with $name: $e');
+  //       }
+  //     }
+
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             'Poster sharing completed for ${selectedCustomers.length} customer${selectedCustomers.length != 1 ? 's' : ''}',
+  //           ),
+  //           backgroundColor: Colors.green,
+  //           duration: const Duration(seconds: 3),
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     if (Navigator.of(context).canPop()) {
+  //       Navigator.of(context).pop();
+  //     }
+
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Error: $e'),
+  //           backgroundColor: Colors.red,
+  //           duration: const Duration(seconds: 4),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
+
+
+
+
+//   Future<void> _sharePosterWithSelectedCustomers(
+//   Set<String> selectedCustomerIds,
+//   List<Map<String, dynamic>> allCustomers,
+// ) async {
+//   try {
+//     // showDialog(
+//     //   context: context,
+//     //   barrierDismissible: false,
+//     //   builder: (context) => const AlertDialog(
+//     //     content: Row(
+//     //       children: [
+//     //         CircularProgressIndicator(),
+//     //         // SizedBox(width: 16),
+//     //         // Text('Preparing poster...'),
+//     //       ],
+//     //     ),
+//     //   ),
+//     // );
+
+//     // Generate poster image
+//     RenderRepaintBoundary boundary =
+//         _posterKey.currentContext!.findRenderObject()
+//             as RenderRepaintBoundary;
+//     ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+//     ByteData? byteData = await image.toByteData(
+//       format: ui.ImageByteFormat.png,
+//     );
+//     Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+//     final directory = await getTemporaryDirectory();
+//     final file = File(
+//       '${directory.path}/poster_share_${DateTime.now().millisecondsSinceEpoch}.png',
+//     );
+//     await file.writeAsBytes(pngBytes);
+
+//     Navigator.of(context).pop(); // Close loading dialog
+
+//     final selectedCustomers = allCustomers
+//         .where((c) => selectedCustomerIds.contains(c['_id']))
+//         .toList();
+
+//     if (selectedCustomers.isEmpty) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//           content: Text('No customers selected'),
+//           backgroundColor: Colors.orange,
+//         ),
+//       );
+//       return;
+//     }
+
+//     // Navigate to ChatModule with poster and selected customers
+//     Navigator.push(
+//       context,
+//       MaterialPageRoute(
+//         builder: (context) => ChatModule(
+//           posterImagePath: file.path,
+//           selectedCustomers: selectedCustomers,
+//         ),
+//       ),
+//     );
+    
+//   } catch (e) {
+//     if (Navigator.of(context).canPop()) {
+//       Navigator.of(context).pop();
+//     }
+
+//     if (mounted) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text('Error: $e'),
+//           backgroundColor: Colors.red,
+//           duration: const Duration(seconds: 4),
+//         ),
+//       );
+//     }
+//   }
+// }
+
+
+
+Future<void> _sharePosterWithSelectedCustomers(
+  Set<String> selectedCustomerIds,
+  List<Map<String, dynamic>> allCustomers,
+) async {
+  try {
+    // Generate poster image WITHOUT showing dialog
+    RenderRepaintBoundary boundary =
+        _posterKey.currentContext!.findRenderObject()
+            as RenderRepaintBoundary;
+    ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+    ByteData? byteData = await image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+    Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+    final directory = await getTemporaryDirectory();
+    final file = File(
+      '${directory.path}/poster_share_${DateTime.now().millisecondsSinceEpoch}.png',
+    );
+    await file.writeAsBytes(pngBytes);
+
+    final selectedCustomers = allCustomers
+        .where((c) => selectedCustomerIds.contains(c['_id']))
+        .toList();
+
+    if (selectedCustomers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No customers selected'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Navigate to ChatModule
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatModule(
+          posterImagePath: file.path,
+          selectedCustomers: selectedCustomers,
+        ),
+      ),
+    );
+    
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+}
 
   Future<void> _loadProfileImageFromUserData(String profileImagePath) async {
     try {
@@ -3674,21 +4620,65 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
-          if (_posterImage != null)
-            IconButton(
-              icon: const Icon(Icons.center_focus_strong),
-              onPressed: _resetBackgroundZoom,
-              tooltip: 'Reset Zoom',
-            ),
-          IconButton(
-            icon: const Icon(Icons.save_alt),
-            onPressed: _savePoster,
-            tooltip: 'Save Poster',
-          ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: _sharePoster,
-            tooltip: 'Share Poster',
+          // if (_posterImage != null)
+          //   IconButton(
+          //     icon: const Icon(Icons.center_focus_strong),
+          //     onPressed: _resetBackgroundZoom,
+          //     tooltip: 'Reset Zoom',
+          //   ),
+          // IconButton(
+          //   icon: const Icon(Icons.save_alt),
+          //   onPressed: _savePoster,
+          //   tooltip: 'Save Poster',
+          // ),
+          // IconButton(
+          //   icon: const Icon(Icons.share),
+          //   onPressed: _sharePoster,
+          //   tooltip: 'Share Poster',
+          // ),
+          PopupMenuButton(
+            icon: const Icon(Icons.more_vert),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'save',
+                child: Row(
+                  children: [
+                    Icon(Icons.save_alt, color: Colors.black),
+                    SizedBox(width: 8),
+                    AppText('save_poster'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'share',
+                child: Row(
+                  children: [
+                    Icon(Icons.share, color: Colors.black),
+                    SizedBox(width: 8),
+                    AppText('share_poster'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'share_customers',
+                child: Row(
+                  children: [
+                    Icon(Icons.people, color: Colors.deepPurple),
+                    SizedBox(width: 8),
+                    AppText('share_to_customers'),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              if (value == 'save') {
+                _savePoster();
+              } else if (value == 'share') {
+                _sharePoster();
+              } else if (value == 'share_customers') {
+                _showCustomerSelectionDialog();
+              }
+            },
           ),
           // IconButton(
           //   icon: const Icon(Icons.save),

@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:gal/gal.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -715,10 +716,10 @@ setState(() {
               ),
             ),
             const SizedBox(height: 32),
-            Text(
+            AppText(
               _isImageGenerationMode
                   ? 'Create Amazing Posters'
-                  : 'Start chat with Chicha',
+                  : 'chat_with_chicha',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -727,10 +728,10 @@ setState(() {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            Text(
+            AppText(
               _isImageGenerationMode
                   ? 'Describe your poster and let AI create it'
-                  : 'Ask me anything!',
+                  : 'ask_me_anything',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
@@ -764,8 +765,8 @@ setState(() {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              _isImageGenerationMode ? 'Post with Chicha' : 'Chat with Chicha',
+            AppText(
+              _isImageGenerationMode ? 'Post with Chicha' : 'chat_with_chicha',
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
             ),
           ],
@@ -797,8 +798,8 @@ actions: [
             color: Colors.white,
           ),
           const SizedBox(height: 2),
-          Text(
-            _isImageGenerationMode ? 'Chat' : 'Poster',
+          AppText(
+            _isImageGenerationMode ? 'Chat' : 'poster',
             style: const TextStyle(
               fontSize: 11,
               color: Colors.white,

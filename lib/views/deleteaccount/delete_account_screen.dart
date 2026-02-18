@@ -219,7 +219,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                           ),
                           const SizedBox(height: 4),
                           AppText(
-                            'action_permanent.',
+                            'action_permanent',
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],
@@ -317,7 +317,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   contentPadding: EdgeInsets.zero,
                   controlAffinity: ListTileControlAffinity.leading,
                   title: AppText(
-                    'I understand that deleting my account is permanent and all my data will be lost',
+                    'delete_confirm_understand',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),

@@ -425,6 +425,7 @@
 //   }
 // }
 
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -644,28 +645,58 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
     }
   }
 
-  Future<void> _saveImage() async {
-    if (_processedImage == null) return;
+  // Future<void> _saveImage() async {
+  //   if (_processedImage == null) return;
 
-    try {
-      final hasPermission = await _requestStoragePermission();
-      if (!hasPermission) {
+  //   try {
+  //     final hasPermission = await _requestStoragePermission();
+  //     if (!hasPermission) {
+  //       _showErrorSnackBar('Storage permission is required to save images');
+  //       return;
+  //     }
+
+  //     final tempDir = await getTemporaryDirectory();
+  //     final timestamp = DateTime.now().millisecondsSinceEpoch;
+  //     final fileName = 'bg_removed_$timestamp.png';
+  //     final tempFile = File('${tempDir.path}/$fileName');
+  //     await tempFile.writeAsBytes(_processedImage!);
+  //     await Gal.putImage(tempFile.path, album: 'Background Remover');
+  //     await tempFile.delete();
+  //     _showSuccessSnackBar('Saved to gallery — "Background Remover"');
+  //   } catch (e) {
+  //     _showErrorSnackBar('Failed to save image: ${e.toString()}');
+  //   }
+  // }
+
+Future<void> _saveImage() async {
+  if (_processedImage == null) return;
+
+  try {
+    final hasPermission = await _requestStoragePermission();
+    if (!hasPermission) {
+      if (mounted) {
         _showErrorSnackBar('Storage permission is required to save images');
-        return;
       }
+      return;
+    }
 
-      final tempDir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'bg_removed_$timestamp.png';
-      final tempFile = File('${tempDir.path}/$fileName');
-      await tempFile.writeAsBytes(_processedImage!);
-      await Gal.putImage(tempFile.path, album: 'Background Remover');
-      await tempFile.delete();
+    final tempDir = await getTemporaryDirectory();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final fileName = 'bg_removed_$timestamp.png';
+    final tempFile = File('${tempDir.path}/$fileName');
+    await tempFile.writeAsBytes(_processedImage!);
+    await Gal.putImage(tempFile.path, album: 'Background Remover');
+    await tempFile.delete();
+    if (mounted) {
       _showSuccessSnackBar('Saved to gallery — "Background Remover"');
-    } catch (e) {
+    }
+  } catch (e) {
+    if (mounted) {
       _showErrorSnackBar('Failed to save image: ${e.toString()}');
     }
   }
+}
+  
 
   Future<void> _shareImage() async {
     if (_processedImage == null) return;
@@ -959,8 +990,8 @@ class _BackgroundRemoverScreenState extends State<BackgroundRemoverScreen>
                         ),
                       )
                     : Icon(Icons.auto_fix_high_outlined, color: Colors.white),
-                label: Text(
-                  _isProcessing ? 'Processing...' : 'Remove Background',
+                label: AppText(
+                  _isProcessing ? 'Processing...' : 'remove_background',
                   style: TextStyle(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -1186,9 +1217,9 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       _buildActionButton(
                         icon: Icons.download_outlined,
                         label: 'Save',
-                        onPressed: () {
+                        onPressed: ()async {
                           widget.onSave();
-                          Navigator.pop(context);
+                          // Navigator.pop(context);
                         },
                       ),
                       _buildActionButton(

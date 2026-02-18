@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/views/logo/logo_history.dart';
 import 'dart:convert';
-
 import 'package:posternova/views/logo/logo_screen.dart';
 import 'package:posternova/widgets/language_widget.dart';
 
@@ -20,6 +20,8 @@ class _LogoCategoryState extends State<LogoCategory> {
   String? errorMessage;
   final TextEditingController _searchController = TextEditingController();
   bool isSearching = false;
+
+  String? userId;
 
   @override
   void initState() {
@@ -49,8 +51,14 @@ class _LogoCategoryState extends State<LogoCategory> {
 
   Future<void> fetchCategories() async {
     try {
+      final userData = await AuthPreferences.getUserData();
+      final fetchedUserId = userData?.user.id;
+
+       setState(() {
+        userId = fetchedUserId; // Store it
+      });
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/admin/getlogocategories'),
+        Uri.parse('http://31.97.206.144:4061/api/admin/getlogocategories/$userId'),
       );
 
       if (response.statusCode == 200) {
@@ -87,8 +95,8 @@ class _LogoCategoryState extends State<LogoCategory> {
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Search categories...',
+                decoration:  InputDecoration(
+                  hintText: AppText.translate(context, 'search_categories'),
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.grey),
                 ),
@@ -117,15 +125,15 @@ class _LogoCategoryState extends State<LogoCategory> {
             },
             icon: Icon(isSearching ? Icons.close : Icons.search),
           ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LogoHistory()),
-              );
-            },
-            icon: const Icon(Icons.history_sharp),
-          ),
+          // IconButton(
+          //   onPressed: () {
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(builder: (context) => LogoHistory()),
+          //     );
+          //   },
+          //   icon: const Icon(Icons.history_sharp),
+          // ),
         ],
       ),
       body: isLoading
@@ -204,7 +212,7 @@ class _LogoCategoryState extends State<LogoCategory> {
                 itemCount: filteredCategories.length,
                 itemBuilder: (context, index) {
                   final category = filteredCategories[index];
-                  return CategoryCard(category: category);
+                  return CategoryCard(category: category,userId: userId!,);
                 },
               ),
             ),
@@ -214,8 +222,9 @@ class _LogoCategoryState extends State<LogoCategory> {
 
 class CategoryCard extends StatelessWidget {
   final CategoryModel category;
+   final String userId;
 
-  const CategoryCard({super.key, required this.category});
+  const CategoryCard({super.key, required this.category,required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -229,7 +238,7 @@ class CategoryCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => LogoMakingScreen(categoryId: category.id),
+              builder: (context) => LogoMakingScreen(categoryId: category.id,userId: userId,),
             ),
           );
         },
