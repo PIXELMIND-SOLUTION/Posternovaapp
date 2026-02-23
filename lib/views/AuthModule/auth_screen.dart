@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:posternova/models/register_model.dart';
@@ -218,52 +219,56 @@ Future<void> _handleLogin() async {
     return;
   }
 
-    // ✅ BYPASS NUMBER
-  if (mobile == "9849008143") {
-    setState(() {
-      _showOtpField = true;
-      _pendingMobile = mobile;
-    });
-
-    _showSnackBar("Enter test OTP");
-    return;
-  }
-
   final phone = "+91$mobile";
 
-  await _firebaseAuth.verifyPhoneNumber(
-    phoneNumber: phone,
+  try {
+    // 🔥 IMPORTANT FOR IOS
+    await FirebaseMessaging.instance.requestPermission();
+    await FirebaseMessaging.instance.getToken();
 
-    verificationCompleted: (PhoneAuthCredential credential) async {
-      // Auto-verification (Android)
-      await _firebaseAuth.signInWithCredential(credential);
+    // Give iOS time to register APNs
+    await Future.delayed(const Duration(seconds: 2));
 
-      final idToken =
-          await _firebaseAuth.currentUser!.getIdToken();
+    String? apnsToken =
+        await FirebaseMessaging.instance.getAPNSToken();
 
-      await _callBackendVerify(idToken.toString());
-    },
+    print("APNS TOKEN: $apnsToken");
 
-    verificationFailed: (FirebaseAuthException e) {
-      print("dddddddddddddddddddddddddd4${e.message}");
-      _showSnackBar(e.message ?? "Verification failed");
-    },
+    if (apnsToken == null) {
+      _showSnackBar("Device not ready. Try again.");
+      return;
+    }
 
-    codeSent: (verificationId, resendToken) {
-      setState(() {
+    // ✅ NOW call verifyPhoneNumber
+    await _firebaseAuth.verifyPhoneNumber(
+      phoneNumber: phone,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        await _firebaseAuth.signInWithCredential(credential);
+
+        final idToken =
+            await _firebaseAuth.currentUser!.getIdToken();
+
+        await _callBackendVerify(idToken.toString());
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        _showSnackBar(e.message ?? "Verification failed");
+      },
+      codeSent: (verificationId, resendToken) {
+        setState(() {
+          _verificationId = verificationId;
+          _showOtpField = true;
+        });
+
+        _showSnackBar("OTP sent via Firebase");
+      },
+      codeAutoRetrievalTimeout: (verificationId) {
         _verificationId = verificationId;
-        _showOtpField = true;
-      });
-
-      _showSnackBar("OTP sent via Firebase");
-    },
-
-    codeAutoRetrievalTimeout: (verificationId) {
-      _verificationId = verificationId;
-    },
-  );
+      },
+    );
+  } catch (e) {
+    print("PhoneAuth Error: $e");
+  }
 }
-
 
 
 
