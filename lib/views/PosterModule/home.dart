@@ -1624,12 +1624,12 @@ Future<void> _loadSectionPreferences() async {
         'color': Color.fromRGBO(11, 245, 124, 1),
         'screen': CustomerList(),
       },
-      {
-        'nameKey': 'edit_poster',
-        'icon': Icons.text_fields_outlined,
-        'color': Color(0xFF8B5CF6),
-        'screen': ImageEditorScreen(),
-      },
+      // {
+      //   'nameKey': 'text_remover',
+      //   'icon': Icons.text_fields_outlined,
+      //   'color': Color(0xFF8B5CF6),
+      //   'screen': ImageEditorScreen(),
+      // },
       {
         'nameKey': 'categories',
         'icon': Icons.category_outlined,

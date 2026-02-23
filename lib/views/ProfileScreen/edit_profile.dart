@@ -541,6 +541,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'dart:io';
@@ -574,9 +575,53 @@ class _EditProfileState extends State<EditProfile> {
     _fetchProfile();
   }
 
+  // Future<void> _fetchProfile() async {
+  //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  //   final userId = authProvider.user?.user.id;
+
+  //   if (userId == null) {
+  //     setState(() => _isLoading = false);
+  //     _showErrorSnackBar('User not logged in');
+  //     return;
+  //   }
+
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse('$_baseUrl/get-profile/$userId'),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final data = json.decode(response.body);
+  //       setState(() {
+  //         _nameController.text = data['name'] ?? '';
+  //         _emailController.text = data['email'] ?? '';
+  //         _mobileController.text = data['mobile'] ?? '';
+  //         _dobController.text = data['dob'] ?? '';
+  //         _anniversaryController.text = data['marriageAnniversaryDate'] ?? '';
+  //         _profileImageUrl = data['profileImage'];
+  //         _isLoading = false;
+  //       });
+  //     } else {
+  //       throw Exception('Failed to load profile');
+  //     }
+  //   } catch (e) {
+  //     setState(() => _isLoading = false);
+  //     _showErrorSnackBar('Failed to load profile: $e');
+  //   }
+  // }
+
+
+
   Future<void> _fetchProfile() async {
+  try {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userId = authProvider.user?.user.id;
+    String? userId = authProvider.user?.user.id;
+
+    // Fallback to local storage if provider hasn't rehydrated
+    if (userId == null) {
+      final userData = await AuthPreferences.getUserData();
+      userId = userData?.user.id;
+    }
 
     if (userId == null) {
       setState(() => _isLoading = false);
@@ -584,30 +629,29 @@ class _EditProfileState extends State<EditProfile> {
       return;
     }
 
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/get-profile/$userId'),
-      );
+    final response = await http.get(
+      Uri.parse('$_baseUrl/get-profile/$userId'),
+    );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _nameController.text = data['name'] ?? '';
-          _emailController.text = data['email'] ?? '';
-          _mobileController.text = data['mobile'] ?? '';
-          _dobController.text = data['dob'] ?? '';
-          _anniversaryController.text = data['marriageAnniversaryDate'] ?? '';
-          _profileImageUrl = data['profileImage'];
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load profile');
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      _showErrorSnackBar('Failed to load profile: $e');
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        _nameController.text = data['name'] ?? '';
+        _emailController.text = data['email'] ?? '';
+        _mobileController.text = data['mobile'] ?? '';
+        _dobController.text = data['dob'] ?? '';
+        _anniversaryController.text = data['marriageAnniversaryDate'] ?? '';
+        _profileImageUrl = data['profileImage'];
+        _isLoading = false;
+      });
+    } else {
+      throw Exception('Failed to load profile');
     }
+  } catch (e) {
+    setState(() => _isLoading = false);
+    _showErrorSnackBar('Failed to load profile: $e');
   }
+}
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -676,64 +720,120 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
+  // Future<void> _updateProfile() async {
+  //   if (!_formKey.currentState!.validate()) return;
+
+  //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  //   final userId = authProvider.user?.user.id;
+
+  //   if (userId == null) {
+  //     _showErrorSnackBar('User not logged in');
+  //     return;
+  //   }
+
+  //   setState(() => _isSaving = true);
+
+  //   try {
+  //     final response = await http.put(
+  //       Uri.parse('http://31.97.206.144:4061/api/users/update-user/$userId'),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: json.encode({
+  //         'name': _nameController.text.trim(),
+  //         'email': _emailController.text.trim(),
+  //         'mobile': _mobileController.text.trim(),
+  //         'dob': _dobController.text.trim(),
+  //         'marriageAnniversaryDate': _anniversaryController.text.trim(),
+  //       }),
+  //     );
+
+  //     print('Response status code for update profile ${response.statusCode}');
+  //           print('Response bodyyyyyyyyyyy for update profile ${response.body}');
+
+
+  //     if (response.statusCode == 200) {
+  //       final responseData = json.decode(response.body);
+        
+  //       // Update the auth provider with new user data if needed
+  //       await authProvider.refreshUserData();
+        
+  //       _showSuccessSnackBar('Profile updated successfully');
+        
+  //       // Wait a moment to show the success message
+  //       await Future.delayed(const Duration(milliseconds: 500));
+        
+  //       if (mounted) {
+  //         Navigator.pop(context, true);
+  //       }
+  //     } else {
+  //       final errorData = json.decode(response.body);
+  //       throw Exception(errorData['message'] ?? 'Failed to update profile');
+  //     }
+  //   } catch (e) {
+  //     _showErrorSnackBar('Failed to update profile: $e');
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _isSaving = false);
+  //     }
+  //   }
+  // }
+
+
+
   Future<void> _updateProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userId = authProvider.user?.user.id;
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  final userId = authProvider.user?.user.id;
 
-    if (userId == null) {
-      _showErrorSnackBar('User not logged in');
-      return;
+  if (userId == null) {
+    _showErrorSnackBar('User not logged in');
+    return;
+  }
+
+  setState(() => _isSaving = true);
+
+  try {
+    final response = await http.put(
+      Uri.parse('http://31.97.206.144:4061/api/users/update-user/$userId'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'mobile': _mobileController.text.trim(),
+        'dob': _dobController.text.trim(),
+        'marriageAnniversaryDate': _anniversaryController.text.trim(),
+      }),
+    );
+
+    // Guard immediately after every await
+    if (!mounted) return;
+
+    if (response.statusCode == 200) {
+      await authProvider.refreshUserData();
+
+      if (!mounted) return;
+
+      // Set saving false BEFORE popping so we never setState on dead widget
+      setState(() => _isSaving = false);
+      _showSuccessSnackBar('Profile updated successfully');
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (mounted) Navigator.pop(context, true);
+    } else {
+      final errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'Failed to update profile');
     }
-
-    setState(() => _isSaving = true);
-
-    try {
-      final response = await http.put(
-        Uri.parse('http://31.97.206.144:4061/api/users/update-user/$userId'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'name': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'mobile': _mobileController.text.trim(),
-          'dob': _dobController.text.trim(),
-          'marriageAnniversaryDate': _anniversaryController.text.trim(),
-        }),
-      );
-
-      print('Response status code for update profile ${response.statusCode}');
-            print('Response bodyyyyyyyyyyy for update profile ${response.body}');
-
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        
-        // Update the auth provider with new user data if needed
-        await authProvider.refreshUserData();
-        
-        _showSuccessSnackBar('Profile updated successfully');
-        
-        // Wait a moment to show the success message
-        await Future.delayed(const Duration(milliseconds: 500));
-        
-        if (mounted) {
-          Navigator.pop(context, true);
-        }
-      } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Failed to update profile');
-      }
-    } catch (e) {
+  } catch (e) {
+    // Only interact with widget if still alive
+    if (mounted) {
+      setState(() => _isSaving = false);
       _showErrorSnackBar('Failed to update profile: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
     }
   }
+}
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

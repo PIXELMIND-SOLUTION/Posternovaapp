@@ -28,8 +28,7 @@ class _AiScreenState extends State<AiScreen> {
   bool _isImageGenerationMode = false;
 
   // ❌ NOT SAFE – ONLY FOR TESTING - Replace with your actual API key
-  static final String? openAiKey =  dotenv.env['OPEN_AI_KEY'];
-
+  static final String? openAiKey = dotenv.env['OPEN_AI_KEY'];
 
   @override
   void initState() {
@@ -69,84 +68,398 @@ class _AiScreenState extends State<AiScreen> {
     }
   }
 
+  // Future<void> _sendChatMessage(String userMessage) async {
+  //   setState(() {
+  //     _messages.add({'role': 'user', 'text': userMessage, 'type': 'text'});
+  //     _isLoading = true;
+  //     _messageController.clear();
+  //   });
+
+  //   _scrollToBottom();
+
+  //   try {
+  //     final now = DateTime.now();
+  //     final today =
+  //         "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+  //     List<Map<String, dynamic>> conversationHistory = [
+  //       {
+  //         "role": "system",
+  //         "content":
+  //             "You are Chicha AI. Today's date is $today. If user asks about current date/time, always answer using this date.",
+  //       },
+  //       ..._messages.where((msg) => msg['type'] == 'text').map((msg) {
+  //         return {
+  //           'role': msg['role'] == 'user' ? 'user' : 'assistant',
+  //           'content': msg['text'],
+  //         };
+  //       }).toList(),
+  //     ];
+
+  //     final response = await http.post(
+  //       Uri.parse('https://api.openai.com/v1/chat/completions'),
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "Authorization": "Bearer $openAiKey",
+  //       },
+  //       body: jsonEncode({
+  //         "model": "gpt-4o-mini",
+  //         "messages": conversationHistory,
+  //         "temperature": 0.7,
+  //         "max_tokens": 1000,
+  //       }),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final data = jsonDecode(response.body);
+  //       final botReply = data['choices'][0]['message']['content'];
+
+  //       setState(() {
+  //         _messages.add({'role': 'bot', 'text': botReply, 'type': 'text'});
+  //       });
+  //     } else {
+  //       debugPrint('API Error: ${response.statusCode} - ${response.body}');
+  //       setState(() {
+  //         _messages.add({
+  //           'role': 'bot',
+  //           'text':
+  //               'Sorry, I encountered an error (${response.statusCode}). Please try again.',
+  //           'type': 'text',
+  //         });
+  //       });
+  //     }
+  //   } catch (e) {
+  //     debugPrint('Error sending message: $e');
+  //     setState(() {
+  //       _messages.add({
+  //         'role': 'bot',
+  //         'text': 'Connection issue. Please check your internet and try again.',
+  //         'type': 'text',
+  //       });
+  //     });
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _isLoading = false);
+  //       _scrollToBottom();
+  //     }
+  //   }
+  // }
+
+
+
   Future<void> _sendChatMessage(String userMessage) async {
-    setState(() {
-      _messages.add({'role': 'user', 'text': userMessage, 'type': 'text'});
-      _isLoading = true;
-      _messageController.clear();
-    });
+  setState(() {
+    _messages.add({'role': 'user', 'text': userMessage, 'type': 'text'});
+    _isLoading = true;
+    _messageController.clear();
+  });
 
-    _scrollToBottom();
+  _scrollToBottom();
 
-    try {
-      final now = DateTime.now();
-      final today =
-          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-      List<Map<String, dynamic>> conversationHistory = [
-        {
-          "role": "system",
-          "content":
-              "You are Chicha AI. Today's date is $today. If user asks about current date/time, always answer using this date.",
-        },
-        ..._messages.where((msg) => msg['type'] == 'text').map((msg) {
-          return {
-            'role': msg['role'] == 'user' ? 'user' : 'assistant',
-            'content': msg['text'],
-          };
-        }).toList(),
-      ];
+  try {
+    final now = DateTime.now();
+    final today =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
-      final response = await http.post(
-        Uri.parse('https://api.openai.com/v1/chat/completions'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $openAiKey",
-        },
-        body: jsonEncode({
-          "model": "gpt-4o-mini",
-          "messages": conversationHistory,
+    // Build conversation history for Gemini's "contents" format
+    final List<Map<String, dynamic>> contents = [
+      // System-like instruction as first user turn
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text":
+                "You are Chicha AI. Today's date is $today. If the user asks about the current date/time, always answer using this date. Acknowledge this with OK.",
+          }
+        ],
+      },
+      {
+        "role": "model",
+        "parts": [
+          {"text": "OK"},
+        ],
+      },
+      // Actual conversation history
+      ..._messages.where((msg) => msg['type'] == 'text').map((msg) {
+        return {
+          "role": msg['role'] == 'user' ? 'user' : 'model',
+          "parts": [
+            {"text": msg['text'] ?? ''},
+          ],
+        };
+      }).toList(),
+    ];
+
+    final response = await http.post(
+      Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${dotenv.env['OPEN_AI_KEY']}',
+      ),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "contents": contents,
+        "generationConfig": {
           "temperature": 0.7,
-          "max_tokens": 1000,
-        }),
-      );
+          "maxOutputTokens": 1000,
+        },
+      }),
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final botReply = data['choices'][0]['message']['content'];
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final botReply =
+          data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
 
-        setState(() {
-          _messages.add({'role': 'bot', 'text': botReply, 'type': 'text'});
-        });
-      } else {
-        debugPrint('API Error: ${response.statusCode} - ${response.body}');
-        setState(() {
-          _messages.add({
-            'role': 'bot',
-            'text':
-                'Sorry, I encountered an error (${response.statusCode}). Please try again.',
-            'type': 'text',
-          });
-        });
-      }
-    } catch (e) {
-      debugPrint('Error sending message: $e');
+      setState(() {
+        _messages.add({'role': 'bot', 'text': botReply, 'type': 'text'});
+      });
+    } else {
+      debugPrint('Gemini Chat Error: ${response.statusCode} - ${response.body}');
       setState(() {
         _messages.add({
           'role': 'bot',
-          'text': 'Connection issue. Please check your internet and try again.',
+          'text': 'Sorry, I encountered an error (${response.statusCode}). Please try again.',
           'type': 'text',
         });
       });
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _scrollToBottom();
-      }
+    }
+  } catch (e) {
+    debugPrint('Error sending message: $e');
+    setState(() {
+      _messages.add({
+        'role': 'bot',
+        'text': 'Connection issue. Please check your internet and try again.',
+        'type': 'text',
+      });
+    });
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
+      _scrollToBottom();
     }
   }
+}
+
+//   Future<void> _generatePosterWithAI(String userPrompt) async {
+//     debugPrint('================= AI POSTER FLOW START =================');
+//     debugPrint('[INIT] User prompt: $userPrompt');
+
+//     setState(() {
+//       _messages.add({'role': 'user', 'text': userPrompt, 'type': 'text'});
+//       _isLoading = true;
+//       _messageController.clear();
+//     });
+
+//     _scrollToBottom();
+
+//     try {
+//       // ======================================================
+//       // STEP 1: ENHANCE PROMPT (CHAT COMPLETION)
+//       // ======================================================
+//       debugPrint('[STEP 1] Enhancing prompt');
+
+//       final enhancePayload = {
+//         "model": "gpt-4o-mini",
+//         "messages": [
+//           {
+//             "role": "system",
+//             "content":
+//                 "You are a professional prompt engineer. Convert the user's simple request into a detailed, professional image generation prompt. Include colors, style, composition, and specific details. Keep it under 150 words. Only return the enhanced prompt, nothing else.",
+//           },
+//           {"role": "user", "content": userPrompt},
+//         ],
+//         "temperature": 0.7,
+//         "max_tokens": 200,
+//       };
+
+//       final enhanceResponse = await http.post(
+//         Uri.parse('https://api.openai.com/v1/chat/completions'),
+//         headers: {
+//           "Content-Type": "application/json",
+//           "Authorization": "Bearer $openAiKey",
+//         },
+//         body: jsonEncode(enhancePayload),
+//       );
+
+//       debugPrint('[STEP 1] Status: ${enhanceResponse.statusCode}');
+//       debugPrint('[STEP 1] Body: ${enhanceResponse.body}');
+
+//       if (enhanceResponse.statusCode != 200) {
+//         throw Exception('Prompt enhancement failed');
+//       }
+
+//       final enhanceJson = jsonDecode(enhanceResponse.body);
+//       final enhancedPrompt = enhanceJson['choices']?[0]?['message']?['content'];
+
+//       if (enhancedPrompt == null || enhancedPrompt.toString().isEmpty) {
+//         throw Exception('Enhanced prompt is empty');
+//       }
+
+//       debugPrint('[STEP 1] Enhanced prompt:\n$enhancedPrompt');
+
+//       setState(() {
+//         _messages.add({
+//           'role': 'bot',
+//           'text': '✨ Enhanced prompt:\n\n$enhancedPrompt',
+//           'type': 'text',
+//         });
+//       });
+
+//       _scrollToBottom();
+
+//       // ======================================================
+//       // STEP 2: SHOW LOADING PLACEHOLDER
+//       // ======================================================
+//       debugPrint('[STEP 2] Showing image loading');
+
+//       setState(() {
+//         _messages.add({
+//           'role': 'bot',
+//           'text': 'Generating image...',
+//           'type': 'loading',
+//         });
+//       });
+
+//       _scrollToBottom();
+
+//       // ======================================================
+//       // STEP 3: IMAGE GENERATION / EDIT
+//       // ======================================================
+//       debugPrint('[STEP 3] Logo present: ${_logoFile != null}');
+
+//       if (_logoFile != null) {
+//         // ---------------- IMAGE EDIT ----------------
+//         debugPrint('[STEP 3A] Using image edit endpoint');
+
+//         final finalPrompt =
+//             '''
+// Create a professional Diwali festival poster.
+// Use warm golden, purple and orange colors.
+// Place the uploaded company logo at the top center.
+// Add diya lamps, lights, fireworks and festive decorations.
+// Text style should be modern and clean.
+
+// $enhancedPrompt
+// ''';
+
+//         final request = http.MultipartRequest(
+//           'POST',
+//           Uri.parse('https://api.openai.com/v1/images/edits'),
+//         );
+
+//         request.headers['Authorization'] = 'Bearer $openAiKey';
+//         request.fields['model'] = 'gpt-image-1';
+//         request.fields['prompt'] = finalPrompt;
+//         request.fields['size'] = '1024x1024';
+
+//         // Detect correct MIME type
+//         final ext = _logoFile!.path.split('.').last.toLowerCase();
+//         final mimeType = ext == 'png' ? 'png' : 'jpeg';
+
+//         request.files.add(
+//           await http.MultipartFile.fromPath(
+//             'image',
+//             _logoFile!.path,
+//             contentType: MediaType('image', mimeType),
+//           ),
+//         );
+
+//         debugPrint('[STEP 3A] Sending image edit request');
+//         debugPrint('[STEP 3A] Logo path: ${_logoFile!.path}');
+
+//         final response = await request.send();
+//         final responseBody = await response.stream.bytesToString();
+
+//         debugPrint('[STEP 3A] Status: ${response.statusCode}');
+//         debugPrint('[STEP 3A] Body: $responseBody');
+
+//         if (response.statusCode != 200) {
+//           throw Exception('Image edit failed');
+//         }
+
+//         final json = jsonDecode(responseBody);
+
+//         // ✅ Image is BASE64, not URL
+//         final base64Image = json['data']?[0]?['b64_json'];
+
+//         if (base64Image == null) {
+//           throw Exception('No image data returned from edit API');
+//         }
+
+//         final imageBytes = base64Decode(base64Image);
+
+//         setState(() {
+//           _messages.removeLast(); // remove loading
+//           _messages.add({'role': 'bot', 'type': 'image', 'image': imageBytes});
+//         });
+//       } else {
+//         // ---------------- IMAGE GENERATION ----------------
+//         debugPrint('[STEP 3B] Using image generation endpoint');
+
+//         final imagePayload = {
+//           "model": "gpt-image-1",
+//           "prompt": enhancedPrompt,
+//           "size": "1024x1024",
+//           "response_format": "b64_json",
+//         };
+
+//         final imageResponse = await http.post(
+//           Uri.parse('https://api.openai.com/v1/images/generations'),
+//           headers: {
+//             "Content-Type": "application/json",
+//             "Authorization": "Bearer $openAiKey",
+//           },
+//           body: jsonEncode(imagePayload),
+//         );
+
+//         debugPrint('[STEP 3B] Status: ${imageResponse.statusCode}');
+//         debugPrint('[STEP 3B] Body: ${imageResponse.body}');
+
+//         if (imageResponse.statusCode != 200) {
+//           throw Exception('Image generation failed');
+//         }
+
+//         final imageJson = jsonDecode(imageResponse.body);
+//         final base64Image = imageJson['data']?[0]?['b64_json'];
+
+//         if (base64Image == null) {
+//           throw Exception('No image data received');
+//         }
+
+//         final imageBytes = base64Decode(base64Image);
+
+//         setState(() {
+//           _messages.removeLast();
+//           _messages.add({'role': 'bot', 'type': 'image', 'image': imageBytes});
+//         });
+//       }
+
+//       debugPrint('================= AI POSTER FLOW SUCCESS =================');
+//     } catch (e, stack) {
+//       debugPrint('❌ ERROR: $e');
+//       debugPrint('STACK TRACE:\n$stack');
+
+//       setState(() {
+//         if (_messages.isNotEmpty && _messages.last['type'] == 'loading') {
+//           _messages.removeLast();
+//         }
+//         _messages.add({
+//           'role': 'bot',
+//           'text': 'Failed to generate poster.\n$e',
+//           'type': 'text',
+//         });
+//       });
+//     } finally {
+//       if (mounted) {
+//         setState(() => _isLoading = false);
+//         _scrollToBottom();
+//       }
+//     }
+//   }
+
+
+
+
 Future<void> _generatePosterWithAI(String userPrompt) async {
-  debugPrint('================= AI POSTER FLOW START =================');
-  debugPrint('[INIT] User prompt: $userPrompt');
+  debugPrint('================= GEMINI POSTER FLOW START =================');
 
   setState(() {
     _messages.add({'role': 'user', 'text': userPrompt, 'type': 'text'});
@@ -158,49 +471,49 @@ Future<void> _generatePosterWithAI(String userPrompt) async {
 
   try {
     // ======================================================
-    // STEP 1: ENHANCE PROMPT (CHAT COMPLETION)
+    // STEP 1: ENHANCE PROMPT via Gemini Chat
     // ======================================================
-    debugPrint('[STEP 1] Enhancing prompt');
-
-    final enhancePayload = {
-      "model": "gpt-4o-mini",
-      "messages": [
-        {
-          "role": "system",
-          "content":
-              "You are a professional prompt engineer. Convert the user's simple request into a detailed, professional image generation prompt. Include colors, style, composition, and specific details. Keep it under 150 words. Only return the enhanced prompt, nothing else.",
-        },
-        {"role": "user", "content": userPrompt},
-      ],
-      "temperature": 0.7,
-      "max_tokens": 200,
-    };
+    debugPrint('[STEP 1] Enhancing prompt with Gemini');
 
     final enhanceResponse = await http.post(
-      Uri.parse('https://api.openai.com/v1/chat/completions'),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $openAiKey",
-      },
-      body: jsonEncode(enhancePayload),
+      Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${dotenv.env['OPEN_AI_KEY']}',
+      ),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text":
+                    "You are a professional prompt engineer. Convert the user's simple request into a detailed, vivid image generation prompt. Include colors, style, composition, lighting, and specific visual details. Keep it under 150 words. Only return the enhanced prompt, nothing else.\n\nUser request: $userPrompt",
+              }
+            ],
+          }
+        ],
+        "generationConfig": {
+          "temperature": 0.7,
+          "maxOutputTokens": 300,
+        },
+      }),
     );
 
     debugPrint('[STEP 1] Status: ${enhanceResponse.statusCode}');
-    debugPrint('[STEP 1] Body: ${enhanceResponse.body}');
 
     if (enhanceResponse.statusCode != 200) {
-      throw Exception('Prompt enhancement failed');
+      throw Exception('Prompt enhancement failed: ${enhanceResponse.body}');
     }
 
     final enhanceJson = jsonDecode(enhanceResponse.body);
     final enhancedPrompt =
-        enhanceJson['choices']?[0]?['message']?['content'];
+        enhanceJson['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
 
-    if (enhancedPrompt == null || enhancedPrompt.toString().isEmpty) {
+    if (enhancedPrompt.isEmpty) {
       throw Exception('Enhanced prompt is empty');
     }
 
-    debugPrint('[STEP 1] Enhanced prompt:\n$enhancedPrompt');
+    debugPrint('[STEP 1] Enhanced: $enhancedPrompt');
 
     setState(() {
       _messages.add({
@@ -215,8 +528,6 @@ Future<void> _generatePosterWithAI(String userPrompt) async {
     // ======================================================
     // STEP 2: SHOW LOADING PLACEHOLDER
     // ======================================================
-    debugPrint('[STEP 2] Showing image loading');
-
     setState(() {
       _messages.add({
         'role': 'bot',
@@ -228,129 +539,91 @@ Future<void> _generatePosterWithAI(String userPrompt) async {
     _scrollToBottom();
 
     // ======================================================
-    // STEP 3: IMAGE GENERATION / EDIT
+    // STEP 3: IMAGE GENERATION via Gemini imagen model
     // ======================================================
-    debugPrint('[STEP 3] Logo present: ${_logoFile != null}');
+    debugPrint('[STEP 3] Generating image with Gemini imagen');
 
+    // Build the final prompt (include logo instruction if logo is selected)
+    final String finalPrompt = _logoFile != null
+        ? '''Create a professional poster. Place the company logo prominently at the top center. $enhancedPrompt'''
+        : enhancedPrompt;
+
+    // Prepare content parts
+    final List<Map<String, dynamic>> imageParts = [];
+
+    // If logo is selected, send it as inline image data
     if (_logoFile != null) {
-      // ---------------- IMAGE EDIT ----------------
-      debugPrint('[STEP 3A] Using image edit endpoint');
-
-      final finalPrompt = '''
-Create a professional Diwali festival poster.
-Use warm golden, purple and orange colors.
-Place the uploaded company logo at the top center.
-Add diya lamps, lights, fireworks and festive decorations.
-Text style should be modern and clean.
-
-$enhancedPrompt
-''';
-
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('https://api.openai.com/v1/images/edits'),
-      );
-
-      request.headers['Authorization'] = 'Bearer $openAiKey';
-      request.fields['model'] = 'gpt-image-1';
-      request.fields['prompt'] = finalPrompt;
-      request.fields['size'] = '1024x1024';
-
-      // Detect correct MIME type
+      final logoBytes = await _logoFile!.readAsBytes();
+      final logoBase64 = base64Encode(logoBytes);
       final ext = _logoFile!.path.split('.').last.toLowerCase();
-      final mimeType = ext == 'png' ? 'png' : 'jpeg';
+      final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
 
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          _logoFile!.path,
-          contentType: MediaType('image', mimeType),
-        ),
-      );
-
-      debugPrint('[STEP 3A] Sending image edit request');
-      debugPrint('[STEP 3A] Logo path: ${_logoFile!.path}');
-
-      final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
-
-      debugPrint('[STEP 3A] Status: ${response.statusCode}');
-      debugPrint('[STEP 3A] Body: $responseBody');
-
-      if (response.statusCode != 200) {
-        throw Exception('Image edit failed');
-      }
-
- final json = jsonDecode(responseBody);
-
-// ✅ Image is BASE64, not URL
-final base64Image = json['data']?[0]?['b64_json'];
-
-if (base64Image == null) {
-  throw Exception('No image data returned from edit API');
-}
-
-final imageBytes = base64Decode(base64Image);
-
-setState(() {
-  _messages.removeLast(); // remove loading
-  _messages.add({
-    'role': 'bot',
-    'type': 'image',
-    'image': imageBytes,
-  });
-});
-
-    } else {
-      // ---------------- IMAGE GENERATION ----------------
-      debugPrint('[STEP 3B] Using image generation endpoint');
-
-      final imagePayload = {
-        "model": "gpt-image-1",
-        "prompt": enhancedPrompt,
-        "size": "1024x1024",
-        "response_format": "b64_json",
-      };
-
-      final imageResponse = await http.post(
-        Uri.parse('https://api.openai.com/v1/images/generations'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $openAiKey",
-        },
-        body: jsonEncode(imagePayload),
-      );
-
-      debugPrint('[STEP 3B] Status: ${imageResponse.statusCode}');
-      debugPrint('[STEP 3B] Body: ${imageResponse.body}');
-
-      if (imageResponse.statusCode != 200) {
-        throw Exception('Image generation failed');
-      }
-
-      final imageJson = jsonDecode(imageResponse.body);
-      final base64Image = imageJson['data']?[0]?['b64_json'];
-
-      if (base64Image == null) {
-        throw Exception('No image data received');
-      }
-
-      final imageBytes = base64Decode(base64Image);
-
-      setState(() {
-        _messages.removeLast();
-        _messages.add({
-          'role': 'bot',
-          'type': 'image',
-          'image': imageBytes,
-        });
+      imageParts.add({
+        "inlineData": {
+          "mimeType": mimeType,
+          "data": logoBase64,
+        }
       });
     }
 
-    debugPrint('================= AI POSTER FLOW SUCCESS =================');
+    imageParts.add({"text": finalPrompt});
+
+    final imageResponse = await http.post(
+      Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${dotenv.env['GEMINI_API_KEY']}',
+      ),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "contents": [
+          {
+            "role": "user",
+            "parts": imageParts,
+          }
+        ],
+        "generationConfig": {
+          "responseModalities": ["TEXT", "IMAGE"],
+        },
+      }),
+    );
+
+    debugPrint('[STEP 3] Status: ${imageResponse.statusCode}');
+
+    if (imageResponse.statusCode != 200) {
+      throw Exception('Image generation failed: ${imageResponse.body}');
+    }
+
+    final imageJson = jsonDecode(imageResponse.body);
+    final parts =
+        imageJson['candidates']?[0]?['content']?['parts'] as List<dynamic>?;
+
+    if (parts == null || parts.isEmpty) {
+      throw Exception('No content returned from Gemini image generation');
+    }
+
+    // Find the image part in the response
+    String? base64Image;
+    for (final part in parts) {
+      if (part['inlineData'] != null) {
+        base64Image = part['inlineData']['data'];
+        break;
+      }
+    }
+
+    if (base64Image == null) {
+      throw Exception('No image data found in Gemini response');
+    }
+
+    final imageBytes = base64Decode(base64Image);
+
+    setState(() {
+      _messages.removeLast(); // remove loading
+      _messages.add({'role': 'bot', 'type': 'image', 'image': imageBytes});
+    });
+
+    debugPrint('================= GEMINI POSTER FLOW SUCCESS =================');
   } catch (e, stack) {
     debugPrint('❌ ERROR: $e');
-    debugPrint('STACK TRACE:\n$stack');
+    debugPrint('STACK: $stack');
 
     setState(() {
       if (_messages.isNotEmpty && _messages.last['type'] == 'loading') {
@@ -783,35 +1056,34 @@ setState(() {
         ),
         foregroundColor: Colors.white,
         elevation: 0,
-actions: [
-  InkWell(
-    onTap: _toggleImageGenerationMode,
-    borderRadius: BorderRadius.circular(12),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            _isImageGenerationMode ? Icons.chat : Icons.image,
-            size: 22,
-            color: Colors.white,
-          ),
-          const SizedBox(height: 2),
-          AppText(
-            _isImageGenerationMode ? 'Chat' : 'poster',
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
+        actions: [
+          InkWell(
+            onTap: _toggleImageGenerationMode,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isImageGenerationMode ? Icons.chat : Icons.image,
+                    size: 22,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 2),
+                  AppText(
+                    _isImageGenerationMode ? 'Chat' : 'poster',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
-      ),
-    ),
-  ),
-],
-
       ),
       body: Column(
         children: [
@@ -960,8 +1232,17 @@ actions: [
                               onSubmitted: (_) => _sendMessage(),
                               decoration: InputDecoration(
                                 hintText: _isImageGenerationMode
-                                    ? 'Describe your poster...'
-                                    : 'Ask me anything...',
+                                    ? AppText.translate(
+                                        context,
+                                        'describe_poster',
+                                      )
+                                    : AppText.translate(
+                                        context,
+                                        'ask_me_anything',
+                                      ),
+                                // hintText: _isImageGenerationMode
+                                //     ? 'Describe your poster...'
+                                //     : 'Ask me anything...',
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 20,
@@ -1020,19 +1301,18 @@ actions: [
         ),
       ),
       floatingActionButton: _isImageGenerationMode
-    ? FloatingActionButton(
-        onPressed: _pickLogo,
-        backgroundColor: const Color(0xFF667EEA),
-        elevation: 6,
-        tooltip: _logoFile == null ? 'Add Logo' : 'Change Logo',
-        child: Icon(
-          _logoFile == null ? Icons.add_photo_alternate : Icons.edit,
-          color: Colors.white,
-          size: 26,
-        ),
-      )
-    : null,
-
+          ? FloatingActionButton(
+              onPressed: _pickLogo,
+              backgroundColor: const Color(0xFF667EEA),
+              elevation: 6,
+              tooltip: _logoFile == null ? 'Add Logo' : 'Change Logo',
+              child: Icon(
+                _logoFile == null ? Icons.add_photo_alternate : Icons.edit,
+                color: Colors.white,
+                size: 26,
+              ),
+            )
+          : null,
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:posternova/widgets/language_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart';
 
@@ -214,8 +215,8 @@ class _AddUserDataState extends State<UserDetails> {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          'Business Profile',
+        title: AppText(
+          'business_profile',
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 20,
@@ -341,8 +342,8 @@ class _AddUserDataState extends State<UserDetails> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          Text(
-                            'Add Business Logo',
+                          AppText(
+                            'add_business_logo',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -350,8 +351,8 @@ class _AddUserDataState extends State<UserDetails> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            'Upload your business logo or brand image',
+                          AppText(
+                            'upload_business_logo',
                             style: TextStyle(
                               fontSize: 12,
                               color: secondaryTextColor,
@@ -383,8 +384,8 @@ class _AddUserDataState extends State<UserDetails> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Text(
-                                'Business Details',
+                              AppText(
+                                'business_details',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
@@ -397,7 +398,7 @@ class _AddUserDataState extends State<UserDetails> {
                           TextFormField(
                             controller: businessNameController,
                             decoration: _inputDecoration(
-                              'Business Name',
+                              AppText.translate(context, 'business_name'),
                               Icons.store_outlined,
                               context,
                             ),
@@ -430,7 +431,7 @@ class _AddUserDataState extends State<UserDetails> {
                                     )
                                     .toList(),
                             decoration: _inputDecoration(
-                              'Business Type',
+                              AppText.translate(context, 'business_type'),
                               Icons.category_outlined,
                               context,
                             ),
@@ -464,8 +465,8 @@ class _AddUserDataState extends State<UserDetails> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Text(
-                                'Contact Information',
+                              AppText(
+                                'contact_information',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
@@ -494,7 +495,7 @@ class _AddUserDataState extends State<UserDetails> {
                           TextFormField(
                             controller: mobileController,
                             decoration: _inputDecoration(
-                              'Mobile Number',
+                               AppText.translate(context, 'mobile_number'),
                               Icons.phone_outlined,
                               context,
                             ),
@@ -519,7 +520,7 @@ class _AddUserDataState extends State<UserDetails> {
                           TextFormField(
                             controller: emailController,
                             decoration: _inputDecoration(
-                              'Email Address',
+                               AppText.translate(context, 'email_address'),
                               Icons.email_outlined,
                               context,
                             ),
@@ -551,7 +552,7 @@ class _AddUserDataState extends State<UserDetails> {
                           TextFormField(
                             controller: gstController,
                             decoration: _inputDecoration(
-                              'GST Number (Optional)',
+                               AppText.translate(context, 'gst_number_optional'),
                               Icons.receipt_long_outlined,
                               context,
                             ),
@@ -563,7 +564,7 @@ class _AddUserDataState extends State<UserDetails> {
                           TextFormField(
                             controller: gstRateController,
                             decoration: _inputDecoration(
-                              'GST Rate % (e.g., 18)',
+                               AppText.translate(context, 'gst_rate_percent'),
                               Icons.percent_outlined,
                               context,
                             ),
@@ -653,8 +654,8 @@ class _AddUserDataState extends State<UserDetails> {
                                       children: [
                                         Icon(Icons.save_outlined, size: 20),
                                         SizedBox(width: 8),
-                                        Text(
-                                          'Save Profile',
+                                        AppText(
+                                          'save_profile',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,

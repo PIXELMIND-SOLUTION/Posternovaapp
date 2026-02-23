@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:posternova/models/otp_model.dart';
@@ -33,8 +32,7 @@ class SmsProvider extends ChangeNotifier {
 
     try {
       _mobileNumber = mobile;
-      _loginResponse =
-          await _smsService.login(LoginRequest(mobile: mobile));
+      _loginResponse = await _smsService.login(LoginRequest(mobile: mobile));
 
       if (_loginResponse?.statusCode != 200) {
         _errorMessage = _loginResponse?.body;
@@ -45,7 +43,6 @@ class SmsProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
-  
 
   /// VERIFY OTP (FCM SAFE)
   Future<void> verifyOtp(String otp, String mobile) async {
@@ -57,11 +54,7 @@ class SmsProvider extends ChangeNotifier {
           await _fcmService.getFCMTokenSafe() ?? 'default_fcm_token';
 
       final response = await _smsService.verifyOtp(
-        VerifyOtpRequest(
-          otp: otp,
-          mobile: mobile,
-          fcmToken: fcmToken,
-        ),
+        VerifyOtpRequest(otp: otp, mobile: mobile, fcmToken: fcmToken),
       );
 
       _otpResponse = response;
@@ -82,8 +75,9 @@ class SmsProvider extends ChangeNotifier {
     _clearError();
 
     try {
-      final response =
-          await _smsService.resendOtp(ResendOtpRequest(mobile: mobile));
+      final response = await _smsService.resendOtp(
+        ResendOtpRequest(mobile: mobile),
+      );
 
       if (response != null) return response.otp;
       _errorMessage = 'Failed to resend OTP';
@@ -121,28 +115,24 @@ class SmsProvider extends ChangeNotifier {
     _errorMessage = null;
   }
 
-
   Future<void> verifyWithFirebaseToken(String idToken) async {
-  _setLoading(true);
-  _clearError();
+    _setLoading(true);
+    _clearError();
 
-  try {
-          final String fcmToken =
+    try {
+      final String fcmToken =
           await _fcmService.getFCMTokenSafe() ?? 'default_fcm_token';
-    final response =
-        await _smsService.verifyFirebaseToken(idToken,fcmToken);
+      final response = await _smsService.verifyFirebaseToken(idToken, fcmToken);
 
-    _otpResponse = response;
+      _otpResponse = response;
 
-    if (response.statusCode != 200) {
-      _errorMessage = response.body;
+      if (response.statusCode != 200) {
+        _errorMessage = response.body;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _setLoading(false);
     }
-
-  } catch (e) {
-    _errorMessage = e.toString();
-  } finally {
-    _setLoading(false);
   }
-}
-
 }

@@ -790,7 +790,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const AppText(
-          'Create Invoice',
+          'create_invoice',
           style: TextStyle(
             color: Colors.black87,
             fontSize: 22,
@@ -855,8 +855,8 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _userName.isEmpty ? 'Business Name' : _userName,
+                          AppText(
+                            _userName.isEmpty ? 'business_name' : _userName,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -1100,7 +1100,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (showUserInfo) ...[
-                  _buildSectionTitle('Customer Information'),
+                  _buildSectionTitle('customer_information'),
                   const SizedBox(height: 12),
                   _buildModernTextField(
                     entry.nameController,
@@ -1126,7 +1126,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                     onChanged: (v) => _syncUserInfoAcrossEntries(),
                   ),
                   const SizedBox(height: 20),
-                  _buildSectionTitle('Product Details'),
+                  _buildSectionTitle('product_details'),
                   const SizedBox(height: 12),
                 ],
 
@@ -1219,7 +1219,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                 ],
 
                 const SizedBox(height: 20),
-                _buildSectionTitle('Total & Taxes'),
+                _buildSectionTitle('total_and_taxes'),
                 const SizedBox(height: 12),
 
                 Row(
@@ -1261,7 +1261,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
+    return AppText(
       title,
       style: TextStyle(
         fontSize: 15,

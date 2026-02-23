@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 // import 'package:media_store_plus/media_store_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -179,7 +180,30 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
   String? _imageBase64;
   String? profileImage;
 
+
+  String? _apiName;
+String? _apiPhone;
+
   String? userId;
+
+
+  Future<void> _fetchProfileFromApi() async {
+  if (userId == null || userId!.isEmpty) return;
+  try {
+    final response = await http.get(
+      Uri.parse('http://31.97.206.144:4061/api/users/get-profile/$userId'),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        _apiName = data['name']?.toString();
+        _apiPhone = data['mobile']?.toString();
+      });
+    }
+  } catch (e) {
+    print('Error fetching profile from API: $e');
+  }
+}
 
   final List<Color> _presetColors = [
     Colors.black,
@@ -259,6 +283,8 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
 
         print('User data loaded: $phoneNumber, $email, $profileImage, $name');
       });
+
+      await _fetchProfileFromApi();
 
       // If there's a profile image URL/path, create the profile item
       if (userData.user.profileImage != null &&
@@ -1065,148 +1091,142 @@ class _PosterMakerAppScreenState extends State<PosterMakerAppScreen>
   //   }
   // }
 
+  //   Future<void> _sharePosterWithSelectedCustomers(
+  //   Set<String> selectedCustomerIds,
+  //   List<Map<String, dynamic>> allCustomers,
+  // ) async {
+  //   try {
+  //     // showDialog(
+  //     //   context: context,
+  //     //   barrierDismissible: false,
+  //     //   builder: (context) => const AlertDialog(
+  //     //     content: Row(
+  //     //       children: [
+  //     //         CircularProgressIndicator(),
+  //     //         // SizedBox(width: 16),
+  //     //         // Text('Preparing poster...'),
+  //     //       ],
+  //     //     ),
+  //     //   ),
+  //     // );
 
+  //     // Generate poster image
+  //     RenderRepaintBoundary boundary =
+  //         _posterKey.currentContext!.findRenderObject()
+  //             as RenderRepaintBoundary;
+  //     ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+  //     ByteData? byteData = await image.toByteData(
+  //       format: ui.ImageByteFormat.png,
+  //     );
+  //     Uint8List pngBytes = byteData!.buffer.asUint8List();
 
+  //     final directory = await getTemporaryDirectory();
+  //     final file = File(
+  //       '${directory.path}/poster_share_${DateTime.now().millisecondsSinceEpoch}.png',
+  //     );
+  //     await file.writeAsBytes(pngBytes);
 
-//   Future<void> _sharePosterWithSelectedCustomers(
-//   Set<String> selectedCustomerIds,
-//   List<Map<String, dynamic>> allCustomers,
-// ) async {
-//   try {
-//     // showDialog(
-//     //   context: context,
-//     //   barrierDismissible: false,
-//     //   builder: (context) => const AlertDialog(
-//     //     content: Row(
-//     //       children: [
-//     //         CircularProgressIndicator(),
-//     //         // SizedBox(width: 16),
-//     //         // Text('Preparing poster...'),
-//     //       ],
-//     //     ),
-//     //   ),
-//     // );
+  //     Navigator.of(context).pop(); // Close loading dialog
 
-//     // Generate poster image
-//     RenderRepaintBoundary boundary =
-//         _posterKey.currentContext!.findRenderObject()
-//             as RenderRepaintBoundary;
-//     ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-//     ByteData? byteData = await image.toByteData(
-//       format: ui.ImageByteFormat.png,
-//     );
-//     Uint8List pngBytes = byteData!.buffer.asUint8List();
+  //     final selectedCustomers = allCustomers
+  //         .where((c) => selectedCustomerIds.contains(c['_id']))
+  //         .toList();
 
-//     final directory = await getTemporaryDirectory();
-//     final file = File(
-//       '${directory.path}/poster_share_${DateTime.now().millisecondsSinceEpoch}.png',
-//     );
-//     await file.writeAsBytes(pngBytes);
+  //     if (selectedCustomers.isEmpty) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('No customers selected'),
+  //           backgroundColor: Colors.orange,
+  //         ),
+  //       );
+  //       return;
+  //     }
 
-//     Navigator.of(context).pop(); // Close loading dialog
+  //     // Navigate to ChatModule with poster and selected customers
+  //     Navigator.push(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (context) => ChatModule(
+  //           posterImagePath: file.path,
+  //           selectedCustomers: selectedCustomers,
+  //         ),
+  //       ),
+  //     );
 
-//     final selectedCustomers = allCustomers
-//         .where((c) => selectedCustomerIds.contains(c['_id']))
-//         .toList();
+  //   } catch (e) {
+  //     if (Navigator.of(context).canPop()) {
+  //       Navigator.of(context).pop();
+  //     }
 
-//     if (selectedCustomers.isEmpty) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(
-//           content: Text('No customers selected'),
-//           backgroundColor: Colors.orange,
-//         ),
-//       );
-//       return;
-//     }
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Error: $e'),
+  //           backgroundColor: Colors.red,
+  //           duration: const Duration(seconds: 4),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
-//     // Navigate to ChatModule with poster and selected customers
-//     Navigator.push(
-//       context,
-//       MaterialPageRoute(
-//         builder: (context) => ChatModule(
-//           posterImagePath: file.path,
-//           selectedCustomers: selectedCustomers,
-//         ),
-//       ),
-//     );
-    
-//   } catch (e) {
-//     if (Navigator.of(context).canPop()) {
-//       Navigator.of(context).pop();
-//     }
+  Future<void> _sharePosterWithSelectedCustomers(
+    Set<String> selectedCustomerIds,
+    List<Map<String, dynamic>> allCustomers,
+  ) async {
+    try {
+      // Generate poster image WITHOUT showing dialog
+      RenderRepaintBoundary boundary =
+          _posterKey.currentContext!.findRenderObject()
+              as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-//     if (mounted) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(
-//           content: Text('Error: $e'),
-//           backgroundColor: Colors.red,
-//           duration: const Duration(seconds: 4),
-//         ),
-//       );
-//     }
-//   }
-// }
+      final directory = await getTemporaryDirectory();
+      final file = File(
+        '${directory.path}/poster_share_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+      await file.writeAsBytes(pngBytes);
 
+      final selectedCustomers = allCustomers
+          .where((c) => selectedCustomerIds.contains(c['_id']))
+          .toList();
 
+      if (selectedCustomers.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No customers selected'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
 
-Future<void> _sharePosterWithSelectedCustomers(
-  Set<String> selectedCustomerIds,
-  List<Map<String, dynamic>> allCustomers,
-) async {
-  try {
-    // Generate poster image WITHOUT showing dialog
-    RenderRepaintBoundary boundary =
-        _posterKey.currentContext!.findRenderObject()
-            as RenderRepaintBoundary;
-    ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-    ByteData? byteData = await image.toByteData(
-      format: ui.ImageByteFormat.png,
-    );
-    Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-    final directory = await getTemporaryDirectory();
-    final file = File(
-      '${directory.path}/poster_share_${DateTime.now().millisecondsSinceEpoch}.png',
-    );
-    await file.writeAsBytes(pngBytes);
-
-    final selectedCustomers = allCustomers
-        .where((c) => selectedCustomerIds.contains(c['_id']))
-        .toList();
-
-    if (selectedCustomers.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No customers selected'),
-          backgroundColor: Colors.orange,
+      // Navigate to ChatModule
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatModule(
+            posterImagePath: file.path,
+            selectedCustomers: selectedCustomers,
+          ),
         ),
       );
-      return;
-    }
-
-    // Navigate to ChatModule
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChatModule(
-          posterImagePath: file.path,
-          selectedCustomers: selectedCustomers,
-        ),
-      ),
-    );
-    
-  } catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
-}
 
   Future<void> _loadProfileImageFromUserData(String profileImagePath) async {
     try {
@@ -2018,9 +2038,13 @@ Future<void> _sharePosterWithSelectedCustomers(
                       hintText: 'Enter your text',
                     ),
                     maxLines: 3,
+
+                    // style: TextStyle(
+                    //   fontFamily: fontFamily,
+                    // ), // Preview the font in the text field
                     style: TextStyle(
-                      fontFamily: fontFamily,
-                    ), // Preview the font in the text field
+                      fontFamily: GoogleFonts.getFont(fontFamily).fontFamily,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -2065,7 +2089,9 @@ Future<void> _sharePosterWithSelectedCustomers(
                         child: DropdownButton<String>(
                           value: fontFamily,
                           isExpanded: true,
+
                           items: const [
+                            // Sans-Serif
                             DropdownMenuItem(
                               value: 'Roboto',
                               child: Text('Roboto'),
@@ -2079,14 +2105,180 @@ Future<void> _sharePosterWithSelectedCustomers(
                               child: Text('Lato'),
                             ),
                             DropdownMenuItem(
-                              value: 'Bali Bliss',
-                              child: Text('Bali Bliss'),
-                            ),
-                            DropdownMenuItem(
                               value: 'Ubuntu',
                               child: Text('Ubuntu'),
                             ),
+                            DropdownMenuItem(
+                              value: 'Nunito',
+                              child: Text('Nunito'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Montserrat',
+                              child: Text('Montserrat'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Open Sans',
+                              child: Text('Open Sans'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Raleway',
+                              child: Text('Raleway'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Oswald',
+                              child: Text('Oswald'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Inter',
+                              child: Text('Inter'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Work Sans',
+                              child: Text('Work Sans'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Mulish',
+                              child: Text('Mulish'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Quicksand',
+                              child: Text('Quicksand'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'DM Sans',
+                              child: Text('DM Sans'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Jost',
+                              child: Text('Jost'),
+                            ),
+                            // Serif
+                            DropdownMenuItem(
+                              value: 'Merriweather',
+                              child: Text('Merriweather'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Playfair Display',
+                              child: Text('Playfair Display'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Lora',
+                              child: Text('Lora'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'EB Garamond',
+                              child: Text('EB Garamond'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Cormorant Garamond',
+                              child: Text('Cormorant Garamond'),
+                            ),
+                            // Display / Decorative
+                            DropdownMenuItem(
+                              value: 'Pacifico',
+                              child: Text('Pacifico'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Lobster',
+                              child: Text('Lobster'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Righteous',
+                              child: Text('Righteous'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Fredoka One',
+                              child: Text('Fredoka One'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Boogaloo',
+                              child: Text('Boogaloo'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Comfortaa',
+                              child: Text('Comfortaa'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Abril Fatface',
+                              child: Text('Abril Fatface'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Alfa Slab One',
+                              child: Text('Alfa Slab One'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Bebas Neue',
+                              child: Text('Bebas Neue'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Secular One',
+                              child: Text('Secular One'),
+                            ),
+                            // Handwriting / Script
+                            DropdownMenuItem(
+                              value: 'Dancing Script',
+                              child: Text('Dancing Script'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Great Vibes',
+                              child: Text('Great Vibes'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Satisfy',
+                              child: Text('Satisfy'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Caveat',
+                              child: Text('Caveat'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Sacramento',
+                              child: Text('Sacramento'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Courgette',
+                              child: Text('Courgette'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Kaushan Script',
+                              child: Text('Kaushan Script'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Bali Bliss',
+                              child: Text('Bali Bliss'),
+                            ),
+                            // Monospace
+                            DropdownMenuItem(
+                              value: 'Source Code Pro',
+                              child: Text('Source Code Pro'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Space Mono',
+                              child: Text('Space Mono'),
+                            ),
                           ],
+                          // items: const [
+                          //   DropdownMenuItem(
+                          //     value: 'Roboto',
+                          //     child: Text('Roboto'),
+                          //   ),
+                          //   DropdownMenuItem(
+                          //     value: 'Poppins',
+                          //     child: Text('Poppins'),
+                          //   ),
+                          //   DropdownMenuItem(
+                          //     value: 'Lato',
+                          //     child: Text('Lato'),
+                          //   ),
+                          //   DropdownMenuItem(
+                          //     value: 'Bali Bliss',
+                          //     child: Text('Bali Bliss'),
+                          //   ),
+                          //   DropdownMenuItem(
+                          //     value: 'Ubuntu',
+                          //     child: Text('Ubuntu'),
+                          //   ),
+                          // ],
                           onChanged: (value) {
                             setDialogState(() {
                               fontFamily = value!;
@@ -2346,7 +2538,9 @@ Future<void> _sharePosterWithSelectedCustomers(
                         child: DropdownButton<String>(
                           value: fontFamily,
                           isExpanded: true,
+
                           items: const [
+                            // Sans-Serif
                             DropdownMenuItem(
                               value: 'Roboto',
                               child: Text('Roboto'),
@@ -2360,14 +2554,180 @@ Future<void> _sharePosterWithSelectedCustomers(
                               child: Text('Lato'),
                             ),
                             DropdownMenuItem(
-                              value: 'Bali Bliss',
-                              child: Text('Bali Bliss'),
-                            ),
-                            DropdownMenuItem(
                               value: 'Ubuntu',
                               child: Text('Ubuntu'),
                             ),
+                            DropdownMenuItem(
+                              value: 'Nunito',
+                              child: Text('Nunito'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Montserrat',
+                              child: Text('Montserrat'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Open Sans',
+                              child: Text('Open Sans'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Raleway',
+                              child: Text('Raleway'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Oswald',
+                              child: Text('Oswald'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Inter',
+                              child: Text('Inter'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Work Sans',
+                              child: Text('Work Sans'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Mulish',
+                              child: Text('Mulish'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Quicksand',
+                              child: Text('Quicksand'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'DM Sans',
+                              child: Text('DM Sans'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Jost',
+                              child: Text('Jost'),
+                            ),
+                            // Serif
+                            DropdownMenuItem(
+                              value: 'Merriweather',
+                              child: Text('Merriweather'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Playfair Display',
+                              child: Text('Playfair Display'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Lora',
+                              child: Text('Lora'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'EB Garamond',
+                              child: Text('EB Garamond'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Cormorant Garamond',
+                              child: Text('Cormorant Garamond'),
+                            ),
+                            // Display / Decorative
+                            DropdownMenuItem(
+                              value: 'Pacifico',
+                              child: Text('Pacifico'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Lobster',
+                              child: Text('Lobster'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Righteous',
+                              child: Text('Righteous'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Fredoka One',
+                              child: Text('Fredoka One'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Boogaloo',
+                              child: Text('Boogaloo'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Comfortaa',
+                              child: Text('Comfortaa'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Abril Fatface',
+                              child: Text('Abril Fatface'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Alfa Slab One',
+                              child: Text('Alfa Slab One'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Bebas Neue',
+                              child: Text('Bebas Neue'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Secular One',
+                              child: Text('Secular One'),
+                            ),
+                            // Handwriting / Script
+                            DropdownMenuItem(
+                              value: 'Dancing Script',
+                              child: Text('Dancing Script'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Great Vibes',
+                              child: Text('Great Vibes'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Satisfy',
+                              child: Text('Satisfy'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Caveat',
+                              child: Text('Caveat'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Sacramento',
+                              child: Text('Sacramento'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Courgette',
+                              child: Text('Courgette'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Kaushan Script',
+                              child: Text('Kaushan Script'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Bali Bliss',
+                              child: Text('Bali Bliss'),
+                            ),
+                            // Monospace
+                            DropdownMenuItem(
+                              value: 'Source Code Pro',
+                              child: Text('Source Code Pro'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Space Mono',
+                              child: Text('Space Mono'),
+                            ),
                           ],
+                          // items: const [
+                          //   DropdownMenuItem(
+                          //     value: 'Roboto',
+                          //     child: Text('Roboto'),
+                          //   ),
+                          //   DropdownMenuItem(
+                          //     value: 'Poppins',
+                          //     child: Text('Poppins'),
+                          //   ),
+                          //   DropdownMenuItem(
+                          //     value: 'Lato',
+                          //     child: Text('Lato'),
+                          //   ),
+                          //   DropdownMenuItem(
+                          //     value: 'Bali Bliss',
+                          //     child: Text('Bali Bliss'),
+                          //   ),
+                          //   DropdownMenuItem(
+                          //     value: 'Ubuntu',
+                          //     child: Text('Ubuntu'),
+                          //   ),
+                          // ],
                           onChanged: (value) {
                             setDialogState(() {
                               fontFamily = value!;
@@ -5033,10 +5393,19 @@ Future<void> _sharePosterWithSelectedCustomers(
                                         ),
                                         child: Text(
                                           item.text,
+
+                                          // style: TextStyle(
+                                          //   fontSize: item.fontSize,
+                                          //   fontWeight: item.fontWeight,
+                                          //   fontFamily: item.fontFamily,
+                                          //   color: item.textColor,
+                                          // ),
                                           style: TextStyle(
                                             fontSize: item.fontSize,
                                             fontWeight: item.fontWeight,
-                                            fontFamily: item.fontFamily,
+                                            fontFamily: GoogleFonts.getFont(
+                                              item.fontFamily,
+                                            ).fontFamily,
                                             color: item.textColor,
                                           ),
                                         ),
@@ -5346,9 +5715,13 @@ Future<void> _sharePosterWithSelectedCustomers(
                               child: ContactBottomBar(
                                 // email: email ?? '',
                                 // email: 'Business Name' ?? '',
-                                email: name ?? '',
+                                // email: name ?? '',
 
-                                phoneNumber: phoneNumber ?? '',
+                                email: _apiName ?? name ?? '',
+
+                                // phoneNumber: phoneNumber ?? '',
+
+                                phoneNumber: _apiPhone ?? phoneNumber ?? '',
                                 emailTextColor: _emailTextColor,
                                 mobileTextColor: _mobileTextColor,
                                 backgroundColor: Colors.black87,

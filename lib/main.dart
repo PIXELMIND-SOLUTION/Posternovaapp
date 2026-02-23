@@ -114,6 +114,9 @@
 //   }
 // }
 
+
+
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -134,7 +137,6 @@ import 'package:posternova/providers/logo/logo_provider.dart';
 import 'package:posternova/providers/plans/get_all_plan_provider.dart';
 import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/providers/plans/plan_provider.dart';
-import 'package:posternova/providers/punchang/online_punchang_provider.dart';
 import 'package:posternova/providers/redeem/redeem_provider.dart';
 import 'package:posternova/providers/reels/reels_provider.dart';
 import 'package:posternova/providers/story/report_provider.dart';
@@ -161,6 +163,7 @@ void main() async {
     print('✅ Firebase initialized successfully');
 
     // Initialize FCM Service
+
     await FCMService().initialize();
     print('✅ FCM Service initialized successfully');
   } catch (e) {
@@ -171,7 +174,7 @@ void main() async {
   runApp(
     AppRestartWrapper(
       key: AppRestartService.key,
-      child: MyApp(), // your existing root widget
+      child: MyApp(), 
     ),
   );
 }
@@ -191,7 +194,6 @@ class MyApp extends StatelessWidget {
 
     return MultiProvider(
       providers: [
-        // LanguageProvider should be first so it's available to all other providers
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => CanvaPosterProvider()),
         ChangeNotifierProvider(create: (_) => DateTimeProvider()),
@@ -212,18 +214,16 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RedeemProvider()),
         ChangeNotifierProvider(create: (_) => ReelProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
-
-        // ChangeNotifierProvider(create: (_) => PanchangProvider()),
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {
           return MaterialApp(
-            title: 'PosterNova',
+            title: 'EditEzy',
             // Set the locale from the provider
             locale: languageProvider.locale,
             // Define supported locales
             supportedLocales: const [
-              Locale('en'), // English
+              Locale('en'), // English22
               Locale('hi'), // Hindi
               Locale('te'), // Telugu
               Locale('ta'), // Tamil

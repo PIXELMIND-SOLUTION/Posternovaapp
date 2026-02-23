@@ -2873,6 +2873,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/helper/sub_modal_helper.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/providers/plans/get_all_plan_provider.dart';
@@ -2917,33 +2918,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchProfileData();
   }
 
+  // Future<void> _fetchProfileData() async {
+  //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  //   final userId = authProvider.user?.user.id;
+
+  //   if (userId == null) return;
+
+  //   setState(() => _isLoadingProfile = true);
+
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse('$_baseUrl/get-profile/$userId'),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final data = json.decode(response.body);
+  //       setState(() {
+  //         _profileData = data;
+  //         _isLoadingProfile = false;
+  //       });
+  //     } else {
+  //       setState(() => _isLoadingProfile = false);
+  //     }
+  //   } catch (e) {
+  //     setState(() => _isLoadingProfile = false);
+  //     print('Error fetching profile: $e');
+  //   }
+  // }
+
+
   Future<void> _fetchProfileData() async {
+  setState(() => _isLoadingProfile = true);
+
+  try {
+    // Try AuthProvider first, fall back to local storage
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userId = authProvider.user?.user.id;
+    String? userId = authProvider.user?.user.id;
 
-    if (userId == null) return;
+    // Fallback to stored data if provider hasn't rehydrated yet
+    if (userId == null) {
+      final userData = await AuthPreferences.getUserData();
+      userId = userData?.user.id;
+    }
 
-    setState(() => _isLoadingProfile = true);
-
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/get-profile/$userId'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _profileData = data;
-          _isLoadingProfile = false;
-        });
-      } else {
-        setState(() => _isLoadingProfile = false);
-      }
-    } catch (e) {
+    if (userId == null) {
       setState(() => _isLoadingProfile = false);
-      print('Error fetching profile: $e');
+      return;
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/get-profile/$userId'),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        _profileData = data;
+        _isLoadingProfile = false;
+      });
+    } else {
+      // Fallback: use locally stored name
+      final userData = await AuthPreferences.getUserData();
+      setState(() {
+        _profileData = {'name': userData?.user.name, 'mobile': userData?.user.mobile};
+        _isLoadingProfile = false;
+      });
+    }
+  } catch (e) {
+    print('Error fetching profile: $e');
+    // Fallback to stored data on error
+    try {
+      final userData = await AuthPreferences.getUserData();
+      setState(() {
+        _profileData = {'name': userData?.user.name, 'mobile': userData?.user.mobile};
+        _isLoadingProfile = false;
+      });
+    } catch (_) {
+      setState(() => _isLoadingProfile = false);
     }
   }
+}
 
   // Refresh profile data after returning from edit screen
   void _refreshProfileAfterEdit() {
@@ -3274,24 +3328,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   isPurchased: myPlanProvider.isPurchase ?? false,
                                 ),
 
-                                _buildMenuItem(
-                                  icon: Icons.design_services_outlined,
-                                  title: 'text_remover',
-                                  onTap: () {
-                                    if (myPlanProvider.isPurchase == true) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ImageEditorScreen(),
-                                        ),
-                                      );
-                                    } else {
-                                      _showPremiumRequiredDialog(context);
-                                    }
-                                  },
-                                  isPremiumRequired: true,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
-                                ),
+                                // _buildMenuItem(
+                                //   icon: Icons.design_services_outlined,
+                                //   title: 'text_remover',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) => ImageEditorScreen(),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased: myPlanProvider.isPurchase ?? false,
+                                // ),
 
 
 

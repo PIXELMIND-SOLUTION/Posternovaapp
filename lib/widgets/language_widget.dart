@@ -255,7 +255,7 @@ class LocalizationService {
 
       'text_remover': 'Text Remover',
       'remove_text_ai':
-          'Remove unwanted text from your images with AI precision',
+          'Remove unwanted text from your images with Editezy precision',
       'select_image': 'Select Image',
 
       //new ones
@@ -290,6 +290,23 @@ class LocalizationService {
       'logo_categories': 'Logo Categories',
       'logo_templates': 'Logo Templates',
 
+      'total_and_taxes': 'Total & Taxes',
+
+      'business_profile': 'Business Profile',
+'add_business_logo': 'Add Business Logo',
+'upload_business_logo': 'Upload your business logo or brand image',
+'business_details': 'Business Details',
+'business_name': 'Business Name',
+'business_type': 'Business Type',
+'contact_information': 'Contact Information',
+'mobile_number': 'Mobile Number',
+'email_address': 'Email Address',
+'gst_number_optional': 'GST Number (Optional)',
+'gst_rate_percent': 'GST Rate % (e.g., 18%)',
+'save_profile': 'Save Profile',
+
+
+
       'chat': 'Chat',
 
       'chat_with_chicha': 'Chat with Chicha',
@@ -312,7 +329,7 @@ class LocalizationService {
       'both_get_rewards': 'Both get rewards',
       'credits_after_purchase':
           'Credits are added after successful first purchase',
-          'logo_history': 'Logo History',
+      'logo_history': 'Logo History',
 
       'about': 'About',
       'chicha_ai': 'Chicha AI',
@@ -406,6 +423,45 @@ class LocalizationService {
       'submit': 'Submit',
       'featured': 'Featured',
 
+      'user_not_logged_in': 'User not logged in',
+      'panchang_no_data': 'No data available for the selected date',
+      'panchang_load_failed': 'Failed to load panchang data',
+      'error_prefix': 'Error',
+      'panchang_loading': 'Loading panchang...',
+      'panchang_retry': 'Try Again',
+      'panchang_change_location': 'Change Location',
+      'panchang_location_hint': 'e.g. Hyderabad, Telangana, India',
+      'panchang_dob': 'Date of Birth',
+      'panchang_vaara': 'Weekday (Vaara)',
+      'panchang_sunrise': 'Sunrise',
+      'panchang_sunset': 'Sunset',
+      'panchang_nakshatra': 'Nakshatra',
+      'panchang_tithi': 'Tithi',
+      'panchang_yoga': 'Yoga',
+      'panchang_karana': 'Karana',
+      'panchang_lord': 'Lord',
+
+        'user_not_logged_in': 'User not logged in',
+  'panchang_no_data': 'No data available for the selected date',
+  'panchang_load_failed': 'Failed to load panchang data',
+  'error_prefix': 'Error',
+  'panchang_loading': 'Loading panchang...',
+  'panchang_retry': 'Try Again',
+  'panchang_change_location': 'Change Location',
+  'panchang_location_hint': 'e.g. Hyderabad, Telangana, India',
+  'panchang_dob': 'Date of Birth',
+  'panchang_vaara': 'Weekday (Vaara)',
+  'panchang_sunrise': 'Sunrise',
+  'panchang_sunset': 'Sunset',
+  'panchang_moonrise': 'Moonrise',        // ← NEW
+  'panchang_moonset': 'Moonset',          // ← NEW
+  'panchang_subtitle': 'Vedic Daily Almanac', // ← NEW
+  'panchang_nakshatra': 'Nakshatra',
+  'panchang_tithi': 'Tithi',
+  'panchang_yoga': 'Yoga',
+  'panchang_karana': 'Karana',
+  'panchang_lord': 'Lord',
+
       'Monday': 'Monday',
       'Tuesday': 'Tuesday',
       'Wednesday': 'Wednesday',
@@ -419,6 +475,8 @@ class LocalizationService {
       'happy_anniversary': 'Happy Anniversary',
       'loading_wishes': 'Loading wishes...',
       'loading_celebrations': 'Loading celebrations...',
+
+      'describe_poster': 'Describe your poster...',
 
       'today': 'Today',
 
@@ -455,6 +513,11 @@ class LocalizationService {
       'share_poster': 'Share Poster',
       'share_to_customers': 'Share to Customers',
 
+      'customer_information': 'Customer Information',
+      'product_details': 'Product Details',
+
+
+
       'create_amazing_content': 'Create amazing content',
       'what_do_you_want_create': 'What do you want to create?',
       'choose_tool_get_started': 'Choose a tool to get started',
@@ -463,7 +526,6 @@ class LocalizationService {
       'customer_logo': 'Customer Logo',
       'create_logo_customers': 'Create logo for customers',
       'search_categories': 'Search categories',
-
 
       'reels': 'Reels',
       'amazing_video_editezy': 'Amazing video by Editezy! Check this out',
@@ -554,8 +616,6 @@ class LocalizationService {
       'logo_history': 'లోగో చరిత్ర',
 
       'search_categories': 'వర్గాలను వెతకండి',
-
-
 
       'no_invoices_yet': 'ఇంకా ఇన్వాయిసులు లేవు',
       'start_creating_invoices':
@@ -947,7 +1007,7 @@ class LocalizationService {
       'save_logo': 'लोगो सहेजें',
 
       'today': 'आज',
-'search_categories': 'श्रेणियाँ खोजें',
+      'search_categories': 'श्रेणियाँ खोजें',
 
       'happy_birthday': 'जन्मदिन मुबारक',
       'happy_anniversary': 'सालगिरह मुबारक',
@@ -958,6 +1018,27 @@ class LocalizationService {
       'start_chat_with_chicha': 'चिचा के साथ चैट शुरू करें',
       'ask_me_anything': 'मुझसे कुछ भी पूछें',
       'poster': 'पोस्टर',
+
+      'business_name': 'व्यवसाय का नाम',
+
+      'total_and_taxes': 'कुल और कर',
+
+
+      'business_profile': 'व्यवसाय प्रोफ़ाइल',
+'add_business_logo': 'व्यवसाय लोगो जोड़ें',
+'upload_business_logo': 'अपना व्यवसाय लोगो या ब्रांड छवि अपलोड करें',
+'business_details': 'व्यवसाय विवरण',
+'business_name': 'व्यवसाय का नाम',
+'business_type': 'व्यवसाय का प्रकार',
+'contact_information': 'संपर्क जानकारी',
+'mobile_number': 'मोबाइल नंबर',
+'email_address': 'ईमेल पता',
+'gst_number_optional': 'GST नंबर (वैकल्पिक)',
+'gst_rate_percent': 'GST दर % (जैसे, 18%)',
+'save_profile': 'प्रोफ़ाइल सहेजें',
+
+
+
 
       'text': 'टेक्स्ट',
       'image': 'छवि',
@@ -975,11 +1056,56 @@ class LocalizationService {
 
       'logo_history': 'लोगो इतिहास',
 
+      'remove_text_ai': 'एडिटेज़ी की सटीकता के साथ अपनी छवियों से अनचाहा टेक्स्ट हटाएँ',
+
+
+
+       'user_not_logged_in': 'उपयोगकर्ता लॉग इन नहीं है',
+  'panchang_no_data': 'चुनी गई तारीख के लिए कोई डेटा उपलब्ध नहीं है',
+  'panchang_load_failed': 'पंचांग डेटा लोड करने में विफल',
+  'error_prefix': 'त्रुटि',
+  'panchang_loading': 'पंचांग लोड हो रहा है...',  // ← NEW
+  'panchang_retry': 'पुनः प्रयास करें',
+  'panchang_change_location': 'स्थान बदलें',
+  'panchang_location_hint': 'उदा. हैदराबाद, तेलंगाना, भारत',
+  'panchang_dob': 'जन्म तिथि',              // ← NEW
+  'panchang_vaara': 'वार',
+  'panchang_sunrise': 'सूर्योदय',
+  'panchang_sunset': 'सूर्यास्त',
+  'panchang_moonrise': 'चंद्रोदय',          // ← NEW
+  'panchang_moonset': 'चंद्रास्त',           // ← NEW
+  'panchang_subtitle': 'वैदिक दैनिक पंचांग', // ← NEW
+  'panchang_nakshatra': 'नक्षत्र',
+  'panchang_tithi': 'तिथि',
+  'panchang_yoga': 'योग',
+  'panchang_karana': 'करण',
+  'panchang_lord': 'स्वामी',
+
+  'customer_information': 'ग्राहक जानकारी',
+
+
+      'user_not_logged_in': 'उपयोगकर्ता लॉग इन नहीं है',
+      'panchang_no_data': 'चुनी गई तारीख के लिए कोई डेटा उपलब्ध नहीं है',
+      'panchang_load_failed': 'पंचांग डेटा लोड करने में विफल',
+      'error_prefix': 'त्रुटि',
+      'panchang_loading': 'पंचांग लोड हो रहा है...',
+      'panchang_retry': 'पुनः प्रयास करें',
+      'panchang_change_location': 'स्थान बदलें',
+      'panchang_location_hint': 'उदा. हैदराबाद, तेलंगाना, भारत',
+      'panchang_dob': 'जन्म तिथि',
+      'panchang_vaara': 'वार',
+      'panchang_sunrise': 'सूर्योदय',
+      'panchang_sunset': 'सूर्यास्त',
+      'panchang_nakshatra': 'नक्षत्र',
+      'panchang_tithi': 'तिथि',
+      'panchang_yoga': 'योग',
+      'panchang_karana': 'करण',
+      'panchang_lord': 'स्वामी',
 
       'important_dates': 'महत्वपूर्ण तिथियाँ',
 
-      'delete_confirm_understand': 'मैं समझता/समझती हूँ कि मेरा खाता हटाना स्थायी है और मेरा सारा डेटा खो जाएगा',
-
+      'delete_confirm_understand':
+          'मैं समझता/समझती हूँ कि मेरा खाता हटाना स्थायी है और मेरा सारा डेटा खो जाएगा',
 
       'text_remover': 'टेक्स्ट हटाने वाला',
       'remove_text_ai': 'AI की सटीकता से अपनी छवियों से अनचाहा टेक्स्ट हटाएं',
@@ -1133,6 +1259,8 @@ class LocalizationService {
 
       'reels': 'रील्स',
       'amazing_video_editezy': 'Editezy का शानदार वीडियो! इसे देखें',
+      'create_invoice': 'इनवॉइस बनाएं',
+
 
       // NEW KEYS
       'categories': 'श्रेणियाँ',
@@ -1293,6 +1421,8 @@ class LocalizationService {
       'save_details': 'विवरण सहेजें',
       'bank_details_saved': 'बैंक विवरण सफलतापूर्वक सहेजा गया!',
 
+      'describe_poster': 'अपने पोस्टर का वर्णन करें...',
+
       'total_earning': 'अब तक की कुल कमाई',
       'current_balance': 'वर्तमान बैलेंस',
       'redeem_now': 'अब रिडीम करें',
@@ -1300,8 +1430,8 @@ class LocalizationService {
       'introduce_friend': 'एक दोस्त को आमंत्रित करें और तुरंत 30 क्रेडिट पाएं!',
       'bonus_credit': 'बोनस! उनके खरीदारी करने पर अतिरिक्त 50 क्रेडिट पाएं!',
       'earn_now': 'अभी कमाएँ',
-   'referral_info': 'आप 3 दोस्तों को रेफ़र करके वार्षिक सदस्यता कमा सकते हैं',
-
+      'referral_info':
+          'आप 3 दोस्तों को रेफ़र करके वार्षिक सदस्यता कमा सकते हैं',
 
       'bday_anniversary': 'जन्मदिन और वर्षगांठ शुभकामनाएँ',
       'add_customer_details': 'ग्राहक\nविवरण जोड़ें',
@@ -1313,6 +1443,8 @@ class LocalizationService {
       'anniversary_captions': 'वर्षगांठ कैप्शन',
       'change': 'बदलें',
       'message_with_image': 'यह संदेश आपकी छवि के साथ\nभेजा जाएगा।',
+      'product_details': 'उत्पाद विवरण',
+
 
       'birth_date': 'जन्म तिथि',
       'anniversary_date': 'विवाह वर्षगांठ की तिथि',

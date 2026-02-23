@@ -3597,7 +3597,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen>
                                 ),
                                 const SizedBox(height: 24),
                                 const Text(
-                                  "AI is working...",
+                                  "Generating image...",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
