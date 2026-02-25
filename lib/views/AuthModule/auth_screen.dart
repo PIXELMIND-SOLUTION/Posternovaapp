@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -18,14 +19,15 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
+class _AuthScreenState extends State<AuthScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
-String? _verificationId;
+  String? _verificationId;
 
   // Login Controllers
   final _loginMobileController = TextEditingController();
@@ -37,7 +39,7 @@ String? _verificationId;
   final _signupReferralCodeController = TextEditingController();
   DateTime? _selectedDob;
   DateTime? _selectedMarriageDate;
-  
+
   // OTP Controllers
   final _otpController = TextEditingController();
   bool _showOtpField = false;
@@ -121,349 +123,414 @@ String? _verificationId;
   //   }
   // }
 
+  // Future<void> _callBackendVerify(String firebaseToken) async {
+  //   final smsProvider =
+  //       Provider.of<SmsProvider>(context, listen: false);
 
-// Future<void> _callBackendVerify(String firebaseToken) async {
-//   final smsProvider =
-//       Provider.of<SmsProvider>(context, listen: false);
+  //   await smsProvider.verifyWithFirebaseToken(firebaseToken);
 
-//   await smsProvider.verifyWithFirebaseToken(firebaseToken);
+  //   if (smsProvider.otpResponse?.statusCode == 200) {
+  //     final data = jsonDecode(smsProvider.otpResponse!.body);
 
-//   if (smsProvider.otpResponse?.statusCode == 200) {
-//     final data = jsonDecode(smsProvider.otpResponse!.body);
+  //     final user = data['user'];
 
-//     final user = data['user'];
+  //     final hasName =
+  //         user['name'] != null && user['name'] != '';
 
-//     final hasName =
-//         user['name'] != null && user['name'] != '';
+  //     final hasEmail =
+  //         user['email'] != null && user['email'] != '';
 
-//     final hasEmail =
-//         user['email'] != null && user['email'] != '';
+  //     if (!hasName || !hasEmail) {
+  //       setState(() {
+  //         _isNewUser = true;
+  //         _isMobileLocked = true;
+  //         _signupMobileController.text =
+  //             _loginMobileController.text;
+  //       });
 
-//     if (!hasName || !hasEmail) {
-//       setState(() {
-//         _isNewUser = true;
-//         _isMobileLocked = true;
-//         _signupMobileController.text =
-//             _loginMobileController.text;
-//       });
+  //       _tabController.animateTo(1);
+  //       return;
+  //     }
 
-//       _tabController.animateTo(1);
-//       return;
-//     }
+  //     Navigator.pushReplacement(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (_) => MainNavigationScreen(),
+  //       ),
+  //     );
+  //   } else {
+  //     _showSnackBar("Backend verification failed");
+  //   }
+  // }
 
-//     Navigator.pushReplacement(
-//       context,
-//       MaterialPageRoute(
-//         builder: (_) => MainNavigationScreen(),
-//       ),
-//     );
-//   } else {
-//     _showSnackBar("Backend verification failed");
-//   }
-// }
+  Future<void> _callBackendVerify(String firebaseToken) async {
+    final smsProvider = Provider.of<SmsProvider>(context, listen: false);
 
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-
-Future<void> _callBackendVerify(String firebaseToken) async {
-  final smsProvider =
-      Provider.of<SmsProvider>(context, listen: false);
-
-  final authProvider =
-      Provider.of<AuthProvider>(context, listen: false);
-
-  await smsProvider.verifyWithFirebaseToken(firebaseToken);
-
-  if (smsProvider.otpResponse?.statusCode == 200) {
-    final data = jsonDecode(smsProvider.otpResponse!.body);
-    final user = data['user'];
-
-    // ✅ SAVE USER HERE (IMPORTANT)
-    await authProvider.login(user['mobile']);
-
-    final hasName =
-        user['name'] != null && user['name'] != '';
-    final hasEmail =
-        user['email'] != null && user['email'] != '';
-
-    if (!hasName || !hasEmail) {
-      setState(() {
-        _isNewUser = true;
-        _isMobileLocked = true;
-        _signupMobileController.text =
-            _loginMobileController.text;
-      });
-
-      _tabController.animateTo(1);
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MainNavigationScreen(),
-      ),
-    );
-  } else {
-    _showSnackBar("Backend verification failed");
-  }
-}
-
-
-
-
-Future<void> _handleLogin() async {
-  final mobile = _loginMobileController.text.trim();
-
-  if (mobile.length != 10) {
-    _showSnackBar('Enter valid mobile number');
-    return;
-  }
-
-  final phone = "+91$mobile";
-
-  try {
-    // 🔥 IMPORTANT FOR IOS
-    await FirebaseMessaging.instance.requestPermission();
-    await FirebaseMessaging.instance.getToken();
-
-    // Give iOS time to register APNs
-    await Future.delayed(const Duration(seconds: 2));
-
-    String? apnsToken =
-        await FirebaseMessaging.instance.getAPNSToken();
-
-    print("APNS TOKEN: $apnsToken");
-
-    if (apnsToken == null) {
-      _showSnackBar("Device not ready. Try again.");
-      return;
-    }
-
-    // ✅ NOW call verifyPhoneNumber
-    await _firebaseAuth.verifyPhoneNumber(
-      phoneNumber: phone,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        await _firebaseAuth.signInWithCredential(credential);
-
-        final idToken =
-            await _firebaseAuth.currentUser!.getIdToken();
-
-        await _callBackendVerify(idToken.toString());
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        _showSnackBar(e.message ?? "Verification failed");
-      },
-      codeSent: (verificationId, resendToken) {
-        setState(() {
-          _verificationId = verificationId;
-          _showOtpField = true;
-        });
-
-        _showSnackBar("OTP sent via Firebase");
-      },
-      codeAutoRetrievalTimeout: (verificationId) {
-        _verificationId = verificationId;
-      },
-    );
-  } catch (e) {
-    print("PhoneAuth Error: $e");
-  }
-}
-
-
-
-
-// Future<void> _handleVerifyOtp() async {
-//   final otp = _otpController.text.trim();
-//   final mobile = _loginMobileController.text.trim();
-  
-//   if (otp.isEmpty) {
-//     _showSnackBar('Please enter OTP');
-//     return;
-//   }
-
-//   final smsProvider = Provider.of<SmsProvider>(context, listen: false);
-//   final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-//   // Verify OTP (FCM token is handled automatically inside the provider)
-//   await smsProvider.verifyOtp(otp, mobile);
-
-//   if (smsProvider.otpResponse?.statusCode == 200) {
-//     final responseBody = smsProvider.otpResponse?.body;
-    
-//     // Check if user exists in the response
-//     if (responseBody != null) {
-//       final userData = jsonDecode(responseBody);
-//       final user = userData['user'];
-      
-//       // Get user ID for greet API
-//       final userId = user['_id'];
-      
-//       // Check if user has only basic fields (new user)
-//       final hasName = user['name'] != null && user['name'].toString().isNotEmpty;
-//       final hasEmail = user['email'] != null && user['email'].toString().isNotEmpty;
-      
-//       if (!hasName || !hasEmail) {
-//         // New user - navigate to registration tab
-//         setState(() {
-//           _isNewUser = true;
-//           _isMobileLocked = true;
-//           _signupMobileController.text = mobile;
-//           _showOtpField = false;
-//           _otpController.clear();
-//         });
-        
-//         _tabController.animateTo(1); // Switch to signup tab
-//         _showSnackBar('Please complete your registration');
-//         return;
-//       }
-
-//       // Existing user - authenticate
-//       final success = await authProvider.login(_pendingMobile!);
-      
-//       if (success) {
-//         // Fetch greet data
-//         try {
-//           final greetService = GreetService();
-//           final greetResponse = await greetService.getGreet(userId);
-          
-//           if (greetResponse.success && greetResponse.data != null) {
-//             print('Greeting Title: ${greetResponse.data!.title}');
-//             print('Greeting Body: ${greetResponse.data!.body}');
-            
-//             // Show greeting message (using title)
-//             if (greetResponse.data!.title != null) {
-//               _showSnackBar(greetResponse.data!.title!);
-//             }
-//           }
-//         } catch (e) {
-//           print('Error fetching greet: $e');
-//           // Continue even if greet fails
-//         }
-
-//         // Navigate to main screen
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(builder: (context) => MainNavigationScreen()),
-//         );
-//       } else {
-//         _showSnackBar('Authentication failed');
-//       }
-//     }
-//   } else {
-//     _showSnackBar(smsProvider.errorMessage ?? 'OTP verification failed');
-//   }
-// }
-
-
-// Future<void> _handleVerifyOtp() async {
-//   final otp = _otpController.text.trim();
-
-//   if (_verificationId == null) {
-//     _showSnackBar("Request OTP first");
-//     return;
-//   }
-
-//   try {
-//     final credential = PhoneAuthProvider.credential(
-//       verificationId: _verificationId!,
-//       smsCode: otp,
-//     );
-
-//     await _firebaseAuth.signInWithCredential(credential);
-
-//     final idToken =
-//         await _firebaseAuth.currentUser!.getIdToken();
-//         print("lllllllllllllllllllllllll$idToken");
-
-//     await _callBackendVerify(idToken.toString());
-
-//   } catch (e) {
-//     _showSnackBar("Invalid OTP");
-//   }
-// }
-
-
-Future<void> _handleVerifyOtp() async {
-  final otp = _otpController.text.trim();
-  final mobile = _loginMobileController.text.trim();
-
-  if (otp.isEmpty) {
-    _showSnackBar('Please enter OTP');
-    return;
-  }
-
-  final smsProvider = Provider.of<SmsProvider>(context, listen: false);
-  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-  // ✅ BYPASS NUMBER
-  if (mobile == "9849008143") {
-    await smsProvider.verifyOtp(otp, mobile);
+    await smsProvider.verifyWithFirebaseToken(firebaseToken);
 
     if (smsProvider.otpResponse?.statusCode == 200) {
-      final userData = jsonDecode(smsProvider.otpResponse!.body);
-      final user = userData['user'];
+      final data = jsonDecode(smsProvider.otpResponse!.body);
+      final user = data['user'];
 
-      final hasName =
-          user['name'] != null && user['name'].toString().isNotEmpty;
-      final hasEmail =
-          user['email'] != null && user['email'].toString().isNotEmpty;
+      // ✅ SAVE USER HERE (IMPORTANT)
+      await authProvider.login(user['mobile']);
+
+      final hasName = user['name'] != null && user['name'] != '';
+      final hasEmail = user['email'] != null && user['email'] != '';
 
       if (!hasName || !hasEmail) {
         setState(() {
           _isNewUser = true;
           _isMobileLocked = true;
-          _signupMobileController.text = mobile;
-          _showOtpField = false;
-          _otpController.clear();
+          _signupMobileController.text = _loginMobileController.text;
         });
 
         _tabController.animateTo(1);
         return;
       }
 
-      // ✅ IMPORTANT: login call
-      final success = await authProvider.login(mobile);
-
-      if (success) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => MainNavigationScreen()),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+      );
     } else {
-      _showSnackBar("Invalid OTP");
+      _showSnackBar("Backend verification failed");
+    }
+  }
+
+  // Future<void> _handleLogin() async {
+  //   final mobile = _loginMobileController.text.trim();
+
+  //   if (mobile.length != 10) {
+  //     _showSnackBar('Enter valid mobile number');
+  //     return;
+  //   }
+
+  //   final phone = "+91$mobile";
+
+  //   try {
+  //     // 🔥 IMPORTANT FOR IOS
+  //     await FirebaseMessaging.instance.requestPermission();
+  //     await FirebaseMessaging.instance.getToken();
+
+  //     // Give iOS time to register APNs
+  //     await Future.delayed(const Duration(seconds: 2));
+
+  //     String? apnsToken =
+  //         await FirebaseMessaging.instance.getAPNSToken();
+
+  //     print("APNS TOKEN: $apnsToken");
+
+  //     if (apnsToken == null) {
+  //       _showSnackBar("Device not ready. Try again.");
+  //       return;
+  //     }
+
+  //     // ✅ NOW call verifyPhoneNumber
+  //     await _firebaseAuth.verifyPhoneNumber(
+  //       phoneNumber: phone,
+  //       verificationCompleted: (PhoneAuthCredential credential) async {
+  //         await _firebaseAuth.signInWithCredential(credential);
+
+  //         final idToken =
+  //             await _firebaseAuth.currentUser!.getIdToken();
+
+  //         await _callBackendVerify(idToken.toString());
+  //       },
+  //       verificationFailed: (FirebaseAuthException e) {
+  //         _showSnackBar(e.message ?? "Verification failed");
+  //       },
+  //       codeSent: (verificationId, resendToken) {
+  //         setState(() {
+  //           _verificationId = verificationId;
+  //           _showOtpField = true;
+  //         });
+
+  //         _showSnackBar("OTP sent via Firebase");
+  //       },
+  //       codeAutoRetrievalTimeout: (verificationId) {
+  //         _verificationId = verificationId;
+  //       },
+  //     );
+  //   } catch (e) {
+  //     print("PhoneAuth Error: $e");
+  //   }
+  // }
+
+  Future<void> _handleLogin() async {
+    final mobile = _loginMobileController.text.trim();
+
+    if (mobile.length != 10) {
+      _showSnackBar('Enter valid mobile number');
+      return;
     }
 
-    return;
+    final phone = "+91$mobile";
+
+    try {
+      // 🔥 Request notification permission (Required for iOS)
+      if (mobile == '9849008143') {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final mobile = _loginMobileController.text.trim();
+
+        final bool success = await authProvider.login(mobile);
+
+        if (success) {
+          _showSnackBar('OTP sent successfully!');
+        } else {
+          _showSnackBar('OTP sent successfully!');
+        }
+        setState(() {
+          _showOtpField = true;
+        });
+      } else {
+        await FirebaseMessaging.instance.requestPermission();
+
+        // Get FCM token (works for both Android & iOS)
+        await FirebaseMessaging.instance.getToken();
+
+        // Give iOS time to register APNs
+        if (Platform.isIOS) {
+          await Future.delayed(const Duration(seconds: 2));
+
+          String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+
+          print("APNS TOKEN: $apnsToken");
+
+          if (apnsToken == null) {
+            _showSnackBar("Device not ready. Try again.");
+            return;
+          }
+        }
+
+        // ✅ NOW call verifyPhoneNumber
+        await _firebaseAuth.verifyPhoneNumber(
+          phoneNumber: phone,
+
+          verificationCompleted: (PhoneAuthCredential credential) async {
+            await _firebaseAuth.signInWithCredential(credential);
+
+            final idToken = await _firebaseAuth.currentUser!.getIdToken();
+
+            await _callBackendVerify(idToken.toString());
+          },
+
+          verificationFailed: (FirebaseAuthException e) {
+            _showSnackBar(e.message ?? "Verification failed");
+          },
+
+          codeSent: (verificationId, resendToken) {
+            setState(() {
+              _verificationId = verificationId;
+              _showOtpField = true;
+            });
+
+            _showSnackBar("OTP sent via Firebase");
+          },
+
+          codeAutoRetrievalTimeout: (verificationId) {
+            _verificationId = verificationId;
+          },
+        );
+      }
+    } catch (e) {
+      print("PhoneAuth Error: $e");
+      _showSnackBar("Something went wrong. Try again.");
+    }
   }
 
-  // ✅ NORMAL FIREBASE FLOW
-  if (_verificationId == null) {
-    _showSnackBar("Request OTP first");
-    return;
+  // Future<void> _handleVerifyOtp() async {
+  //   final otp = _otpController.text.trim();
+  //   final mobile = _loginMobileController.text.trim();
+
+  //   if (otp.isEmpty) {
+  //     _showSnackBar('Please enter OTP');
+  //     return;
+  //   }
+
+  //   final smsProvider = Provider.of<SmsProvider>(context, listen: false);
+  //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+  //   // Verify OTP (FCM token is handled automatically inside the provider)
+  //   await smsProvider.verifyOtp(otp, mobile);
+
+  //   if (smsProvider.otpResponse?.statusCode == 200) {
+  //     final responseBody = smsProvider.otpResponse?.body;
+
+  //     // Check if user exists in the response
+  //     if (responseBody != null) {
+  //       final userData = jsonDecode(responseBody);
+  //       final user = userData['user'];
+
+  //       // Get user ID for greet API
+  //       final userId = user['_id'];
+
+  //       // Check if user has only basic fields (new user)
+  //       final hasName = user['name'] != null && user['name'].toString().isNotEmpty;
+  //       final hasEmail = user['email'] != null && user['email'].toString().isNotEmpty;
+
+  //       if (!hasName || !hasEmail) {
+  //         // New user - navigate to registration tab
+  //         setState(() {
+  //           _isNewUser = true;
+  //           _isMobileLocked = true;
+  //           _signupMobileController.text = mobile;
+  //           _showOtpField = false;
+  //           _otpController.clear();
+  //         });
+
+  //         _tabController.animateTo(1); // Switch to signup tab
+  //         _showSnackBar('Please complete your registration');
+  //         return;
+  //       }
+
+  //       // Existing user - authenticate
+  //       final success = await authProvider.login(_pendingMobile!);
+
+  //       if (success) {
+  //         // Fetch greet data
+  //         try {
+  //           final greetService = GreetService();
+  //           final greetResponse = await greetService.getGreet(userId);
+
+  //           if (greetResponse.success && greetResponse.data != null) {
+  //             print('Greeting Title: ${greetResponse.data!.title}');
+  //             print('Greeting Body: ${greetResponse.data!.body}');
+
+  //             // Show greeting message (using title)
+  //             if (greetResponse.data!.title != null) {
+  //               _showSnackBar(greetResponse.data!.title!);
+  //             }
+  //           }
+  //         } catch (e) {
+  //           print('Error fetching greet: $e');
+  //           // Continue even if greet fails
+  //         }
+
+  //         // Navigate to main screen
+  //         Navigator.pushReplacement(
+  //           context,
+  //           MaterialPageRoute(builder: (context) => MainNavigationScreen()),
+  //         );
+  //       } else {
+  //         _showSnackBar('Authentication failed');
+  //       }
+  //     }
+  //   } else {
+  //     _showSnackBar(smsProvider.errorMessage ?? 'OTP verification failed');
+  //   }
+  // }
+
+  // Future<void> _handleVerifyOtp() async {
+  //   final otp = _otpController.text.trim();
+
+  //   if (_verificationId == null) {
+  //     _showSnackBar("Request OTP first");
+  //     return;
+  //   }
+
+  //   try {
+  //     final credential = PhoneAuthProvider.credential(
+  //       verificationId: _verificationId!,
+  //       smsCode: otp,
+  //     );
+
+  //     await _firebaseAuth.signInWithCredential(credential);
+
+  //     final idToken =
+  //         await _firebaseAuth.currentUser!.getIdToken();
+  //         print("lllllllllllllllllllllllll$idToken");
+
+  //     await _callBackendVerify(idToken.toString());
+
+  //   } catch (e) {
+  //     _showSnackBar("Invalid OTP");
+  //   }
+  // }
+
+  Future<void> _handleVerifyOtp() async {
+    final otp = _otpController.text.trim();
+    final mobile = _loginMobileController.text.trim();
+
+    if (otp.isEmpty) {
+      _showSnackBar('Please enter OTP');
+      return;
+    }
+
+    final smsProvider = Provider.of<SmsProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    print('mobileeeeeeeeeeeeeeee $mobile');
+    // ✅ BYPASS NUMBER
+    if (mobile == "9849008143") {
+      print('mobileeeeeeeeeeeeeeetttttttte $mobile');
+
+      await smsProvider.verifyOtp(otp, mobile);
+
+      if (smsProvider.otpResponse?.statusCode == 200) {
+        print('eeeeeeeeeeeeeeeeee $mobile');
+
+        final userData = jsonDecode(smsProvider.otpResponse!.body);
+        final user = userData['user'];
+
+        final hasName =
+            user['name'] != null && user['name'].toString().isNotEmpty;
+        final hasEmail =
+            user['email'] != null && user['email'].toString().isNotEmpty;
+
+        if (!hasName || !hasEmail) {
+          setState(() {
+            _isNewUser = true;
+            _isMobileLocked = true;
+            _signupMobileController.text = mobile;
+            _showOtpField = false;
+            _otpController.clear();
+          });
+
+          _tabController.animateTo(1);
+          return;
+        }
+
+        print('mobileeeeeeeeeeeeeeee $mobile');
+
+        // ✅ IMPORTANT: login call
+        final success = await authProvider.login(mobile);
+
+        if (success) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+          );
+        }
+      } else {
+        _showSnackBar("Invalid OTP");
+      }
+
+      return;
+    }
+
+    // ✅ NORMAL FIREBASE FLOW
+    if (_verificationId == null) {
+      _showSnackBar("Request OTP first");
+      return;
+    }
+
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId!,
+        smsCode: otp,
+      );
+
+      await _firebaseAuth.signInWithCredential(credential);
+
+      final idToken = await _firebaseAuth.currentUser!.getIdToken();
+
+      await _callBackendVerify(idToken.toString());
+    } catch (e) {
+      _showSnackBar("Invalid OTP");
+    }
   }
-
-  try {
-    final credential = PhoneAuthProvider.credential(
-      verificationId: _verificationId!,
-      smsCode: otp,
-    );
-
-    await _firebaseAuth.signInWithCredential(credential);
-
-    final idToken =
-        await _firebaseAuth.currentUser!.getIdToken();
-
-    await _callBackendVerify(idToken.toString());
-
-  } catch (e) {
-    _showSnackBar("Invalid OTP");
-  }
-}
-
-
-
 
   Future<void> _handleResendOtp() async {
     if (_pendingMobile == null) return;
@@ -478,7 +545,7 @@ Future<void> _handleVerifyOtp() async {
         _otpController.text = resOtp;
       }
     });
-    
+
     if (smsProvider.resendOtpResponse?.statusCode == 200) {
       _showSnackBar('OTP resent successfully!');
     } else {
@@ -486,56 +553,56 @@ Future<void> _handleVerifyOtp() async {
     }
   }
 
-Future<void> _handleSignup() async {
-  // Validation
-  if (_signupNameController.text.trim().isEmpty) {
-    _showSnackBar('Please enter your name');
-    return;
-  }
-  if (_signupEmailController.text.trim().isEmpty) {
-    _showSnackBar('Please enter your email');
-    return;
-  }
-  if (_signupMobileController.text.trim().isEmpty || 
-      _signupMobileController.text.trim().length != 10) {
-    _showSnackBar('Please enter a valid 10-digit mobile number');
-    return;
-  }
+  Future<void> _handleSignup() async {
+    // Validation
+    if (_signupNameController.text.trim().isEmpty) {
+      _showSnackBar('Please enter your name');
+      return;
+    }
+    if (_signupEmailController.text.trim().isEmpty) {
+      _showSnackBar('Please enter your email');
+      return;
+    }
+    if (_signupMobileController.text.trim().isEmpty ||
+        _signupMobileController.text.trim().length != 10) {
+      _showSnackBar('Please enter a valid 10-digit mobile number');
+      return;
+    }
 
-  final signupProvider = Provider.of<SignupProvider>(context, listen: false);
-  
-  // Create signup model WITHOUT fcmtoken - provider will handle it automatically
-  final signupModel = SignupModel(
-    id: '', // Will be generated by backend
-    name: _signupNameController.text.trim(),
-    email: _signupEmailController.text.trim(),
-    mobile: _signupMobileController.text.trim(),
-    dob: _selectedDob != null
-        ? '${_selectedDob!.year}-${_selectedDob!.month.toString().padLeft(2, '0')}-${_selectedDob!.day.toString().padLeft(2, '0')}'
-        : null,
-    marriageAnniversary: _selectedMarriageDate != null
-        ? '${_selectedMarriageDate!.year}-${_selectedMarriageDate!.month.toString().padLeft(2, '0')}-${_selectedMarriageDate!.day.toString().padLeft(2, '0')}'
-        : null,
-    referralCode: _signupReferralCodeController.text.trim().isEmpty
-        ? null
-        : _signupReferralCodeController.text.trim(),
-    // fcmtoken will be automatically added by SignupProvider
-  );
+    final signupProvider = Provider.of<SignupProvider>(context, listen: false);
 
-  final success = await signupProvider.registerUser(signupModel);
-
-  if (success) {
-    _showSnackBar('Registration successful!');
-    
-    // Navigate to main screen after successful registration
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => MainNavigationScreen()),
+    // Create signup model WITHOUT fcmtoken - provider will handle it automatically
+    final signupModel = SignupModel(
+      id: '', // Will be generated by backend
+      name: _signupNameController.text.trim(),
+      email: _signupEmailController.text.trim(),
+      mobile: _signupMobileController.text.trim(),
+      dob: _selectedDob != null
+          ? '${_selectedDob!.year}-${_selectedDob!.month.toString().padLeft(2, '0')}-${_selectedDob!.day.toString().padLeft(2, '0')}'
+          : null,
+      marriageAnniversary: _selectedMarriageDate != null
+          ? '${_selectedMarriageDate!.year}-${_selectedMarriageDate!.month.toString().padLeft(2, '0')}-${_selectedMarriageDate!.day.toString().padLeft(2, '0')}'
+          : null,
+      referralCode: _signupReferralCodeController.text.trim().isEmpty
+          ? null
+          : _signupReferralCodeController.text.trim(),
+      // fcmtoken will be automatically added by SignupProvider
     );
-  } else {
-    _showSnackBar(signupProvider.errorMessage ?? 'Registration failed');
+
+    final success = await signupProvider.registerUser(signupModel);
+
+    if (success) {
+      _showSnackBar('Registration successful!');
+
+      // Navigate to main screen after successful registration
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => MainNavigationScreen()),
+      );
+    } else {
+      _showSnackBar(signupProvider.errorMessage ?? 'Registration failed');
+    }
   }
-}
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -555,11 +622,7 @@ Future<void> _handleSignup() async {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0A0E21),
-              Color(0xFF1D1E33),
-              Color(0xFF0A0E21),
-            ],
+            colors: [Color(0xFF0A0E21), Color(0xFF1D1E33), Color(0xFF0A0E21)],
           ),
         ),
         child: SafeArea(
@@ -573,11 +636,10 @@ Future<void> _handleSignup() async {
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  physics: _isMobileLocked ? const NeverScrollableScrollPhysics() : null,
-                  children: [
-                    _buildLoginForm(),
-                    _buildSignupForm(),
-                  ],
+                  physics: _isMobileLocked
+                      ? const NeverScrollableScrollPhysics()
+                      : null,
+                  children: [_buildLoginForm(), _buildSignupForm()],
                 ),
               ),
             ],
@@ -595,10 +657,7 @@ Future<void> _handleSignup() async {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [
-                Colors.purple.shade400,
-                Colors.blue.shade400,
-              ],
+              colors: [Colors.purple.shade400, Colors.blue.shade400],
             ),
             boxShadow: [
               BoxShadow(
@@ -608,11 +667,7 @@ Future<void> _handleSignup() async {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.auto_awesome,
-            size: 50,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.auto_awesome, size: 50, color: Colors.white),
         ),
         const SizedBox(height: 20),
         ShaderMask(
@@ -663,10 +718,7 @@ Future<void> _handleSignup() async {
         dividerColor: Colors.transparent,
         labelColor: Colors.white,
         unselectedLabelColor: Colors.grey.shade400,
-        labelStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         tabs: const [
           Tab(text: 'Login'),
           Tab(text: 'Sign Up'),
@@ -705,7 +757,9 @@ Future<void> _handleSignup() async {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: smsProvider.isResending ? null : _handleResendOtp,
+                    onPressed: smsProvider.isResending
+                        ? null
+                        : _handleResendOtp,
                     child: Text(
                       smsProvider.isResending ? 'Resending...' : 'Refresh OTP',
                       style: TextStyle(
@@ -841,8 +895,8 @@ Future<void> _handleSignup() async {
         color: isEnabled ? const Color(0xFF1D1E33) : const Color(0xFF15162A),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: isEnabled 
-              ? Colors.purple.withOpacity(0.3) 
+          color: isEnabled
+              ? Colors.purple.withOpacity(0.3)
               : Colors.grey.withOpacity(0.2),
         ),
         boxShadow: [
@@ -879,9 +933,14 @@ Future<void> _handleSignup() async {
                   ),
                   onPressed: onTogglePassword,
                 )
-              : (isEnabled ? null : Icon(Icons.lock, color: Colors.grey.shade600, size: 20)),
+              : (isEnabled
+                    ? null
+                    : Icon(Icons.lock, color: Colors.grey.shade600, size: 20)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 18,
+          ),
         ),
       ),
     );
@@ -920,7 +979,9 @@ Future<void> _handleSignup() async {
                     ? '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'
                     : label,
                 style: TextStyle(
-                  color: selectedDate != null ? Colors.white : Colors.grey.shade400,
+                  color: selectedDate != null
+                      ? Colors.white
+                      : Colors.grey.shade400,
                   fontSize: 16,
                 ),
               ),
@@ -932,7 +993,11 @@ Future<void> _handleSignup() async {
     );
   }
 
-  Widget _buildActionButton(String text, VoidCallback? onPressed, {bool isLoading = false}) {
+  Widget _buildActionButton(
+    String text,
+    VoidCallback? onPressed, {
+    bool isLoading = false,
+  }) {
     return Container(
       width: double.infinity,
       height: 55,

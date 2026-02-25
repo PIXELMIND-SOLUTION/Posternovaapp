@@ -6,7 +6,8 @@ import 'package:posternova/views/logo/make_logo.dart';
 class SizeScreen extends StatefulWidget {
   final String? categoryId;
   final String?image;
-  const SizeScreen({super.key, this.categoryId,this.image});
+  final String?logoId;
+  const SizeScreen({super.key, this.categoryId,this.image,this.logoId});
 
   @override
   State<SizeScreen> createState() => _CreatePostState();
@@ -263,6 +264,7 @@ class _CreatePostState extends State<SizeScreen> with TickerProviderStateMixin {
             pageBuilder: (context, animation, secondaryAnimation) => MakeLogo(
               posterSize: posterSize, // Pass the selected size
               categoryId: widget.categoryId, 
+              id: widget.categoryId,
               image: widget.image,// Pass the categoryId
             ), // PosterMaker(posterSize: posterSize),
             transitionsBuilder:

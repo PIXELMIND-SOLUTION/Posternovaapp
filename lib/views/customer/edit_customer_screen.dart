@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/providers/customer/customer_provider.dart';
 import 'package:provider/provider.dart';
@@ -354,6 +355,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
     required TextEditingController controller,
     required String labelText,
     required String hintText,
+    List<TextInputFormatter>? inputFormatters,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     bool readOnly = false,
@@ -367,6 +369,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
         keyboardType: keyboardType,
         validator: validator,
         readOnly: readOnly,
+        inputFormatters: inputFormatters,
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           labelText: labelText,
@@ -721,15 +724,35 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                           },
                         ),
 
+                        // _buildCustomTextField(
+                        //   controller: mobileController,
+                        //   labelText: 'Mobile Number',
+                        //   hintText: 'Enter mobile number',
+                        //   prefixIcon: Icons.phone_outlined,
+                        //   keyboardType: TextInputType.phone,
+                        //   validator: (value) {
+                        //     if (value == null || value.isEmpty) {
+                        //       return 'Please enter a mobile number';
+                        //     }
+                        //     return null;
+                        //   },
+                        // ),
                         _buildCustomTextField(
                           controller: mobileController,
                           labelText: 'Mobile Number',
                           hintText: 'Enter mobile number',
                           prefixIcon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter a mobile number';
+                            }
+                            if (value.length != 10) {
+                              return 'Mobile number must be 10 digits';
                             }
                             return null;
                           },

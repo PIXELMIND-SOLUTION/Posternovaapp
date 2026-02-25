@@ -2774,6 +2774,10 @@ class _CategoryScreenState extends State<CategoryScreen>
   bool _isLoadingRecent = true;
   Timer? _speechTimer;
 
+
+final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
   @override
   void initState() {
     super.initState();
@@ -2977,6 +2981,7 @@ class _CategoryScreenState extends State<CategoryScreen>
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
+        
         backgroundColor: const Color(0xFFF8F9FA),
         body: SafeArea(
           child: Stack(
