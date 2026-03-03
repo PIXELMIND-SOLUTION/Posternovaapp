@@ -107,8 +107,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<dynamic> _filteredNewposters = [];
 
   static bool _hasClosedWishesSection = false;
-static bool _hasClosedCelebrationsSection = false;
-
+  static bool _hasClosedCelebrationsSection = false;
 
   // late final CategoryProviderr categoryprovider;
   late final CanvaPosterProvider canvaPosterProvider;
@@ -137,140 +136,233 @@ static bool _hasClosedCelebrationsSection = false;
     await prefs.setBool('show_customer_celebrations', show);
   }
 
-
-Future<void> _loadSectionPreferences() async {
-  final prefs = await SharedPreferences.getInstance();
-  setState(() {
-    // Only load from preferences if not manually closed in this session
-    if (!_hasClosedWishesSection) {
-      _showWishesSection = prefs.getBool('show_wishes_section') ?? true;
-    }
-    if (!_hasClosedCelebrationsSection) {
-      _showCustomerCelebrationsSection =
-          prefs.getBool('show_customer_celebrations') ?? true;
-    }
-  });
-}
+  Future<void> _loadSectionPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      // Only load from preferences if not manually closed in this session
+      if (!_hasClosedWishesSection) {
+        _showWishesSection = prefs.getBool('show_wishes_section') ?? true;
+      }
+      if (!_hasClosedCelebrationsSection) {
+        _showCustomerCelebrationsSection =
+            prefs.getBool('show_customer_celebrations') ?? true;
+      }
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    // _fetchWeeklyPosters();
     _initializeAnimations();
-    _fetchnewposters();
-
     _loadUserData();
     _loadUserId();
     _initializeUser();
+
+    // Load all data in parallel without waiting for modals
     Future.microtask(() async {
-      await _loadUserId(); // Ensure userId is loaded first
-      fetchCustomers();
-
-      // if (!_hasSpokenGreeting && username != null) {
-      //   await Future.delayed(
-      //     const Duration(milliseconds: 800),
-      //   ); // Small delay for better UX
-      //   await VoiceGreetingHelper.speakWelcome(username);
-      //   _hasSpokenGreeting = true;
-      // }
-      final myPlanProvider = Provider.of<MyPlanProvider>(
-        context,
-        listen: false,
-      );
-      final storyProvider = Provider.of<StoryProvider>(context, listen: false);
-      storyProvider.fetchStories();
-
-      if (!_hasShownReferAndEarnModal) {
-        showReferAndEarnModal(context);
-        _hasShownReferAndEarnModal = true;
-      }
-
-      final posterProvider = Provider.of<PosterProvider>(
-        context,
-        listen: false,
-      );
-
-      final authprovider = Provider.of<AuthProvider>(context, listen: false);
-
-      // myPlanProvider
-      //     .fetchMyPlan(userId.toString())
-      //     .then((_) {
-      //       print(
-      //         'Fetch MyPlan completed - isPurchase: ${myPlanProvider.isPurchase}',
-      //       );
-      //       print(
-      //         'Subscribed Plan: ${myPlanProvider.subscribedPlan?.name ?? 'None'}',
-      //       );
-
-      //       if (myPlanProvider.isPurchase) {
-      //         print('User has an active subscription');
-      //       } else {
-      //         print('User does not have an active subscription');
-      //         showSubscriptionModal(context);
-      //       }
-      //     })
-      //     .catchError((error) {
-      //       print('Error fetching MyPlan: $error');
-      //       showSubscriptionModal(context);
-      //     });
-
-      myPlanProvider
-          .fetchMyPlan(userId.toString())
-          .then((_) {
-            print(
-              'Fetch MyPlan completed - isPurchase: ${myPlanProvider.isPurchase}',
-            );
-            print(
-              'Subscribed Plan: ${myPlanProvider.subscribedPlan?.name ?? 'None'}',
-            );
-
-            if (myPlanProvider.isPurchase) {
-              print('User has an active subscription');
-            } else {
-              print('User does not have an active subscription');
-              // Navigate to subscription page instead of showing modal
-              if (mounted) {
-                // Check if widget is still mounted
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SubscriptionPlansPage(),
-                  ),
-                );
-              }
-            }
-          })
-          .catchError((error) {
-            print('Error fetching MyPlan: $error');
-            // Navigate to subscription page instead of showing modal
-            if (mounted) {
-              // Check if widget is still mounted
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SubscriptionPlansPage(),
-                ),
-              );
-            }
-          });
-
-      posterProvider.fetchPosters().then((_) {
-        print(
-          'Fetch posters completed - poster count: ${posterProvider.posters.length}',
-        );
-      });
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchFestivalPosters(context.read<DateTimeProvider>().selectedDate);
-      _startAnimations();
+      await _initializeAllData();
     });
   }
+
+  Future<void> _initializeAllData() async {
+    if (!mounted) return;
+
+    // Load all data in parallel
+    await Future.wait([
+      _loadUserId().catchError((e) => print('Error loading userId: $e')),
+      _fetchnewposters().catchError((e) => print('Error fetching posters: $e')),
+      _initializeProviders().catchError(
+        (e) => print('Error initializing providers: $e'),
+      ),
+      _fetchWeeklyPosters().catchError(
+        (e) => print('Error fetching weekly posters: $e'),
+      ),
+    ]);
+
+    if (!mounted) return;
+
+    // Fetch festival posters after data is loaded
+    _fetchFestivalPosters(context.read<DateTimeProvider>().selectedDate);
+
+    // Start animations
+    _startAnimations();
+  }
+
+  Future<void> _initializeProviders() async {
+    if (!mounted) return;
+
+    final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
+    final storyProvider = Provider.of<StoryProvider>(context, listen: false);
+    final posterProvider = Provider.of<PosterProvider>(context, listen: false);
+
+    storyProvider.fetchStories();
+
+    // Load plan and posters in parallel
+    await Future.wait([
+      myPlanProvider.fetchMyPlan(userId.toString()).catchError((e) {
+        print('Error fetching MyPlan: $e');
+        return null;
+      }),
+      posterProvider.fetchPosters().catchError((e) {
+        print('Error fetching posters: $e');
+        return null;
+      }),
+    ]);
+
+    if (!mounted) return;
+
+    // Show modals after data is loaded
+    _showInitialModals();
+  }
+
+  void _showInitialModals() {
+    if (!mounted) return;
+
+    final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
+
+    // Show subscription if needed
+    if (!myPlanProvider.isPurchase) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => SubscriptionPlansPage()),
+          );
+        }
+      });
+    }
+
+    // Show refer modal if needed
+    if (!_hasShownReferAndEarnModal) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          showReferAndEarnModal(context);
+          _hasShownReferAndEarnModal = true;
+        }
+      });
+    }
+  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   // _fetchWeeklyPosters();
+  //   _initializeAnimations();
+  //   _fetchnewposters();
+
+  //   _loadUserData();
+  //   _loadUserId();
+  //   _initializeUser();
+  //   Future.microtask(() async {
+  //     await _loadUserId(); // Ensure userId is loaded first
+  //     fetchCustomers();
+
+  //     // if (!_hasSpokenGreeting && username != null) {
+  //     //   await Future.delayed(
+  //     //     const Duration(milliseconds: 800),
+  //     //   ); // Small delay for better UX
+  //     //   await VoiceGreetingHelper.speakWelcome(username);
+  //     //   _hasSpokenGreeting = true;
+  //     // }
+  //     final myPlanProvider = Provider.of<MyPlanProvider>(
+  //       context,
+  //       listen: false,
+  //     );
+  //     final storyProvider = Provider.of<StoryProvider>(context, listen: false);
+  //     storyProvider.fetchStories();
+
+  //     if (!_hasShownReferAndEarnModal) {
+  //       showReferAndEarnModal(context);
+  //       _hasShownReferAndEarnModal = true;
+  //     }
+
+  //     final posterProvider = Provider.of<PosterProvider>(
+  //       context,
+  //       listen: false,
+  //     );
+
+  //     final authprovider = Provider.of<AuthProvider>(context, listen: false);
+
+  //     // myPlanProvider
+  //     //     .fetchMyPlan(userId.toString())
+  //     //     .then((_) {
+  //     //       print(
+  //     //         'Fetch MyPlan completed - isPurchase: ${myPlanProvider.isPurchase}',
+  //     //       );
+  //     //       print(
+  //     //         'Subscribed Plan: ${myPlanProvider.subscribedPlan?.name ?? 'None'}',
+  //     //       );
+
+  //     //       if (myPlanProvider.isPurchase) {
+  //     //         print('User has an active subscription');
+  //     //       } else {
+  //     //         print('User does not have an active subscription');
+  //     //         showSubscriptionModal(context);
+  //     //       }
+  //     //     })
+  //     //     .catchError((error) {
+  //     //       print('Error fetching MyPlan: $error');
+  //     //       showSubscriptionModal(context);
+  //     //     });
+
+  //     myPlanProvider
+  //         .fetchMyPlan(userId.toString())
+  //         .then((_) {
+  //           print(
+  //             'Fetch MyPlan completed - isPurchase: ${myPlanProvider.isPurchase}',
+  //           );
+  //           print(
+  //             'Subscribed Plan: ${myPlanProvider.subscribedPlan?.name ?? 'None'}',
+  //           );
+
+  //           if (myPlanProvider.isPurchase) {
+  //             print('User has an active subscription');
+  //           } else {
+  //             print('User does not have an active subscription');
+  //             // Navigate to subscription page instead of showing modal
+  //             if (mounted) {
+  //               // Check if widget is still mounted
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(
+  //                   builder: (context) => SubscriptionPlansPage(),
+  //                 ),
+  //               );
+  //             }
+  //           }
+  //         })
+  //         .catchError((error) {
+  //           print('Error fetching MyPlan: $error');
+  //           // Navigate to subscription page instead of showing modal
+  //           if (mounted) {
+  //             // Check if widget is still mounted
+  //             Navigator.push(
+  //               context,
+  //               MaterialPageRoute(
+  //                 builder: (context) => SubscriptionPlansPage(),
+  //               ),
+  //             );
+  //           }
+  //         });
+
+  //     posterProvider.fetchPosters().then((_) {
+  //       print(
+  //         'Fetch posters completed - poster count: ${posterProvider.posters.length}',
+  //       );
+  //     });
+  //   });
+
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     _fetchFestivalPosters(context.read<DateTimeProvider>().selectedDate);
+  //     _startAnimations();
+  //   });
+  // }
 
   Future<void> _fetchWeeklyPosters() async {
     try {
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/poster/weeklyposters/$currentUserId'),
+        Uri.parse(
+          'http://31.97.206.144:4061/api/poster/weeklyposters/$currentUserId',
+        ),
       );
 
       print('response status code for weekly posters ${response.statusCode}');
@@ -290,15 +382,17 @@ Future<void> _loadSectionPreferences() async {
   }
 
   Future<void> _loadUserId() async {
+    if (!mounted) return;
     try {
       final userData = await AuthPreferences.getUserData();
+      if (!mounted) return;
       if (userData != null) {
         setState(() {
           username = userData.user.name;
           currentUserId = userData.user.id;
         });
 
-              await _fetchWeeklyPosters(); 
+        await _fetchWeeklyPosters();
 
         final response = await http.get(
           Uri.parse(
@@ -556,7 +650,7 @@ Future<void> _loadSectionPreferences() async {
     final posters = posterProvider.posters;
 
     return Scaffold(
-      appBar: FancyAppBar(userId: userId,),
+      appBar: FancyAppBar(userId: userId),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -787,117 +881,135 @@ Future<void> _loadSectionPreferences() async {
   //   );
   // }
 
-
-
   Widget _buildWeeklyPostersSection() {
-  if (weeklyPosters.isEmpty) return const SizedBox();
+    if (weeklyPosters.isEmpty) return const SizedBox();
 
-  final orderedDays = _getOrderedDaysFromToday();
-  final today = DateFormat('EEEE').format(DateTime.now());
+    final orderedDays = _getOrderedDaysFromToday();
+    final today = DateFormat('EEEE').format(DateTime.now());
 
-  return Consumer<LanguageProvider>(
-    builder: (context, languageProvider, child) {
-      final langCode = languageProvider.locale.languageCode;
+    return Consumer<LanguageProvider>(
+      builder: (context, languageProvider, child) {
+        final langCode = languageProvider.locale.languageCode;
 
-      return Column(
-        children: orderedDays.map((day) {
-          final posters = weeklyPosters[day] ?? [];
-          final isToday = day == today;
+        return Column(
+          children: orderedDays.map((day) {
+            final posters = weeklyPosters[day] ?? [];
+            final isToday = day == today;
 
-          final translatedDay = LocalizationService.translate(day, langCode);
-          final todayPrefix = LocalizationService.translate('today_prefix', langCode);
+            final translatedDay = LocalizationService.translate(day, langCode);
+            final todayPrefix = LocalizationService.translate(
+              'today_prefix',
+              langCode,
+            );
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: isToday
-                            ? const LinearGradient(
-                                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                              )
-                            : null,
-                        color: isToday ? null : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isToday ? Icons.today : Icons.calendar_today_outlined,
-                            size: 18,
-                            color: isToday ? Colors.white : const Color(0xFF6B7280),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            isToday ? '$todayPrefix - $translatedDay' : translatedDay,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: isToday ? Colors.white : const Color(0xFF111827),
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: isToday
+                              ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFF6366F1),
+                                    Color(0xFF8B5CF6),
+                                  ],
+                                )
+                              : null,
+                          color: isToday ? null : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isToday
+                                  ? Icons.today
+                                  : Icons.calendar_today_outlined,
+                              size: 18,
+                              color: isToday
+                                  ? Colors.white
+                                  : const Color(0xFF6B7280),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Text(
+                              isToday
+                                  ? '$todayPrefix - $translatedDay'
+                                  : translatedDay,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: isToday
+                                    ? Colors.white
+                                    : const Color(0xFF111827),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // Text(
+                      //   posters.isEmpty
+                      //       ? LocalizationService.translate('no_templates', langCode)
+                      //       : '${posters.length} ${LocalizationService.translate('templates', langCode)}',
+                      //   style: TextStyle(
+                      //     fontSize: 14,
+                      //     color: posters.isEmpty
+                      //         ? Colors.grey.shade400
+                      //         : const Color(0xFF6B7280),
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                ),
+                if (posters.isEmpty)
+                  Container(
+                    height: 120,
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${LocalizationService.translate('no_templates_available', langCode)} $translatedDay',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                     ),
-                    const Spacer(),
-                    // Text(
-                    //   posters.isEmpty
-                    //       ? LocalizationService.translate('no_templates', langCode)
-                    //       : '${posters.length} ${LocalizationService.translate('templates', langCode)}',
-                    //   style: TextStyle(
-                    //     fontSize: 14,
-                    //     color: posters.isEmpty
-                    //         ? Colors.grey.shade400
-                    //         : const Color(0xFF6B7280),
-                    //   ),
-                    // ),
-                  ],
-                ),
-              ),
-              if (posters.isEmpty)
-                Container(
-                  height: 120,
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${LocalizationService.translate('no_templates_available', langCode)} $translatedDay',
-                      style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                  )
+                else
+                  SizedBox(
+                    height: 220,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: posters.length,
+                      itemBuilder: (context, index) {
+                        final poster = posters[index];
+                        return _buildWeeklyPosterCard(poster, index);
+                      },
                     ),
                   ),
-                )
-              else
-                SizedBox(
-                  height: 220,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: posters.length,
-                    itemBuilder: (context, index) {
-                      final poster = posters[index];
-                      return _buildWeeklyPosterCard(poster, index);
-                    },
-                  ),
-                ),
-              const SizedBox(height: 24),
-            ],
-          );
-        }).toList(),
-      );
-    },
-  );
-}
+                const SizedBox(height: 24),
+              ],
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
 
   Widget _buildWeeklyPosterCard(dynamic poster, int index) {
     return Consumer<MyPlanProvider>(
@@ -1149,7 +1261,7 @@ Future<void> _loadSectionPreferences() async {
             onTap: () {
               setState(() {
                 _showWishesSection = false;
-                 _hasClosedWishesSection = true;
+                _hasClosedWishesSection = true;
               });
               _saveWishesSectionPreference(false);
             },
@@ -1462,7 +1574,7 @@ Future<void> _loadSectionPreferences() async {
             onTap: () {
               setState(() {
                 _showCustomerCelebrationsSection = false;
-                 _hasClosedCelebrationsSection = true;
+                _hasClosedCelebrationsSection = true;
               });
               _saveCustomerCelebrationsPreference(false);
             },
@@ -1783,7 +1895,6 @@ Future<void> _loadSectionPreferences() async {
           // _buildWishesSection(), // Add this
           // _buildCustomerCelebrationsSection(), // Add this
           // const SizedBox(height: 16),
-
           _buildSectionHeader(
             titleKey: 'seasonal_celebrations',
             subtitleKey: 'never_miss_celebration',
@@ -2468,8 +2579,8 @@ Future<void> _loadSectionPreferences() async {
   // }
 
   Widget _buildSectionHeader({
-    required String titleKey, 
-    required String subtitleKey, 
+    required String titleKey,
+    required String subtitleKey,
     bool showViewAll = false,
     VoidCallback? onViewAll,
   }) {

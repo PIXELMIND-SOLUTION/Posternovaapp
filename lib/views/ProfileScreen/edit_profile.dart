@@ -999,7 +999,7 @@ class _EditProfileState extends State<EditProfile> {
               label: 'email',
               icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
-                readOnly: true,
+                // readOnly: true,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter your email';

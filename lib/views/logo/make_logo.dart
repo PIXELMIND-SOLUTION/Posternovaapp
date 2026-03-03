@@ -5217,7 +5217,7 @@ class TrianglePainter extends CustomPainter {
     path.lineTo(0, size.height);
     path.lineTo(size.width, size.height);
     path.close();
-
+  
     canvas.drawPath(path, paint);
   }
 

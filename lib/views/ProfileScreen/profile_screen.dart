@@ -3224,6 +3224,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           builder: (context, myPlanProvider, child) {
                             return Column(
                               children: [
+
+                                  _buildMenuItem(
+                                  icon: Icons.person,
+                                  title: 'profile',
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const EditProfile(),
+                                      ),
+                                    );
+                                    
+                                    // Refresh profile data if edit was successful
+                                    if (result == true) {
+                                      _refreshProfileAfterEdit();
+                                    }
+                                  },
+                                  isPremiumRequired: false,
+                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                ),
+
+
                                 _buildMenuItem(
                                   icon: Icons.policy,
                                   title: 'privacy_policy',
@@ -3258,25 +3280,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   },
                                 ),
 
-                                _buildMenuItem(
-                                  icon: Icons.person,
-                                  title: 'profile',
-                                  onTap: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const EditProfile(),
-                                      ),
-                                    );
-                                    
-                                    // Refresh profile data if edit was successful
-                                    if (result == true) {
-                                      _refreshProfileAfterEdit();
-                                    }
-                                  },
-                                  isPremiumRequired: false,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
-                                ),
+                               
                                 _buildMenuItem(
                                   icon: Icons.info_outline,
                                   title: 'about',
