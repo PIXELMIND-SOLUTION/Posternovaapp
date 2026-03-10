@@ -894,6 +894,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         return Column(
           children: orderedDays.map((day) {
             final posters = weeklyPosters[day] ?? [];
+
+
+            // This is the extra added lines added to show only the added posters should show //
+
+            
+            if (posters.isEmpty) return const SizedBox.shrink();
             final isToday = day == today;
 
             final translatedDay = LocalizationService.translate(day, langCode);

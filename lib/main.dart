@@ -5,12 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-
 import 'firebase_options.dart';
 import 'services/FCM/fcm_service.dart';
 import 'services/FCM/local_notification_service.dart';
 import 'services/language/restart_lan_service.dart';
-
 import 'providers/PosterProvider/category_poster_provider.dart';
 import 'providers/PosterProvider/getall_poster_provider.dart';
 import 'providers/PosterProvider/poster_provider.dart';
@@ -30,7 +28,6 @@ import 'providers/redeem/redeem_provider.dart';
 import 'providers/reels/reels_provider.dart';
 import 'providers/story/report_provider.dart';
 import 'providers/story/story_provider.dart';
-
 import 'views/NavBar/navbar_screen.dart';
 import 'views/splash.dart';
 import 'widgets/language_widget.dart';
@@ -142,7 +139,7 @@ class MyApp extends StatelessWidget {
               scaffoldBackgroundColor: Colors.white,
               primarySwatch: Colors.deepPurple,
               textTheme:
-                  ThemeData.light().textTheme.apply(fontFamily: 'Poppins'),
+                  ThemeData.light().textTheme.apply(fontFamily: 'Calibri'),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: Colors.deepPurple,
                 brightness: Brightness.light,
@@ -153,7 +150,7 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
               scaffoldBackgroundColor: Colors.white,
               textTheme:
-                  ThemeData.dark().textTheme.apply(fontFamily: 'Poppins'),
+                  ThemeData.dark().textTheme.apply(fontFamily: 'Calibri'),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: Colors.deepPurple,
                 brightness: Brightness.dark,

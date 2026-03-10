@@ -2813,7 +2813,7 @@ void _onLanguageChanged() {
                                   languageProvider.locale.languageCode,
                                 ),
                                 style: TextStyle(
-                                  fontFamily: 'Serif',
+                                  fontFamily: 'Calibri',
                                   fontWeight: FontWeight.w400,
                                   fontSize: 14,
                                   letterSpacing: 1.5,
@@ -2833,7 +2833,8 @@ void _onLanguageChanged() {
                           Text(
                             _username ?? 'User',
                             style: const TextStyle(
-                              fontFamily: 'Cursive',
+                               fontFamily: 'Calibri', 
+                              // fontFamily: 'Cursive',
                               fontWeight: FontWeight.w900,
                               fontSize: 24,
                               letterSpacing: 1.5,

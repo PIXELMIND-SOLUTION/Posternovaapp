@@ -781,7 +781,7 @@ class _EditProfileState extends State<EditProfile> {
 
 
 
-  Future<void> _updateProfile() async {
+Future<void> _updateProfile() async {
   if (!_formKey.currentState!.validate()) return;
 
   final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -791,6 +791,12 @@ class _EditProfileState extends State<EditProfile> {
     _showErrorSnackBar('User not logged in');
     return;
   }
+
+  // Store original values before update
+  final originalName = authProvider.user?.user.name ?? '';
+  final originalEmail = authProvider.user?.user.email ?? '';
+final originalDob = _dobController.text.trim();
+final originalAnniversary = _anniversaryController.text.trim();
 
   setState(() => _isSaving = true);
 
@@ -807,7 +813,6 @@ class _EditProfileState extends State<EditProfile> {
       }),
     );
 
-    // Guard immediately after every await
     if (!mounted) return;
 
     if (response.statusCode == 200) {
@@ -815,9 +820,21 @@ class _EditProfileState extends State<EditProfile> {
 
       if (!mounted) return;
 
-      // Set saving false BEFORE popping so we never setState on dead widget
       setState(() => _isSaving = false);
-      _showSuccessSnackBar('Profile updated successfully');
+
+      // Detect which fields changed and build message
+      final List<String> updatedFields = [];
+
+      if (_nameController.text.trim() != originalName) updatedFields.add('Name');
+      if (_emailController.text.trim() != originalEmail) updatedFields.add('Email');
+      if (_dobController.text.trim() != originalDob) updatedFields.add('Date of birth');
+      if (_anniversaryController.text.trim() != originalAnniversary) updatedFields.add('Anniversary date');
+
+      final message = updatedFields.isNotEmpty
+          ? '${updatedFields.join(', ')} updated successfully'
+          : 'Profile updated successfully';
+
+      _showSuccessSnackBar(message);
 
       await Future.delayed(const Duration(milliseconds: 500));
 
@@ -827,13 +844,67 @@ class _EditProfileState extends State<EditProfile> {
       throw Exception(errorData['message'] ?? 'Failed to update profile');
     }
   } catch (e) {
-    // Only interact with widget if still alive
     if (mounted) {
       setState(() => _isSaving = false);
       _showErrorSnackBar('Failed to update profile: $e');
     }
   }
 }
+
+
+//   Future<void> _updateProfile() async {
+//   if (!_formKey.currentState!.validate()) return;
+
+//   final authProvider = Provider.of<AuthProvider>(context, listen: false);
+//   final userId = authProvider.user?.user.id;
+
+//   if (userId == null) {
+//     _showErrorSnackBar('User not logged in');
+//     return;
+//   }
+
+//   setState(() => _isSaving = true);
+
+//   try {
+//     final response = await http.put(
+//       Uri.parse('http://31.97.206.144:4061/api/users/update-user/$userId'),
+//       headers: {'Content-Type': 'application/json'},
+//       body: json.encode({
+//         'name': _nameController.text.trim(),
+//         'email': _emailController.text.trim(),
+//         'mobile': _mobileController.text.trim(),
+//         'dob': _dobController.text.trim(),
+//         'marriageAnniversaryDate': _anniversaryController.text.trim(),
+//       }),
+//     );
+
+//     // Guard immediately after every await
+//     if (!mounted) return;
+
+//     if (response.statusCode == 200) {
+//       await authProvider.refreshUserData();
+
+//       if (!mounted) return;
+
+//       // Set saving false BEFORE popping so we never setState on dead widget
+//       setState(() => _isSaving = false);
+//       _showSuccessSnackBar('Profile updated successfully');
+
+//       await Future.delayed(const Duration(milliseconds: 500));
+
+//       if (mounted) Navigator.pop(context, true);
+//     } else {
+//       final errorData = json.decode(response.body);
+//       throw Exception(errorData['message'] ?? 'Failed to update profile');
+//     }
+//   } catch (e) {
+//     // Only interact with widget if still alive
+//     if (mounted) {
+//       setState(() => _isSaving = false);
+//       _showErrorSnackBar('Failed to update profile: $e');
+//     }
+//   }
+// }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

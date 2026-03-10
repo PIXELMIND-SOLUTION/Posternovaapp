@@ -4254,40 +4254,67 @@ List<String> religions = customerProvider.customers
             ),
             maxLength: keyboardType == TextInputType.phone ? 15 : 50,
           ),
+          // actions: [
+          //   TextButton(
+          //     onPressed: () => Navigator.pop(context),
+          //     child: const Text('Cancel'),
+          //   ),
+          //   ElevatedButton(
+          //     onPressed: () {
+          //       if (controller.text.isNotEmpty) {
+          //         onSave(controller.text);
+          //         Navigator.pop(context);
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //           SnackBar(
+          //             content: Text('$title updated successfully!'),
+          //             backgroundColor: Colors.green,
+          //             duration: const Duration(seconds: 2),
+          //           ),
+          //         );
+          //       } else {
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //           const SnackBar(
+          //             content: Text('Value cannot be empty!'),
+          //             backgroundColor: Colors.red,
+          //             duration: Duration(seconds: 2),
+          //           ),
+          //         );
+          //       }
+          //     },
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: Colors.deepPurple,
+          //       foregroundColor: Colors.white,
+          //     ),
+          //     child: const Text('Save'),
+          //   ),
+          // ],
+
+
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (controller.text.isNotEmpty) {
-                  onSave(controller.text);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('$title updated successfully!'),
-                      backgroundColor: Colors.green,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Value cannot be empty!'),
-                      backgroundColor: Colors.red,
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Save'),
-            ),
-          ],
+  TextButton(
+    onPressed: () => Navigator.pop(context),
+    child: const Text('Cancel'),
+  ),
+  ElevatedButton(
+    onPressed: () {
+      onSave(controller.text);
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$title updated successfully!'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.deepPurple,
+      foregroundColor: Colors.white,
+    ),
+    child: const Text('Save'),
+  ),
+],
         ),
       );
     }

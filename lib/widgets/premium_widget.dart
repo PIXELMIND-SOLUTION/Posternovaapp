@@ -1970,13 +1970,6 @@ import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-/// UPDATED UI CODE
-/// - SubscriptionPlansWidget converted to StatefulWidget and safely defers fetch
-/// - Uses ListView for plan list (no Expanded children inside Column)
-/// - PlanCard layout cleaned up (no nested ListView with NeverScrollablePhysics)
-/// - Minor visual tweaks retained from your original design
-
 class SubscriptionPlansPage extends StatefulWidget {
   final VoidCallback? onClose;
   final bool showCloseButton;

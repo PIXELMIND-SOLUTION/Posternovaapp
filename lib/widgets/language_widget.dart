@@ -293,19 +293,14 @@ class LocalizationService {
       'total_and_taxes': 'Total & Taxes',
 
       'business_profile': 'Business Profile',
-'add_business_logo': 'Add Business Logo',
-'upload_business_logo': 'Upload your business logo or brand image',
-'business_details': 'Business Details',
-'business_name': 'Business Name',
-'business_type': 'Business Type',
-'contact_information': 'Contact Information',
-'mobile_number': 'Mobile Number',
-'email_address': 'Email Address',
-'gst_number_optional': 'GST Number (Optional)',
-'gst_rate_percent': 'GST Rate % (e.g., 18%)',
-'save_profile': 'Save Profile',
-
-
+      'add_business_logo': 'Add Business Logo',
+      'upload_business_logo': 'Upload your business logo or brand image',
+      'business_details': 'Business Details',
+      'contact_information': 'Contact Information',
+      'email_address': 'Email Address',
+      'gst_number_optional': 'GST Number (Optional)',
+      'gst_rate_percent': 'GST Rate % (e.g., 18%)',
+      'save_profile': 'Save Profile',
 
       'chat': 'Chat',
 
@@ -320,7 +315,6 @@ class LocalizationService {
       'enter_address_optional': 'Enter address (optional)',
 
       'create_business_post': 'Create Business Post',
-      'add_business_logo': 'Add Business Logo',
 
       'invite_friend': 'Invite a friend',
       'share_code_button': 'Share your code using the Share button.',
@@ -333,13 +327,11 @@ class LocalizationService {
 
       'about': 'About',
       'chicha_ai': 'Chicha AI',
-      'text_remover': 'Text Remover',
 
       'owner_name': 'Owner Name',
       'designation': 'Designation',
       'phone_number': 'Phone Number',
       'whatsapp_number': 'WhatsApp Number',
-      'email_address': 'Email Address',
       'website': 'Website',
       'choose_perfect_design': 'Choose your perfect design',
 
@@ -440,27 +432,9 @@ class LocalizationService {
       'panchang_yoga': 'Yoga',
       'panchang_karana': 'Karana',
       'panchang_lord': 'Lord',
-
-        'user_not_logged_in': 'User not logged in',
-  'panchang_no_data': 'No data available for the selected date',
-  'panchang_load_failed': 'Failed to load panchang data',
-  'error_prefix': 'Error',
-  'panchang_loading': 'Loading panchang...',
-  'panchang_retry': 'Try Again',
-  'panchang_change_location': 'Change Location',
-  'panchang_location_hint': 'e.g. Hyderabad, Telangana, India',
-  'panchang_dob': 'Date of Birth',
-  'panchang_vaara': 'Weekday (Vaara)',
-  'panchang_sunrise': 'Sunrise',
-  'panchang_sunset': 'Sunset',
-  'panchang_moonrise': 'Moonrise',        // ← NEW
-  'panchang_moonset': 'Moonset',          // ← NEW
-  'panchang_subtitle': 'Vedic Daily Almanac', // ← NEW
-  'panchang_nakshatra': 'Nakshatra',
-  'panchang_tithi': 'Tithi',
-  'panchang_yoga': 'Yoga',
-  'panchang_karana': 'Karana',
-  'panchang_lord': 'Lord',
+      'panchang_moonrise': 'Moonrise', // ← NEW
+      'panchang_moonset': 'Moonset', // ← NEW
+      'panchang_subtitle': 'Vedic Daily Almanac', // ← NEW
 
       'Monday': 'Monday',
       'Tuesday': 'Tuesday',
@@ -516,8 +490,6 @@ class LocalizationService {
       'customer_information': 'Customer Information',
       'product_details': 'Product Details',
 
-
-
       'create_amazing_content': 'Create amazing content',
       'what_do_you_want_create': 'What do you want to create?',
       'choose_tool_get_started': 'Choose a tool to get started',
@@ -527,7 +499,6 @@ class LocalizationService {
       'create_logo_customers': 'Create logo for customers',
       'search_categories': 'Search categories',
 
-      'reels': 'Reels',
       'amazing_video_editezy': 'Amazing video by Editezy! Check this out',
 
       'background_remover': 'Background Remover',
@@ -637,7 +608,6 @@ class LocalizationService {
 
       'home': 'హోమ్',
       'category': 'వర్గం',
-      'poster': 'పోస్టర్',
       'reels': 'రీల్స్',
       'customer': 'కస్టమర్',
 
@@ -664,7 +634,6 @@ class LocalizationService {
       'weekly_templates': 'వారపు టెంప్లేట్లు',
       'fresh_designs_everyday': 'ప్రతి రోజు కొత్త డిజైన్లు',
       'design_studio': 'డిజైన్ స్టూడియో',
-      'reels': 'రీల్స్',
       'amazing_video_editezy': 'Editezy యొక్క అద్భుతమైన వీడియో! చూడండి',
       'share_referral_earn':
           'మీ రిఫరల్ కోడ్‌ను స్నేహితులతో పంచుకుని, వారు అప్‌గ్రేడ్ చేసినప్పుడు బహుమతులు పొందండి',
@@ -753,8 +722,6 @@ class LocalizationService {
       'email_id': 'ఈమెయిల్ ID',
       'gst': 'GST',
       'business_type': 'వ్యాపార రకం',
-      'home': 'హోమ్',
-      'category': 'వర్గం',
       'create': 'సృష్టించండి',
       'invoice': 'ఇన్వాయిస్',
       'add_customer': 'గ్రాహకుడిని జోడించండి',
@@ -784,10 +751,6 @@ class LocalizationService {
       'hsn': 'HSN',
       'add_more': 'మరిన్ని జోడించండి',
       'logo_editor': 'లోగో ఎడిటర్',
-      'text': 'పాఠ్యం',
-      'image': 'చిత్రం',
-      'shapes': 'ఆకారాలు',
-      'elements': 'అంశాలు',
       'choose_shape': 'ఆకారం ఎంచుకోండి',
       'circle': 'వృత్తం',
       'rectangle': 'చతురస్రం',
@@ -842,7 +805,6 @@ class LocalizationService {
       'change_industry': 'పరిశ్రమ మార్చండి',
       'refer_earn': 'రిఫర్ చేసి సంపాదించండి',
       'settings': 'సెట్టింగ్స్',
-      'delete_account': 'ఖాతాను తొలగించు',
       'add_business': 'వ్యాపారాన్ని జోడించండి',
       'contact_us': 'మమ్మల్ని సంప్రదించండి',
       'partner_with_us': 'మాతో భాగస్వామ్యం అవ్వండి',
@@ -858,7 +820,6 @@ class LocalizationService {
       'caption': 'శీర్షిక',
       'whatsapp_sticker': 'వాట్సాప్ స్టికర్',
       'auto_product_ad': 'ఆటో ఉత్పత్తి ప్రకటన',
-      'ask_me_anything': 'ఏదైనా అడగండి',
       'privacy_policy': 'గోప్యతా విధానం',
       'terms_and_conditions': 'నియమాలు మరియు షరతులు',
 
@@ -1023,22 +984,17 @@ class LocalizationService {
 
       'total_and_taxes': 'कुल और कर',
 
-
       'business_profile': 'व्यवसाय प्रोफ़ाइल',
-'add_business_logo': 'व्यवसाय लोगो जोड़ें',
-'upload_business_logo': 'अपना व्यवसाय लोगो या ब्रांड छवि अपलोड करें',
-'business_details': 'व्यवसाय विवरण',
-'business_name': 'व्यवसाय का नाम',
-'business_type': 'व्यवसाय का प्रकार',
-'contact_information': 'संपर्क जानकारी',
-'mobile_number': 'मोबाइल नंबर',
-'email_address': 'ईमेल पता',
-'gst_number_optional': 'GST नंबर (वैकल्पिक)',
-'gst_rate_percent': 'GST दर % (जैसे, 18%)',
-'save_profile': 'प्रोफ़ाइल सहेजें',
-
-
-
+      'add_business_logo': 'व्यवसाय लोगो जोड़ें',
+      'upload_business_logo': 'अपना व्यवसाय लोगो या ब्रांड छवि अपलोड करें',
+      'business_details': 'व्यवसाय विवरण',
+      'business_type': 'व्यवसाय का प्रकार',
+      'contact_information': 'संपर्क जानकारी',
+      'mobile_number': 'मोबाइल नंबर',
+      'email_address': 'ईमेल पता',
+      'gst_number_optional': 'GST नंबर (वैकल्पिक)',
+      'gst_rate_percent': 'GST दर % (जैसे, 18%)',
+      'save_profile': 'प्रोफ़ाइल सहेजें',
 
       'text': 'टेक्स्ट',
       'image': 'छवि',
@@ -1056,51 +1012,31 @@ class LocalizationService {
 
       'logo_history': 'लोगो इतिहास',
 
-      'remove_text_ai': 'एडिटेज़ी की सटीकता के साथ अपनी छवियों से अनचाहा टेक्स्ट हटाएँ',
-
-
-
-       'user_not_logged_in': 'उपयोगकर्ता लॉग इन नहीं है',
-  'panchang_no_data': 'चुनी गई तारीख के लिए कोई डेटा उपलब्ध नहीं है',
-  'panchang_load_failed': 'पंचांग डेटा लोड करने में विफल',
-  'error_prefix': 'त्रुटि',
-  'panchang_loading': 'पंचांग लोड हो रहा है...',  // ← NEW
-  'panchang_retry': 'पुनः प्रयास करें',
-  'panchang_change_location': 'स्थान बदलें',
-  'panchang_location_hint': 'उदा. हैदराबाद, तेलंगाना, भारत',
-  'panchang_dob': 'जन्म तिथि',              // ← NEW
-  'panchang_vaara': 'वार',
-  'panchang_sunrise': 'सूर्योदय',
-  'panchang_sunset': 'सूर्यास्त',
-  'panchang_moonrise': 'चंद्रोदय',          // ← NEW
-  'panchang_moonset': 'चंद्रास्त',           // ← NEW
-  'panchang_subtitle': 'वैदिक दैनिक पंचांग', // ← NEW
-  'panchang_nakshatra': 'नक्षत्र',
-  'panchang_tithi': 'तिथि',
-  'panchang_yoga': 'योग',
-  'panchang_karana': 'करण',
-  'panchang_lord': 'स्वामी',
-
-  'customer_information': 'ग्राहक जानकारी',
-
+      'remove_text_ai':
+          'एडिटेज़ी की सटीकता के साथ अपनी छवियों से अनचाहा टेक्स्ट हटाएँ',
 
       'user_not_logged_in': 'उपयोगकर्ता लॉग इन नहीं है',
       'panchang_no_data': 'चुनी गई तारीख के लिए कोई डेटा उपलब्ध नहीं है',
       'panchang_load_failed': 'पंचांग डेटा लोड करने में विफल',
       'error_prefix': 'त्रुटि',
-      'panchang_loading': 'पंचांग लोड हो रहा है...',
+      'panchang_loading': 'पंचांग लोड हो रहा है...', // ← NEW
       'panchang_retry': 'पुनः प्रयास करें',
       'panchang_change_location': 'स्थान बदलें',
       'panchang_location_hint': 'उदा. हैदराबाद, तेलंगाना, भारत',
-      'panchang_dob': 'जन्म तिथि',
+      'panchang_dob': 'जन्म तिथि', // ← NEW
       'panchang_vaara': 'वार',
       'panchang_sunrise': 'सूर्योदय',
       'panchang_sunset': 'सूर्यास्त',
+      'panchang_moonrise': 'चंद्रोदय', // ← NEW
+      'panchang_moonset': 'चंद्रास्त', // ← NEW
+      'panchang_subtitle': 'वैदिक दैनिक पंचांग', // ← NEW
       'panchang_nakshatra': 'नक्षत्र',
       'panchang_tithi': 'तिथि',
       'panchang_yoga': 'योग',
       'panchang_karana': 'करण',
       'panchang_lord': 'स्वामी',
+
+      'customer_information': 'ग्राहक जानकारी',
 
       'important_dates': 'महत्वपूर्ण तिथियाँ',
 
@@ -1108,7 +1044,6 @@ class LocalizationService {
           'मैं समझता/समझती हूँ कि मेरा खाता हटाना स्थायी है और मेरा सारा डेटा खो जाएगा',
 
       'text_remover': 'टेक्स्ट हटाने वाला',
-      'remove_text_ai': 'AI की सटीकता से अपनी छवियों से अनचाहा टेक्स्ट हटाएं',
       'select_image': 'छवि चुनें',
 
       'enter_full_name': 'पूरा नाम दर्ज करें',
@@ -1120,7 +1055,6 @@ class LocalizationService {
 
       'home': 'होम',
       'category': 'श्रेणी',
-      'poster': 'पोस्टर',
       'reels': 'रील्स',
       'customer': 'ग्राहक',
 
@@ -1185,8 +1119,6 @@ class LocalizationService {
       'warning': 'चेतावनी',
       'action_permanent': 'यह कार्रवाई स्थायी है और इसे वापस नहीं लिया जा सकता',
       'before_you_go': 'जाने से पहले',
-      'delete_confirm_understand':
-          'मैं समझता/समझती हूँ कि मेरा खाता हटाना स्थायी है और मेरा सारा डेटा खो जाएगा',
 
       'create_story': 'स्टोरी बनाएं',
       'new_story': 'नई स्टोरी',
@@ -1212,14 +1144,11 @@ class LocalizationService {
       'version_made': 'संस्करण 1.0.0\nEditezy टीम द्वारा ❤️ से बनाया गया',
 
       'about': 'हमारे बारे में',
-      'text_remover': 'टेक्स्ट हटाएं',
       'chicha_ai': 'चिचा एआई',
       'featured': 'प्रमुख',
 
       'online_punchang': 'ऑनलाइन पंचांग',
       'edit_poster': 'पोस्टर संपादित करें',
-      'invoices': 'इनवॉइस',
-      'background_remover': 'बैकग्राउंड रिमूवर',
       'browse_or_voice_search': 'श्रेणियाँ ब्राउज़ करें या आवाज़ से खोजें',
 
       'seasonal_celebrations': 'मौसमी उत्सव',
@@ -1233,11 +1162,9 @@ class LocalizationService {
       'share_referral_earn':
           'दोस्तों के साथ अपना रेफरल कोड साझा करें और उनके अपग्रेड करने पर इनाम पाएं',
       'your_referral_code': 'आपका रेफरल कोड',
-      'how_it_works': 'यह कैसे काम करता है',
       'send_referral_any_platform':
           'किसी भी प्लेटफ़ॉर्म के जरिए अपना रेफरल कोड दोस्तों को भेजें',
       'share_your_code': 'अपना कोड साझा करें',
-      'friend_signs_up': 'दोस्त साइन अप करता है',
       'enter_code_during_signup':
           'वे रजिस्ट्रेशन के दौरान आपका कोड दर्ज करते हैं',
       'earn_rewards': 'इनाम पाएं',
@@ -1257,10 +1184,8 @@ class LocalizationService {
       'customer_logo': 'ग्राहक लोगो',
       'create_logo_customers': 'ग्राहकों के लिए लोगो बनाएं',
 
-      'reels': 'रील्स',
       'amazing_video_editezy': 'Editezy का शानदार वीडियो! इसे देखें',
       'create_invoice': 'इनवॉइस बनाएं',
-
 
       // NEW KEYS
       'categories': 'श्रेणियाँ',
@@ -1278,13 +1203,9 @@ class LocalizationService {
       'chooose_plan': 'अपना प्लान चुनें',
       'your_story': 'आपकी कहानी',
       'add_user_data': 'उपयोगकर्ता डेटा जोड़ें',
-      'business_name': 'व्यवसाय का नाम',
-      'mobile_number': 'मोबाइल नंबर',
+
       'email_id': 'ईमेल आईडी',
       'gst': 'GST',
-      'business_type': 'व्यवसाय का प्रकार',
-      'home': 'होम',
-      'category': 'श्रेणी',
       'create': 'बनाएं',
       'invoice': 'इनवॉइस',
       'add_customer': 'ग्राहक जोड़ें',
@@ -1300,7 +1221,6 @@ class LocalizationService {
       'poster_maker': 'पोस्टर मेकर',
       'add_image': 'छवि जोड़ें',
       'logo_maker': 'लोगो मेकर',
-      'create_invoice': 'इनवॉइस बनाएं',
       'logo': 'लोगो',
       'choose_logo': 'लोगो चुनें',
       'customer_name': 'ग्राहक का नाम',
@@ -1314,10 +1234,6 @@ class LocalizationService {
       'hsn': 'HSN',
       'add_more': 'और जोड़ें',
       'logo_editor': 'लोगो संपादक',
-      'text': 'पाठ',
-      'image': 'छवि',
-      'shapes': 'आकृतियाँ',
-      'elements': 'तत्व',
       'choose_shape': 'आकार चुनें',
       'circle': 'वृत्त',
       'rectangle': 'आयत',
@@ -1356,7 +1272,6 @@ class LocalizationService {
       'change_industry': 'उद्योग बदलें',
       'refer_earn': 'रेफर करें और कमाएं',
       'settings': 'सेटिंग्स',
-      'delete_account': 'खाता हटाएं',
       'add_business': 'व्यवसाय जोड़ें',
       'contact_us': 'संपर्क करें',
       'partner_with_us': 'हमारे साथ साझेदारी करें',
@@ -1372,17 +1287,14 @@ class LocalizationService {
       'caption': 'कैप्शन',
       'whatsapp_sticker': 'व्हाट्सएप स्टिकर',
       'auto_product_ad': 'स्वचालित उत्पाद विज्ञापन',
-      'ask_me_anything': 'मुझसे कुछ भी पूछें',
       'privacy_policy': 'गोपनीयता नीति',
       'terms_and_conditions': 'नियम और शर्तें',
 
       'create_business_post': 'व्यवसाय पोस्ट बनाएं',
-      'add_business_logo': 'व्यवसाय लोगो जोड़ें',
       'owner_name': 'मालिक का नाम',
       'designation': 'पदनाम',
       'phone_number': 'फोन नंबर',
       'whatsapp_number': 'व्हाट्सएप नंबर',
-      'email_address': 'ईमेल पता',
       'website': 'वेबसाइट',
       'gst_number': 'GST नंबर',
       'add_supporting_image': 'सहायक छवि जोड़ें',
@@ -1444,7 +1356,6 @@ class LocalizationService {
       'change': 'बदलें',
       'message_with_image': 'यह संदेश आपकी छवि के साथ\nभेजा जाएगा।',
       'product_details': 'उत्पाद विवरण',
-
 
       'birth_date': 'जन्म तिथि',
       'anniversary_date': 'विवाह वर्षगांठ की तिथि',
@@ -1551,7 +1462,6 @@ class LocalizationService {
 
       'home': 'முகப்பு',
       'category': 'வகை',
-      'poster': 'போஸ்டர்',
       'reels': 'ரீல்ஸ்',
       'customer': 'வாடிக்கையாளர்',
 
@@ -1682,8 +1592,6 @@ class LocalizationService {
       'email_id': 'மின்னஞ்சல் ஐடி',
       'gst': 'GST',
       'business_type': 'வணிக வகை',
-      'home': 'முகப்பு',
-      'category': 'வகை',
       'create': 'உருவாக்கு',
       'invoice': 'விலைப்பட்டியல்',
       'add_customer': 'வாடிக்கையாளரைச் சேர்க்கவும்',
@@ -1713,10 +1621,6 @@ class LocalizationService {
       'hsn': 'HSN',
       'add_more': 'மேலும் சேர்க்கவும்',
       'logo_editor': 'லோகோ எடிட்டர்',
-      'text': 'உரைத்தொகை',
-      'image': 'படம்',
-      'shapes': 'வடிவங்கள்',
-      'elements': 'உறுப்புகள்',
       'choose_shape': 'வடிவத்தைத் தேர்ந்தெடுக்கவும்',
       'circle': 'வட்டம்',
       'rectangle': 'செவ்வகம்',
@@ -1746,12 +1650,9 @@ class LocalizationService {
       'contact': 'தொடர்புக்கு',
       'save': 'சேமிக்கவும்',
       'browse_or_voice_search': 'வகைகளை பார்க்கவும் அல்லது குரல் மூலம் தேடவும்',
-      'reels': 'ரீல்ஸ்',
       'amazing_video_editezy': 'Editezy வழங்கும் அற்புதமான வீடியோ! பாருங்கள்',
 
       'online_punchang': 'ஆன்லைன் பஞ்சாங்கம்',
-      'invoices': 'விலைப்பட்டியல்கள்',
-      'background_remover': 'பின்னணி நீக்கி',
 
       'create_amazing_content': 'அற்புதமான உள்ளடக்கத்தை உருவாக்குங்கள்',
       'what_do_you_want_create': 'நீங்கள் என்ன உருவாக்க விரும்புகிறீர்கள்?',
@@ -1761,7 +1662,6 @@ class LocalizationService {
       'customer_logo': 'வாடிக்கையாளர் லோகோ',
       'create_logo_customers': 'வாடிக்கையாளர்களுக்கான லோகோ உருவாக்கவும்',
       'about': 'பற்றி',
-      'text_remover': 'உரை நீக்கி',
       'chicha_ai': 'Chicha AI',
 
       'delete_account': 'கணக்கை நீக்கவும்',
@@ -1783,7 +1683,6 @@ class LocalizationService {
       'change_industry': 'தொழிலை மாற்றவும்',
       'refer_earn': 'பரிந்துரை செய்து சம்பாதிக்கவும்',
       'settings': 'அமைப்புகள்',
-      'delete_account': 'கணக்கை நீக்கவும்',
       'add_business': 'வணிகத்தைச் சேர்க்கவும்',
       'contact_us': 'எங்களை தொடர்புகொள்ளுங்கள்',
       'partner_with_us': 'எங்களுடன் கூட்டிணையுங்கள்',
@@ -1799,7 +1698,6 @@ class LocalizationService {
       'caption': 'பொருள் விளக்கம்',
       'whatsapp_sticker': 'வாட்ஸ்அப் ஸ்டிக்கர்',
       'auto_product_ad': 'தானியங்கு தயாரிப்பு விளம்பரம்',
-      'ask_me_anything': 'என்னையென்று ஏதும் கேளுங்கள்',
       'privacy_policy': 'தனியுரிமைக் கொள்கை',
       'terms_and_conditions': 'விதிமுறைகள் மற்றும் நிபந்தனைகள்',
 
