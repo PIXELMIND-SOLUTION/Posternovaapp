@@ -542,6 +542,8 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
   bool _isLoading = false;
   bool _isGoldShop = false;
 
+  String _gstRate = '';
+
   String _userName = '';
   String _userMobile = '';
   String _userAddress = '';
@@ -588,6 +590,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
         _userName = prefs.getString('user_name') ?? '';
         _userMobile = prefs.getString('user_mobile') ?? '';
         _userAddress = prefs.getString('user_address') ?? '';
+        _gstRate = prefs.getString('gst_rate') ?? '';
 
         for (var entry in _productEntries) {
           entry.nameController.text = _userName;
@@ -1244,6 +1247,39 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                     ),
                   ],
                 ),
+
+                if (_gstRate.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue[100]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.percent_outlined,
+                          color: Colors.blue[700],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'GST Rate: $_gstRate%',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 12),
                 _buildModernTextField(

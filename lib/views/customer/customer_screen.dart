@@ -1347,7 +1347,6 @@ import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/views/customer/add_customer_screen.dart';
 import 'package:posternova/views/customer/edit_customer_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
-import 'package:posternova/views/subscription/plan_detail_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:posternova/widgets/premium_widget.dart';
@@ -2235,14 +2234,14 @@ class _AddCustomersState extends State<CustomerScreen> with TickerProviderStateM
                             Icon(
                               Icons.temple_hindu_rounded,
                               size: 12,
-                              color: primaryColor,
+                              color: textColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               customer['religion'],
                               style: TextStyle(
                                 fontSize: 11,
-                                color: primaryColor,
+                                color: textColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

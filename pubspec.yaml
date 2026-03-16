@@ -58,6 +58,8 @@ dependencies:
   socket_io_client: ^3.1.4
   dio: ^5.9.1
   google_fonts: ^6.3.2
+  showcaseview: ^5.0.1
+  extended_image: ^10.0.1
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +71,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets\appstore.png
     - .env
   fonts:
     - family: Calibri

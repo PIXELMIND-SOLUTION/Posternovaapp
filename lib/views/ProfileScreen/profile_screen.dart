@@ -7,13 +7,16 @@ import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/views/AI/chat_ai.dart';
 import 'package:posternova/views/AuthModule/auth_screen.dart';
 import 'package:posternova/views/ProfileScreen/edit_profile.dart';
+import 'package:posternova/views/ProfileScreen/settings_screen.dart';
 import 'package:posternova/views/about/about_screen.dart';
 import 'package:posternova/views/backgroundremover/background_remover.dart';
+import 'package:posternova/views/business/business_card_screen.dart';
 import 'package:posternova/views/deleteaccount/delete_account_screen.dart';
 import 'package:posternova/views/invoices/create_invoice_screen.dart';
 import 'package:posternova/views/referearn/referearn_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
+import 'package:posternova/views/whatsppstickers/stickers_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:posternova/widgets/premium_widget.dart';
@@ -437,6 +440,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   isPremiumRequired: true,
                                   isPurchased: myPlanProvider.isPurchase ?? false,
                                 ),
+
+
+
+                                 _buildMenuItem(
+                                  icon: Icons.credit_card,
+                                  title: 'Business Card',
+                                  onTap: () {
+                                    if (myPlanProvider.isPurchase == true) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => BusinessCardScreen(),
+                                        ),
+                                      );
+                                    } else {
+                                      _showPremiumRequiredDialog(context);
+                                    }
+                                  },
+                                  isPremiumRequired: true,
+                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                ),
+
+
+                                 _buildMenuItem(
+                                  icon: Icons.emoji_emotions,
+                                  title: 'stickers',
+                                  onTap: () {
+                                    if (myPlanProvider.isPurchase == true) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => WhatsAppStickerScreen(),
+                                        ),
+                                      );
+                                    } else {
+                                      _showPremiumRequiredDialog(context);
+                                    }
+                                  },
+                                  isPremiumRequired: true,
+                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                ),
+
+                                //  _buildMenuItem(
+                                //   icon: Icons.settings,
+                                //   title: 'settings',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) => SettingsScreen(),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased: myPlanProvider.isPurchase ?? false,
+                                // ),
                                 _buildMenuItem(
                                   icon: Icons.chat_bubble_outline,
                                   title: 'chicha_ai',

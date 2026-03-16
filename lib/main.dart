@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:posternova/providers/topics/hot_topic_provider.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'services/FCM/fcm_service.dart';
@@ -35,9 +36,7 @@ import 'widgets/language_widget.dart';
 /// 🔴 REQUIRED for iOS background notifications
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   print('📦 Background message: ${message.messageId}');
 }
@@ -54,9 +53,7 @@ void main() async {
     );
 
     /// 2️⃣ Register background handler BEFORE runApp
-    FirebaseMessaging.onBackgroundMessage(
-      firebaseMessagingBackgroundHandler,
-    );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     /// 3️⃣ Initialize local notifications
     await LocalNotificationService.init();
@@ -69,12 +66,7 @@ void main() async {
     print('❌ Error initializing Firebase/FCM: $e');
   }
 
-  runApp(
-    AppRestartWrapper(
-      key: AppRestartService.key,
-      child: const MyApp(),
-    ),
-  );
+  runApp(AppRestartWrapper(key: AppRestartService.key, child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -112,6 +104,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RedeemProvider()),
         ChangeNotifierProvider(create: (_) => ReelProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => HotTopicReelsProvider()),
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {
@@ -138,8 +131,9 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.light,
               scaffoldBackgroundColor: Colors.white,
               primarySwatch: Colors.deepPurple,
-              textTheme:
-                  ThemeData.light().textTheme.apply(fontFamily: 'Calibri'),
+              textTheme: ThemeData.light().textTheme.apply(
+                fontFamily: 'Calibri',
+              ),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: Colors.deepPurple,
                 brightness: Brightness.light,
@@ -149,8 +143,9 @@ class MyApp extends StatelessWidget {
             darkTheme: ThemeData(
               brightness: Brightness.dark,
               scaffoldBackgroundColor: Colors.white,
-              textTheme:
-                  ThemeData.dark().textTheme.apply(fontFamily: 'Calibri'),
+              textTheme: ThemeData.dark().textTheme.apply(
+                fontFamily: 'Calibri',
+              ),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: Colors.deepPurple,
                 brightness: Brightness.dark,

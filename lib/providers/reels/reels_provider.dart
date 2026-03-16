@@ -15,7 +15,7 @@ class ReelProvider with ChangeNotifier {
   List<Reel> get reels => _reels;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  String? get userId => _userId;
+  String? get userId => _userId;  
 
   // Initialize user ID from preferences
   Future<void> initializeUserId() async {

@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "31280683326-45d9pd9f5bed5evcl3dgcvvghv5jt3cv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.posternova.posternova",
+            "certificate_hash": "979e36c96691481ea9f8273d1298897a251af8ba"
+          }
+        },
+        {
           "client_id": "31280683326-6vom9o17et0pr4gu9vgn0vdu27jfigej.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
