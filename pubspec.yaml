@@ -60,6 +60,7 @@ dependencies:
   google_fonts: ^6.3.2
   showcaseview: ^5.0.1
   extended_image: ^10.0.1
+  google_sign_in: 6.2.1
 
 dev_dependencies:
   flutter_test:
@@ -72,6 +73,7 @@ flutter:
 
   assets:
     - assets\appstore.png
+    - assets\ugadi.png
     - .env
   fonts:
     - family: Calibri

@@ -3653,6 +3653,7 @@ import 'package:posternova/providers/topics/hot_topic_provider.dart';
 import 'package:posternova/views/PosterModule/poster_making_screen.dart'
     hide Overlay;
 import 'package:posternova/views/ProfileScreen/profile_screen.dart';
+import 'package:posternova/views/SecondPhase/poster_editor.dart';
 import 'package:posternova/views/category/category_detail_screen.dart';
 import 'package:posternova/views/category/search_category.dart';
 import 'package:posternova/views/hot/hot_screen.dart';
@@ -4218,6 +4219,54 @@ bool _isBirthdayLoading = false;
                   ),
                 ),
 
+                                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: Colors.black87,
+                        size: 26,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PosterEditorScreen (posterAsset: "assets/ugadi.png",),
+                          ),
+                        );
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 38,
+                        minHeight: 38,
+                      ),
+                    ),
+                    Positioned(
+                      right: 4,
+                      top: 4,  
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '3',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
                 // ── Notification badge ─────────────────────────────────────
                 Stack(
                   clipBehavior: Clip.none,
@@ -4232,7 +4281,7 @@ bool _isBirthdayLoading = false;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => NotificationScreen(),
+                            builder: (context) => NotificationScreen(userId: userId.toString(),),
                           ),
                         );
                       },

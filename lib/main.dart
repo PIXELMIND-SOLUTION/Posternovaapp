@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:posternova/providers/auth/google_provider.dart';
 import 'package:posternova/providers/topics/hot_topic_provider.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
@@ -105,6 +106,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReelProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => HotTopicReelsProvider()),
+            ChangeNotifierProvider(create: (_) => GoogleProvider()), // Add this
+
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {

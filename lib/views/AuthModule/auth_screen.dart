@@ -1989,6 +1989,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:posternova/models/register_model.dart';
+import 'package:posternova/providers/auth/google_provider.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/providers/auth/otp_provider.dart';
 import 'package:posternova/providers/auth/register_provider.dart';
@@ -2613,14 +2614,51 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               ],
             ),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _socialBtn('G', const Color(0xFF4285F4), Colors.white),
-                const SizedBox(width: 20),
-                _socialBtn('f', const Color(0xFF1877F2), Colors.white),
-              ],
-            ),
+           Row(
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+    Consumer<GoogleProvider>(
+      builder: (context, googleProvider, child) {
+        return _socialBtn(
+          'G',
+          const Color(0xFF4285F4),
+          Colors.white,
+          onTap: googleProvider.isLoading
+              ? null
+              : () async {
+                  final success = await googleProvider.signInWithGoogle(context);
+                  if (success) {
+                    // Navigate to home screen or check if profile is complete
+                    if (googleProvider.googleSignInResponse != null) {
+                      final data = jsonDecode(googleProvider.googleSignInResponse!.body);
+                      final user = data['user'];
+                      
+                      final hasName = user['name'] != null && user['name'] != '';
+                      final hasEmail = user['email'] != null && user['email'] != '';
+                      
+                      if (!hasName || !hasEmail) {
+                        // Go to signup step if profile incomplete
+                        // You'll need to handle this based on your flow
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+                        );
+                      }
+                    }
+                  } else if (googleProvider.error != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(googleProvider.error!)),
+                    );
+                  }
+                },
+        );
+      },
+    ),
+    const SizedBox(width: 20),
+    _socialBtn('f', const Color(0xFF1877F2), Colors.white), // Facebook will be similar
+  ],
+),
           ],
         );
       },
@@ -3050,8 +3088,11 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _socialBtn(String label, Color bg, Color fg) {
-    return Container(
+
+Widget _socialBtn(String label, Color bg, Color fg, {VoidCallback? onTap}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
       width: 56,
       height: 56,
       decoration: BoxDecoration(
@@ -3068,8 +3109,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       child: Text(label,
           style: TextStyle(
               color: fg, fontSize: 22, fontWeight: FontWeight.w900)),
-    );
-  }
+    ),
+  );
+}
 }
 
 // ─── Background Diagonal Shapes ──────────────────────────────────────────────

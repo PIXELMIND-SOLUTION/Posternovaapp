@@ -120,7 +120,7 @@ import 'package:posternova/models/user_model.dart';
 import 'package:posternova/services/auth/login_service.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final Authservice _authservice = Authservice();
+  final AuthService _authservice = AuthService();
   bool _isLoading = false;
   String? _error;
   LoginResponse? _user;

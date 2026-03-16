@@ -2,6 +2,7 @@ class ApiConstants {
   static const String baseUrl = 'http://31.97.206.144:4061/api/users';
 
   static const String login = '$baseUrl/login';
+  static const String googleSignIn = '$baseUrl/api/auth/google';
   static const String editProfile = '$baseUrl/edit-profile';
 
   static String uploadProfileImage(String userId) => '$editProfile/$userId';
