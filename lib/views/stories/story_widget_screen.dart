@@ -8,7 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class StoriesWidget extends StatefulWidget {
-  const StoriesWidget({Key? key}) : super(key: key);
+  final String? profile;
+  StoriesWidget({Key? key, this.profile}) : super(key: key);
 
   @override
   State<StoriesWidget> createState() => _StoriesWidgetState();
@@ -37,14 +38,19 @@ class _StoriesWidgetState extends State<StoriesWidget> {
       ),
     );
   }
-  
-  void _openStoryViewer(BuildContext context, List<UserStories> userStoriesList, int initialUserIndex) {
+
+  void _openStoryViewer(
+    BuildContext context,
+    List<UserStories> userStoriesList,
+    int initialUserIndex,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => StoryViewerScreen(
           userStoriesList: userStoriesList,
           initialUserIndex: initialUserIndex,
+          profile: widget.profile,
         ),
       ),
     );
@@ -57,8 +63,9 @@ class _StoriesWidgetState extends State<StoriesWidget> {
         if (storyProvider.isLoading) {
           return _buildSkeletonLoading();
         }
-        
-        final List<UserStories> userStoriesList = storyProvider.getStoriesForDisplay();
+
+        final List<UserStories> userStoriesList = storyProvider
+            .getStoriesForDisplay();
         final bool currentUserHasStory = storyProvider.currentUserHasStory();
         final String? currentUserImage = storyProvider.currentUserImage;
 
@@ -67,7 +74,7 @@ class _StoriesWidgetState extends State<StoriesWidget> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            itemCount: userStoriesList.length + (currentUserHasStory ? 0 : 1), 
+            itemCount: userStoriesList.length + (currentUserHasStory ? 0 : 1),
             // If user has story, it's already in userStoriesList; if not, add 1 for "Add Story"
             itemBuilder: (context, index) {
               // First position is either current user's story or "Add Story"
@@ -76,8 +83,8 @@ class _StoriesWidgetState extends State<StoriesWidget> {
                   // Current user has a story, so it's the first item in userStoriesList
                   final UserStories userStories = userStoriesList[0];
                   return _buildStoryItem(
-                    context, 
-                    userStories, 
+                    context,
+                    userStories,
                     true, // isCurrentUser
                     () => _openStoryViewer(context, userStoriesList, 0),
                     userStories.hasUnviewedStories,
@@ -87,26 +94,27 @@ class _StoriesWidgetState extends State<StoriesWidget> {
                   return _buildAddStoryItem(context, currentUserImage);
                 }
               }
-              
+
               // For remaining positions, show other users' stories
               int adjustedIndex = index;
               if (!currentUserHasStory) {
                 adjustedIndex = index - 1; // Adjust for the "Add Story" item
               }
-              
+
               // Make sure index is within bounds
               if (adjustedIndex < userStoriesList.length) {
                 final UserStories userStories = userStoriesList[adjustedIndex];
-                
+
                 return _buildStoryItem(
-                  context, 
-                  userStories, 
+                  context,
+                  userStories,
                   false, // not current user (current user is always at index 0 if they have a story)
-                  () => _openStoryViewer(context, userStoriesList, adjustedIndex),
+                  () =>
+                      _openStoryViewer(context, userStoriesList, adjustedIndex),
                   userStories.hasUnviewedStories,
                 );
               }
-              
+
               // Fallback empty container
               return Container();
             },
@@ -175,14 +183,29 @@ class _StoriesWidgetState extends State<StoriesWidget> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.grey[300],
-                    image: userProfileImage != null
+                    image:
+                        (widget.profile != null && widget.profile!.isNotEmpty)
+                        ? DecorationImage(
+                            image: NetworkImage(widget.profile!),
+                            fit: BoxFit.cover,
+                            onError: (exception, stackTrace) {
+                              print('Error loading profile image: $exception');
+                            },
+                          )
+                        : (userProfileImage != null &&
+                              userProfileImage.isNotEmpty)
                         ? DecorationImage(
                             image: NetworkImage(userProfileImage),
                             fit: BoxFit.cover,
+                            onError: (exception, stackTrace) {
+                              print('Error loading profile image: $exception');
+                            },
                           )
                         : null,
                   ),
-                  child: userProfileImage == null
+                  child:
+                      (widget.profile == null || widget.profile!.isEmpty) &&
+                          (userProfileImage == null || userProfileImage.isEmpty)
                       ? const Icon(Icons.person, size: 35, color: Colors.white)
                       : null,
                 ),
@@ -198,11 +221,7 @@ class _StoriesWidgetState extends State<StoriesWidget> {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 14,
-                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 14),
                   ),
                 ),
               ],
@@ -218,28 +237,137 @@ class _StoriesWidgetState extends State<StoriesWidget> {
     );
   }
 
+  // Widget _buildStoryItem(
+  //   BuildContext context,
+  //   UserStories userStories,
+  //   bool isCurrentUser,
+  //   VoidCallback onTap,
+  //   bool hasUnviewedStories,
+  // ) {
+  //   // Get user's profile image instead of story content image
+  //   String? profileImageUrl;
+
+  //   if (isCurrentUser) {
+  //     // For current user, use the profile image from StoryProvider
+  //     profileImageUrl = Provider.of<StoryProvider>(
+  //       context,
+  //       listen: false,
+  //     ).currentUserImage;
+  //   } else {
+  //     // For other users, get profile image from UserStories or first story's profile image
+  //     if (userStories.userAvatar.isNotEmpty &&
+  //         userStories.userAvatar != 'default-profile-image.jpg') {
+  //       profileImageUrl = userStories.userAvatar;
+  //     } else if (userStories.stories.isNotEmpty) {
+  //       // Fallback to first story's profile image
+  //       final firstStory = userStories.stories.first;
+  //       if (firstStory.hasCustomProfileImage) {
+  //         profileImageUrl = firstStory.profileImage;
+  //       }
+  //     }
+  //   }
+
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+  //     child: GestureDetector(
+  //       onTap: onTap,
+  //       child: Column(
+  //         children: [
+  //           Container(
+  //             width: 68,
+  //             height: 68,
+  //             decoration: BoxDecoration(
+  //               shape: BoxShape.circle,
+  //               gradient: hasUnviewedStories
+  //                   ? const LinearGradient(
+  //                       colors: [Colors.purple, Colors.orange, Colors.pink],
+  //                       begin: Alignment.topLeft,
+  //                       end: Alignment.bottomRight,
+  //                     )
+  //                   : null,
+  //               border: !hasUnviewedStories
+  //                   ? Border.all(color: Colors.grey, width: 2)
+  //                   : null,
+  //             ),
+  //             padding: const EdgeInsets.all(2),
+  //             child: Container(
+  //               decoration: BoxDecoration(
+  //                 shape: BoxShape.circle,
+  //                 color: Colors.grey[300],
+  //                 border: Border.all(color: Colors.white, width: 2),
+  //                 image: profileImageUrl != null && profileImageUrl.isNotEmpty
+  //                     ? DecorationImage(
+  //                         image: NetworkImage(profileImageUrl),
+  //                         fit: BoxFit.cover,
+  //                         onError: (exception, stackTrace) {
+  //                           // Handle image loading errors
+  //                           print('Error loading profile image: $exception');
+  //                         },
+  //                       )
+  //                     : null,
+  //               ),
+  //               child: profileImageUrl == null || profileImageUrl.isEmpty
+  //                   ? const Icon(Icons.person, color: Colors.white)
+  //                   : null,
+  //             ),
+  //           ),
+  //           const SizedBox(height: 4),
+  //           Text(
+  //             isCurrentUser
+  //                 ? AppText.translate(context, 'your_story')
+  //                 : userStories.username.isNotEmpty
+  //                 ? userStories.username
+  //                 : 'Story',
+  //             style: TextStyle(
+  //               color: Colors.black,
+  //               fontSize: 12,
+  //               fontWeight: hasUnviewedStories
+  //                   ? FontWeight.bold
+  //                   : FontWeight.normal,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
   Widget _buildStoryItem(
-    BuildContext context, 
-    UserStories userStories, 
+    BuildContext context,
+    UserStories userStories,
     bool isCurrentUser,
     VoidCallback onTap,
     bool hasUnviewedStories,
   ) {
     // Get user's profile image instead of story content image
     String? profileImageUrl;
-    
+    String? firstVideoUrl;
+    bool hasVideo = false;
+    int storyCount = userStories.stories.length;
+    int viewedCount = userStories.stories.where((s) => s.isViewed).length;
+
     if (isCurrentUser) {
       // For current user, use the profile image from StoryProvider
-      profileImageUrl = Provider.of<StoryProvider>(context, listen: false).currentUserImage;
+      profileImageUrl = Provider.of<StoryProvider>(
+        context,
+        listen: false,
+      ).currentUserImage;
     } else {
       // For other users, get profile image from UserStories or first story's profile image
-      if (userStories.userAvatar.isNotEmpty && userStories.userAvatar != 'default-profile-image.jpg') {
+      if (userStories.userAvatar.isNotEmpty &&
+          userStories.userAvatar != 'default-profile-image.jpg') {
         profileImageUrl = userStories.userAvatar;
       } else if (userStories.stories.isNotEmpty) {
-        // Fallback to first story's profile image
+        // Check if first story has a video
         final firstStory = userStories.stories.first;
         if (firstStory.hasCustomProfileImage) {
           profileImageUrl = firstStory.profileImage;
+        }
+
+        // If the story has a video but no profile image, show video icon
+        if (firstStory.videos.isNotEmpty &&
+            (profileImageUrl == null || profileImageUrl!.isEmpty)) {
+          hasVideo = true;
+          firstVideoUrl = firstStory.videos.first;
         }
       }
     }
@@ -250,56 +378,248 @@ class _StoriesWidgetState extends State<StoriesWidget> {
         onTap: onTap,
         child: Column(
           children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: hasUnviewedStories 
-                    ? const LinearGradient(
-                        colors: [Colors.purple, Colors.orange, Colors.pink],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : null,
-                border: !hasUnviewedStories 
-                    ? Border.all(color: Colors.grey, width: 2) 
-                    : null,
-              ),
-              padding: const EdgeInsets.all(2), 
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey[300],
-                  border: Border.all(color: Colors.white, width: 2),
-                  image: profileImageUrl != null && profileImageUrl.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(profileImageUrl),
-                          fit: BoxFit.cover,
-                          onError: (exception, stackTrace) {
-                            // Handle image loading errors
-                            print('Error loading profile image: $exception');
-                          },
-                        )
-                      : null,
-                ),
-                child: profileImageUrl == null || profileImageUrl.isEmpty
-                    ? const Icon(Icons.person, color: Colors.white)
-                    : null,
-              ),
-            ),
+            // Story ring with segments for multiple stories
+            storyCount > 1
+                ? Container(
+                    width: 68,
+                    height: 68,
+                    decoration: const BoxDecoration(shape: BoxShape.circle),
+                    child: CustomPaint(
+                      painter: StoryRingPainter(
+                        storyCount: storyCount,
+                        viewedStories: viewedCount,
+                        hasUnviewed: hasUnviewedStories,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(
+                          3,
+                        ), // Inner padding for profile image
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey[300],
+                            border: Border.all(color: Colors.white, width: 2),
+                            image: widget.profile != null
+                                ? DecorationImage(
+                                    image: NetworkImage(
+                                      widget.profile.toString(),
+                                    ),
+                                    fit: BoxFit.cover,
+                                    onError: (exception, stackTrace) {
+                                      print(
+                                        'Error loading profile image: $exception',
+                                      );
+                                    },
+                                  )
+                                : null,
+                          ),
+                          child: widget.profile == null
+                              ? (hasVideo
+                                    ? Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[800],
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.play_circle_filled,
+                                              color: Colors.white,
+                                              size: 30,
+                                            ),
+                                            if (firstVideoUrl != null)
+                                              Positioned(
+                                                bottom: 2,
+                                                right: 2,
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(
+                                                    2,
+                                                  ),
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                        color: Colors.blue,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                  child: const Icon(
+                                                    Icons.videocam,
+                                                    color: Colors.white,
+                                                    size: 10,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                      ))
+                              : null,
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: hasUnviewedStories
+                          ? const LinearGradient(
+                              colors: [
+                                Colors.purple,
+                                Colors.orange,
+                                Colors.pink,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      border: !hasUnviewedStories
+                          ? Border.all(color: Colors.grey, width: 2)
+                          : null,
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.grey[300],
+                        border: Border.all(color: Colors.white, width: 2),
+                        image:
+                            profileImageUrl != null &&
+                                profileImageUrl.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(profileImageUrl),
+                                fit: BoxFit.cover,
+                                onError: (exception, stackTrace) {
+                                  print(
+                                    'Error loading profile image: $exception',
+                                  );
+                                },
+                              )
+                            : null,
+                      ),
+                      child: profileImageUrl == null || profileImageUrl.isEmpty
+                          ? (hasVideo
+                                ? Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[800],
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.play_circle_filled,
+                                          color: Colors.white,
+                                          size: 30,
+                                        ),
+                                        if (firstVideoUrl != null)
+                                          Positioned(
+                                            bottom: 2,
+                                            right: 2,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(2),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.blue,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.videocam,
+                                                color: Colors.white,
+                                                size: 10,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  )
+                                : const Icon(Icons.person, color: Colors.white))
+                          : null,
+                    ),
+                  ),
             const SizedBox(height: 4),
             Text(
-              isCurrentUser ? AppText.translate(context, 'your_story') : userStories.username.isNotEmpty ? userStories.username : 'Story',
+              isCurrentUser
+                  ? AppText.translate(context, 'your_story')
+                  : userStories.username.isNotEmpty
+                  ? userStories.username
+                  : 'Story',
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 12,
-                fontWeight: hasUnviewedStories ? FontWeight.bold : FontWeight.normal,
+                fontWeight: hasUnviewedStories
+                    ? FontWeight.bold
+                    : FontWeight.normal,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+// Custom painter for segmented story ring with gaps - MOVE THIS OUTSIDE THE CLASS
+class StoryRingPainter extends CustomPainter {
+  final int storyCount;
+  final int viewedStories;
+  final bool hasUnviewed;
+
+  StoryRingPainter({
+    required this.storyCount,
+    required this.viewedStories,
+    required this.hasUnviewed,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    final strokeWidth = 3.0;
+    final rect = Rect.fromCircle(center: center, radius: radius - 1);
+
+    // Gap between segments (in radians) - small but visible gap
+    final gapAngle = 0.15; // Slightly larger gap for better visibility
+
+    // Available angle for each segment (total circle minus gaps)
+    final totalGaps = gapAngle * storyCount;
+    final availableAngle = 2 * 3.14159 - totalGaps;
+    final segmentAngle = availableAngle / storyCount;
+
+    for (int i = 0; i < storyCount; i++) {
+      // Start angle with gap
+      final startAngle = (i * (segmentAngle + gapAngle)) - 3.14159 / 2;
+
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round; // Rounded ends for better look
+
+      // Determine color based on viewed status
+      if (i < viewedStories) {
+        // Viewed stories - grey
+        paint.color = Colors.grey;
+      } else {
+        // Unviewed stories - gradient colors
+        paint.shader = const SweepGradient(
+          startAngle: 0,
+          endAngle: 2 * 3.14159,
+          colors: [Colors.purple, Colors.orange, Colors.pink],
+        ).createShader(rect);
+      }
+
+      canvas.drawArc(rect, startAngle, segmentAngle, false, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant StoryRingPainter oldDelegate) {
+    return oldDelegate.storyCount != storyCount ||
+        oldDelegate.viewedStories != viewedStories ||
+        oldDelegate.hasUnviewed != hasUnviewed;
   }
 }

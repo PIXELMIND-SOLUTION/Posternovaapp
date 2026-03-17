@@ -74,6 +74,7 @@ flutter:
   assets:
     - assets\appstore.png
     - assets\ugadi.png
+    - assets/videos/bg.webm
     - .env
   fonts:
     - family: Calibri

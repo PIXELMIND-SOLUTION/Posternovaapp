@@ -3635,10 +3635,6 @@
 // //   }
 // // }
 
-
-
-
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -3699,11 +3695,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<dynamic> bannerList = [];
 
   List<dynamic> birthdayAnniversaryPosters = [];
-bool _isBirthdayLoading = false;
+  bool _isBirthdayLoading = false;
 
-   // List<dynamic> birthdayPosters = [];
-// List<dynamic> anniversaryPosters = [];
-// bool _isBirthdayLoading = false;
+  // List<dynamic> birthdayPosters = [];
+  // List<dynamic> anniversaryPosters = [];
+  // bool _isBirthdayLoading = false;
   // ─── Controllers ───────────────────────────────────────────────────────────
   final TextEditingController _searchController = TextEditingController();
   late PageController _bannerPageController;
@@ -3719,6 +3715,8 @@ bool _isBirthdayLoading = false;
     'Sunday',
   ];
 
+  late VideoPlayerController _controller;
+
   // ══════════════════════════════════════════════════════════════════════════
   // LIFECYCLE
   // ══════════════════════════════════════════════════════════════════════════
@@ -3731,6 +3729,12 @@ bool _isBirthdayLoading = false;
     _loadUserId();
     _initializeUser();
     Future.microtask(() async => await _initializeAllData());
+    _controller = VideoPlayerController.asset("assets/videos/bg.webm")
+      ..initialize().then((_) {
+        setState(() {});
+        _controller.setLooping(true);
+        _controller.play();
+      });
   }
 
   @override
@@ -3741,33 +3745,34 @@ bool _isBirthdayLoading = false;
     super.dispose();
   }
 
-
-
   Future<void> _fetchBirthdayAnniversaryPosters() async {
-  if (!mounted) return;
-  setState(() => _isBirthdayLoading = true);
-  try {
-    final posterProvider = Provider.of<PosterProvider>(context, listen: false);
-    // Filter from already-loaded posters for birthday/anniversary categories
-    final allPosters = posterProvider.posters;
-    final filtered = allPosters.where((poster) {
-      final name = (poster.categoryName ?? '').toLowerCase();
-      return name.contains('birthday') ||
-          name.contains('anniversary') ||
-          name.contains('wedding');
-    }).toList();
- 
     if (!mounted) return;
-    setState(() {
-      birthdayAnniversaryPosters = filtered;
-      _isBirthdayLoading = false;
-    });
-  } catch (e) {
-    if (!mounted) return;
-    setState(() => _isBirthdayLoading = false);
-    debugPrint('fetchBirthdayAnniversary: $e');
+    setState(() => _isBirthdayLoading = true);
+    try {
+      final posterProvider = Provider.of<PosterProvider>(
+        context,
+        listen: false,
+      );
+      // Filter from already-loaded posters for birthday/anniversary categories
+      final allPosters = posterProvider.posters;
+      final filtered = allPosters.where((poster) {
+        final name = (poster.categoryName ?? '').toLowerCase();
+        return name.contains('birthday') ||
+            name.contains('anniversary') ||
+            name.contains('wedding');
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        birthdayAnniversaryPosters = filtered;
+        _isBirthdayLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isBirthdayLoading = false);
+      debugPrint('fetchBirthdayAnniversary: $e');
+    }
   }
-}
 
   // ══════════════════════════════════════════════════════════════════════════
   // INIT HELPERS
@@ -3877,16 +3882,18 @@ bool _isBirthdayLoading = false;
   //   }
   // }
 
-
   Future<void> _fetchReels() async {
-  if (userId == null) return;
-  try {
-    final hotTopicProvider = Provider.of<HotTopicReelsProvider>(context, listen: false);
-    await hotTopicProvider.loadHotTopicReels(userId!);
-  } catch (e) {
-    debugPrint('fetchReels: $e');
+    if (userId == null) return;
+    try {
+      final hotTopicProvider = Provider.of<HotTopicReelsProvider>(
+        context,
+        listen: false,
+      );
+      await hotTopicProvider.loadHotTopicReels(userId!);
+    } catch (e) {
+      debugPrint('fetchReels: $e');
+    }
   }
-}
 
   Future<void> _fetchWeeklyPosters() async {
     try {
@@ -4075,56 +4082,128 @@ bool _isBirthdayLoading = false;
   // BUILD
   // ══════════════════════════════════════════════════════════════════════════
 
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     backgroundColor: const Color(0xFFF5F5F5),
+  //     appBar: _buildAppBar(),
+  //     body: RefreshIndicator(
+  //       onRefresh: () async {
+  //         await Future.wait([
+  //           _fetchFestivalPosters(
+  //             context.read<DateTimeProvider>().selectedDate,
+  //           ),
+  //           _fetchnewposters(),
+  //           _fetchWeeklyPosters(),
+  //           _fetchBanners(),
+  //           _fetchReels(),
+  //         ]);
+  //       },
+  //       color: const Color(0xFFFFC107),
+  //       child: CustomScrollView(
+  //         slivers: [
+  //           SliverToBoxAdapter(
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 _buildSearchBar(),
+  //                 _buildBannerSection(),
+  //                 const SizedBox(height: 12),
+  //                 _buildForYouSection(), // StoriesWidget
+  //                 const SizedBox(height: 12),
+  //                 _buildUpcomingFestivalsSection(),
+  //                 _buildFestivalPostersSection(),
+  //                 const SizedBox(height: 12),
+  //                 _buildSectionHeader(
+  //                   titleKey: 'weekly_templates',
+  //                   subtitleKey: 'fresh_designs_everyday',
+  //                 ),
+  //                 _buildWeeklyPostersSection(),
+  //                 const SizedBox(height: 12),
+
+  //                 _buildHotTopicsSection(), // Reels from API
+  //                 const SizedBox(height: 12),
+  //                 _buildBirthdayAnniversarySection(),
+  //                 const SizedBox(height: 12),
+  //                 // _buildWeeklyPostersSection(),
+  //                 const SizedBox(height: 100),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       appBar: _buildAppBar(),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await Future.wait([
-            _fetchFestivalPosters(
-              context.read<DateTimeProvider>().selectedDate,
-            ),
-            _fetchnewposters(),
-            _fetchWeeklyPosters(),
-            _fetchBanners(),
-            _fetchReels(),
-          ]);
-        },
-        color: const Color(0xFFFFC107),
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchBar(),
-                  _buildBannerSection(),
-                  const SizedBox(height: 12),
-                  _buildForYouSection(), // StoriesWidget
-                  const SizedBox(height: 12),
-                  _buildUpcomingFestivalsSection(),
-                  _buildFestivalPostersSection(),
-                  const SizedBox(height: 12),
-                  _buildSectionHeader(
-                    titleKey: 'weekly_templates',
-                    subtitleKey: 'fresh_designs_everyday',
+      body: Stack(
+        children: [
+          /// 🔥 VIDEO BACKGROUND
+          _controller.value.isInitialized
+              ? SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller.value.size.width,
+                      height: _controller.value.size.height,
+                      child: VideoPlayer(_controller),
+                    ),
                   ),
-                  _buildWeeklyPostersSection(),
-                  const SizedBox(height: 12),
+                )
+              : Container(color: Colors.black),
 
-                  _buildHotTopicsSection(), // Reels from API
-                  const SizedBox(height: 12),
-                     _buildBirthdayAnniversarySection(),
-                  const SizedBox(height: 12),
-                  // _buildWeeklyPostersSection(),
-                  const SizedBox(height: 100),
-                ],
-              ),
+          /// 🔥 OPTIONAL DARK OVERLAY (for readability)
+          Container(color: Colors.black.withOpacity(0.3)),
+
+          /// 🔥 YOUR ACTUAL UI
+          RefreshIndicator(
+            onRefresh: () async {
+              await Future.wait([
+                _fetchFestivalPosters(
+                  context.read<DateTimeProvider>().selectedDate,
+                ),
+                _fetchnewposters(),
+                _fetchWeeklyPosters(),
+                _fetchBanners(),
+                _fetchReels(),
+              ]);
+            },
+            color: const Color(0xFFFFC107),
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSearchBar(),
+                      _buildBannerSection(),
+                      const SizedBox(height: 12),
+                      _buildForYouSection(),
+                      const SizedBox(height: 12),
+                      _buildUpcomingFestivalsSection(),
+                      _buildFestivalPostersSection(),
+                      const SizedBox(height: 12),
+                      _buildSectionHeader(
+                        titleKey: 'weekly_templates',
+                        subtitleKey: 'fresh_designs_everyday',
+                      ),
+                      _buildWeeklyPostersSection(),
+                      const SizedBox(height: 12),
+                      _buildHotTopicsSection(),
+                      const SizedBox(height: 12),
+                      _buildBirthdayAnniversarySection(),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -4219,7 +4298,7 @@ bool _isBirthdayLoading = false;
                   ),
                 ),
 
-                                Stack(
+                Stack(
                   clipBehavior: Clip.none,
                   children: [
                     IconButton(
@@ -4232,7 +4311,9 @@ bool _isBirthdayLoading = false;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => PosterEditorScreen (posterAsset: "assets/ugadi.png",),
+                            builder: (context) => PosterEditorScreen(
+                              posterAsset: "assets/ugadi.png",
+                            ),
                           ),
                         );
                       },
@@ -4244,7 +4325,7 @@ bool _isBirthdayLoading = false;
                     ),
                     Positioned(
                       right: 4,
-                      top: 4,  
+                      top: 4,
                       child: Container(
                         width: 16,
                         height: 16,
@@ -4281,7 +4362,8 @@ bool _isBirthdayLoading = false;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => NotificationScreen(userId: userId.toString(),),
+                            builder: (context) =>
+                                NotificationScreen(userId: userId.toString()),
                           ),
                         );
                       },
@@ -4293,7 +4375,7 @@ bool _isBirthdayLoading = false;
                     ),
                     Positioned(
                       right: 4,
-                      top: 4,  
+                      top: 4,
                       child: Container(
                         width: 16,
                         height: 16,
@@ -4386,59 +4468,54 @@ bool _isBirthdayLoading = false;
   //   );
   // }
 
-
-
-
   Widget _buildSearchBar() {
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SearchScreen(),
-        ),
-      );
-    },
-    child: Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SearchScreen()),
+        );
+      },
       child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF0F0F0),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
-        ),
-        child: Row(
-          children: [
-            const SizedBox(width: 10),
-            const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
-            const SizedBox(width: 8),
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Container(
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0F0F0),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+          ),
+          child: Row(
+            children: [
+              const SizedBox(width: 10),
+              const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+              const SizedBox(width: 8),
 
-            Expanded(
-              child: AbsorbPointer(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    hintText: 'Search Posts by Topics',
-                    hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+              Expanded(
+                child: AbsorbPointer(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Search Posts by Topics',
+                      hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    style: const TextStyle(fontSize: 14),
                   ),
-                  style: const TextStyle(fontSize: 14),
                 ),
               ),
-            ),
 
-            const Icon(Icons.mic_rounded, color: Colors.grey, size: 20),
-            const SizedBox(width: 10),
-          ],
+              const Icon(Icons.mic_rounded, color: Colors.grey, size: 20),
+              const SizedBox(width: 10),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // BANNER  — from /api/poster/getbanners
@@ -4460,7 +4537,7 @@ bool _isBirthdayLoading = false;
     return Column(
       children: [
         SizedBox(
-          height: 100,
+          height: 120,
           child: items != null
               ? PageView.builder(
                   controller: _bannerPageController,
@@ -4529,7 +4606,7 @@ bool _isBirthdayLoading = false;
   //                       progress == null ? child : _buildBannerGradient(),
   //                 )
   //               : _buildBannerGradient(),
-        
+
   //           // Dim left side for text legibility
   //           Container(
   //             decoration: BoxDecoration(
@@ -4550,65 +4627,63 @@ bool _isBirthdayLoading = false;
   //   );
   // }
 
-
-
   Widget _buildBannerItem(dynamic banner) {
-  final imageUrl =
-      (banner['images'] != null && (banner['images'] as List).isNotEmpty)
-      ? banner['images'][0]
-      : (banner['imageUrl'] ??
-          banner['image'] ??
-          banner['bannerImage'] ??
-          '');
+    final imageUrl =
+        (banner['images'] != null && (banner['images'] as List).isNotEmpty)
+        ? banner['images'][0]
+        : (banner['imageUrl'] ??
+              banner['image'] ??
+              banner['bannerImage'] ??
+              '');
 
-  return GestureDetector(
-    onTap: () {
-      if (banner['posterId'] != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SamplePosterScreen(posterId: banner['posterId']),
-          ),
-        );
-      }
-    },
-    child: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16), // Curve amount
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            imageUrl.isNotEmpty
-                ? Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildBannerGradient(),
-                    loadingBuilder: (_, child, progress) =>
-                        progress == null ? child : _buildBannerGradient(),
-                  )
-                : _buildBannerGradient(),
+    return GestureDetector(
+      onTap: () {
+        if (banner['posterId'] != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => SamplePosterScreen(posterId: banner['posterId']),
+            ),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16), // Curve amount
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.fill,
+                      errorBuilder: (_, __, ___) => _buildBannerGradient(),
+                      loadingBuilder: (_, child, progress) =>
+                          progress == null ? child : _buildBannerGradient(),
+                    )
+                  : _buildBannerGradient(),
 
-            // Dim left side for text legibility
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withOpacity(0.55),
-                    Colors.transparent,
-                    Colors.transparent,
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
+              // Dim left side for text legibility
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withOpacity(0.55),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildBannerGradient() => Container(
     decoration: const BoxDecoration(
@@ -4714,7 +4789,7 @@ bool _isBirthdayLoading = false;
 
   Widget _buildForYouSection() {
     return Container(
-      color: const Color(0xFFFFFDE7),
+      // color: const Color(0xFFFFFDE7),
       padding: const EdgeInsets.symmetric(vertical: 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4726,11 +4801,11 @@ bool _isBirthdayLoading = false;
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: Color.fromARGB(221, 255, 255, 255),
               ),
             ),
           ),
-          const StoriesWidget(),
+          StoriesWidget(profile: userImage),
         ],
       ),
     );
@@ -5036,219 +5111,217 @@ bool _isBirthdayLoading = false;
     );
   }
 
-
-
-
-
   Widget _buildBirthdayAnniversarySection() {
-  // Use posters from PosterProvider filtered by category name
-  return Consumer<PosterProvider>(
-    builder: (context, posterProvider, _) {
-      final allPosters = posterProvider.posters;
- 
-      // Separate birthday and anniversary lists
-      final birthdayPosters = allPosters
-          .where((p) =>
-              (p.categoryName ?? '').toLowerCase().contains('birthday'))
-          .toList();
- 
-      final anniversaryPosters = allPosters
-          .where((p) =>
-              (p.categoryName ?? '').toLowerCase().contains('anniversary') ||
-              (p.categoryName ?? '').toLowerCase().contains('wedding'))
-          .toList();
- 
-      // Don't render section if both lists are empty
-      if (birthdayPosters.isEmpty && anniversaryPosters.isEmpty) {
-        return const SizedBox.shrink();
-      }
- 
-      return Container(
-        color: Colors.white,
-        padding: const EdgeInsets.only(top: 12, bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Birthday sub-section ──────────────────────────────────
-            if (birthdayPosters.isNotEmpty) ...[
-              _buildCelebrationHeader(
-                title: 'Birthday Posters',
-                icon: Icons.cake_rounded,
-                iconColor: const Color(0xFFE91E63),
-                onViewAll: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DetailsScreen(category: 'birthday'),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              _buildCelebrationPosterList(birthdayPosters),
-              const SizedBox(height: 14),
-            ],
- 
-            // ── Anniversary sub-section ───────────────────────────────
-            if (anniversaryPosters.isNotEmpty) ...[
-              _buildCelebrationHeader(
-                title: 'Anniversary Posters',
-                icon: Icons.favorite_rounded,
-                iconColor: const Color(0xFFE53935),
-                onViewAll: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DetailsScreen(category: 'anniversary'),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              _buildCelebrationPosterList(anniversaryPosters),
-            ],
-          ],
-        ),
-      );
-    },
-  );
-}
- 
-/// Shared header row for Birthday / Anniversary sections
-Widget _buildCelebrationHeader({
-  required String title,
-  required IconData icon,
-  required Color iconColor,
-  required VoidCallback onViewAll,
-}) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: iconColor, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-        // GestureDetector(
-        //   onTap: onViewAll,
-        //   child: const Text(
-        //     'View All',
-        //     style: TextStyle(
-        //       color: Color(0xFFFFC107),  
-        //       fontSize: 13,
-        //       fontWeight: FontWeight.w600,
-        //     ),
-        //   ),
-        // ),
-      ],
-    ),
-  );
-}
- 
-/// Horizontal poster list — same card size as weekly posters (110×140)
-Widget _buildCelebrationPosterList(List<dynamic> posters) {
-  return SizedBox(
-    height: 140, // same as _buildWeeklyPosterCard
-    child: ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      itemCount: posters.length,
-      itemBuilder: (context, index) {
-        final poster = posters[index];
-        return Consumer<MyPlanProvider>(
-          builder: (context, myPlanProvider, _) {
-            return GestureDetector(
-              onTap: () {
-                if (myPlanProvider.isPurchase) {
-                  Navigator.push(
+    // Use posters from PosterProvider filtered by category name
+    return Consumer<PosterProvider>(
+      builder: (context, posterProvider, _) {
+        final allPosters = posterProvider.posters;
+
+        // Separate birthday and anniversary lists
+        final birthdayPosters = allPosters
+            .where(
+              (p) => (p.categoryName ?? '').toLowerCase().contains('birthday'),
+            )
+            .toList();
+
+        final anniversaryPosters = allPosters
+            .where(
+              (p) =>
+                  (p.categoryName ?? '').toLowerCase().contains(
+                    'anniversary',
+                  ) ||
+                  (p.categoryName ?? '').toLowerCase().contains('wedding'),
+            )
+            .toList();
+
+        // Don't render section if both lists are empty
+        if (birthdayPosters.isEmpty && anniversaryPosters.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          color: Colors.white,
+          padding: const EdgeInsets.only(top: 12, bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Birthday sub-section ──────────────────────────────────
+              if (birthdayPosters.isNotEmpty) ...[
+                _buildCelebrationHeader(
+                  title: 'Birthday Posters',
+                  icon: Icons.cake_rounded,
+                  iconColor: const Color(0xFFE91E63),
+                  onViewAll: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => SamplePosterScreen(
-                        posterId: poster.id,
-                      ),
+                      builder: (_) => DetailsScreen(category: 'birthday'),
                     ),
-                  );
-                } else {
-                  _showPremiumDialog();
-                }
-              },
-              child: Container(
-                width: 110, // same as weekly poster card
-                margin: const EdgeInsets.only(right: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(10),
-                        ),
-                        child: poster.images != null &&
-                                poster.images.isNotEmpty
-                            ? Image.network(
-                                poster.images[0],
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: const Color(0xFFF3F4F6),
-                                ),
-                                loadingBuilder: (_, child, progress) {
-                                  if (progress == null) return child;
-                                  return Container(
-                                    color: const Color(0xFFF3F4F6),
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Color(0xFFFFC107),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : Container(color: const Color(0xFFF3F4F6)),
-                      ),
+                const SizedBox(height: 10),
+                _buildCelebrationPosterList(birthdayPosters),
+                const SizedBox(height: 14),
+              ],
+
+              // ── Anniversary sub-section ───────────────────────────────
+              if (anniversaryPosters.isNotEmpty) ...[
+                _buildCelebrationHeader(
+                  title: 'Anniversary Posters',
+                  icon: Icons.favorite_rounded,
+                  iconColor: const Color(0xFFE53935),
+                  onViewAll: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DetailsScreen(category: 'anniversary'),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(6),
-                      child: Text(
-                        poster.categoryName ?? 'Poster',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            );
-          },
+                const SizedBox(height: 10),
+                _buildCelebrationPosterList(anniversaryPosters),
+              ],
+            ],
+          ),
         );
       },
-    ),
-  );
-}
+    );
+  }
+
+  /// Shared header row for Birthday / Anniversary sections
+  Widget _buildCelebrationHeader({
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required VoidCallback onViewAll,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: iconColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          // GestureDetector(
+          //   onTap: onViewAll,
+          //   child: const Text(
+          //     'View All',
+          //     style: TextStyle(
+          //       color: Color(0xFFFFC107),
+          //       fontSize: 13,
+          //       fontWeight: FontWeight.w600,
+          //     ),
+          //   ),
+          // ),
+        ],
+      ),
+    );
+  }
+
+  /// Horizontal poster list — same card size as weekly posters (110×140)
+  Widget _buildCelebrationPosterList(List<dynamic> posters) {
+    return SizedBox(
+      height: 140, // same as _buildWeeklyPosterCard
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: posters.length,
+        itemBuilder: (context, index) {
+          final poster = posters[index];
+          return Consumer<MyPlanProvider>(
+            builder: (context, myPlanProvider, _) {
+              return GestureDetector(
+                onTap: () {
+                  if (myPlanProvider.isPurchase) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SamplePosterScreen(posterId: poster.id),
+                      ),
+                    );
+                  } else {
+                    _showPremiumDialog();
+                  }
+                },
+                child: Container(
+                  width: 110, // same as weekly poster card
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(10),
+                          ),
+                          child:
+                              poster.images != null && poster.images.isNotEmpty
+                              ? Image.network(
+                                  poster.images[0],
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      Container(color: const Color(0xFFF3F4F6)),
+                                  loadingBuilder: (_, child, progress) {
+                                    if (progress == null) return child;
+                                    return Container(
+                                      color: const Color(0xFFF3F4F6),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFFFFC107),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Container(color: const Color(0xFFF3F4F6)),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Text(
+                          poster.categoryName ?? 'Poster',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
 
   void _goToReelsScreen(int initialIndex) {
     Navigator.push(
