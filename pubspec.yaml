@@ -61,6 +61,8 @@ dependencies:
   showcaseview: ^5.0.1
   extended_image: ^10.0.1
   google_sign_in: 6.2.1
+  ffmpeg_kit_flutter_new: ^4.1.0
+  audioplayers: ^6.6.0
 
 dev_dependencies:
   flutter_test:
@@ -75,6 +77,12 @@ flutter:
     - assets\appstore.png
     - assets\ugadi.png
     - assets/videos/bg.webm
+    - assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3
+    - assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3
+    - assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3
+    - assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3
+    - assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3
+    - assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3
     - .env
   fonts:
     - family: Calibri
