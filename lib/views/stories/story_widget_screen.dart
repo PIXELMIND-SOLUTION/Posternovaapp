@@ -69,55 +69,65 @@ class _StoriesWidgetState extends State<StoriesWidget> {
         final bool currentUserHasStory = storyProvider.currentUserHasStory();
         final String? currentUserImage = storyProvider.currentUserImage;
 
-        return Container(
-          height: 110,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            itemCount: userStoriesList.length + (currentUserHasStory ? 0 : 1),
-            // If user has story, it's already in userStoriesList; if not, add 1 for "Add Story"
-            itemBuilder: (context, index) {
-              // First position is either current user's story or "Add Story"
-              if (index == 0) {
-                if (currentUserHasStory) {
-                  // Current user has a story, so it's the first item in userStoriesList
-                  final UserStories userStories = userStoriesList[0];
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            height: 110,
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 255, 253, 181),
+            ),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: userStoriesList.length + (currentUserHasStory ? 0 : 1),
+              // If user has story, it's already in userStoriesList; if not, add 1 for "Add Story"
+              itemBuilder: (context, index) {
+                // First position is either current user's story or "Add Story"
+                if (index == 0) {
+                  if (currentUserHasStory) {
+                    // Current user has a story, so it's the first item in userStoriesList
+                    final UserStories userStories = userStoriesList[0];
+                    return _buildStoryItem(
+                      context,
+                      userStories,
+                      true, // isCurrentUser
+                      () => _openStoryViewer(context, userStoriesList, 0),
+                      userStories.hasUnviewedStories,
+                    );
+                  } else {
+                    // Current user has no story, show "Add Story"
+                    return _buildAddStoryItem(context, currentUserImage);
+                  }
+                }
+
+                // For remaining positions, show other users' stories
+                int adjustedIndex = index;
+                if (!currentUserHasStory) {
+                  adjustedIndex = index - 1; // Adjust for the "Add Story" item
+                }
+
+                // Make sure index is within bounds
+                if (adjustedIndex < userStoriesList.length) {
+                  final UserStories userStories =
+                      userStoriesList[adjustedIndex];
+
                   return _buildStoryItem(
                     context,
                     userStories,
-                    true, // isCurrentUser
-                    () => _openStoryViewer(context, userStoriesList, 0),
+                    false, // not current user (current user is always at index 0 if they have a story)
+                    () => _openStoryViewer(
+                      context,
+                      userStoriesList,
+                      adjustedIndex,
+                    ),
                     userStories.hasUnviewedStories,
                   );
-                } else {
-                  // Current user has no story, show "Add Story"
-                  return _buildAddStoryItem(context, currentUserImage);
                 }
-              }
 
-              // For remaining positions, show other users' stories
-              int adjustedIndex = index;
-              if (!currentUserHasStory) {
-                adjustedIndex = index - 1; // Adjust for the "Add Story" item
-              }
-
-              // Make sure index is within bounds
-              if (adjustedIndex < userStoriesList.length) {
-                final UserStories userStories = userStoriesList[adjustedIndex];
-
-                return _buildStoryItem(
-                  context,
-                  userStories,
-                  false, // not current user (current user is always at index 0 if they have a story)
-                  () =>
-                      _openStoryViewer(context, userStoriesList, adjustedIndex),
-                  userStories.hasUnviewedStories,
-                );
-              }
-
-              // Fallback empty container
-              return Container();
-            },
+                // Fallback empty container
+                return Container();
+              },
+            ),
           ),
         );
       },

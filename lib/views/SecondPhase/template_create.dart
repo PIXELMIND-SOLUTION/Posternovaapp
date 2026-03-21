@@ -12,6 +12,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:posternova/helper/storage_helper.dart';
+import 'package:posternova/models/create_poster_model.dart';
+import 'package:posternova/views/SecondPhase/poster_cropper_screen.dart';
 
 // ─────────────────────────────────────────────
 //  DATA MODELS
@@ -234,16 +236,15 @@ class FrameStyle {
 //  MAIN SCREEN
 // ─────────────────────────────────────────────
 
-class PosterEditorScreen extends StatefulWidget {
-  final String posterAsset;
-  const PosterEditorScreen({Key? key, required this.posterAsset})
-    : super(key: key);
+class TemplateCreate extends StatefulWidget {
+  final PosterSize posterSize;
+  const TemplateCreate({Key? key, required this.posterSize}) : super(key: key);
 
   @override
-  State<PosterEditorScreen> createState() => _PosterEditorScreenState();
+  State<TemplateCreate> createState() => _TemplateCreateState();
 }
 
-class _PosterEditorScreenState extends State<PosterEditorScreen>
+class _TemplateCreateState extends State<TemplateCreate>
     with TickerProviderStateMixin {
   BottomTab _activeTab = BottomTab.text;
   Color _bgColor = const Color(0xFFF5F0E8);
@@ -467,7 +468,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         id: 'logo',
         type: BrandElementType.logo,
         position: const Offset(12, 12),
-        isVisible: true,
+        isVisible: false,
       ),
       BrandElement(
         id: 'name',
@@ -475,7 +476,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         position: const Offset(12, 290),
         fontSize: 16,
         color: Colors.white,
-        isVisible: true,
+        isVisible: false,
       ),
       BrandElement(
         id: 'phone',
@@ -483,7 +484,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         position: const Offset(12, 312),
         fontSize: 12,
         color: Colors.white70,
-        isVisible: true,
+        isVisible: false,
       ),
       BrandElement(
         id: 'address',
@@ -491,7 +492,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         position: const Offset(12, 330),
         fontSize: 10,
         color: Colors.white60,
-        isVisible: true,
+        isVisible: false,
       ),
     ];
 
@@ -680,6 +681,44 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
   // ── IMAGE UPLOAD ─────────────────────────
 
+  // Future<void> _pickImage({bool forLogo = false}) async {
+  //   try {
+  //     final picker = ImagePicker();
+  //     final XFile? picked = await picker.pickImage(
+  //       source: ImageSource.gallery,
+  //       imageQuality: 90,
+  //     );
+  //     if (picked != null) {
+  //       setState(() {
+  //         if (forLogo)
+  //           _uploadedLogoPath = picked.path;
+  //         else
+  //           _uploadedImagePath = picked.path;
+  //       });
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text(
+  //               forLogo ? 'Logo updated!' : 'Background image updated!',
+  //             ),
+  //             backgroundColor: const Color(0xFF2E7D32),
+  //             duration: const Duration(seconds: 2),
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Failed to pick image: $e'),
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
+
   Future<void> _pickImage({bool forLogo = false}) async {
     try {
       final picker = ImagePicker();
@@ -687,23 +726,42 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         source: ImageSource.gallery,
         imageQuality: 90,
       );
-      if (picked != null) {
-        setState(() {
-          if (forLogo)
-            _uploadedLogoPath = picked.path;
-          else
-            _uploadedImagePath = picked.path;
-        });
+      if (picked == null) return;
+
+      if (forLogo) {
+        // Logo doesn't need cropping to poster size
+        setState(() => _uploadedLogoPath = picked.path);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                forLogo ? 'Logo updated!' : 'Background image updated!',
-              ),
-              backgroundColor: const Color(0xFF2E7D32),
-              duration: const Duration(seconds: 2),
+            const SnackBar(
+              content: Text('Logo updated!'),
+              backgroundColor: Color(0xFF2E7D32),
+              duration: Duration(seconds: 2),
             ),
           );
+        }
+      } else {
+        // Background image → open cropper locked to poster aspect ratio
+        final croppedFile = await Navigator.push<File>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PosterCropperScreen(
+              imageFile: File(picked.path),
+              posterSize: widget.posterSize,
+            ),
+          ),
+        );
+        if (croppedFile != null) {
+          setState(() => _uploadedImagePath = croppedFile.path);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Background image updated!'),
+                backgroundColor: Color(0xFF2E7D32),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
@@ -1159,7 +1217,11 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
         setState(() => _downloadProgress = 0.4);
         await Future.delayed(const Duration(milliseconds: 100));
-        final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+        final double targetPixelRatio =
+            widget.posterSize.width / boundary.size.width;
+        final ui.Image image = await boundary.toImage(
+          pixelRatio: targetPixelRatio,
+        );
         setState(() => _downloadProgress = 0.65);
         final ByteData? byteData = await image.toByteData(
           format: ui.ImageByteFormat.png,
@@ -1325,7 +1387,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: AspectRatio(
-            aspectRatio: 3 / 4,
+            aspectRatio: widget.posterSize.width / widget.posterSize.height,
             child: RepaintBoundary(
               key: _posterKey,
               child: ClipRRect(
@@ -1352,34 +1414,56 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   }
 
   Widget _buildPosterBackground() {
-    Widget img;
+    Widget base;
+
     if (_uploadedImagePath != null) {
-      img = Image.file(
+      // Image is already cropped to exact poster ratio — use BoxFit.fill
+      base = Image.file(
         File(_uploadedImagePath!),
-        fit: BoxFit.cover,
+        fit: BoxFit.fill, // fill exactly, no letterboxing
         width: double.infinity,
         height: double.infinity,
+        gaplessPlayback: true, // prevents flicker on image change
       );
     } else {
-      img = Image.network(
-        widget.posterAsset,
-        fit: BoxFit.fill,
+      base = Container(
         width: double.infinity,
         height: double.infinity,
+        color: _bgColor,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.add_photo_alternate_outlined,
+                size: 48,
+                color: Colors.black.withOpacity(0.2),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '${widget.posterSize.width.toInt()} × ${widget.posterSize.height.toInt()} px',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.black.withOpacity(0.25),
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Upload an image to get started',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.black.withOpacity(0.15),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
-    Widget base = Stack(
-      children: [
-        Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: _bgColor,
-        ),
-        img,
-      ],
-    );
-
+    // Apply effects
     if (_selectedEffect == EffectType.blur) {
       base = ImageFiltered(
         imageFilter: ui.ImageFilter.blur(
@@ -5296,30 +5380,30 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             ),
           ),
           const Divider(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.image, size: 18, color: Colors.grey),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text('Show Logo', style: TextStyle(fontSize: 13)),
-              ),
-              Switch(
-                value: _brandElements
-                    .firstWhere((e) => e.id == 'logo')
-                    .isVisible,
-                onChanged: (v) {
-                  setState(() {
-                    final i = _brandElements.indexWhere((e) => e.id == 'logo');
-                    if (i != -1)
-                      _brandElements[i] = _brandElements[i].copyWith(
-                        isVisible: v,
-                      );
-                  });
-                },
-                activeColor: const Color(0xFFF5C518),
-              ),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     const Icon(Icons.image, size: 18, color: Colors.grey),
+          //     const SizedBox(width: 8),
+          //     const Expanded(
+          //       child: Text('Show Logo', style: TextStyle(fontSize: 13)),
+          //     ),
+          //     Switch(
+          //       value: _brandElements
+          //           .firstWhere((e) => e.id == 'logo')
+          //           .isVisible,
+          //       onChanged: (v) {
+          //         setState(() {
+          //           final i = _brandElements.indexWhere((e) => e.id == 'logo');
+          //           if (i != -1)
+          //             _brandElements[i] = _brandElements[i].copyWith(
+          //               isVisible: v,
+          //             );
+          //         });
+          //       },
+          //       activeColor: const Color(0xFFF5C518),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );

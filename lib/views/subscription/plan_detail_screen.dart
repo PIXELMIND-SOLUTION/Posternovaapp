@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:posternova/models/get_all_plan_model.dart';
 
@@ -16,14 +15,15 @@ class AnimatedPlanList extends StatefulWidget {
   State<AnimatedPlanList> createState() => _AnimatedPlanListState();
 }
 
-class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProviderStateMixin {
+class _AnimatedPlanListState extends State<AnimatedPlanList>
+    with TickerProviderStateMixin {
   late List<AnimationController> _controllers;
   late List<Animation<double>> _animations;
 
   @override
   void initState() {
     super.initState();
-    
+
     _controllers = List.generate(
       widget.plans.length,
       (index) => AnimationController(
@@ -31,14 +31,11 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
         vsync: this,
       ),
     );
-    
+
     _animations = _controllers.map((controller) {
-      return CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeOutCubic,
-      );
+      return CurvedAnimation(parent: controller, curve: Curves.easeOutCubic);
     }).toList();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (var controller in _controllers) {
         controller.forward();
@@ -58,7 +55,7 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -78,7 +75,7 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
             final plan = widget.plans[index];
             final planStyle = _getPlanStyle(plan.name, theme, isDark);
             final isPopular = plan.name.toUpperCase().contains('GOLD');
-            
+
             return FadeTransition(
               opacity: _animations[index],
               child: SlideTransition(
@@ -96,7 +93,7 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
-                            color: isPopular 
+                            color: isPopular
                                 ? planStyle['accentColor'].withOpacity(0.3)
                                 : theme.colorScheme.outline.withOpacity(0.1),
                             width: isPopular ? 1.5 : 1,
@@ -116,7 +113,8 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: planStyle['accentColor'].withOpacity(0.1),
+                                        color: planStyle['accentColor']
+                                            .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Icon(
@@ -128,52 +126,66 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             plan.name,
-                                            style: theme.textTheme.titleMedium?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: theme.colorScheme.onSurface,
-                                            ),
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface,
+                                                ),
                                           ),
                                           if (plan.duration!.isNotEmpty)
                                             Text(
                                               plan.duration.toString(),
-                                              style: theme.textTheme.bodySmall?.copyWith(
-                                                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                              ),
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withOpacity(0.7),
+                                                  ),
                                             ),
                                         ],
                                       ),
                                     ),
                                   ],
                                 ),
-                                
+
                                 const SizedBox(height: 16),
-                                
+
                                 // Pricing Section
                                 Row(
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.baseline,
                                   textBaseline: TextBaseline.alphabetic,
                                   children: [
                                     Text(
-                                      plan.offerPrice == 0 
-                                          ? 'Free' 
+                                      plan.offerPrice == 0
+                                          ? 'Free'
                                           : '₹${plan.offerPrice}',
-                                      style: theme.textTheme.headlineMedium?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: planStyle['accentColor'],
-                                      ),
+                                      style: theme.textTheme.headlineMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: planStyle['accentColor'],
+                                          ),
                                     ),
-                                    if (plan.originalPrice > plan.offerPrice && plan.offerPrice > 0) ...[
+                                    if (plan.originalPrice > plan.offerPrice &&
+                                        plan.offerPrice > 0) ...[
                                       const SizedBox(width: 8),
                                       Text(
                                         '₹${plan.originalPrice}',
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          decoration: TextDecoration.lineThrough,
-                                          color: theme.colorScheme.onSurface.withOpacity(0.5),
-                                        ),
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                              decoration:
+                                                  TextDecoration.lineThrough,
+                                              color: theme.colorScheme.onSurface
+                                                  .withOpacity(0.5),
+                                            ),
                                       ),
                                     ],
                                     const Spacer(),
@@ -197,10 +209,10 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
                                     //   ),
                                   ],
                                 ),
-                                
+
                                 if (plan.features.isNotEmpty) ...[
                                   const SizedBox(height: 20),
-                                  
+
                                   // Features Section
                                   Text(
                                     'What\'s included:',
@@ -210,13 +222,14 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-                                  
+
                                   // Show features
                                   ...plan.features.take(3).map((feature) {
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 8),
                                       child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Icon(
                                             Icons.check,
@@ -227,52 +240,62 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
                                           Expanded(
                                             child: Text(
                                               feature,
-                                              style: theme.textTheme.bodyMedium?.copyWith(
-                                                color: theme.colorScheme.onSurface.withOpacity(0.8),
-                                                height: 1.4,
-                                              ),
+                                              style: theme.textTheme.bodyMedium
+                                                  ?.copyWith(
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withOpacity(0.8),
+                                                    height: 1.4,
+                                                  ),
                                             ),
                                           ),
                                         ],
                                       ),
                                     );
                                   }).toList(),
-                                  
+
                                   if (plan.features.length > 3)
                                     Padding(
                                       padding: const EdgeInsets.only(left: 28),
                                       child: Text(
                                         '+ ${plan.features.length - 3} more features',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: planStyle['accentColor'],
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: planStyle['accentColor'],
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                       ),
                                     ),
                                 ],
-                                
+
                                 const SizedBox(height: 20),
-                                
+
                                 // Action Button
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
-                                    onPressed: () => widget.onPlanSelected(plan),
+                                    onPressed: () =>
+                                        widget.onPlanSelected(plan),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: isPopular 
+                                      backgroundColor: isPopular
                                           ? planStyle['accentColor']
                                           : theme.colorScheme.surfaceVariant,
                                       foregroundColor: isPopular
                                           ? Colors.white
                                           : theme.colorScheme.onSurfaceVariant,
                                       elevation: 0,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
                                     child: Text(
-                                      plan.offerPrice == 0 ? 'Start Free' : 'Select Plan',
+                                      plan.offerPrice == 0
+                                          ? 'Start Free'
+                                          : 'Select Plan',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 15,
@@ -285,7 +308,7 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
                           ),
                         ),
                       ),
-                      
+
                       // Popular Badge
                       if (isPopular)
                         Positioned(
@@ -315,7 +338,7 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
               ),
             );
           }),
-          
+
           // Footer note
           Padding(
             padding: const EdgeInsets.all(16),
@@ -331,15 +354,16 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
       ),
     );
   }
-  
-  Map<String, dynamic> _getPlanStyle(String planName, ThemeData theme, bool isDark) {
+
+  Map<String, dynamic> _getPlanStyle(
+    String planName,
+    ThemeData theme,
+    bool isDark,
+  ) {
     final name = planName.toUpperCase();
-    
+
     if (name.contains('COPPER')) {
-      return {
-        'accentColor': const Color(0xFF8B4513),
-        'icon': Icons.layers,
-      };
+      return {'accentColor': const Color(0xFF8B4513), 'icon': Icons.layers};
     } else if (name.contains('SILVER')) {
       return {
         'accentColor': const Color(0xFF607D8B),
@@ -351,10 +375,7 @@ class _AnimatedPlanListState extends State<AnimatedPlanList> with TickerProvider
         'icon': Icons.workspace_premium,
       };
     } else {
-      return {
-        'accentColor': theme.colorScheme.primary,
-        'icon': Icons.verified,
-      };
+      return {'accentColor': theme.colorScheme.primary, 'icon': Icons.verified};
     }
   }
 }

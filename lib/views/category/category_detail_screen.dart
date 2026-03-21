@@ -1,10 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:posternova/models/category_model.dart';
 import 'package:posternova/providers/PosterProvider/category_poster_provider.dart';
 import 'package:posternova/views/PosterModule/poster_making_screen.dart';
+import 'package:posternova/views/SecondPhase/poster_editor.dart';
 import 'package:provider/provider.dart';
-
 
 class DetailsScreen extends StatefulWidget {
   final String category;
@@ -22,15 +21,19 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
     // fetch posters for the selected category
     Future.microtask(() {
-      final provider =
-          Provider.of<CategoryPosterProvider>(context, listen: false);
+      final provider = Provider.of<CategoryPosterProvider>(
+        context,
+        listen: false,
+      );
       provider.fetchPostersByCategory(widget.category);
     });
   }
 
   Future<void> _refresh() async {
-    final provider =
-        Provider.of<CategoryPosterProvider>(context, listen: false);
+    final provider = Provider.of<CategoryPosterProvider>(
+      context,
+      listen: false,
+    );
     await provider.fetchPostersByCategory(widget.category);
   }
 
@@ -58,7 +61,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
               ),
             ),
             const SizedBox(height: 2),
-          
           ],
         ),
       ),
@@ -69,27 +71,29 @@ class _DetailsScreenState extends State<DetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // small header row with count + refresh
-              Consumer<CategoryPosterProvider>(builder: (context, provider, _) {
-                final count = provider.categoryPosters.length;
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '$count Posters',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
+              Consumer<CategoryPosterProvider>(
+                builder: (context, provider, _) {
+                  final count = provider.categoryPosters.length;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '$count Posters',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: _refresh,
-                      icon: const Icon(Icons.refresh_outlined),
-                      color: Colors.black54,
-                    )
-                  ],
-                );
-              }),
+                      IconButton(
+                        onPressed: _refresh,
+                        icon: const Icon(Icons.refresh_outlined),
+                        color: Colors.black54,
+                      ),
+                    ],
+                  );
+                },
+              ),
               const SizedBox(height: 12),
 
               // main content
@@ -123,26 +127,31 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         itemCount: provider.categoryPosters.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.72,
-                        ),
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.72,
+                            ),
                         itemBuilder: (context, index) {
-                          final CategoryModel poster = provider.categoryPosters[index];
+                          final CategoryModel poster =
+                              provider.categoryPosters[index];
 
                           // safe title fallback using id
-                          final String shortId = poster.id != null && poster.id.length > 6
+                          final String shortId =
+                              poster.id != null && poster.id.length > 6
                               ? poster.id.substring(0, 6)
                               : '${poster.id}';
                           final String title = 'Poster #$shortId';
 
                           return GestureDetector(
                             onTap: () {
+                              final bgImageUrl = poster.images[0] ?? '';
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => SamplePosterScreen(posterId: poster.id),
+                                  builder: (_) => PosterEditorScreen(
+                                    posterAsset: bgImageUrl,
+                                  ),
                                 ),
                               );
                             },
@@ -167,23 +176,46 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                                   width: double.infinity,
                                                   height: double.infinity,
                                                   fit: BoxFit.cover,
-                                                  loadingBuilder: (context, child, loadingProgress) {
-                                                    if (loadingProgress == null) return child;
-                                                    return const Center(child: CircularProgressIndicator());
-                                                  },
-                                                  errorBuilder: (context, error, stackTrace) {
-                                                    return Container(
-                                                      color: Colors.grey[200],
-                                                      child: const Center(
-                                                        child: Icon(Icons.broken_image, size: 40),
-                                                      ),
-                                                    );
-                                                  },
+                                                  loadingBuilder:
+                                                      (
+                                                        context,
+                                                        child,
+                                                        loadingProgress,
+                                                      ) {
+                                                        if (loadingProgress ==
+                                                            null)
+                                                          return child;
+                                                        return const Center(
+                                                          child:
+                                                              CircularProgressIndicator(),
+                                                        );
+                                                      },
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) {
+                                                        return Container(
+                                                          color:
+                                                              Colors.grey[200],
+                                                          child: const Center(
+                                                            child: Icon(
+                                                              Icons
+                                                                  .broken_image,
+                                                              size: 40,
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
                                                 )
                                               : Container(
                                                   color: Colors.grey[200],
                                                   child: const Center(
-                                                    child: Icon(Icons.image_not_supported, size: 40),
+                                                    child: Icon(
+                                                      Icons.image_not_supported,
+                                                      size: 40,
+                                                    ),
                                                   ),
                                                 ),
                                         ),
@@ -214,31 +246,34 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                           right: 8,
                                           bottom: 8,
                                           child: Row(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
-                                        
                                               Row(
                                                 children: [
-                                            
                                                   const SizedBox(width: 8),
-                      
                                                 ],
-                                              )
+                                              ),
                                             ],
                                           ),
-                                        )
+                                        ),
                                       ],
                                     ),
                                   ),
 
                                   // footer with small info
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
                                     width: double.infinity,
                                     color: Colors.white,
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Expanded(
                                           child: Text(
@@ -255,19 +290,27 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                         IconButton(
                                           onPressed: () {
                                             // quick preview
+                                            final bgImageUrl =
+                                                poster.images[0] ?? '';
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) => SamplePosterScreen(posterId: poster.id),
+                                                builder: (_) =>
+                                                    PosterEditorScreen(
+                                                      posterAsset: bgImageUrl,
+                                                    ),
                                               ),
                                             );
                                           },
-                                          icon: const Icon(Icons.open_in_new, size: 20),
+                                          icon: const Icon(
+                                            Icons.open_in_new,
+                                            size: 20,
+                                          ),
                                           color: Colors.black54,
-                                        )
+                                        ),
                                       ],
                                     ),
-                                  )
+                                  ),
                                 ],
                               ),
                             ),
