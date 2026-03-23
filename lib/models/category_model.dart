@@ -13,6 +13,7 @@ class CategoryModel {
   final List<String> tags;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String posterlang;
 
   CategoryModel({
     required this.id,
@@ -27,6 +28,7 @@ class CategoryModel {
     required this.tags,
     required this.createdAt,
     required this.updatedAt,
+    required this.posterlang,
   });
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
@@ -35,7 +37,7 @@ class CategoryModel {
       if (dateValue == null) {
         return DateTime.now();
       }
-      
+
       if (dateValue is String) {
         try {
           return DateTime.parse(dateValue);
@@ -51,7 +53,7 @@ class CategoryModel {
               "MM/dd/yyyy",
               "dd/MM/yyyy",
             ];
-            
+
             for (final format in formats) {
               try {
                 final formatter = DateFormat(format);
@@ -60,7 +62,7 @@ class CategoryModel {
                 // Continue to next format
               }
             }
-            
+
             // If all parsing attempts fail, return current date
             print("Failed to parse date: $dateValue");
             return DateTime.now();
@@ -73,7 +75,7 @@ class CategoryModel {
         // Handle timestamp (milliseconds since epoch)
         return DateTime.fromMillisecondsSinceEpoch(dateValue);
       }
-      
+
       return DateTime.now();
     }
 
@@ -81,15 +83,20 @@ class CategoryModel {
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       categoryName: json['categoryName'] ?? '',
-      price: json['price'] is int ? json['price'] : (json['price'] is String ? int.tryParse(json['price']) ?? 0 : 0),
+      price: json['price'] is int
+          ? json['price']
+          : (json['price'] is String ? int.tryParse(json['price']) ?? 0 : 0),
       images: json['images'] != null ? List<String>.from(json['images']) : [],
       description: json['description'] ?? '',
       size: json['size'] ?? '',
-      festivalDate: json['festivalDate'] != null ? parseDateTime(json['festivalDate']) : null,
+      festivalDate: json['festivalDate'] != null
+          ? parseDateTime(json['festivalDate'])
+          : null,
       inStock: json['inStock'] ?? false,
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       createdAt: parseDateTime(json['createdAt']) ?? DateTime.now(),
       updatedAt: parseDateTime(json['updatedAt']) ?? DateTime.now(),
+      posterlang: json['posterlang'] ?? 'english', // Add this
     );
   }
 
@@ -107,6 +114,7 @@ class CategoryModel {
       'tags': tags,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      posterlang: posterlang,
     };
   }
 

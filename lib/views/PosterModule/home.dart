@@ -7541,13 +7541,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:posternova/helper/storage_helper.dart';
+import 'package:posternova/models/banner_model.dart';
 import 'package:posternova/models/category_model.dart';
+import 'package:posternova/models/festival_poster_model.dart';
+import 'package:posternova/models/hot_top.dart';
+import 'package:posternova/models/weekly_template_model.dart';
 import 'package:posternova/providers/PosterProvider/getall_poster_provider.dart';
 import 'package:posternova/providers/PosterProvider/poster_provider.dart';
+import 'package:posternova/providers/banner/banner_provider.dart';
+import 'package:posternova/providers/festival/festival_posters_provider.dart';
 import 'package:posternova/providers/festivals/date_time_provider.dart';
 import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/providers/story/story_provider.dart';
 import 'package:posternova/providers/topics/hot_topic_provider.dart';
+import 'package:posternova/providers/weekly/weekly_templates_provider.dart';
 import 'package:posternova/views/PosterModule/poster_making_screen.dart'
     hide Overlay;
 import 'package:posternova/views/ProfileScreen/profile_screen.dart';
@@ -7625,7 +7632,7 @@ class CelebrationConfig {
 
     return CelebrationConfig(
       enabled: json['enabled'] ?? false,
-      videoUrl: json['video_url'] ?? 'assets/videos/celebration.mp4',
+      videoUrl: json['video_url'] ?? '',
       durationSeconds: json['duration_seconds'] ?? 10,
       loop: json['loop'] ?? false,
       gradientColors: gradients,
@@ -8103,24 +8110,24 @@ class _HomeScreenState extends State<HomeScreen>
     //   "secondary_text_color": "#888888",
     //   "accent_color": "#FF6B6B"
     // }
-    // final config = CelebrationConfig.fromJson({
-    //   'enabled': true,
-    //   'video_url':
-    //       'assets/videos/celebration.mp4', // empty → triggers local fallback
-    //   'duration_seconds': 0, // 0 = play forever (loop: true)
-    //   'loop': true,
-    //   // Exact teal/mint green gradient from the Eid home screen
-    //   'gradient_colors': ['#A8D5CC', '#C8E8E0'],
-    //   'section_bg_color': '#C8E8E0', // same mint — sections blend into bg
-    //   'primary_text_color': '#1A1A1A', // dark text readable on light mint
-    //   'secondary_text_color': '#4A7A72', // muted teal for subtitles
-    //   'accent_color': '#2E8B7A', // deeper teal for highlights
-    // });
+    final config = CelebrationConfig.fromJson({
+      'enabled': true,
+      'video_url':
+          'assets/videos/celebration.mp4', // empty → triggers local fallback
+      'duration_seconds': 0, // 0 = play forever (loop: true)
+      'loop': true,
+      // Exact teal/mint green gradient from the Eid home screen
+      'gradient_colors': ['#A8D5CC', '#C8E8E0'],
+      'section_bg_color': '#C8E8E0', // same mint — sections blend into bg
+      'primary_text_color': '#1A1A1A', // dark text readable on light mint
+      'secondary_text_color': '#4A7A72', // muted teal for subtitles
+      'accent_color': '#2E8B7A', // deeper teal for highlights
+    });
 
-    // if (config.enabled) {
-    //   setState(() => _celebrationConfig = config);
-    //   await _initCelebrationVideo(config);
-    // }
+    if (config.enabled) {
+      setState(() => _celebrationConfig = config);
+      await _initCelebrationVideo(config);
+    }
   }
 
   Future<void> _initCelebrationVideo(CelebrationConfig config) async {
@@ -8258,19 +8265,28 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _initializeAllData() async {
     if (!mounted || !_hasNetwork) return;
+    final selectedDate = context.read<DateTimeProvider>().selectedDate;
+
     await Future.wait([
       _loadUserId().catchError((e) => debugPrint('loadUserId: $e')),
       _fetchnewposters().catchError((e) => debugPrint('fetchPosters: $e')),
       _initializeProviders().catchError((e) => debugPrint('providers: $e')),
       _fetchWeeklyPosters().catchError((e) => debugPrint('weeklyPosters: $e')),
-      _fetchBanners().catchError((e) => debugPrint('banners: $e')),
-      _fetchCelebrationConfig().catchError(
-        (e) => debugPrint('celebration: $e'),
-      ),
+      _fetchBanners().catchError(
+        (e) => debugPrint('banners: $e'),
+      ), // Will only fetch if no data
+      // _fetchFestivalPosters(context.read<DateTimeProvider>().selectedDate),
+      _fetchFestivalPosters(
+        selectedDate,
+      ).catchError((e) => debugPrint('festivalPosters: $e')),
+
+      _fetchReels().catchError((e) => debugPrint('reels: $e')),
+      // _fetchCelebrationConfig().catchError(
+      //   (e) => debugPrint('celebration: $e'),
+      // ),
     ]);
     if (!mounted) return;
-    _fetchFestivalPosters(context.read<DateTimeProvider>().selectedDate);
-    _fetchReels();
+
     _startBannerAutoScroll();
     if (mounted) setState(() => _isInitialLoad = false);
   }
@@ -8317,41 +8333,54 @@ class _HomeScreenState extends State<HomeScreen>
   // DATA FETCHERS
   // ══════════════════════════════════════════════════════════════════════════
 
-  Future<void> _fetchBanners() async {
-    if (mounted) setState(() => _isBannerLoading = true);
-    try {
-      final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/poster/getbanners'),
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        List banners = data is List
-            ? data
-            : (data['banners'] ?? data['data'] ?? []);
-        List<String> images = [];
-        for (var item in banners) {
-          if (item['images'] != null && item['images'].isNotEmpty)
-            images.add(item['images'][0]);
-        }
-        if (mounted)
-          setState(() {
-            bannerList = images;
-            _isBannerLoading = false;
-          });
-      } else {
-        if (mounted) setState(() => _isBannerLoading = false);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isBannerLoading = false);
-      debugPrint('fetchBanners: $e');
+  // Future<void> _fetchBanners() async {
+  //   if (mounted) setState(() => _isBannerLoading = true);
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse('http://31.97.206.144:4061/api/poster/getbanners'),
+  //     );
+  //     if (response.statusCode == 200) {
+  //       final data = jsonDecode(response.body);
+  //       List banners = data is List
+  //           ? data
+  //           : (data['banners'] ?? data['data'] ?? []);
+  //       List<String> images = [];
+  //       for (var item in banners) {
+  //         if (item['images'] != null && item['images'].isNotEmpty)
+  //           images.add(item['images'][0]);
+  //       }
+  //       if (mounted)
+  //         setState(() {
+  //           bannerList = images;
+  //           _isBannerLoading = false;
+  //         });
+  //     } else {
+  //       if (mounted) setState(() => _isBannerLoading = false);
+  //     }
+  //   } catch (e) {
+  //     if (mounted) setState(() => _isBannerLoading = false);
+  //     debugPrint('fetchBanners: $e');
+  //   }
+  // }
+
+  Future<void> _fetchBanners({bool forceRefresh = false}) async {
+    final bannerProvider = Provider.of<BannerProvider>(context, listen: false);
+
+    // Only fetch if no data or force refresh
+    if (!bannerProvider.hasData || forceRefresh) {
+      await bannerProvider.fetchBanners(forceRefresh: forceRefresh);
     }
   }
 
   void _startBannerAutoScroll() {
+    final bannerProvider = Provider.of<BannerProvider>(context, listen: false);
+
     Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted || !_bannerPageController.hasClients || bannerList.isEmpty)
+      if (!mounted ||
+          !_bannerPageController.hasClients ||
+          bannerProvider.bannerCount == 0)
         return;
-      final next = (_currentBannerPage + 1) % bannerList.length;
+      final next = (_currentBannerPage + 1) % bannerProvider.bannerCount;
       _bannerPageController.animateToPage(
         next,
         duration: const Duration(milliseconds: 500),
@@ -8361,45 +8390,63 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  Future<void> _fetchReels() async {
+  Future<void> _fetchReels({bool forceRefresh = false}) async {
     if (userId == null) return;
-    if (mounted) setState(() => _isReelsLoading = true);
-    try {
-      final hotTopicProvider = Provider.of<HotTopicReelsProvider>(
-        context,
-        listen: false,
+
+    final hotTopicsProvider = Provider.of<HotTopicsProvider>(
+      context,
+      listen: false,
+    );
+
+    // Only fetch if no data or force refresh
+    if (!hotTopicsProvider.hasData || forceRefresh) {
+      await hotTopicsProvider.fetchHotTopicReels(
+        userId: userId,
+        forceRefresh: forceRefresh,
       );
-      await hotTopicProvider.loadHotTopicReels(userId!);
-    } catch (e) {
-      debugPrint('fetchReels: $e');
-    } finally {
-      if (mounted) setState(() => _isReelsLoading = false);
     }
   }
 
-  Future<void> _fetchWeeklyPosters() async {
-    if (mounted) setState(() => _isWeeklyLoading = true);
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'http://31.97.206.144:4061/api/poster/weeklyposters/$currentUserId',
-        ),
+  // Future<void> _fetchWeeklyPosters() async {
+  //   if (mounted) setState(() => _isWeeklyLoading = true);
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse(
+  //         'http://31.97.206.144:4061/api/poster/weeklyposters/$currentUserId',
+  //       ),
+  //     );
+  //     if (response.statusCode == 200) {
+  //       final data = jsonDecode(response.body) as Map<String, dynamic>;
+  //       if (mounted)
+  //         setState(() {
+  //           weeklyPosters = data.map(
+  //             (k, v) => MapEntry(k, List<dynamic>.from(v)),
+  //           );
+  //           _isWeeklyLoading = false;
+  //         });
+  //     } else {
+  //       if (mounted) setState(() => _isWeeklyLoading = false);
+  //     }
+  //   } catch (e) {
+  //     if (mounted) setState(() => _isWeeklyLoading = false);
+  //     debugPrint('fetchWeeklyPosters: $e');
+  //   }
+  // }
+
+  Future<void> _fetchWeeklyPosters({bool forceRefresh = false}) async {
+    if (userId == null) return;
+
+    final weeklyProvider = Provider.of<WeeklyTemplatesProvider>(
+      context,
+      listen: false,
+    );
+
+    // Only fetch if no data or force refresh
+    if (!weeklyProvider.hasData || forceRefresh) {
+      await weeklyProvider.fetchWeeklyPosters(
+        userId!,
+        forceRefresh: forceRefresh,
       );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        if (mounted)
-          setState(() {
-            weeklyPosters = data.map(
-              (k, v) => MapEntry(k, List<dynamic>.from(v)),
-            );
-            _isWeeklyLoading = false;
-          });
-      } else {
-        if (mounted) setState(() => _isWeeklyLoading = false);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isWeeklyLoading = false);
-      debugPrint('fetchWeeklyPosters: $e');
     }
   }
 
@@ -8505,31 +8552,52 @@ class _HomeScreenState extends State<HomeScreen>
   String _formatDate(DateTime d) =>
       "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
 
-  Future<void> _fetchFestivalPosters(DateTime date) async {
-    if (mounted)
-      setState(() {
-        _isFestivalLoading = true;
-        festivaldata = [];
-      });
-    try {
-      final response = await http.post(
-        Uri.parse('http://31.97.206.144:4061/api/poster/festival'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'festivalDate': _formatDate(date)}),
-      );
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        if (mounted)
-          setState(() {
-            festivaldata = decoded is List ? decoded : [];
-            _isFestivalLoading = false;
-          });
-      } else {
-        if (mounted) setState(() => _isFestivalLoading = false);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isFestivalLoading = false);
+  // Future<void> _fetchFestivalPosters(DateTime date) async {
+  //   if (mounted)
+  //     setState(() {
+  //       _isFestivalLoading = true;
+  //       festivaldata = [];
+  //     });
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse('http://31.97.206.144:4061/api/poster/festival'),
+  //       headers: {'Content-Type': 'application/json'},
+  //       body: jsonEncode({'festivalDate': _formatDate(date)}),
+  //     );
+  //     if (response.statusCode == 200) {
+  //       final decoded = jsonDecode(response.body);
+  //       if (mounted)
+  //         setState(() {
+  //           festivaldata = decoded is List ? decoded : [];
+  //           _isFestivalLoading = false;
+  //         });
+  //     } else {
+  //       if (mounted) setState(() => _isFestivalLoading = false);
+  //     }
+  //   } catch (e) {
+  //     if (mounted) setState(() => _isFestivalLoading = false);
+  //   }
+  // }
+
+  Future<void> _fetchFestivalPosters(
+    DateTime date, {
+    bool forceRefresh = false,
+  }) async {
+    final festivalProvider = Provider.of<FestivalPostersProvider>(
+      context,
+      listen: false,
+    );
+
+    // Check if we have cached data for this date
+    if (!forceRefresh && festivalProvider.hasCachedDataForDate(date)) {
+      print('Using cached festival posters for date: ${_formatDate(date)}');
+      return;
     }
+
+    await festivalProvider.fetchFestivalPosters(
+      date,
+      forceRefresh: forceRefresh,
+    );
   }
 
   Future<void> _fetchnewposters() async {
@@ -8614,11 +8682,20 @@ class _HomeScreenState extends State<HomeScreen>
       onRefresh: () async {
         if (!_requireNetwork()) return;
         await Future.wait([
-          _fetchFestivalPosters(context.read<DateTimeProvider>().selectedDate),
+          Provider.of<FestivalPostersProvider>(
+            context,
+            listen: false,
+          ).refresh(),
           _fetchnewposters(),
-          _fetchWeeklyPosters(),
-          _fetchBanners(),
-          _fetchReels(),
+          Provider.of<WeeklyTemplatesProvider>(
+            context,
+            listen: false,
+          ).refresh(userId!),
+          Provider.of<BannerProvider>(context, listen: false).refresh(),
+          Provider.of<HotTopicsProvider>(
+            context,
+            listen: false,
+          ).refreshWithUserId(userId!),
         ]);
       },
       color: _accent,
@@ -8912,53 +8989,62 @@ class _HomeScreenState extends State<HomeScreen>
   // ══════════════════════════════════════════════════════════════════════════
 
   Widget _buildBannerSection() {
-    if (_isBannerLoading) {
-      return const SizedBox(
-        height: 136,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: _BannerSkeleton(),
-        ),
-      );
-    }
-    if (bannerList.isEmpty) return const SizedBox.shrink();
-    return Column(
-      children: [
-        SizedBox(
-          height: 120,
-          child: PageView.builder(
-            controller: _bannerPageController,
-            onPageChanged: (i) => setState(() => _currentBannerPage = i),
-            itemCount: bannerList.length,
-            itemBuilder: (_, i) => _buildBannerItem(bannerList[i]),
-          ),
-        ),
-        if (bannerList.length > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(bannerList.length, (i) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: _currentBannerPage == i ? 18 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(3),
-                    color: _currentBannerPage == i
-                        ? _accent
-                        : Colors.grey.shade300,
-                  ),
-                );
-              }),
+    return Consumer<BannerProvider>(
+      builder: (context, bannerProvider, _) {
+        // Show loading only on first load when no data
+        if (bannerProvider.isLoading && !bannerProvider.hasData) {
+          return const SizedBox(
+            height: 136,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: _BannerSkeleton(),
             ),
-          ),
-      ],
+          );
+        }
+
+        if (bannerProvider.banners.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          children: [
+            SizedBox(
+              height: 120,
+              child: PageView.builder(
+                controller: _bannerPageController,
+                onPageChanged: (i) => setState(() => _currentBannerPage = i),
+                itemCount: bannerProvider.bannerCount,
+                itemBuilder: (_, i) =>
+                    _buildBannerItem(bannerProvider.getBannerByIndex(i)!),
+              ),
+            ),
+            if (bannerProvider.bannerCount > 1)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(bannerProvider.bannerCount, (i) {
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: _currentBannerPage == i ? 18 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(3),
+                        color: _currentBannerPage == i
+                            ? _accent
+                            : Colors.grey.shade300,
+                      ),
+                    );
+                  }),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildBannerItem(String imageUrl) {
+  // Update _buildBannerItem to accept BannerModel:
+  Widget _buildBannerItem(BannerModel banner) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: ClipRRect(
@@ -8966,9 +9052,9 @@ class _HomeScreenState extends State<HomeScreen>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            imageUrl.isNotEmpty
+            banner.imageUrl.isNotEmpty
                 ? Image.network(
-                    imageUrl,
+                    banner.imageUrl,
                     fit: BoxFit.fill,
                     errorBuilder: (_, __, ___) => _buildBannerGradient(),
                     loadingBuilder: (_, child, progress) =>
@@ -9065,88 +9151,120 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  // Update _buildDateSelector to work with FestivalPostersProvider:
   Widget _buildDateSelector(DateTimeProvider dtp) {
     final today = DateTime.now();
     final dates = List.generate(7, (i) => today.add(Duration(days: i)));
-    return SizedBox(
-      height: 68,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: dates.length,
-        itemBuilder: (context, index) {
-          final date = dates[index];
-          final isSelected =
-              date.day == dtp.selectedDate.day &&
-              date.month == dtp.selectedDate.month;
-          final day = date.day.toString();
-          final suffix = _getDaySuffix(date.day);
-          final month = DateFormat('MMM').format(date);
-          return GestureDetector(
-            onTap: () {
-              if (!_requireNetwork()) return;
-              dtp.setStartDate(date);
-              _fetchFestivalPosters(date);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 58,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                color: isSelected ? _accent : _sectionBg,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isSelected ? _accent : Colors.grey.shade300,
+
+    return Consumer<FestivalPostersProvider>(
+      builder: (context, festivalProvider, _) {
+        return SizedBox(
+          height: 68,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: dates.length,
+            itemBuilder: (context, index) {
+              final date = dates[index];
+              final isSelected =
+                  date.day == dtp.selectedDate.day &&
+                  date.month == dtp.selectedDate.month;
+              final day = date.day.toString();
+              final suffix = _getDaySuffix(date.day);
+              final month = DateFormat('MMM').format(date);
+
+              // Check if this date has cached data
+              final hasCache = festivalProvider.hasCachedDataForDate(date);
+
+              return GestureDetector(
+                onTap: () async {
+                  if (!_requireNetwork()) return;
+                  dtp.setStartDate(date);
+                  await festivalProvider.changeDate(date);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 58,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected ? _accent : _sectionBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? _accent : Colors.grey.shade300,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: _accent.withOpacity(0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Stack(
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: day,
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : _primaryText,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: suffix,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? Colors.white70
+                                        : _secondaryText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            month,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected ? Colors.white : _secondaryText,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Show indicator if data is cached
+                      if (hasCache && !isSelected)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: _accent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: _accent.withOpacity(0.35),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: day,
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : _primaryText,
-                          ),
-                        ),
-                        TextSpan(
-                          text: suffix,
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white70 : _secondaryText,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    month,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : _secondaryText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -9155,34 +9273,45 @@ class _HomeScreenState extends State<HomeScreen>
   // ══════════════════════════════════════════════════════════════════════════
 
   Widget _buildFestivalPostersSection() {
-    if (_isFestivalLoading) {
-      return SizedBox(
-        height: 155,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          itemCount: 5,
-          itemBuilder: (_, __) => const _PosterCardSkeleton(),
-        ),
-      );
-    }
-    if (festivaldata.isEmpty) return const SizedBox.shrink();
-    return SizedBox(
-      height: 155,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-        itemCount: festivaldata.length,
-        itemBuilder: (_, i) => _buildSmallPosterCard(festivaldata[i], i),
-      ),
+    return Consumer<FestivalPostersProvider>(
+      builder: (context, festivalProvider, _) {
+        // Show loading only on first load when no data
+        if (festivalProvider.isLoading && !festivalProvider.hasData) {
+          return SizedBox(
+            height: 155,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              itemCount: 5,
+              itemBuilder: (_, __) => const _PosterCardSkeleton(),
+            ),
+          );
+        }
+
+        if (festivalProvider.festivalPosters.isEmpty)
+          return const SizedBox.shrink();
+
+        return SizedBox(
+          height: 155,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+            itemCount: festivalProvider.festivalPosters.length,
+            itemBuilder: (_, i) =>
+                _buildSmallPosterCard(festivalProvider.festivalPosters[i], i),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildSmallPosterCard(dynamic poster, int index) {
+  // Update _buildSmallPosterCard to accept FestivalPoster:
+  Widget _buildSmallPosterCard(FestivalPoster poster, int index) {
     return GestureDetector(
       onTap: () {
         if (!_requireNetwork()) return;
-        final bgImageUrl = poster['designData']?['bgImage']?['url'] ?? '';
+        final bgImageUrl =
+            poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -9213,7 +9342,7 @@ class _HomeScreenState extends State<HomeScreen>
                   top: Radius.circular(10),
                 ),
                 child: Image.network(
-                  poster['images'][0],
+                  poster.imageUrl,
                   width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) =>
@@ -9232,7 +9361,7 @@ class _HomeScreenState extends State<HomeScreen>
             Padding(
               padding: const EdgeInsets.all(7),
               child: Text(
-                poster['categoryName'] ?? 'Festival',
+                poster.categoryName,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
@@ -9247,61 +9376,70 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
-
   // ══════════════════════════════════════════════════════════════════════════
   // WEEKLY TEMPLATES
   // ══════════════════════════════════════════════════════════════════════════
 
   Widget _buildWeeklySectionWithHeader() {
-    if (_isWeeklyLoading) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader(
-            titleKey: 'weekly_templates',
-            subtitleKey: 'fresh_designs_everyday',
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 140,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: 5,
-              itemBuilder: (_, __) => const _PosterCardSkeleton(),
+    return Consumer<WeeklyTemplatesProvider>(
+      builder: (context, weeklyProvider, _) {
+        // Show loading only on first load when no data
+        if (weeklyProvider.isLoading && !weeklyProvider.hasData) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSectionHeader(
+                titleKey: 'weekly_templates',
+                subtitleKey: 'fresh_designs_everyday',
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 140,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: 5,
+                  itemBuilder: (_, __) => const _PosterCardSkeleton(),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          );
+        }
+
+        final orderedDays = _getOrderedDaysFromToday();
+        final hasAnyPosters = orderedDays.any(
+          (d) => weeklyProvider.getPostersForDay(d).isNotEmpty,
+        );
+
+        if (!hasAnyPosters) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(
+              titleKey: 'weekly_templates',
+              subtitleKey: 'fresh_designs_everyday',
             ),
-          ),
-          const SizedBox(height: 12),
-        ],
-      );
-    }
-    final orderedDays = _getOrderedDaysFromToday();
-    final hasAnyPosters = orderedDays.any(
-      (d) => (weeklyPosters[d] ?? []).isNotEmpty,
-    );
-    if (!hasAnyPosters) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(
-          titleKey: 'weekly_templates',
-          subtitleKey: 'fresh_designs_everyday',
-        ),
-        _buildWeeklyPostersSection(),
-        const SizedBox(height: 12),
-      ],
+            _buildWeeklyPostersSection(weeklyProvider),
+            const SizedBox(height: 12),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildWeeklyPostersSection() {
+  // Update _buildWeeklyPostersSection:
+  Widget _buildWeeklyPostersSection(WeeklyTemplatesProvider weeklyProvider) {
     final orderedDays = _getOrderedDaysFromToday();
     final today = DateFormat('EEEE').format(DateTime.now());
+
     return Consumer<LanguageProvider>(
       builder: (context, lp, _) {
         final langCode = lp.locale.languageCode;
         return Column(
           children: orderedDays.map((day) {
-            final posters = weeklyPosters[day] ?? [];
+            final posters = weeklyProvider.getPostersForDay(day);
             if (posters.isEmpty) return const SizedBox.shrink();
             final isToday = day == today;
             final translatedDay = LocalizationService.translate(day, langCode);
@@ -9377,14 +9515,16 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildWeeklyPosterCard(dynamic poster, int index) {
+  // Update _buildWeeklyPosterCard to accept WeeklyTemplate:
+  Widget _buildWeeklyPosterCard(WeeklyTemplate poster, int index) {
     return Consumer<MyPlanProvider>(
       builder: (context, myplanprovider, _) {
         return GestureDetector(
           onTap: () {
             if (!_requireNetwork()) return;
             if (myplanprovider.isPurchase) {
-              final bgImageUrl = poster['designData']?['bgImage']?['url'] ?? '';
+              final bgImageUrl =
+                  poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -9418,7 +9558,7 @@ class _HomeScreenState extends State<HomeScreen>
                       top: Radius.circular(10),
                     ),
                     child: Image.network(
-                      poster['images']?[0] ?? '',
+                      poster.imageUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) =>
@@ -9437,7 +9577,9 @@ class _HomeScreenState extends State<HomeScreen>
                 Padding(
                   padding: const EdgeInsets.all(6),
                   child: Text(
-                    poster['categoryName'] ?? poster['name'] ?? 'Poster',
+                    poster.categoryName.isNotEmpty
+                        ? poster.categoryName
+                        : (poster.name ?? 'Poster'),
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -9460,10 +9602,10 @@ class _HomeScreenState extends State<HomeScreen>
   // ══════════════════════════════════════════════════════════════════════════
 
   Widget _buildHotTopicsSection() {
-    return Consumer<HotTopicReelsProvider>(
-      builder: (context, hotTopicProvider, _) {
+    return Consumer<HotTopicsProvider>(
+      builder: (context, hotTopicsProvider, _) {
         return Container(
-          color: _sectionBg,
+          color: Colors.white,
           padding: const EdgeInsets.only(top: 12, bottom: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -9476,23 +9618,20 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       'Hot Topics',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
-                        color: _primaryText,
+                        color: Colors.black87,
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        if (!_requireNetwork()) return;
-                        _goToReelsScreen(0);
-                      },
-                      child: Text(
+                      onTap: () => _goToReelsScreen(0),
+                      child: const Text(
                         'View All',
                         style: TextStyle(
-                          color: _accent,
+                          color: Color(0xFFFFC107),
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -9504,22 +9643,7 @@ class _HomeScreenState extends State<HomeScreen>
               const SizedBox(height: 10),
               SizedBox(
                 height: 180,
-                child: (_isReelsLoading || hotTopicProvider.isLoading)
-                    ? ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: 5,
-                        itemBuilder: (_, __) => const _ReelCardSkeleton(),
-                      )
-                    : hotTopicProvider.reels.isEmpty
-                    ? const SizedBox.shrink()
-                    : ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: hotTopicProvider.reels.length,
-                        itemBuilder: (_, i) =>
-                            _buildReelCard(hotTopicProvider.reels[i], i),
-                      ),
+                child: _buildReelsContent(hotTopicsProvider),
               ),
             ],
           ),
@@ -9528,12 +9652,35 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  void _goToReelsScreen(int initialIndex) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => HotScreen()));
+  Widget _buildReelsContent(HotTopicsProvider provider) {
+    // Show loading only on first load when no data
+    if (provider.isLoading && !provider.hasData) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFFFC107)),
+      );
+    }
+
+    // Show placeholders if no data
+    if (provider.reels.isEmpty) {
+      return _buildReelPlaceholders();
+    }
+
+    // Show reels list
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      itemCount: provider.reelCount,
+      itemBuilder: (_, i) => _buildReelCard(provider.getReelByIndex(i)!, i),
+    );
   }
 
-  Widget _buildReelCard(dynamic reel, int index) {
-    final videoUrl = reel.videoUrl ?? 'assets/videos/celebration.mp4';
+  // Update _buildReelCard to accept ReelModel:
+  Widget _buildReelCard(ReelModel reel, int index) {
+    final videoUrl = reel.videoUrl.isNotEmpty
+        ? reel.videoUrl
+        : 'assets/videos/celebration.mp4';
+    print("Playing reel video: $videoUrl");
+
     return GestureDetector(
       onTap: () {
         if (!_requireNetwork()) return;
@@ -9582,11 +9729,25 @@ class _HomeScreenState extends State<HomeScreen>
                     horizontal: 7,
                     vertical: 6,
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Icon(
+                      // Optional: Add title if available
+                      if (reel.title != null)
+                        Expanded(
+                          child: Text(
+                            reel.title!,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      const Icon(
                         Icons.play_circle_fill_rounded,
                         color: Colors.white70,
                         size: 18,
@@ -9600,6 +9761,45 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
+  }
+
+  Widget _buildReelPlaceholders() {
+    const gradients = [
+      [Color(0xFFFF7043), Color(0xFFFF5722)],
+      [Color(0xFF42A5F5), Color(0xFF1976D2)],
+      [Color(0xFF66BB6A), Color(0xFF388E3C)],
+      [Color(0xFFAB47BC), Color(0xFF7B1FA2)],
+      [Color(0xFFFFCA28), Color(0xFFF57F17)],
+      [Color(0xFF26C6DA), Color(0xFF00838F)],
+    ];
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      itemCount: 6,
+      itemBuilder: (_, i) => Container(
+        width: 105,
+        margin: const EdgeInsets.only(right: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: gradients[i % gradients.length],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.play_circle_fill_rounded,
+            color: Colors.white54,
+            size: 34,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _goToReelsScreen(int initialIndex) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => HotScreen()));
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -9627,7 +9827,7 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _SkeletonBox(width: 140, height: 18, borderRadius: 4),
+                          _SkeletonBox(width: 130, height: 18, borderRadius: 4),
                           _SkeletonBox(width: 60, height: 14, borderRadius: 4),
                         ],
                       ),
@@ -9744,7 +9944,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
-                    height: 150,
+                    height: 130,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
@@ -10314,17 +10514,27 @@ class _AutoPlayReelVideoState extends State<_AutoPlayReelVideo> {
       return;
     }
     try {
-      _controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.videoUrl),
-      );
+      // Check if it's an asset or network URL
+      if (widget.videoUrl.startsWith('assets/')) {
+        _controller = VideoPlayerController.asset(widget.videoUrl);
+      } else {
+        _controller = VideoPlayerController.networkUrl(
+          Uri.parse(widget.videoUrl),
+        );
+      }
+
       await _controller!.initialize();
       if (!mounted) return;
+
       _controller!
         ..setLooping(true)
         ..setVolume(0)
         ..play();
+
+      print("Video playing: ${_controller!.value.isPlaying}"); // Debug log
       setState(() => _initialized = true);
-    } catch (_) {
+    } catch (e) {
+      print("Video error: $e");
       if (mounted) setState(() => _hasError = true);
     }
   }
@@ -10335,8 +10545,7 @@ class _AutoPlayReelVideoState extends State<_AutoPlayReelVideo> {
     super.dispose();
   }
 
-  @override
-  @override
+  // REMOVED the extra @override here - this was the syntax error!
   Widget build(BuildContext context) {
     if (_hasError || !_initialized || _controller == null) {
       return Container(
@@ -10357,14 +10566,13 @@ class _AutoPlayReelVideoState extends State<_AutoPlayReelVideo> {
       );
     }
 
-    return SizedBox.expand(
-      child: OverflowBox(
-        maxWidth: double.infinity,
-        maxHeight: double.infinity,
-        child: AspectRatio(
-          aspectRatio: _controller!.value.aspectRatio,
-          child: VideoPlayer(_controller!),
-        ),
+    // Fix: Use FittedBox to ensure video fills the container properly
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(
+        width: _controller!.value.size.width,
+        height: _controller!.value.size.height,
+        child: VideoPlayer(_controller!),
       ),
     );
   }

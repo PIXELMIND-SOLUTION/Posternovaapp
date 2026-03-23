@@ -1,62 +1,3 @@
-
-// import 'package:flutter/material.dart';
-// import 'package:posternova/models/category_model.dart';
-// import 'package:posternova/services/PosterServices/getall_poster_service.dart';
-
-// class PosterProvider extends ChangeNotifier {
-//   final PosterService _service = PosterService();
-
-//   // Add these state variables
-//   List<CategoryModel> _posters = [];
-//   bool _isLoading = false;
-//   String? _error;
-
-//   // Add these getters
-//   List<CategoryModel> get posters => _posters;
-//   bool get isLoading => _isLoading;
-//   String? get error => _error;
-
-//   Future<void> fetchPosters() async {
-//     print('PosterProvider: Starting fetchPosters');
-//     _isLoading = true;
-//     _error = null;
-//     notifyListeners();
-
-//     try {
-//       print('PosterProvider: Calling service.fetchTemplates()');
-//       _posters = await _service.fetchTemplates();
-//       print('PosterProvider: Fetched ${_posters.length} posters');
-      
-//       // Debug: Print first poster if available
-//       if (_posters.isNotEmpty) {
-//         print('First poster: ${_posters[0].name}, Category: ${_posters[0].categoryName}');
-//       } else {
-//         print('No posters fetched from service');
-//       }
-      
-//     } catch (e) {
-//       print('PosterProvider Error: $e');
-//       _error = 'Failed to load posters: $e';
-//     } finally {
-//       _isLoading = false;
-//       notifyListeners();
-//     }
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/models/category_model.dart';
@@ -73,6 +14,27 @@ class PosterProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  List<String> getAvailableLanguages() {
+    final languages = <String>{};
+    for (var poster in _posters) {
+      if (poster.posterlang.isNotEmpty) {
+        languages.add(poster.posterlang);
+      }
+    }
+    return languages.toList();
+  }
+
+  List<CategoryModel> getPostersByLanguage(String? language) {
+    if (language == null || language == 'all') {
+      return _posters;
+    }
+    return _posters
+        .where(
+          (poster) => poster.posterlang.toLowerCase() == language.toLowerCase(),
+        )
+        .toList();
+  }
+
   /// Fetch posters using userId from stored user data
   Future<void> fetchPosters() async {
     print('PosterProvider: Starting fetchPosters');
@@ -83,24 +45,25 @@ class PosterProvider extends ChangeNotifier {
     try {
       // Get userId from stored user data
       final userData = await AuthPreferences.getUserData();
-      
+
       if (userData == null || userData.user.id == null) {
         throw 'User not logged in';
       }
-      
+
       final userId = userData.user.id!;
       print('PosterProvider: Fetching posters for userId: $userId');
-      
+
       _posters = await _service.fetchTemplates(userId);
       print('PosterProvider: Fetched ${_posters.length} posters');
-      
+
       // Debug: Print first poster if available
       if (_posters.isNotEmpty) {
-        print('First poster: ${_posters[0].name}, Category: ${_posters[0].categoryName}');
+        print(
+          'First poster: ${_posters[0].name}, Category: ${_posters[0].categoryName}',
+        );
       } else {
         print('No posters fetched from service');
       }
-      
     } catch (e) {
       print('PosterProvider Error: $e');
       _error = 'Failed to load posters: $e';
@@ -121,13 +84,14 @@ class PosterProvider extends ChangeNotifier {
       print('PosterProvider: Calling service.fetchTemplates()');
       _posters = await _service.fetchTemplates(userId);
       print('PosterProvider: Fetched ${_posters.length} posters');
-      
+
       if (_posters.isNotEmpty) {
-        print('First poster: ${_posters[0].name}, Category: ${_posters[0].categoryName}');
+        print(
+          'First poster: ${_posters[0].name}, Category: ${_posters[0].categoryName}',
+        );
       } else {
         print('No posters fetched from service');
       }
-      
     } catch (e) {
       print('PosterProvider Error: $e');
       _error = 'Failed to load posters: $e';

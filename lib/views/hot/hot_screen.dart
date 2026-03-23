@@ -39,10 +39,11 @@ class _HotScreenState extends State<HotScreen> {
     userId = userData?.user.id;
 
     if (userId != null && mounted) {
-      Provider.of<HotTopicReelsProvider>(
+      final hotTopicsProvider = Provider.of<HotTopicsProvider>(
         context,
         listen: false,
-      ).loadHotTopicReels(userId!);
+      );
+      await hotTopicsProvider.fetchHotTopicReels(userId: userId);
     }
   }
 
@@ -69,7 +70,7 @@ class _HotScreenState extends State<HotScreen> {
           ),
         ),
       ),
-      body: Consumer<HotTopicReelsProvider>(
+      body: Consumer<HotTopicsProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
             return const Center(
@@ -80,47 +81,47 @@ class _HotScreenState extends State<HotScreen> {
             );
           }
 
-          if (provider.status == ReelsStatus.error) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.white54,
-                    size: 64,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    provider.errorMessage ?? 'Something went wrong',
-                    style: const TextStyle(color: Colors.white70, fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      if (userId != null) {
-                        provider.loadHotTopicReels(userId!);
-                      }
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
+          // if (provider.error != null) {
+          //   return Center(
+          //     child: Column(
+          //       mainAxisAlignment: MainAxisAlignment.center,
+          //       children: [
+          //         const Icon(
+          //           Icons.error_outline,
+          //           color: Colors.white54,
+          //           size: 64,
+          //         ),
+          //         const SizedBox(height: 16),
+          //         Text(
+          //           provider.errorMessage ?? 'Something went wrong',
+          //           style: const TextStyle(color: Colors.white70, fontSize: 16),
+          //           textAlign: TextAlign.center,
+          //         ),
+          //         const SizedBox(height: 24),
+          //         ElevatedButton.icon(
+          //           onPressed: () {
+          //             if (userId != null) {
+          //               provider.loadHotTopicReels(userId!);
+          //             }
+          //           },
+          //           icon: const Icon(Icons.refresh),
+          //           label: const Text('Retry'),
+          //           style: ElevatedButton.styleFrom(
+          //             backgroundColor: Colors.white,
+          //             foregroundColor: Colors.black,
+          //             padding: const EdgeInsets.symmetric(
+          //               horizontal: 24,
+          //               vertical: 12,
+          //             ),
+          //             shape: RoundedRectangleBorder(
+          //               borderRadius: BorderRadius.circular(24),
+          //             ),
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   );
+          // }
 
           if (provider.reels.isEmpty) {
             return Center(
@@ -310,8 +311,10 @@ class _HotReelItemState extends State<HotReelItem> {
     });
   }
 
+  // In _toggleLike method
   void _toggleLike() {
-    final provider = Provider.of<HotTopicReelsProvider>(context, listen: false);
+    // Change from HotTopicsProvider to HotTopicsProvider (same name)
+    final provider = Provider.of<HotTopicsProvider>(context, listen: false);
     provider.toggleLike(widget.reel.id);
   }
 
@@ -1659,22 +1662,22 @@ class _HotReelItemState extends State<HotReelItem> {
             child: Column(
               children: [
                 // Like button
-                Consumer<HotTopicReelsProvider>(
-                  builder: (context, provider, _) {
-                    final current = provider.reels.firstWhere(
-                      (r) => r.id == widget.reel.id,
-                      orElse: () => widget.reel,
-                    );
-                    return _ActionButton(
-                      icon: current.isLiked
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      iconColor: current.isLiked ? Colors.red : Colors.white,
-                      label: _formatCount(current.likeCount),
-                      onTap: _toggleLike,
-                    );
-                  },
-                ),
+                // Consumer<HotTopicsProvider>(
+                //   builder: (context, provider, _) {
+                //     final current = provider.reels.firstWhere(
+                //       (r) => r.id == widget.reel.id,
+                //       orElse: () => widget.reel,
+                //     );
+                //     return _ActionButton(
+                //       icon: current.isLiked
+                //           ? Icons.favorite
+                //           : Icons.favorite_border,
+                //       iconColor: current.isLiked ? Colors.red : Colors.white,
+                //       label: _formatCount(current.likeCount),
+                //       onTap: _toggleLike,
+                //     );
+                //   },
+                // ),
                 const SizedBox(height: 20),
 
                 _ActionButton(icon: Icons.reply, label: '', onTap: _shareReel),

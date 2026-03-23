@@ -9,6 +9,7 @@ class HotTopicReelsService {
 
   Future<HotTopicReelsModel> fetchHotTopicReels(String userId) async {
     final url = Uri.parse('$_baseUrl/allhottopicreels/$userId');
+    print("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu$url");
 
     final response = await http.get(
       url,

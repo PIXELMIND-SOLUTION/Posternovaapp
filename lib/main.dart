@@ -5,7 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:posternova/providers/auth/google_provider.dart';
+import 'package:posternova/providers/banner/banner_provider.dart';
+import 'package:posternova/providers/category/categories_provider.dart';
+import 'package:posternova/providers/festival/festival_posters_provider.dart';
 import 'package:posternova/providers/topics/hot_topic_provider.dart';
+import 'package:posternova/providers/weekly/weekly_templates_provider.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'services/FCM/fcm_service.dart';
@@ -105,9 +109,14 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RedeemProvider()),
         ChangeNotifierProvider(create: (_) => ReelProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
-        ChangeNotifierProvider(create: (_) => HotTopicReelsProvider()),
-            ChangeNotifierProvider(create: (_) => GoogleProvider()), // Add this
-
+        ChangeNotifierProvider(create: (_) => HotTopicsProvider()),
+        ChangeNotifierProvider(create: (_) => GoogleProvider()), // Add this
+        ChangeNotifierProvider(
+          create: (_) => WeeklyTemplatesProvider(),
+        ), // Add this
+        ChangeNotifierProvider(create: (_) => BannerProvider()), // A
+        ChangeNotifierProvider(create: (_) => FestivalPostersProvider()),
+        ChangeNotifierProvider(create: (_) => CategoriesProvider()),
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {

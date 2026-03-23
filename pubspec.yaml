@@ -45,7 +45,7 @@ dependencies:
   upgrader: ^12.3.0
   screenshot: ^3.0.0
   matrix_gesture_detector: ^0.2.0-nullsafety.1
-  video_player: ^2.10.1
+  video_player: 2.8.2
 
   # 🔥 FIREBASE (ALIGNED)
   firebase_core: ^4.4.0
@@ -63,6 +63,8 @@ dependencies:
   google_sign_in: 6.2.1
   ffmpeg_kit_flutter_new: ^4.1.0
   audioplayers: ^6.6.0
+  chewie: 1.7.4
+  
 
 dev_dependencies:
   flutter_test:

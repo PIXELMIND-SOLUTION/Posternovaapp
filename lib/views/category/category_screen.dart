@@ -43,6 +43,21 @@ class _CategoryScreenState extends State<CategoryScreen>
   Timer? _speechTimer;
   String? _selectedCategory;
 
+  String? _selectedLanguage;
+  List<String> _availableLanguages = [];
+  bool _showLanguageFilter = false;
+
+  final List<Map<String, dynamic>> _languages = [
+    {'name': 'English', 'code': 'english', 'icon': '🇺🇸'},
+    {'name': 'Telugu', 'code': 'telugu', 'icon': '🇮🇳'},
+    {'name': 'Hindi', 'code': 'hindi', 'icon': '🇮🇳'},
+    {'name': 'Tamil', 'code': 'tamil', 'icon': '🇮🇳'},
+    {'name': 'Malayalam', 'code': 'malayalam', 'icon': '🇮🇳'},
+    {'name': 'Kannada', 'code': 'kannada', 'icon': '🇮🇳'},
+    {'name': 'Bengali', 'code': 'bengali', 'icon': '🇮🇳'},
+    {'name': 'All', 'code': null, 'icon': '🌐'},
+  ];
+
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
@@ -70,10 +85,52 @@ class _CategoryScreenState extends State<CategoryScreen>
 
     Future.microtask(() {
       if (!mounted) return;
+      final posterProvider = Provider.of<PosterProvider>(
+        context,
+        listen: false,
+      );
+
       Provider.of<PosterProvider>(context, listen: false).fetchPosters();
       _animationController.forward();
       _loadRecentSearches();
+      _extractAvailableLanguages(posterProvider.posters);
     });
+  }
+
+  void _extractAvailableLanguages(List<CategoryModel> posters) {
+    final Set<String> languages = {};
+    for (var poster in posters) {
+      if (poster.posterlang.isNotEmpty) {
+        languages.add(poster.posterlang.toLowerCase());
+      }
+    }
+    setState(() {
+      _availableLanguages = languages.toList();
+    });
+  }
+
+  List<CategoryModel> _filterByLanguage(List<CategoryModel> posters) {
+    if (_selectedLanguage == null || _selectedLanguage == 'all') {
+      return posters;
+    }
+    return posters
+        .where(
+          (poster) =>
+              poster.posterlang.toLowerCase() ==
+              _selectedLanguage!.toLowerCase(),
+        )
+        .toList();
+  }
+
+  // Filter categories based on selected language
+  List<String> _getFilteredCategories(List<CategoryModel> filteredPosters) {
+    final categories = <String>{};
+    for (var poster in filteredPosters) {
+      if (poster.categoryName.isNotEmpty) {
+        categories.add(poster.categoryName);
+      }
+    }
+    return categories.toList();
   }
 
   Future<void> _loadRecentSearches() async {
@@ -230,6 +287,207 @@ class _CategoryScreenState extends State<CategoryScreen>
     super.dispose();
   }
 
+  // Build language filter button
+  Widget _buildLanguageFilterButton() {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _showLanguageFilter = !_showLanguageFilter;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+          borderRadius: BorderRadius.circular(10),
+          color: _selectedLanguage != null
+              ? const Color(0xFF4F46E5).withOpacity(0.1)
+              : Colors.white,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.translate, size: 18, color: Color(0xFF4F46E5)),
+            const SizedBox(width: 8),
+            Text(
+              _selectedLanguage != null && _selectedLanguage != 'all'
+                  ? _getLanguageDisplayName(_selectedLanguage!)
+                  : 'Language',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: _selectedLanguage != null
+                    ? const Color(0xFF4F46E5)
+                    : const Color(0xFF374151),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              _showLanguageFilter ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+              size: 20,
+              color: const Color(0xFF6B7280),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getLanguageDisplayName(String code) {
+    final language = _languages.firstWhere(
+      (lang) => lang['code'] == code,
+      orElse: () => {'name': code, 'icon': ''},
+    );
+    return '${language['icon']} ${language['name']}';
+  }
+
+  // Language filter dropdown overlay
+  Widget _buildLanguageDropdown() {
+    if (!_showLanguageFilter) return const SizedBox.shrink();
+
+    return Positioned(
+      top: 70,
+      right: 16,
+      child: Material(
+        elevation: 8,
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        child: Container(
+          width: 200,
+          constraints: const BoxConstraints(maxHeight: 400),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Filter by Language',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                    if (_selectedLanguage != null)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedLanguage = null;
+                            _showLanguageFilter = false;
+                          });
+                        },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Clear',
+                          style: TextStyle(fontSize: 12, color: Colors.red),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Language list
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: _languages.length,
+                  itemBuilder: (context, index) {
+                    final language = _languages[index];
+                    final isSelected = _selectedLanguage == language['code'];
+                    final isAvailable =
+                        language['code'] == null ||
+                        _availableLanguages.contains(language['code']);
+
+                    if (!isAvailable && language['code'] != null) {
+                      return const SizedBox.shrink(); // Hide unavailable languages
+                    }
+
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedLanguage = language['code'];
+                          _showLanguageFilter = false;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF4F46E5).withOpacity(0.1)
+                              : Colors.transparent,
+                          border: const Border(
+                            bottom: BorderSide(color: Color(0xFFF3F4F6)),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              language['icon'],
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                language['name'],
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? const Color(0xFF4F46E5)
+                                      : const Color(0xFF374151),
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: Color(0xFF4F46E5),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -248,6 +506,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                 child: Column(
                   children: [
                     _buildAppBar(padding, isTablet),
+                    _buildFilterRow(padding),
                     Expanded(
                       child: Consumer<PosterProvider>(
                         builder: (context, posterProvider, child) {
@@ -259,8 +518,29 @@ class _CategoryScreenState extends State<CategoryScreen>
                             return _buildErrorState(posterProvider);
                           }
 
-                          final categories = _extractUniqueCategories(
+                          // 🔥 CRITICAL FIX: Filter posters by selected language
+                          final filteredByLanguage = _filterByLanguage(
                             posterProvider.posters,
+                          );
+
+                          // If no posters after language filter, show empty state
+                          if (filteredByLanguage.isEmpty) {
+                            return _buildEmptyLanguageState();
+                          }
+
+                          // Extract languages after data loads
+                          if (_availableLanguages.isEmpty &&
+                              posterProvider.posters.isNotEmpty) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _extractAvailableLanguages(
+                                posterProvider.posters,
+                              );
+                            });
+                          }
+
+                          // 🔥 USE FILTERED posters for categories
+                          final categories = _extractUniqueCategories(
+                            filteredByLanguage,
                           );
 
                           if (categories.isEmpty) {
@@ -285,7 +565,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                               Expanded(
                                 child: _buildCategoryList(
                                   filteredCategories,
-                                  posterProvider.posters,
+                                  filteredByLanguage, // 🔥 Pass filtered posters
                                   padding,
                                   isTablet,
                                 ),
@@ -298,7 +578,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                   ],
                 ),
               ),
-
+              _buildLanguageDropdown(),
               // Voice search overlay
               if (_isListening) _buildVoiceSearchOverlay(),
 
@@ -306,6 +586,86 @@ class _CategoryScreenState extends State<CategoryScreen>
               if (_isMicButtonVisible) _buildFloatingMicButton(context),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterRow(double padding) {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.fromLTRB(padding, 12, padding, 12),
+      child: Row(
+        children: [
+          Expanded(child: _buildLanguageFilterButton()),
+          // You can add more filters here if needed
+          // const SizedBox(width: 12),
+          // _buildAnotherFilterButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyLanguageState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFEF3C7),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.translate_outlined,
+                color: Color(0xFFF59E0B),
+                size: 48,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              _selectedLanguage != null
+                  ? 'No ${_getLanguageDisplayName(_selectedLanguage!)} templates available'
+                  : 'No templates available',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A1A),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Try selecting a different language',
+              style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            if (_selectedLanguage != null)
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _selectedLanguage = null;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F46E5),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.clear, size: 18),
+                label: const Text('Clear Language Filter'),
+              ),
+          ],
         ),
       ),
     );
@@ -552,10 +912,48 @@ class _CategoryScreenState extends State<CategoryScreen>
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-
-            // Language / translate icon
-            const SizedBox(width: 8),
+            // Language filter indicator
+            if (_selectedLanguage != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4F46E5).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.translate,
+                      size: 14,
+                      color: Color(0xFF4F46E5),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _getLanguageDisplayName(_selectedLanguage!),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF4F46E5),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedLanguage = null;
+                        });
+                      },
+                      child: const Icon(
+                        Icons.close,
+                        size: 14,
+                        color: Color(0xFF4F46E5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             // Search button
             _buildSearchIconButton(),
           ],

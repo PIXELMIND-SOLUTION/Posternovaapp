@@ -1,5 +1,25 @@
 // hot_topic_reels_model.dart
 
+class ReelUser {
+  final String name;
+  final String email;
+  final String mobile;
+
+  ReelUser({required this.name, required this.email, required this.mobile});
+
+  factory ReelUser.fromJson(Map<String, dynamic> json) {
+    return ReelUser(
+      name: json['name'] as String,
+      email: json['email'] as String,
+      mobile: json['mobile'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'name': name, 'email': email, 'mobile': mobile};
+  }
+}
+
 class Reel {
   final String id;
   final String videoUrl;
@@ -8,6 +28,7 @@ class Reel {
   final bool isLiked;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final ReelUser user; // Add user field
 
   Reel({
     required this.id,
@@ -17,6 +38,7 @@ class Reel {
     required this.isLiked,
     required this.createdAt,
     required this.updatedAt,
+    required this.user,
   });
 
   factory Reel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +50,7 @@ class Reel {
       isLiked: json['isLiked'] as bool,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      user: ReelUser.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 
@@ -40,6 +63,7 @@ class Reel {
       'isLiked': isLiked,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'user': user.toJson(),
     };
   }
 
@@ -51,6 +75,7 @@ class Reel {
     bool? isLiked,
     DateTime? createdAt,
     DateTime? updatedAt,
+    ReelUser? user,
   }) {
     return Reel(
       id: id ?? this.id,
@@ -60,22 +85,18 @@ class Reel {
       isLiked: isLiked ?? this.isLiked,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      user: user ?? this.user,
     );
   }
 }
 
 class HotTopicReelsModel {
-  final String userId;
-  final List<Reel> reels;
+  final List<Reel> reels; // Remove userId field
 
-  HotTopicReelsModel({
-    required this.userId,
-    required this.reels,
-  });
+  HotTopicReelsModel({required this.reels});
 
   factory HotTopicReelsModel.fromJson(Map<String, dynamic> json) {
     return HotTopicReelsModel(
-      userId: json['userId'] as String,
       reels: (json['reels'] as List<dynamic>)
           .map((e) => Reel.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -83,9 +104,6 @@ class HotTopicReelsModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'reels': reels.map((e) => e.toJson()).toList(),
-    };
+    return {'reels': reels.map((e) => e.toJson()).toList()};
   }
 }
