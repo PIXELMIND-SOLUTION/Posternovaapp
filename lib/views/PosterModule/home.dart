@@ -7562,6 +7562,7 @@ import 'package:posternova/views/SecondPhase/poster_editor.dart';
 import 'package:posternova/views/category/category_detail_screen.dart';
 import 'package:posternova/views/category/search_category.dart';
 import 'package:posternova/views/hot/hot_screen.dart';
+import 'package:posternova/views/logo/static_logo.dart';
 import 'package:posternova/views/notifications/notification_screen.dart';
 import 'package:posternova/views/stories/story_widget_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
@@ -8857,6 +8858,27 @@ class _HomeScreenState extends State<HomeScreen>
                       ],
                     ),
                   ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.notifications_none_rounded,
+                    color: Colors.black87,
+                    size: 26,
+                  ),
+                  onPressed: () {
+                    if (!_requireNetwork()) return;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LogoListingScreen(),
+                      ),
+                    );
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 38,
+                    minHeight: 38,
+                  ),
+                ),
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -9522,18 +9544,31 @@ class _HomeScreenState extends State<HomeScreen>
         return GestureDetector(
           onTap: () {
             if (!_requireNetwork()) return;
-            if (myplanprovider.isPurchase) {
-              final bgImageUrl =
-                  poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PosterEditorScreen(posterAsset: bgImageUrl),
-                ),
-              );
-            } else {
-              _showPremiumDialog();
-            }
+            // if (myplanprovider.isPurchase) {
+            //   final bgImageUrl =
+            //       poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
+            //   Navigator.push(
+            //     context,
+            //     MaterialPageRoute(
+            //       builder: (_) => PosterEditorScreen(posterAsset: bgImageUrl),
+            //     ),
+            //   );
+            // } else {
+            //   _showPremiumDialog();
+            // }
+
+            // if (myplanprovider.isPurchase) {
+            final bgImageUrl =
+                poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PosterEditorScreen(posterAsset: bgImageUrl),
+              ),
+            );
+            // } else {
+            //   _showPremiumDialog();
+            // }
           },
           child: Container(
             width: 110,

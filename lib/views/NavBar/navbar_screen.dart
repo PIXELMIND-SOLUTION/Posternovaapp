@@ -1426,8 +1426,6 @@
 //   }
 // }
 
-
-
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -2209,13 +2207,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       showLater: true,
       showIgnore: false,
       child: Scaffold(
-         backgroundColor: Colors.black,
+        // backgroundColor: Colors.black,
         body: _screens[_currentIndex],
         bottomNavigationBar: Consumer<LanguageProvider>(
           builder: (context, languageProvider, child) {
             final langCode = languageProvider.locale.languageCode;
             return Column(
-              
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildWishesSection(langCode),
@@ -2228,7 +2225,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                     Positioned(
                       right: 4,
                       top:
-                          -30, // adjust this value to position it above the navbar
+                          -20, // adjust this value to position it above the navbar
                       child: _buildProBadge(),
                     ),
                   ],

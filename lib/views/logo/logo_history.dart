@@ -351,13 +351,13 @@ class _LogoHistoryState extends State<LogoHistory> {
                     imageUrl: item.editedImage,
                     label: 'Edited',
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              MakeLogo(image: item.editedImage, id: item.id),
-                        ),
-                      );
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) =>
+                      //         MakeLogo(image: item.editedImage, id: item.id),
+                      //   ),
+                      // );
                     },
                     // onTap: () => _showImagePreview(
                     //   context,

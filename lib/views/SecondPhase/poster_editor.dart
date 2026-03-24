@@ -1,3 +1,4 @@
+import 'dart:convert' show json;
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:audioplayers/audioplayers.dart';
@@ -6,12 +7,16 @@ import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
 import 'dart:io';
 import 'package:flutter/rendering.dart';
+import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:posternova/helper/storage_helper.dart';
+import 'package:posternova/providers/auth/login_provider.dart';
+import 'package:posternova/providers/plans/my_plan_provider.dart';
+import 'package:provider/provider.dart';
 
 // ─────────────────────────────────────────────
 //  DATA MODELS
@@ -219,6 +224,7 @@ class FrameStyle {
   final Color? headerBg, footerBg;
   final FrameLayout layout;
   final Color accentColor;
+  final Color? backgroundColor;
 
   const FrameStyle({
     required this.name,
@@ -227,6 +233,7 @@ class FrameStyle {
     this.footerBg,
     required this.layout,
     this.accentColor = Colors.white,
+    this.backgroundColor,
   });
 }
 
@@ -247,6 +254,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     with TickerProviderStateMixin {
   BottomTab _activeTab = BottomTab.text;
   Color _bgColor = const Color(0xFFF5F0E8);
+  MyPlanProvider? _planProvider;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isAudioPlaying = false;
@@ -453,21 +461,34 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   bool _isDownloading = false;
   double _downloadProgress = 0;
 
+  Map<String, dynamic>? _profileData;
+
+  final String _baseUrl = 'http://31.97.206.144:4061/api/users';
+
   final GlobalKey _posterKey = GlobalKey();
 
   String? _resizingTextId;
   Offset _resizeStartOffset = Offset.zero;
   double _resizeStartFontSize = 24;
+  bool _isLoadingProfile = false;
+
+  String? userId;
 
   @override
   void initState() {
     super.initState();
+    if (_planProvider == null || !_planProvider!.isPurchase) {
+      _preventScreenshots();
+    }
+    _planProvider = Provider.of<MyPlanProvider>(context, listen: false);
+    _checkPurchaseStatus();
+    _fetchProfileData();
     _brandElements = [
       BrandElement(
         id: 'logo',
         type: BrandElementType.logo,
         position: const Offset(12, 12),
-        isVisible: true,
+        isVisible: false,
       ),
       BrandElement(
         id: 'name',
@@ -475,7 +496,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         position: const Offset(12, 290),
         fontSize: 16,
         color: Colors.white,
-        isVisible: true,
+        isVisible: false,
       ),
       BrandElement(
         id: 'phone',
@@ -483,7 +504,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         position: const Offset(12, 312),
         fontSize: 12,
         color: Colors.white70,
-        isVisible: true,
+        isVisible: false,
       ),
       BrandElement(
         id: 'address',
@@ -491,7 +512,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         position: const Offset(12, 330),
         fontSize: 10,
         color: Colors.white60,
-        isVisible: true,
+        isVisible: false,
       ),
     ];
 
@@ -547,17 +568,126 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     _setupBrandAnimations();
 
     _brandInfo = BrandInfo();
-    _loadBrandInfoFromUser();
+    // _loadBrandInfoFromUser();
+  }
+
+  void _preventScreenshots() {
+    // For Android and iOS
+    if (_planProvider != null && !_planProvider!.isPurchase) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      // This prevents screenshots by setting secure flag
+      // Note: This only works on Android and iOS
+    }
+  }
+
+  // When purchase is successful, you can allow screenshots
+  void _allowScreenshots() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  Future<void> _checkPurchaseStatus() async {
+    final userData = await AuthPreferences.getUserData();
+    if (!mounted) return;
+    if (userData != null) {
+      setState(() {
+        userId = userData.user.id;
+      });
+    }
+    // Fetch user plan if not already loaded
+    if (_planProvider != null &&
+        _planProvider!.subscribedPlan == null &&
+        userId != null) {
+      await _planProvider!.fetchMyPlan(userId.toString());
+    }
+  }
+
+  Future<void> _fetchProfileData() async {
+    setState(() => _isLoadingProfile = true);
+
+    try {
+      // Try AuthProvider first, fall back to local storage
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      String? userId = authProvider.user?.user.id;
+
+      // Fallback to stored data if provider hasn't rehydrated yet
+      if (userId == null) {
+        final userData = await AuthPreferences.getUserData();
+        userId = userData?.user.id;
+      }
+
+      if (userId == null) {
+        setState(() => _isLoadingProfile = false);
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/get-profile/$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // setState(() {
+        //   _profileData = data;
+        //   _isLoadingProfile = false;
+        // });
+        print("llllllllllllllllllllllllllll${data['name']}");
+        print("llllllllllllllllllllllllllll${data['mobile']}");
+
+        print("llllllllllllllllllllllllllll${data['profileImage']}");
+
+        setState(() {
+          _brandInfo = BrandInfo(
+            name: data['name'] ?? _brandInfo.name,
+            phone: data['mobile'],
+            logoAsset: data['profileImage'] ?? '',
+            address:
+                _brandInfo.address ??
+                _brandInfo.phone, // address not in user data, keep default
+          );
+        });
+      } else {
+        // Fallback: use locally stored name
+        final userData = await AuthPreferences.getUserData();
+        setState(() {
+          _profileData = {
+            'name': userData?.user.name,
+            'mobile': userData?.user.mobile,
+          };
+          _isLoadingProfile = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+      // Fallback to stored data on error
+      try {
+        final userData = await AuthPreferences.getUserData();
+        setState(() {
+          _profileData = {
+            'name': userData?.user.name,
+            'mobile': userData?.user.mobile,
+          };
+          _isLoadingProfile = false;
+        });
+      } catch (_) {
+        setState(() => _isLoadingProfile = false);
+      }
+    }
   }
 
   Future<void> _loadBrandInfoFromUser() async {
     try {
       final userData = await AuthPreferences.getUserData();
       if (userData != null && mounted) {
+        print("llllllllllllllllllllllll${userData.user.name}");
+        print("llllllllllllllllllllllll${userData.user.mobile}");
+
+        print("llllllllllllllllllllllll${userData.user.profileImage}");
+
         setState(() {
           _brandInfo = BrandInfo(
             name: userData.user.name ?? _brandInfo.name,
             phone: userData.user.mobile ?? _brandInfo.phone,
+            logoAsset: userData.user.profileImage ?? '',
             address:
                 _brandInfo.address ??
                 _brandInfo.phone, // address not in user data, keep default
@@ -939,7 +1069,233 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   }
   // }
 
+  void _showPremiumModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFAF5FF), Color(0xFFEEF2FF)],
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.lock_outline_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Unlock Download',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Get access to download your posters and videos.\nOnly ₹20 for lifetime access!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Premium Access',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        '₹20',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF10B981),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Maybe Later',
+                        style: TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showPaymentDialog();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Pay ₹20',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPaymentDialog() {
+    // You can integrate your payment gateway here
+    // For now, show a success dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF10B981),
+                  size: 48,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Payment Successful!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'You now have full access to download your posters and videos.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // Update purchase status
+                    _planProvider!.setPurchaseStatus(true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _startDownload() async {
+    print("gggggggggggggggggggggggg${_planProvider?.isPurchase}");
+    if (!_planProvider!.isPurchase) {
+      _showPremiumModal();
+      return;
+    }
     setState(() {
       _isDownloading = true;
       _downloadProgress = 0;
@@ -2024,10 +2380,33 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
   Widget _buildBrandContent(BrandElement elem) {
     switch (elem.type) {
+      // case BrandElementType.logo:
+      //   return GestureDetector(
+      //     onTap: () => _pickImage(forLogo: true),
+      //     child: _logoWidget(const Color(0xFFD4AF37), size: 56),
+      //   );
       case BrandElementType.logo:
         return GestureDetector(
           onTap: () => _pickImage(forLogo: true),
-          child: _logoWidget(const Color(0xFFD4AF37), size: 56),
+          child: _uploadedLogoPath != null
+              ? ClipOval(
+                  child: Image.file(
+                    File(_uploadedLogoPath!),
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : (_brandInfo.logoAsset.isNotEmpty
+                    ? ClipOval(
+                        child: Image.network(
+                          _brandInfo.logoAsset,
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : _logoWidget(const Color(0xFFD4AF37), size: 56)),
         );
       case BrandElementType.name:
         return Text(
@@ -2135,7 +2514,25 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                   _frameLogoPosition += d.delta;
                 });
               },
-              child: _logoWidget(frame.borderColor, size: 52),
+              child: _uploadedLogoPath != null
+                  ? ClipOval(
+                      child: Image.file(
+                        File(_uploadedLogoPath!),
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : (_brandInfo.logoAsset.isNotEmpty
+                        ? ClipOval(
+                            child: Image.network(
+                              _brandInfo.logoAsset,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : _logoWidget(const Color(0xFFD4AF37), size: 50)),
             ),
           ),
         ],
@@ -5296,30 +5693,30 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             ),
           ),
           const Divider(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.image, size: 18, color: Colors.grey),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text('Show Logo', style: TextStyle(fontSize: 13)),
-              ),
-              Switch(
-                value: _brandElements
-                    .firstWhere((e) => e.id == 'logo')
-                    .isVisible,
-                onChanged: (v) {
-                  setState(() {
-                    final i = _brandElements.indexWhere((e) => e.id == 'logo');
-                    if (i != -1)
-                      _brandElements[i] = _brandElements[i].copyWith(
-                        isVisible: v,
-                      );
-                  });
-                },
-                activeColor: const Color(0xFFF5C518),
-              ),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     const Icon(Icons.image, size: 18, color: Colors.grey),
+          //     const SizedBox(width: 8),
+          //     const Expanded(
+          //       child: Text('Show Logo', style: TextStyle(fontSize: 13)),
+          //     ),
+          //     Switch(
+          //       value: _brandElements
+          //           .firstWhere((e) => e.id == 'logo')
+          //           .isVisible,
+          //       onChanged: (v) {
+          //         setState(() {
+          //           final i = _brandElements.indexWhere((e) => e.id == 'logo');
+          //           if (i != -1)
+          //             _brandElements[i] = _brandElements[i].copyWith(
+          //               isVisible: v,
+          //             );
+          //         });
+          //       },
+          //       activeColor: const Color(0xFFF5C518),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );

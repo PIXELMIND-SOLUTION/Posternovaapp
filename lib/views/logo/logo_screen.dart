@@ -483,19 +483,6 @@
 // //   }
 // // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // // File: logo_making_screen.dart
 // // Professional redesigned LogoMakingScreen - Modern UI
 // import 'package:flutter/material.dart';
@@ -990,28 +977,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // File: logo_making_screen.dart
 // Professional redesigned LogoMakingScreen - Modern UI
 import 'dart:io';
@@ -1042,10 +1007,12 @@ class _LogoMakingScreenState extends State<LogoMakingScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => Provider.of<LogoProvider>(context, listen: false)
-        .fetchLogos(
-            logoCategoryId: widget.categoryId,
-            userId: widget.userId.toString()));
+    Future.microtask(
+      () => Provider.of<LogoProvider>(context, listen: false).fetchLogos(
+        logoCategoryId: widget.categoryId,
+        userId: widget.userId.toString(),
+      ),
+    );
 
     _searchController.addListener(() {
       setState(() {
@@ -1179,18 +1146,26 @@ class _LogoMakingScreenState extends State<LogoMakingScreen> {
           decoration: InputDecoration(
             hintText: 'Search logos...',
             hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
-            prefixIcon: const Icon(Icons.search_rounded,
-                color: Color(0xFF718096), size: 22),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: Color(0xFF718096),
+              size: 22,
+            ),
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
                     onPressed: () => _searchController.clear(),
-                    icon: const Icon(Icons.close_rounded,
-                        color: Color(0xFF718096), size: 20),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF718096),
+                      size: 20,
+                    ),
                   )
                 : null,
             border: InputBorder.none,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
           ),
         ),
       ),
@@ -1281,16 +1256,20 @@ class _LogoMakingScreenState extends State<LogoMakingScreen> {
                 color: const Color(0xFFFEE2E2),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.cloud_off_rounded,
-                  size: 48, color: Color(0xFFEF4444)),
+              child: const Icon(
+                Icons.cloud_off_rounded,
+                size: 48,
+                color: Color(0xFFEF4444),
+              ),
             ),
             const SizedBox(height: 20),
             const Text(
               'Connection Error',
               style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A202C)),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A202C),
+              ),
             ),
             const SizedBox(height: 12),
             Text(
@@ -1303,19 +1282,22 @@ class _LogoMakingScreenState extends State<LogoMakingScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => provider.fetchLogos(
-                    logoCategoryId: widget.categoryId,
-                    userId: widget.userId.toString()),
+                  logoCategoryId: widget.categoryId,
+                  userId: widget.userId.toString(),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF667EEA),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 0,
                 ),
-                child: const Text('Try Again',
-                    style:
-                        TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Try Again',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ],
@@ -1349,23 +1331,30 @@ class _LogoMakingScreenState extends State<LogoMakingScreen> {
                 color: const Color(0xFFF5F7FA),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.search_off_rounded,
-                  size: 64, color: Color(0xFFCBD5E0)),
+              child: const Icon(
+                Icons.search_off_rounded,
+                size: 64,
+                color: Color(0xFFCBD5E0),
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
               'No Logos Found',
               style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A202C)),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A202C),
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
               'Try adjusting your search to find what you\'re looking for',
               textAlign: TextAlign.center,
-              style:
-                  TextStyle(color: Color(0xFF718096), fontSize: 14, height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF718096),
+                fontSize: 14,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -1399,9 +1388,11 @@ class _LogoPreviewSheetState extends State<_LogoPreviewSheet> {
         final granted = await Gal.requestAccess(toAlbum: true);
         if (!granted) {
           if (!mounted) return;
-          _showSnackbar(context,
-              message: 'Gallery permission denied.',
-              isSuccess: false);
+          _showSnackbar(
+            context,
+            message: 'Gallery permission denied.',
+            isSuccess: false,
+          );
           return;
         }
       }
@@ -1426,23 +1417,31 @@ class _LogoPreviewSheetState extends State<_LogoPreviewSheet> {
       await file.delete();
 
       if (!mounted) return;
-      _showSnackbar(context,
-          message: 'Logo saved to gallery!', isSuccess: true);
+      _showSnackbar(
+        context,
+        message: 'Logo saved to gallery!',
+        isSuccess: true,
+      );
     } on GalException catch (e) {
       if (!mounted) return;
-      _showSnackbar(context,
-          message: e.type.message, isSuccess: false);
+      _showSnackbar(context, message: e.type.message, isSuccess: false);
     } catch (e) {
       if (!mounted) return;
-      _showSnackbar(context,
-          message: 'Download failed. Please try again.', isSuccess: false);
+      _showSnackbar(
+        context,
+        message: 'Download failed. Please try again.',
+        isSuccess: false,
+      );
     } finally {
       if (mounted) setState(() => _isDownloading = false);
     }
   }
 
-  void _showSnackbar(BuildContext context,
-      {required String message, required bool isSuccess}) {
+  void _showSnackbar(
+    BuildContext context, {
+    required String message,
+    required bool isSuccess,
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -1454,15 +1453,13 @@ class _LogoPreviewSheetState extends State<_LogoPreviewSheet> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(fontSize: 14),
-              ),
+              child: Text(message, style: const TextStyle(fontSize: 14)),
             ),
           ],
         ),
-        backgroundColor:
-            isSuccess ? const Color(0xFF48BB78) : const Color(0xFFEF4444),
+        backgroundColor: isSuccess
+            ? const Color(0xFF48BB78)
+            : const Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
@@ -1537,15 +1534,17 @@ class _LogoPreviewSheetState extends State<_LogoPreviewSheet> {
                               fit: BoxFit.contain,
                               loadingBuilder:
                                   (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF667EEA)),
-                                  ),
-                                );
-                              },
+                                    if (loadingProgress == null) return child;
+                                    return const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Color(0xFF667EEA),
+                                            ),
+                                      ),
+                                    );
+                                  },
                               errorBuilder: (_, __, ___) => const Icon(
                                 Icons.image_outlined,
                                 size: 64,
@@ -1553,8 +1552,11 @@ class _LogoPreviewSheetState extends State<_LogoPreviewSheet> {
                               ),
                             ),
                           )
-                        : const Icon(Icons.image_outlined,
-                            size: 64, color: Color(0xFFCBD5E0)),
+                        : const Icon(
+                            Icons.image_outlined,
+                            size: 64,
+                            color: Color(0xFFCBD5E0),
+                          ),
                   ),
                 ),
               ],
@@ -1575,24 +1577,23 @@ class _LogoPreviewSheetState extends State<_LogoPreviewSheet> {
                       context,
                       MaterialPageRoute(
                         builder: (_) => MakeLogo(
-                          image: widget.logo.image,
-                          id: widget.logo.id,
+                          stickerUrl: widget.logo.image,
+                          // id: widget.logo.id,
                         ),
                       ),
                     );
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF1A202C),
-                    side:
-                        const BorderSide(color: Color(0xFFE2C97E), width: 2),
+                    side: const BorderSide(color: Color(0xFFE2C97E), width: 2),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   child: const Text(
                     'Edit Logo',
-                    style:
-                        TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -1601,16 +1602,19 @@ class _LogoPreviewSheetState extends State<_LogoPreviewSheet> {
               // Download Logo
               Expanded(
                 child: ElevatedButton(
-                  onPressed:
-                      _isDownloading ? null : () => _downloadLogo(context),
+                  onPressed: _isDownloading
+                      ? null
+                      : () => _downloadLogo(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE2C97E),
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor:
-                        const Color(0xFFE2C97E).withOpacity(0.7),
+                    disabledBackgroundColor: const Color(
+                      0xFFE2C97E,
+                    ).withOpacity(0.7),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     elevation: 0,
                   ),
                   child: _isDownloading
@@ -1619,14 +1623,17 @@ class _LogoPreviewSheetState extends State<_LogoPreviewSheet> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Text(
                           'Download Logo',
                           style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w600),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                 ),
               ),
@@ -1739,10 +1746,12 @@ class _DashedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(radius),
-      ));
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(radius),
+        ),
+      );
 
     final dashPath = Path();
     final pathMetrics = path.computeMetrics();
@@ -1806,22 +1815,20 @@ class _ModernLogoCard extends StatelessWidget {
                           child: Image.network(
                             logo.image,
                             fit: BoxFit.cover,
-                            loadingBuilder:
-                                (context, child, loadingProgress) {
+                            loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
                               return Center(
                                 child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes !=
-                                          null
-                                      ? loadingProgress
-                                              .cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
                                       : null,
                                   strokeWidth: 2,
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(
-                                    Color(0xFF667EEA),
-                                  ),
+                                        Color(0xFF667EEA),
+                                      ),
                                 ),
                               );
                             },
@@ -1856,8 +1863,7 @@ class _ModernLogoCard extends StatelessWidget {
     return Container(
       color: const Color(0xFFF5F7FA),
       child: const Center(
-        child:
-            Icon(Icons.image_outlined, size: 48, color: Color(0xFFCBD5E0)),
+        child: Icon(Icons.image_outlined, size: 48, color: Color(0xFFCBD5E0)),
       ),
     );
   }
