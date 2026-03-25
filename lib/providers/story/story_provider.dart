@@ -366,6 +366,7 @@ class StoryProvider extends ChangeNotifier {
 
       // Also fetch current user's stories
       await fetchCurrentUserStories();
+      print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
     } on SocketException {
       _error = 'Please turn on your internet connection';
     } catch (e) {

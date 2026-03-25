@@ -7,7 +7,7 @@ class PhonePePaymentResponse {
   final String? currency;
   final PlanData? plan;
   final UserData? user;
-  
+
   PhonePePaymentResponse({
     required this.success,
     this.message,
@@ -18,29 +18,25 @@ class PhonePePaymentResponse {
     this.plan,
     this.user,
   });
-  
+
   // Convenience getter for redirectUrl
   String? get redirectUrl => response?.redirectUrl;
-  
+
   factory PhonePePaymentResponse.fromJson(Map<String, dynamic> json) {
     return PhonePePaymentResponse(
       success: json['success'] ?? false,
       message: json['message'],
       merchantOrderId: json['merchantOrderId'],
-      response: json['response'] != null 
-          ? ResponseData.fromJson(json['response']) 
+      response: json['response'] != null
+          ? ResponseData.fromJson(json['response'])
           : null,
       amount: json['amount'],
       currency: json['currency'],
-      plan: json['plan'] != null 
-          ? PlanData.fromJson(json['plan']) 
-          : null,
-      user: json['user'] != null 
-          ? UserData.fromJson(json['user']) 
-          : null,
+      plan: json['plan'] != null ? PlanData.fromJson(json['plan']) : null,
+      user: json['user'] != null ? UserData.fromJson(json['user']) : null,
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'success': success,
@@ -60,14 +56,9 @@ class ResponseData {
   final String? state;
   final int? expireAt;
   final String? redirectUrl;
-  
-  ResponseData({
-    this.orderId,
-    this.state,
-    this.expireAt,
-    this.redirectUrl,
-  });
-  
+
+  ResponseData({this.orderId, this.state, this.expireAt, this.redirectUrl});
+
   factory ResponseData.fromJson(Map<String, dynamic> json) {
     return ResponseData(
       orderId: json['orderId'],
@@ -76,7 +67,7 @@ class ResponseData {
       redirectUrl: json['redirectUrl'],
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'orderId': orderId,
@@ -91,13 +82,9 @@ class PlanData {
   final String? id;
   final String? name;
   final int? offerPrice;
-  
-  PlanData({
-    this.id,
-    this.name,
-    this.offerPrice,
-  });
-  
+
+  PlanData({this.id, this.name, this.offerPrice});
+
   factory PlanData.fromJson(Map<String, dynamic> json) {
     return PlanData(
       id: json['id'],
@@ -105,13 +92,9 @@ class PlanData {
       offerPrice: json['offerPrice'],
     );
   }
-  
+
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'offerPrice': offerPrice,
-    };
+    return {'id': id, 'name': name, 'offerPrice': offerPrice};
   }
 }
 
@@ -119,26 +102,25 @@ class UserData {
   final String? id;
   final String? name;
   final String? email;
-  
-  UserData({
-    this.id,
-    this.name,
-    this.email,
-  });
-  
+  final String? profileImage;
+
+  UserData({this.id, this.name, this.email, this.profileImage});
+
   factory UserData.fromJson(Map<String, dynamic> json) {
     return UserData(
       id: json['id'],
       name: json['name'],
       email: json['email'],
+      profileImage: json['profileImage'],
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
       'email': email,
+      'profileImage': profileImage,
     };
   }
 }

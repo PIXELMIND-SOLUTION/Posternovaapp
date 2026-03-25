@@ -7555,17 +7555,18 @@ import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/providers/story/story_provider.dart';
 import 'package:posternova/providers/topics/hot_topic_provider.dart';
 import 'package:posternova/providers/weekly/weekly_templates_provider.dart';
-import 'package:posternova/views/PosterModule/poster_making_screen.dart'
-    hide Overlay;
 import 'package:posternova/views/ProfileScreen/profile_screen.dart';
 import 'package:posternova/views/SecondPhase/poster_editor.dart';
 import 'package:posternova/views/category/category_detail_screen.dart';
 import 'package:posternova/views/category/search_category.dart';
 import 'package:posternova/views/hot/hot_screen.dart';
-import 'package:posternova/views/logo/static_logo.dart';
 import 'package:posternova/views/notifications/notification_screen.dart';
 import 'package:posternova/views/stories/story_widget_screen.dart';
-import 'package:posternova/widgets/common_modal.dart';
+import 'package:posternova/widgets/home/celebration.dart';
+import 'package:posternova/widgets/home/auto_video_player.dart';
+import 'package:posternova/widgets/home/flipper_modal.dart';
+import 'package:posternova/widgets/home/network.dart';
+import 'package:posternova/widgets/home/skeleton.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:posternova/widgets/language_animation_widget.dart';
 import 'package:posternova/services/language/restart_lan_service.dart';
@@ -7576,389 +7577,6 @@ import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CELEBRATION CONFIG MODEL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class CelebrationConfig {
-  final bool enabled;
-  final String videoUrl;
-  final int durationSeconds;
-  final bool loop;
-
-  // ── Theme fields (all optional — null = use app defaults) ──────────────────
-  final List<Color>?
-  gradientColors; // e.g. [Color(0xFFFF6B6B), Color(0xFF4ECDC4)]
-  final Color? sectionBgColor; // background of each section card
-  final Color? primaryTextColor; // section titles, day labels
-  final Color? secondaryTextColor; // subtitles, "View All", grey text
-  final Color? accentColor; // selected date chip, dots, highlights
-
-  CelebrationConfig({
-    required this.enabled,
-    required this.videoUrl,
-    required this.durationSeconds,
-    required this.loop,
-    this.gradientColors,
-    this.sectionBgColor,
-    this.primaryTextColor,
-    this.secondaryTextColor,
-    this.accentColor,
-  });
-
-  /// Parse a hex string like "#FF6B6B" or "FF6B6B" → Color
-  static Color? _hexToColor(String? hex) {
-    if (hex == null || hex.isEmpty) return null;
-    final cleaned = hex.replaceAll('#', '');
-    if (cleaned.length == 6) {
-      return Color(int.parse('FF$cleaned', radix: 16));
-    } else if (cleaned.length == 8) {
-      return Color(int.parse(cleaned, radix: 16));
-    }
-    return null;
-  }
-
-  factory CelebrationConfig.fromJson(Map<String, dynamic> json) {
-    // gradient_colors: ["#FF6B6B", "#4ECDC4"] or null
-    List<Color>? gradients;
-    final rawGradients = json['gradient_colors'];
-    if (rawGradients is List && rawGradients.isNotEmpty) {
-      final parsed = rawGradients
-          .map((e) => _hexToColor(e?.toString()))
-          .whereType<Color>()
-          .toList();
-      if (parsed.length >= 2) gradients = parsed;
-    }
-
-    return CelebrationConfig(
-      enabled: json['enabled'] ?? false,
-      videoUrl: json['video_url'] ?? '',
-      durationSeconds: json['duration_seconds'] ?? 10,
-      loop: json['loop'] ?? false,
-      gradientColors: gradients,
-      sectionBgColor: _hexToColor(json['section_bg_color']),
-      primaryTextColor: _hexToColor(json['primary_text_color']),
-      secondaryTextColor: _hexToColor(json['secondary_text_color']),
-      accentColor: _hexToColor(json['accent_color']),
-    );
-  }
-
-  /// True if any theming field is present
-  bool get hasTheme =>
-      gradientColors != null ||
-      sectionBgColor != null ||
-      primaryTextColor != null ||
-      secondaryTextColor != null ||
-      accentColor != null;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SKELETON SHIMMER HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SkeletonBox extends StatefulWidget {
-  final double width;
-  final double height;
-  final double borderRadius;
-  const _SkeletonBox({
-    required this.width,
-    required this.height,
-    this.borderRadius = 8,
-  });
-
-  @override
-  State<_SkeletonBox> createState() => _SkeletonBoxState();
-}
-
-class _SkeletonBoxState extends State<_SkeletonBox>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animController;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.3, end: 0.7).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, __) => Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-          gradient: LinearGradient(
-            colors: [
-              Colors.grey.withOpacity(_anim.value * 0.6),
-              Colors.white.withOpacity(_anim.value),
-              Colors.grey.withOpacity(_anim.value * 0.6),
-            ],
-          ),
-        ),
-        child: Opacity(
-          opacity: 0.06,
-          child: Center(
-            child: Image.asset(
-              'assets/images/logo.png',
-              width: widget.width * 0.4,
-              height: widget.height * 0.4,
-              fit: BoxFit.contain,
-              color: Colors.black,
-              errorBuilder: (_, __, ___) => Icon(
-                Icons.edit,
-                color: Colors.black,
-                size: widget.width * 0.3,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BannerSkeleton extends StatelessWidget {
-  const _BannerSkeleton();
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: const _SkeletonBox(
-          width: double.infinity,
-          height: 104,
-          borderRadius: 16,
-        ),
-      ),
-    );
-  }
-}
-
-class _StorySkeleton extends StatelessWidget {
-  const _StorySkeleton();
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 90,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: 6,
-        itemBuilder: (_, __) => Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: Column(
-            children: [
-              const _SkeletonBox(width: 56, height: 56, borderRadius: 28),
-              const SizedBox(height: 6),
-              _SkeletonBox(width: 48, height: 10, borderRadius: 4),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PosterCardSkeleton extends StatelessWidget {
-  const _PosterCardSkeleton();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 110,
-      margin: const EdgeInsets.only(right: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-            child: const _SkeletonBox(width: 110, height: 100, borderRadius: 0),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(6),
-            child: _SkeletonBox(width: 70, height: 10, borderRadius: 4),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReelCardSkeleton extends StatelessWidget {
-  const _ReelCardSkeleton();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 105,
-      margin: const EdgeInsets.only(right: 10),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-      child: const _SkeletonBox(width: 105, height: 180, borderRadius: 12),
-    );
-  }
-}
-
-class _DateSelectorSkeleton extends StatelessWidget {
-  const _DateSelectorSkeleton();
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 68,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: 7,
-        itemBuilder: (_, __) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: const _SkeletonBox(width: 58, height: 68, borderRadius: 10),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NO NETWORK BOTTOM SHEET
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _NoNetworkSheet extends StatelessWidget {
-  final VoidCallback onRetry;
-  const _NoNetworkSheet({required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 20),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFF3E0),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.wifi_off_rounded,
-              color: Color(0xFFFF6D00),
-              size: 40,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'No Internet Connection',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Please check your Wi-Fi or mobile data and try again. All features are unavailable while offline.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF6B7280),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded, size: 20),
-              label: const Text(
-                'Try Again',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF448AFF),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INLINE CELEBRATION VIDEO WIDGET
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _CelebrationVideoWidget extends StatefulWidget {
-  final VideoPlayerController controller;
-  const _CelebrationVideoWidget({required this.controller});
-
-  @override
-  State<_CelebrationVideoWidget> createState() =>
-      _CelebrationVideoWidgetState();
-}
-
-class _CelebrationVideoWidgetState extends State<_CelebrationVideoWidget> {
-  @override
-  Widget build(BuildContext context) {
-    if (!widget.controller.value.isInitialized) return const SizedBox.shrink();
-    return SizedBox(
-      width: double.infinity,
-      child: AspectRatio(
-        aspectRatio: widget.controller.value.aspectRatio,
-        child: VideoPlayer(widget.controller),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HOME SCREEN
-// ─────────────────────────────────────────────────────────────────────────────
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -8055,7 +7673,6 @@ class _HomeScreenState extends State<HomeScreen>
     _checkNetwork().then((_) {
       _loadUserData();
       _loadUserId();
-      _initializeUser();
       if (!_hasLoadedOnce) {
         Future.microtask(() async => await _initializeAllData());
         _hasLoadedOnce = true;
@@ -8239,7 +7856,7 @@ class _HomeScreenState extends State<HomeScreen>
         isDismissible: false,
         enableDrag: false,
         backgroundColor: Colors.transparent,
-        builder: (_) => _NoNetworkSheet(
+        builder: (_) => NoNetworkSheet(
           onRetry: () async {
             Navigator.pop(context);
             _noNetworkSheetShown = false;
@@ -8268,44 +7885,75 @@ class _HomeScreenState extends State<HomeScreen>
     if (!mounted || !_hasNetwork) return;
     final selectedDate = context.read<DateTimeProvider>().selectedDate;
 
+    // Set all loading states to true
+    setState(() {
+      _isStoriesLoading = true;
+      _isFestivalLoading = true;
+      _isWeeklyLoading = true;
+      _isReelsLoading = true;
+    });
+
     await Future.wait([
       _loadUserId().catchError((e) => debugPrint('loadUserId: $e')),
       _fetchnewposters().catchError((e) => debugPrint('fetchPosters: $e')),
       _initializeProviders().catchError((e) => debugPrint('providers: $e')),
       _fetchWeeklyPosters().catchError((e) => debugPrint('weeklyPosters: $e')),
-      _fetchBanners().catchError(
-        (e) => debugPrint('banners: $e'),
-      ), // Will only fetch if no data
-      // _fetchFestivalPosters(context.read<DateTimeProvider>().selectedDate),
+      _fetchBanners().catchError((e) => debugPrint('banners: $e')),
+      _initializeUser().catchError((e) => debugPrint('initializeUser: $e')),
       _fetchFestivalPosters(
         selectedDate,
       ).catchError((e) => debugPrint('festivalPosters: $e')),
-
       _fetchReels().catchError((e) => debugPrint('reels: $e')),
-      // _fetchCelebrationConfig().catchError(
-      //   (e) => debugPrint('celebration: $e'),
-      // ),
     ]);
+
     if (!mounted) return;
 
+    // Set all loading states to false AFTER all data is loaded
+    setState(() {
+      _isStoriesLoading = false;
+      _isFestivalLoading = false;
+      _isWeeklyLoading = false;
+      _isReelsLoading = false;
+      _isInitialLoad = false;
+    });
+
     _startBannerAutoScroll();
-    if (mounted) setState(() => _isInitialLoad = false);
+    _showInitialModals();
   }
 
   Future<void> _initializeProviders() async {
     if (!mounted) return;
     final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
-    final storyProvider = Provider.of<StoryProvider>(context, listen: false);
     final posterProvider = Provider.of<PosterProvider>(context, listen: false);
-    if (mounted) setState(() => _isStoriesLoading = true);
-    storyProvider.fetchStories();
+
+    // Don't set _isStoriesLoading here anymore
     await Future.wait([
       myPlanProvider.fetchMyPlan(userId.toString()).catchError((_) => null),
       posterProvider.fetchPosters().catchError((_) => null),
     ]);
-    if (mounted) setState(() => _isStoriesLoading = false);
+
     if (!mounted) return;
     _showInitialModals();
+  }
+
+  Future<void> _initializeUser() async {
+    final userData = await AuthPreferences.getUserData();
+    if (userData != null && userData.user.id != null) {
+      final storyProvider = Provider.of<StoryProvider>(context, listen: false);
+      storyProvider.setCurrentUser(
+        userId: userData.user.id,
+        userImage: userData.user.profileImage,
+        username: userData.user.name ?? '',
+      );
+
+      // Wait for stories to actually load
+      await storyProvider.fetchStories();
+
+      // Stories are now loaded, we can update loading state
+      if (mounted) {
+        setState(() => _isStoriesLoading = false);
+      }
+    }
   }
 
   void _showInitialModals() {
@@ -8329,40 +7977,6 @@ class _HomeScreenState extends State<HomeScreen>
       });
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // DATA FETCHERS
-  // ══════════════════════════════════════════════════════════════════════════
-
-  // Future<void> _fetchBanners() async {
-  //   if (mounted) setState(() => _isBannerLoading = true);
-  //   try {
-  //     final response = await http.get(
-  //       Uri.parse('http://31.97.206.144:4061/api/poster/getbanners'),
-  //     );
-  //     if (response.statusCode == 200) {
-  //       final data = jsonDecode(response.body);
-  //       List banners = data is List
-  //           ? data
-  //           : (data['banners'] ?? data['data'] ?? []);
-  //       List<String> images = [];
-  //       for (var item in banners) {
-  //         if (item['images'] != null && item['images'].isNotEmpty)
-  //           images.add(item['images'][0]);
-  //       }
-  //       if (mounted)
-  //         setState(() {
-  //           bannerList = images;
-  //           _isBannerLoading = false;
-  //         });
-  //     } else {
-  //       if (mounted) setState(() => _isBannerLoading = false);
-  //     }
-  //   } catch (e) {
-  //     if (mounted) setState(() => _isBannerLoading = false);
-  //     debugPrint('fetchBanners: $e');
-  //   }
-  // }
 
   Future<void> _fetchBanners({bool forceRefresh = false}) async {
     final bannerProvider = Provider.of<BannerProvider>(context, listen: false);
@@ -8408,32 +8022,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // Future<void> _fetchWeeklyPosters() async {
-  //   if (mounted) setState(() => _isWeeklyLoading = true);
-  //   try {
-  //     final response = await http.get(
-  //       Uri.parse(
-  //         'http://31.97.206.144:4061/api/poster/weeklyposters/$currentUserId',
-  //       ),
-  //     );
-  //     if (response.statusCode == 200) {
-  //       final data = jsonDecode(response.body) as Map<String, dynamic>;
-  //       if (mounted)
-  //         setState(() {
-  //           weeklyPosters = data.map(
-  //             (k, v) => MapEntry(k, List<dynamic>.from(v)),
-  //           );
-  //           _isWeeklyLoading = false;
-  //         });
-  //     } else {
-  //       if (mounted) setState(() => _isWeeklyLoading = false);
-  //     }
-  //   } catch (e) {
-  //     if (mounted) setState(() => _isWeeklyLoading = false);
-  //     debugPrint('fetchWeeklyPosters: $e');
-  //   }
-  // }
-
   Future<void> _fetchWeeklyPosters({bool forceRefresh = false}) async {
     if (userId == null) return;
 
@@ -8461,7 +8049,6 @@ class _HomeScreenState extends State<HomeScreen>
           username = userData.user.name;
           currentUserId = userData.user.id;
         });
-        await _fetchWeeklyPosters();
         final response = await http.get(
           Uri.parse(
             'http://31.97.206.144:4061/api/users/wishes/$currentUserId',
@@ -8515,19 +8102,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  Future<void> _initializeUser() async {
-    final userData = await AuthPreferences.getUserData();
-    if (userData != null && userData.user.id != null) {
-      final storyProvider = Provider.of<StoryProvider>(context, listen: false);
-      storyProvider.setCurrentUser(
-        userId: userData.user.id,
-        userImage: userData.user.profileImage,
-        username: userData.user.name ?? '',
-      );
-      storyProvider.fetchStories();
-    }
-  }
-
   Future<void> fetchCustomers() async {
     if (userId == null) return;
     setState(() => isLoadingCustomers = true);
@@ -8553,33 +8127,6 @@ class _HomeScreenState extends State<HomeScreen>
   String _formatDate(DateTime d) =>
       "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
 
-  // Future<void> _fetchFestivalPosters(DateTime date) async {
-  //   if (mounted)
-  //     setState(() {
-  //       _isFestivalLoading = true;
-  //       festivaldata = [];
-  //     });
-  //   try {
-  //     final response = await http.post(
-  //       Uri.parse('http://31.97.206.144:4061/api/poster/festival'),
-  //       headers: {'Content-Type': 'application/json'},
-  //       body: jsonEncode({'festivalDate': _formatDate(date)}),
-  //     );
-  //     if (response.statusCode == 200) {
-  //       final decoded = jsonDecode(response.body);
-  //       if (mounted)
-  //         setState(() {
-  //           festivaldata = decoded is List ? decoded : [];
-  //           _isFestivalLoading = false;
-  //         });
-  //     } else {
-  //       if (mounted) setState(() => _isFestivalLoading = false);
-  //     }
-  //   } catch (e) {
-  //     if (mounted) setState(() => _isFestivalLoading = false);
-  //   }
-  // }
-
   Future<void> _fetchFestivalPosters(
     DateTime date, {
     bool forceRefresh = false,
@@ -8589,15 +8136,29 @@ class _HomeScreenState extends State<HomeScreen>
       listen: false,
     );
 
+    print('🎯 _fetchFestivalPosters called for date: ${_formatDate(date)}');
+
     // Check if we have cached data for this date
     if (!forceRefresh && festivalProvider.hasCachedDataForDate(date)) {
       print('Using cached festival posters for date: ${_formatDate(date)}');
+      // Even with cache, make sure we update the UI
+      if (mounted) {
+        setState(() {
+          _isFestivalLoading = false;
+        });
+      }
       return;
     }
 
+    print(
+      '🌐 Fetching festival posters from API for date: ${_formatDate(date)}',
+    );
     await festivalProvider.fetchFestivalPosters(
       date,
       forceRefresh: forceRefresh,
+    );
+    print(
+      '✅ Festival posters fetched, count: ${festivalProvider.festivalPosters.length}',
     );
   }
 
@@ -8716,7 +8277,7 @@ class _HomeScreenState extends State<HomeScreen>
                 if (_celebrationVideoReady &&
                     _celebrationController != null &&
                     _celebrationController!.value.isInitialized)
-                  _CelebrationVideoWidget(controller: _celebrationController!),
+                  CelebrationVideoWidget(controller: _celebrationController!),
                 const SizedBox(height: 12),
                 _buildUpcomingFestivalsSection(),
                 _buildFestivalPostersSection(),
@@ -8858,27 +8419,6 @@ class _HomeScreenState extends State<HomeScreen>
                       ],
                     ),
                   ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.notifications_none_rounded,
-                    color: Colors.black87,
-                    size: 26,
-                  ),
-                  onPressed: () {
-                    if (!_requireNetwork()) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LogoListingScreen(),
-                      ),
-                    );
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 38,
-                    minHeight: 38,
-                  ),
-                ),
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -9019,7 +8559,7 @@ class _HomeScreenState extends State<HomeScreen>
             height: 136,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: _BannerSkeleton(),
+              child: BannerSkeleton(),
             ),
           );
         }
@@ -9135,7 +8675,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           _isStoriesLoading
-              ? const _StorySkeleton()
+              ? const StorySkeleton()
               : StoriesWidget(profile: userImage),
         ],
       ),
@@ -9188,21 +8728,53 @@ class _HomeScreenState extends State<HomeScreen>
             itemCount: dates.length,
             itemBuilder: (context, index) {
               final date = dates[index];
+              // IMPORTANT: Use festivalProvider.selectedDate, not dtp.selectedDate
               final isSelected =
-                  date.day == dtp.selectedDate.day &&
-                  date.month == dtp.selectedDate.month;
+                  date.year == festivalProvider.selectedDate.year &&
+                  date.month == festivalProvider.selectedDate.month &&
+                  date.day == festivalProvider.selectedDate.day;
+
               final day = date.day.toString();
               final suffix = _getDaySuffix(date.day);
               final month = DateFormat('MMM').format(date);
-
-              // Check if this date has cached data
               final hasCache = festivalProvider.hasCachedDataForDate(date);
 
               return GestureDetector(
                 onTap: () async {
                   if (!_requireNetwork()) return;
+
+                  print('\n=== 🎯 Date Tapped ===');
+                  print('Date: ${_formatDateForDebug(date)}');
+                  print(
+                    'Provider current date: ${_formatDateForDebug(festivalProvider.selectedDate)}',
+                  );
+                  print('Is selected: $isSelected');
+
+                  if (isSelected) {
+                    print('Same date, skipping');
+                    return;
+                  }
+
+                  setState(() {
+                    _isFestivalLoading = true;
+                  });
+
+                  // Update DateTimeProvider if needed
                   dtp.setStartDate(date);
-                  await festivalProvider.changeDate(date);
+
+                  // Call changeDate on the provider
+                  final success = await festivalProvider.changeDate(date);
+                  print('Change date success: $success');
+                  print(
+                    'New posters count: ${festivalProvider.festivalPosters.length}',
+                  );
+                  print(
+                    'New date in provider: ${_formatDateForDebug(festivalProvider.selectedDate)}',
+                  );
+
+                  setState(() {
+                    _isFestivalLoading = false;
+                  });
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -9224,62 +8796,82 @@ class _HomeScreenState extends State<HomeScreen>
                           ]
                         : [],
                   ),
-                  child: Stack(
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: day,
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : _primaryText,
+                  child: Center(
+                    // ← Add this Center widget
+                    child: Stack(
+                      alignment: Alignment.center, // ← Center the stack content
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment
+                              .center, // ← Center horizontally
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: day,
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : _primaryText,
+                                    ),
                                   ),
-                                ),
-                                TextSpan(
-                                  text: suffix,
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected
-                                        ? Colors.white70
-                                        : _secondaryText,
+                                  TextSpan(
+                                    text: suffix,
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? Colors.white70
+                                          : _secondaryText,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          Text(
-                            month,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.white : _secondaryText,
+                            Text(
+                              month,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? Colors.white
+                                    : _secondaryText,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      // Show indicator if data is cached
-                      if (hasCache && !isSelected)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: _accent,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                          ],
                         ),
-                    ],
+                        if (hasCache && !isSelected)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: _accent,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        if (isSelected && _isFestivalLoading)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: isSelected ? Colors.white : _accent,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -9290,41 +8882,68 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // FESTIVAL POSTERS
-  // ══════════════════════════════════════════════════════════════════════════
+  // Add helper method to compare dates
+  bool _isSameDate(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
 
+  // Update _buildFestivalPostersSection to properly react to changes
   Widget _buildFestivalPostersSection() {
     return Consumer<FestivalPostersProvider>(
       builder: (context, festivalProvider, _) {
-        // Show loading only on first load when no data
-        if (festivalProvider.isLoading && !festivalProvider.hasData) {
+        // Add debug print to see when this rebuilds
+        print(
+          '🔥 _buildFestivalPostersSection REBUILDING - Date: ${_formatDateForDebug(festivalProvider.selectedDate)}, Posters: ${festivalProvider.festivalPosters.length}',
+        );
+
+        // Show loading state
+        if (_isFestivalLoading || festivalProvider.isLoading) {
+          print('⏳ Showing loading skeleton');
           return SizedBox(
             height: 155,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               itemCount: 5,
-              itemBuilder: (_, __) => const _PosterCardSkeleton(),
+              itemBuilder: (_, __) => const PosterCardSkeleton(),
             ),
           );
         }
 
-        if (festivalProvider.festivalPosters.isEmpty)
-          return const SizedBox.shrink();
+        // Check if we have data
+        if (festivalProvider.festivalPosters.isEmpty) {
+          print(
+            '📭 No posters available for selected date: ${_formatDateForDebug(festivalProvider.selectedDate)}',
+          );
+          return SizedBox();
+        }
 
+        // Show posters
+        print(
+          '🎨 Showing ${festivalProvider.festivalPosters.length} posters for date: ${_formatDateForDebug(festivalProvider.selectedDate)}',
+        );
         return SizedBox(
           height: 155,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
             itemCount: festivalProvider.festivalPosters.length,
-            itemBuilder: (_, i) =>
-                _buildSmallPosterCard(festivalProvider.festivalPosters[i], i),
+            itemBuilder: (_, i) {
+              final poster = festivalProvider.festivalPosters[i];
+              print('   Poster $i: ${poster.categoryName}');
+              return _buildSmallPosterCard(poster, i);
+            },
           ),
         );
       },
     );
+  }
+
+  // Add this helper method
+  String _formatDateForDebug(DateTime date) {
+    return "${date.year}-${date.month}-${date.day}";
   }
 
   // Update _buildSmallPosterCard to accept FestivalPoster:
@@ -9371,7 +8990,7 @@ class _HomeScreenState extends State<HomeScreen>
                       Container(color: const Color(0xFFF3F4F6)),
                   loadingBuilder: (context, child, progress) {
                     if (progress == null) return child;
-                    return const _SkeletonBox(
+                    return const SkeletonBox(
                       width: 110,
                       height: 100,
                       borderRadius: 0,
@@ -9421,7 +9040,7 @@ class _HomeScreenState extends State<HomeScreen>
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   itemCount: 5,
-                  itemBuilder: (_, __) => const _PosterCardSkeleton(),
+                  itemBuilder: (_, __) => const PosterCardSkeleton(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -9600,7 +9219,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Container(color: const Color(0xFFF3F4F6)),
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
-                        return const _SkeletonBox(
+                        return const SkeletonBox(
                           width: 110,
                           height: 100,
                           borderRadius: 0,
@@ -9740,7 +9359,7 @@ class _HomeScreenState extends State<HomeScreen>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              _AutoPlayReelVideo(videoUrl: videoUrl),
+              AutoPlayReelVideo(videoUrl: videoUrl),
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -9862,8 +9481,8 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _SkeletonBox(width: 130, height: 18, borderRadius: 4),
-                          _SkeletonBox(width: 60, height: 14, borderRadius: 4),
+                          SkeletonBox(width: 130, height: 18, borderRadius: 4),
+                          SkeletonBox(width: 60, height: 14, borderRadius: 4),
                         ],
                       ),
                     ),
@@ -9876,7 +9495,7 @@ class _HomeScreenState extends State<HomeScreen>
                         itemCount: 4,
                         itemBuilder: (_, __) => Padding(
                           padding: const EdgeInsets.only(right: 12),
-                          child: const _SkeletonBox(
+                          child: const SkeletonBox(
                             width: 110,
                             height: 130,
                             borderRadius: 16,
@@ -10049,7 +9668,7 @@ class _HomeScreenState extends State<HomeScreen>
                       height: h,
                       loadingBuilder: (_, child, progress) {
                         if (progress == null) return child;
-                        return const _SkeletonBox(
+                        return const SkeletonBox(
                           width: w,
                           height: h,
                           borderRadius: 0,
@@ -10479,7 +10098,7 @@ class _HomeScreenState extends State<HomeScreen>
                         loadReferralCode();
                     });
 
-                    return _FlippableReferModal(
+                    return FlippableReferModal(
                       isLoading: isLoading,
                       errorMessage: errorMessage,
                       userReferralCode: userReferralCode,
@@ -10510,632 +10129,6 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         );
       },
-    );
-  }
-
-  void _launchURL(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri))
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AUTO PLAY REEL VIDEO
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _AutoPlayReelVideo extends StatefulWidget {
-  final String videoUrl;
-  const _AutoPlayReelVideo({required this.videoUrl});
-
-  @override
-  State<_AutoPlayReelVideo> createState() => _AutoPlayReelVideoState();
-}
-
-class _AutoPlayReelVideoState extends State<_AutoPlayReelVideo> {
-  VideoPlayerController? _controller;
-  bool _initialized = false;
-  bool _hasError = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initVideo();
-  }
-
-  Future<void> _initVideo() async {
-    if (widget.videoUrl.isEmpty) {
-      setState(() => _hasError = true);
-      return;
-    }
-    try {
-      // Check if it's an asset or network URL
-      if (widget.videoUrl.startsWith('assets/')) {
-        _controller = VideoPlayerController.asset(widget.videoUrl);
-      } else {
-        _controller = VideoPlayerController.networkUrl(
-          Uri.parse(widget.videoUrl),
-        );
-      }
-
-      await _controller!.initialize();
-      if (!mounted) return;
-
-      _controller!
-        ..setLooping(true)
-        ..setVolume(0)
-        ..play();
-
-      print("Video playing: ${_controller!.value.isPlaying}"); // Debug log
-      setState(() => _initialized = true);
-    } catch (e) {
-      print("Video error: $e");
-      if (mounted) setState(() => _hasError = true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  // REMOVED the extra @override here - this was the syntax error!
-  Widget build(BuildContext context) {
-    if (_hasError || !_initialized || _controller == null) {
-      return Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: const Center(
-          child: Icon(
-            Icons.play_circle_outline_rounded,
-            color: Colors.white38,
-            size: 36,
-          ),
-        ),
-      );
-    }
-
-    // Fix: Use FittedBox to ensure video fills the container properly
-    return FittedBox(
-      fit: BoxFit.cover,
-      child: SizedBox(
-        width: _controller!.value.size.width,
-        height: _controller!.value.size.height,
-        child: VideoPlayer(_controller!),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FLIPPABLE REFER MODAL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _FlippableReferModal extends StatefulWidget {
-  final bool isLoading;
-  final String? errorMessage;
-  final String? userReferralCode;
-  final VoidCallback onLoadReferralCode;
-  final VoidCallback onShare;
-  final VoidCallback onClose;
-  final VoidCallback onCopy;
-
-  const _FlippableReferModal({
-    required this.isLoading,
-    required this.errorMessage,
-    required this.userReferralCode,
-    required this.onLoadReferralCode,
-    required this.onShare,
-    required this.onClose,
-    required this.onCopy,
-  });
-
-  @override
-  State<_FlippableReferModal> createState() => _FlippableReferModalState();
-}
-
-class _FlippableReferModalState extends State<_FlippableReferModal>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _flipController;
-  late Animation<double> _flipAnimation;
-  bool _isFlipped = false;
-  bool _showBack = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _flipController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _flipController, curve: Curves.easeInOut),
-    );
-    _flipAnimation.addListener(() {
-      if (_flipAnimation.value >= 0.5 && !_showBack)
-        setState(() => _showBack = true);
-      else if (_flipAnimation.value < 0.5 && _showBack)
-        setState(() => _showBack = false);
-    });
-  }
-
-  @override
-  void dispose() {
-    _flipController.dispose();
-    super.dispose();
-  }
-
-  void _flip() {
-    if (_isFlipped)
-      _flipController.reverse();
-    else
-      _flipController.forward();
-    _isFlipped = !_isFlipped;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          constraints: const BoxConstraints(maxWidth: 500),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey[200]!),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4F46E5).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.people_outline,
-                          color: Color(0xFF4F46E5),
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: AppText(
-                          'refer_earn',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF111827),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _flip,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF4F46E5).withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AnimatedBuilder(
-                                animation: _flipAnimation,
-                                builder: (_, __) => Transform(
-                                  alignment: Alignment.center,
-                                  transform: Matrix4.rotationY(
-                                    _flipAnimation.value * 3.14159,
-                                  ),
-                                  child: const Icon(
-                                    Icons.flip_camera_android_rounded,
-                                    color: Color(0xFF4F46E5),
-                                    size: 16,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                _showBack ? 'My Code' : 'How it works',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF4F46E5),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: widget.onClose,
-                        icon: const Icon(Icons.close, size: 24),
-                        color: Colors.grey[600],
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: _flip,
-                  child: AnimatedBuilder(
-                    animation: _flipAnimation,
-                    builder: (context, _) {
-                      final angle = _flipAnimation.value * 3.14159;
-                      final isSecondHalf = _flipAnimation.value >= 0.5;
-                      return Transform(
-                        alignment: Alignment.center,
-                        transform: Matrix4.identity()
-                          ..setEntry(3, 2, 0.001)
-                          ..rotateY(angle),
-                        child: Transform(
-                          alignment: Alignment.center,
-                          transform: isSecondHalf
-                              ? (Matrix4.identity()..rotateY(3.14159))
-                              : Matrix4.identity(),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                            child: _showBack
-                                ? _buildHowItWorksContent()
-                                : _buildMyCodeContent(),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.touch_app_rounded,
-                        size: 13,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Tap card to flip',
-                        style: TextStyle(fontSize: 11, color: Colors.grey[400]),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: widget.onCopy,
-                          icon: const Icon(Icons.copy, size: 20),
-                          label: const Text('Copy Code'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4F46E5),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: widget.userReferralCode != null
-                              ? widget.onShare
-                              : null,
-                          icon: const Icon(Icons.share, size: 20),
-                          label: const Text('Share'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: Colors.grey[300],
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMyCodeContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF0F9FF),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFBAE6FD)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0EA5E9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.info_outline,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: AppText(
-                  'share_referral_earn',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF0C4A6E),
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        const AppText(
-          'your_referral_code',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 10),
-        if (widget.isLoading)
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFF4F46E5),
-                  ),
-                ),
-                SizedBox(width: 12),
-                Text(
-                  'Loading...',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-                ),
-              ],
-            ),
-          )
-        else if (widget.errorMessage != null)
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF2F2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFECACA)),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: Color(0xFFEF4444),
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.errorMessage!,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF991B1B),
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: widget.onLoadReferralCode,
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          )
-        else
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFEEF2FF), Color(0xFFF5F3FF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFC7D2FE)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.userReferralCode ?? '--',
-                        style: const TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 4,
-                          color: Color(0xFF4F46E5),
-                        ),
-                      ),
-                      const Text(
-                        'Your unique referral code',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4F46E5).withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.card_giftcard_rounded,
-                    color: Color(0xFF4F46E5),
-                    size: 28,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        const SizedBox(height: 8),
-      ],
-    );
-  }
-
-  Widget _buildHowItWorksContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const AppText(
-          'how_it_works',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF111827),
-          ),
-        ),
-        const SizedBox(height: 16),
-        _howItWorksStep(
-          '1',
-          Icons.share_rounded,
-          'share_your_code',
-          'send_referral_any_platform',
-          const Color(0xFF6366F1),
-        ),
-        const SizedBox(height: 12),
-        _howItWorksStep(
-          '2',
-          Icons.person_add_rounded,
-          'friend_signs_up',
-          'enter_code_during_signup',
-          const Color(0xFF0EA5E9),
-        ),
-        const SizedBox(height: 12),
-        _howItWorksStep(
-          '3',
-          Icons.emoji_events_rounded,
-          'earn_rewards',
-          'get_200_on_upgrade',
-          const Color(0xFF10B981),
-        ),
-        const SizedBox(height: 8),
-      ],
-    );
-  }
-
-  Widget _howItWorksStep(
-    String number,
-    IconData icon,
-    String titleKey,
-    String descKey,
-    Color color,
-  ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Center(child: Icon(icon, color: color, size: 20)),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText(
-                titleKey,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 3),
-              AppText(
-                descKey,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6B7280),
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

@@ -510,7 +510,7 @@ import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/views/createposter/create_poster_screen.dart';
 import 'package:posternova/views/createposter/logo_maker_screen.dart';
 import 'package:posternova/views/logo/logo_category.dart';
-import 'package:posternova/views/logo/logo_screen.dart';
+import 'package:posternova/views/logo/logo_screen.dart' hide LogoCategory;
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
@@ -1090,8 +1090,7 @@ class _PosterScreenState extends State<PosterScreen>
           colors: [Color(0xFF10B981), Color(0xFF059669)],
         ),
         // screen: const LogoMakingScreen(),
-                screen: const LogoCategory(),
-
+        screen: const LogoCategory(),
       ),
     ];
 

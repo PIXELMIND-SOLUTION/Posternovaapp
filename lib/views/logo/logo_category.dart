@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/views/logo/logo_history.dart';
+import 'package:posternova/views/logo/new_logo.dart';
 import 'dart:convert';
-import 'package:posternova/views/logo/logo_screen.dart';
+// import 'package:posternova/views/logo/logo_screen.dart';
 import 'package:posternova/widgets/language_widget.dart';
 
 class LogoCategory extends StatefulWidget {
@@ -54,11 +55,13 @@ class _LogoCategoryState extends State<LogoCategory> {
       final userData = await AuthPreferences.getUserData();
       final fetchedUserId = userData?.user.id;
 
-       setState(() {
+      setState(() {
         userId = fetchedUserId; // Store it
       });
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/admin/getlogocategories/$userId'),
+        Uri.parse(
+          'http://31.97.206.144:4061/api/admin/getlogocategories/$userId',
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -95,7 +98,7 @@ class _LogoCategoryState extends State<LogoCategory> {
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration:  InputDecoration(
+                decoration: InputDecoration(
                   hintText: AppText.translate(context, 'search_categories'),
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.grey),
@@ -212,7 +215,7 @@ class _LogoCategoryState extends State<LogoCategory> {
                 itemCount: filteredCategories.length,
                 itemBuilder: (context, index) {
                   final category = filteredCategories[index];
-                  return CategoryCard(category: category,userId: userId!,);
+                  return CategoryCard(category: category, userId: userId!);
                 },
               ),
             ),
@@ -222,9 +225,9 @@ class _LogoCategoryState extends State<LogoCategory> {
 
 class CategoryCard extends StatelessWidget {
   final CategoryModel category;
-   final String userId;
+  final String userId;
 
-  const CategoryCard({super.key, required this.category,required this.userId});
+  const CategoryCard({super.key, required this.category, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +241,8 @@ class CategoryCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => LogoMakingScreen(categoryId: category.id,userId: userId,),
+              builder: (context) =>
+                  LogosGridScreen(categoryId: category.id, userId: userId),
             ),
           );
         },

@@ -1,1260 +1,3 @@
-// import 'dart:typed_data';
-// import 'dart:ui' as ui;
-// import 'package:flutter/material.dart';
-// import 'package:flutter/rendering.dart';
-// import 'package:gal/gal.dart';
-// import 'package:http/http.dart' as http;
-
-// // ─────────────────────────────────────────────
-// //  DATA MODELS
-// // ─────────────────────────────────────────────
-
-// class LogoPlaceholder {
-//   final String id;
-//   final String type;
-//   final String label;
-//   final String defaultValue;
-//   final Offset position;
-//   final Size size;
-//   final TextStyle style;
-//   final bool required;
-//   final int maxLength;
-//   final TextAlign textAlign;
-
-//   LogoPlaceholder({
-//     required this.id,
-//     required this.type,
-//     required this.label,
-//     required this.defaultValue,
-//     required this.position,
-//     required this.size,
-//     required this.style,
-//     required this.required,
-//     required this.maxLength,
-//     required this.textAlign,
-//   });
-
-//   factory LogoPlaceholder.fromJson(Map<String, dynamic> json) {
-//     return LogoPlaceholder(
-//       id: json['id'],
-//       type: json['type'],
-//       label: json['label'],
-//       defaultValue: json['defaultValue'],
-//       position: Offset(
-//         json['position']['x'].toDouble(),
-//         json['position']['y'].toDouble(),
-//       ),
-//       size: Size(
-//         json['position']['width'].toDouble(),
-//         json['position']['height'].toDouble(),
-//       ),
-//       style: _parseTextStyle(json['style']),
-//       required: json['required'] ?? false,
-//       maxLength: json['maxLength'] ?? 100,
-//       textAlign: _parseTextAlign(json['style']['textAlign'] ?? 'center'),
-//     );
-//   }
-
-//   static TextStyle _parseTextStyle(Map<String, dynamic> style) {
-//     return TextStyle(
-//       fontSize: (style['fontSize'] ?? 24).toDouble(),
-//       fontFamily: style['fontFamily'] ?? 'Roboto',
-//       fontWeight: style['fontWeight'] == 'bold'
-//           ? FontWeight.bold
-//           : FontWeight.normal,
-//       color: Color(
-//         int.parse(style['color'].replaceFirst('#', 'FF'), radix: 16),
-//       ),
-//       letterSpacing: (style['letterSpacing'] ?? 0).toDouble(),
-//       shadows: style['textShadow'] != null
-//           ? [
-//               Shadow(
-//                 color: Colors.black.withOpacity(0.3),
-//                 offset: const Offset(2, 2),
-//                 blurRadius: 4,
-//               ),
-//             ]
-//           : null,
-//     );
-//   }
-
-//   static TextAlign _parseTextAlign(String align) {
-//     switch (align.toLowerCase()) {
-//       case 'left':
-//         return TextAlign.left;
-//       case 'right':
-//         return TextAlign.right;
-//       case 'center':
-//       default:
-//         return TextAlign.center;
-//     }
-//   }
-// }
-
-// class LogoData {
-//   final String id;
-//   final String name;
-//   final String category;
-//   final String imageUrl;
-//   final String imageType;
-//   final List<LogoPlaceholder> placeholders;
-//   final bool isPremium;
-//   final List<String> tags;
-
-//   LogoData({
-//     required this.id,
-//     required this.name,
-//     required this.category,
-//     required this.imageUrl,
-//     required this.imageType,
-//     required this.placeholders,
-//     required this.isPremium,
-//     required this.tags,
-//   });
-
-//   factory LogoData.fromJson(Map<String, dynamic> json) {
-//     final logo = json['logo'];
-//     return LogoData(
-//       id: logo['_id'],
-//       name: logo['name'],
-//       category: logo['category'],
-//       imageUrl: logo['image']['url'],
-//       imageType: logo['image']['type'],
-//       placeholders: (logo['placeholders'] as List)
-//           .map((p) => LogoPlaceholder.fromJson(p))
-//           .toList(),
-//       isPremium: logo['metadata']['isPremium'] ?? false,
-//       tags: List<String>.from(logo['metadata']['tags'] ?? []),
-//     );
-//   }
-// }
-
-// // ─────────────────────────────────────────────
-// //  EDITABLE LAYER MODEL (text + stickers)
-// // ─────────────────────────────────────────────
-
-// enum LayerType { text, sticker }
-
-// class EditableLayer {
-//   final String id;
-//   LayerType type;
-//   String content; // text string or emoji
-//   Offset position;
-//   double fontSize;
-//   Color color;
-//   FontWeight fontWeight;
-//   bool isSelected;
-
-//   EditableLayer({
-//     required this.id,
-//     required this.type,
-//     required this.content,
-//     required this.position,
-//     this.fontSize = 24,
-//     this.color = Colors.white,
-//     this.fontWeight = FontWeight.bold,
-//     this.isSelected = false,
-//   });
-// }
-
-// // ─────────────────────────────────────────────
-// //  MAIN LOGO EDITOR SCREEN
-// // ─────────────────────────────────────────────
-
-// class LogoEditorScreen extends StatefulWidget {
-//   final LogoData logoData;
-//   const LogoEditorScreen({super.key, required this.logoData});
-
-//   @override
-//   State<LogoEditorScreen> createState() => _LogoEditorScreenState();
-// }
-
-// class _LogoEditorScreenState extends State<LogoEditorScreen> {
-//   // ── Placeholder text values (from API) ──────────────────────
-//   final Map<String, String> _textValues = {};
-
-//   // ── Draggable layers (user-added text + stickers) ────────────
-//   final List<EditableLayer> _layers = [];
-//   String? _selectedLayerId;
-
-//   // ── Canvas drag offsets per placeholder id ───────────────────
-//   final Map<String, Offset> _placeholderOffsets = {};
-
-//   // ── UI state ────────────────────────────────────────────────
-//   final GlobalKey _canvasKey = GlobalKey();
-//   bool _isSaving = false;
-//   bool _isCapturing = false; // true during gallery save — hides selection UI
-//   bool _isLoading = true;
-//   ui.Image? _loadedImage;
-
-//   // Canvas size (fixed logical size)
-//   static const double _canvasSize = 320.0;
-
-//   // Bottom toolbar tab
-//   int _activeTab = 0; // 0=Text, 1=Stickers, 2=Color
-
-//   // Sticker options
-//   static const List<String> _stickers = [
-//     '⭐',
-//     '🔥',
-//     '💎',
-//     '🎯',
-//     '🏆',
-//     '✨',
-//     '🎨',
-//     '🚀',
-//     '💡',
-//     '🎵',
-//     '❤️',
-//     '👑',
-//     '🌟',
-//     '💪',
-//     '🎉',
-//     '🌈',
-//     '🦋',
-//     '🌸',
-//     '🍀',
-//     '⚡',
-//     '🎸',
-//     '🎤',
-//     '📸',
-//     '🎬',
-//   ];
-
-//   // Color palette
-//   static const List<Color> _colorPalette = [
-//     Colors.white,
-//     Colors.black,
-//     Color(0xFFFF6B6B),
-//     Color(0xFFFFD93D),
-//     Color(0xFF6BCB77),
-//     Color(0xFF4D96FF),
-//     Color(0xFFFF6FC8),
-//     Color(0xFFFF9A3C),
-//     Color(0xFF845EC2),
-//     Color(0xFF00C9A7),
-//     Color(0xFFF9F871),
-//     Color(0xFFFF8066),
-//   ];
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _initializeTextValues();
-//     _loadLogoImage();
-//   }
-
-//   void _initializeTextValues() {
-//     for (var placeholder in widget.logoData.placeholders) {
-//       if (placeholder.type == 'text') {
-//         _textValues[placeholder.id] = placeholder.defaultValue;
-//         _placeholderOffsets[placeholder.id] = placeholder.position;
-//       }
-//     }
-//   }
-
-//   Future<void> _loadLogoImage() async {
-//     try {
-//       final response = await http.get(Uri.parse(widget.logoData.imageUrl));
-//       if (response.statusCode == 200) {
-//         final Uint8List bytes = response.bodyBytes;
-//         final ui.Codec codec = await ui.instantiateImageCodec(bytes);
-//         final ui.FrameInfo frame = await codec.getNextFrame();
-//         setState(() {
-//           _loadedImage = frame.image;
-//           _isLoading = false;
-//         });
-//       }
-//     } catch (e) {
-//       setState(() => _isLoading = false);
-//       debugPrint('Error loading image: $e');
-//     }
-//   }
-
-//   Future<void> _saveLogoToGallery() async {
-//     setState(() => _isSaving = true);
-
-//     try {
-//       // Deselect all and set saving mode before capture
-//       setState(() {
-//         _selectedLayerId = null;
-//         _isCapturing = true;
-//       });
-//       await Future.delayed(const Duration(milliseconds: 150));
-
-//       final RenderRepaintBoundary? boundary =
-//           _canvasKey.currentContext?.findRenderObject()
-//               as RenderRepaintBoundary?;
-//       if (boundary == null) return;
-
-//       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-//       final ByteData? byteData = await image.toByteData(
-//         format: ui.ImageByteFormat.png,
-//       );
-//       final bytes = byteData?.buffer.asUint8List();
-
-//       if (bytes != null) {
-//         await Gal.putImageBytes(
-//           bytes,
-//           name: 'Logo_${DateTime.now().millisecondsSinceEpoch}',
-//           album: 'Logo Maker',
-//         );
-//         if (mounted) {
-//           ScaffoldMessenger.of(context).showSnackBar(
-//             const SnackBar(
-//               content: Row(
-//                 children: [
-//                   Icon(Icons.check_circle, color: Colors.white),
-//                   SizedBox(width: 12),
-//                   Text('Logo saved to gallery!'),
-//                 ],
-//               ),
-//               backgroundColor: Color(0xFF6C63FF),
-//               behavior: SnackBarBehavior.floating,
-//             ),
-//           );
-//         }
-//       }
-//     } catch (e) {
-//       if (mounted) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(
-//             content: Text('Failed to save: $e'),
-//             backgroundColor: Colors.red,
-//           ),
-//         );
-//       }
-//     } finally {
-//       setState(() {
-//         _isSaving = false;
-//         _isCapturing = false;
-//       });
-//     }
-//   }
-
-//   // ── Layer management ─────────────────────────────────────────
-
-//   void _addTextLayer() {
-//     final layer = EditableLayer(
-//       id: DateTime.now().millisecondsSinceEpoch.toString(),
-//       type: LayerType.text,
-//       content: 'New Text',
-//       position: const Offset(60, 130),
-//       fontSize: 22,
-//       color: Colors.white,
-//       fontWeight: FontWeight.bold,
-//     );
-//     setState(() {
-//       _layers.add(layer);
-//       _selectedLayerId = layer.id;
-//     });
-//     _openLayerTextEditor(layer);
-//   }
-
-//   void _addSticker(String emoji) {
-//     final layer = EditableLayer(
-//       id: DateTime.now().millisecondsSinceEpoch.toString(),
-//       type: LayerType.sticker,
-//       content: emoji,
-//       position: const Offset(120, 100),
-//       fontSize: 48,
-//     );
-//     setState(() {
-//       _layers.add(layer);
-//       _selectedLayerId = layer.id;
-//     });
-//   }
-
-//   void _deleteSelectedLayer() {
-//     if (_selectedLayerId == null) return;
-//     setState(() {
-//       _layers.removeWhere((l) => l.id == _selectedLayerId);
-//       _selectedLayerId = null;
-//     });
-//   }
-
-//   EditableLayer? get _selectedLayer {
-//     try {
-//       return _layers.firstWhere((l) => l.id == _selectedLayerId);
-//     } catch (_) {
-//       return null;
-//     }
-//   }
-
-//   // ── Text editor ──────────────────────────────────────────────
-
-//   void _openPlaceholderEditor(LogoPlaceholder placeholder) {
-//     final controller = TextEditingController(text: _textValues[placeholder.id]);
-//     showModalBottomSheet(
-//       context: context,
-//       isScrollControlled: true,
-//       backgroundColor: Colors.transparent,
-//       builder: (_) => _TextEditorBottomSheet(
-//         label: placeholder.label,
-//         controller: controller,
-//         currentText: _textValues[placeholder.id] ?? '',
-//         maxLength: placeholder.maxLength,
-//         isRequired: placeholder.required,
-//         onSave: (newText) {
-//           setState(() => _textValues[placeholder.id] = newText);
-//         },
-//       ),
-//     );
-//   }
-
-//   void _openLayerTextEditor(EditableLayer layer) {
-//     final controller = TextEditingController(text: layer.content);
-//     showModalBottomSheet(
-//       context: context,
-//       isScrollControlled: true,
-//       backgroundColor: Colors.transparent,
-//       builder: (_) => _TextEditorBottomSheet(
-//         label: 'Edit Text',
-//         controller: controller,
-//         currentText: layer.content,
-//         maxLength: 60,
-//         isRequired: false,
-//         onSave: (newText) {
-//           setState(() => layer.content = newText);
-//         },
-//       ),
-//     );
-//   }
-
-//   // ── Build ────────────────────────────────────────────────────
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: const Color(0xFFF0F2F8),
-//       appBar: _buildAppBar(),
-//       body: _isLoading
-//           ? const Center(
-//               child: CircularProgressIndicator(
-//                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6C63FF)),
-//               ),
-//             )
-//           : Column(
-//               children: [
-//                 Expanded(child: _buildCanvas()),
-//                 _buildBottomPanel(),
-//               ],
-//             ),
-//     );
-//   }
-
-//   PreferredSizeWidget _buildAppBar() {
-//     return AppBar(
-//       backgroundColor: Colors.white,
-//       elevation: 0,
-//       leading: IconButton(
-//         icon: Container(
-//           padding: const EdgeInsets.all(8),
-//           decoration: BoxDecoration(
-//             color: Colors.grey[100],
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//           child: const Icon(
-//             Icons.arrow_back_ios_new,
-//             size: 18,
-//             color: Color(0xFF2D3142),
-//           ),
-//         ),
-//         onPressed: () => Navigator.pop(context),
-//       ),
-//       title: Text(
-//         widget.logoData.name,
-//         style: const TextStyle(
-//           color: Color(0xFF2D3142),
-//           fontWeight: FontWeight.bold,
-//           fontSize: 18,
-//         ),
-//       ),
-//       centerTitle: true,
-//       actions: [
-//         if (_selectedLayerId != null)
-//           IconButton(
-//             icon: const Icon(Icons.delete_outline, color: Colors.red),
-//             onPressed: _deleteSelectedLayer,
-//             tooltip: 'Delete selected',
-//           ),
-//         if (widget.logoData.isPremium)
-//           Container(
-//             margin: const EdgeInsets.only(right: 8),
-//             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-//             decoration: BoxDecoration(
-//               gradient: const LinearGradient(
-//                 colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-//               ),
-//               borderRadius: BorderRadius.circular(20),
-//             ),
-//             child: const Row(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 Icon(Icons.stars, size: 14, color: Colors.white),
-//                 SizedBox(width: 4),
-//                 Text(
-//                   'PREMIUM',
-//                   style: TextStyle(
-//                     fontSize: 10,
-//                     fontWeight: FontWeight.bold,
-//                     color: Colors.white,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         IconButton(
-//           icon: _isSaving
-//               ? const SizedBox(
-//                   width: 20,
-//                   height: 20,
-//                   child: CircularProgressIndicator(strokeWidth: 2),
-//                 )
-//               : Container(
-//                   padding: const EdgeInsets.all(8),
-//                   decoration: BoxDecoration(
-//                     color: const Color(0xFF6C63FF).withOpacity(0.1),
-//                     borderRadius: BorderRadius.circular(10),
-//                   ),
-//                   child: const Icon(
-//                     Icons.download_outlined,
-//                     color: Color(0xFF6C63FF),
-//                     size: 20,
-//                   ),
-//                 ),
-//           onPressed: _isSaving ? null : _saveLogoToGallery,
-//         ),
-//         const SizedBox(width: 8),
-//       ],
-//     );
-//   }
-
-//   Widget _buildCanvas() {
-//     return Center(
-//       child: Container(
-//         margin: const EdgeInsets.all(20),
-//         width: _canvasSize,
-//         height: _canvasSize,
-//         decoration: BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.circular(20),
-//           boxShadow: [
-//             BoxShadow(
-//               color: Colors.black.withOpacity(0.12),
-//               blurRadius: 24,
-//               offset: const Offset(0, 6),
-//             ),
-//           ],
-//         ),
-//         child: ClipRRect(
-//           borderRadius: BorderRadius.circular(20),
-//           child: RepaintBoundary(
-//             key: _canvasKey,
-//             child: SizedBox(
-//               width: _canvasSize,
-//               height: _canvasSize,
-//               child: Stack(
-//                 children: [
-//                   // ── Solid white base — guarantees correct bg on export ──
-//                   Positioned.fill(child: Container(color: Colors.white)),
-
-//                   // ── Background image ──
-//                   if (_loadedImage != null)
-//                     Positioned.fill(
-//                       child: CustomPaint(
-//                         painter: _BackgroundPainter(image: _loadedImage!),
-//                       ),
-//                     ),
-
-//                   // ── API placeholder texts (draggable) ──
-//                   ...widget.logoData.placeholders
-//                       .where((p) => p.type == 'text')
-//                       .map((p) => _buildDraggablePlaceholderText(p)),
-
-//                   // ── User-added layers (text + stickers) ──
-//                   ..._layers.map((layer) => _buildDraggableLayer(layer)),
-
-//                   // ── Tap canvas to deselect — hidden during save capture ──
-//                   if (!_isCapturing)
-//                     Positioned.fill(
-//                       child: GestureDetector(
-//                         onTap: () => setState(() => _selectedLayerId = null),
-//                         behavior: HitTestBehavior.translucent,
-//                       ),
-//                     ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildDraggablePlaceholderText(LogoPlaceholder placeholder) {
-//     final offset = _placeholderOffsets[placeholder.id] ?? placeholder.position;
-//     final isSelected = _selectedLayerId == placeholder.id;
-
-//     return Positioned(
-//       left: offset.dx,
-//       top: offset.dy,
-//       child: GestureDetector(
-//         onTap: () {
-//           setState(() => _selectedLayerId = placeholder.id);
-//           _openPlaceholderEditor(placeholder);
-//         },
-//         onPanUpdate: (details) {
-//           setState(() {
-//             final current =
-//                 _placeholderOffsets[placeholder.id] ?? placeholder.position;
-//             _placeholderOffsets[placeholder.id] = Offset(
-//               (current.dx + details.delta.dx).clamp(
-//                 0,
-//                 _canvasSize - placeholder.size.width,
-//               ),
-//               (current.dy + details.delta.dy).clamp(
-//                 0,
-//                 _canvasSize - placeholder.size.height,
-//               ),
-//             );
-//           });
-//         },
-//         child: Container(
-//           width: placeholder.size.width,
-//           height: placeholder.size.height,
-//           decoration: isSelected && !_isCapturing
-//               ? BoxDecoration(
-//                   border: Border.all(
-//                     color: const Color(0xFF6C63FF),
-//                     width: 1.5,
-//                   ),
-//                   borderRadius: BorderRadius.circular(6),
-//                 )
-//               : null,
-//           alignment: _alignFromTextAlign(placeholder.textAlign),
-//           child: Text(
-//             _textValues[placeholder.id] ?? placeholder.defaultValue,
-//             // Ensure text is always visible: add a contrasting outline shadow
-//             style: placeholder.style.copyWith(
-//               shadows: [
-//                 // Contrasting halo so any text color is readable on any bg
-//                 Shadow(
-//                   color: _contrastShadowColor(
-//                     placeholder.style.color ?? Colors.white,
-//                   ),
-//                   offset: const Offset(0, 0),
-//                   blurRadius: 6,
-//                 ),
-//                 Shadow(
-//                   color: _contrastShadowColor(
-//                     placeholder.style.color ?? Colors.white,
-//                   ),
-//                   offset: const Offset(1, 1),
-//                   blurRadius: 2,
-//                 ),
-//                 ...(placeholder.style.shadows ?? []),
-//               ],
-//             ),
-//             textAlign: placeholder.textAlign,
-//             maxLines: 2,
-//             overflow: TextOverflow.ellipsis,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildDraggableLayer(EditableLayer layer) {
-//     final isSelected = _selectedLayerId == layer.id;
-//     final isText = layer.type == LayerType.text;
-
-//     return Positioned(
-//       left: layer.position.dx,
-//       top: layer.position.dy,
-//       child: GestureDetector(
-//         onTap: () {
-//           setState(() => _selectedLayerId = layer.id);
-//           if (isText) _openLayerTextEditor(layer);
-//         },
-//         onPanUpdate: (details) {
-//           setState(() {
-//             layer.position = Offset(
-//               (layer.position.dx + details.delta.dx).clamp(0, _canvasSize - 80),
-//               (layer.position.dy + details.delta.dy).clamp(0, _canvasSize - 50),
-//             );
-//           });
-//         },
-//         child: Container(
-//           padding: const EdgeInsets.all(4),
-//           decoration: isSelected && !_isCapturing
-//               ? BoxDecoration(
-//                   border: Border.all(
-//                     color: const Color(0xFF6C63FF),
-//                     width: 1.5,
-//                   ),
-//                   borderRadius: BorderRadius.circular(6),
-//                 )
-//               : null,
-//           child: Text(
-//             layer.content,
-//             style: TextStyle(
-//               fontSize: layer.fontSize,
-//               color: isText ? layer.color : null,
-//               fontWeight: isText ? layer.fontWeight : FontWeight.normal,
-//               shadows: isText
-//                   ? [
-//                       // Contrasting halo ensures text is visible on any bg
-//                       Shadow(
-//                         color: _contrastShadowColor(layer.color),
-//                         offset: const Offset(0, 0),
-//                         blurRadius: 6,
-//                       ),
-//                       Shadow(
-//                         color: _contrastShadowColor(layer.color),
-//                         offset: const Offset(1, 1),
-//                         blurRadius: 2,
-//                       ),
-//                     ]
-//                   : null,
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   // ── Bottom Panel ─────────────────────────────────────────────
-
-//   Widget _buildBottomPanel() {
-//     return Container(
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.06),
-//             blurRadius: 12,
-//             offset: const Offset(0, -2),
-//           ),
-//         ],
-//       ),
-//       child: Column(
-//         mainAxisSize: MainAxisSize.min,
-//         children: [
-//           const SizedBox(height: 10),
-//           Container(
-//             width: 40,
-//             height: 4,
-//             decoration: BoxDecoration(
-//               color: Colors.grey[300],
-//               borderRadius: BorderRadius.circular(2),
-//             ),
-//           ),
-//           const SizedBox(height: 12),
-
-//           // ── Tab buttons ──
-//           Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 20),
-//             child: Row(
-//               children: [
-//                 _tabButton(0, Icons.text_fields, 'Text'),
-//                 const SizedBox(width: 8),
-//                 _tabButton(1, Icons.emoji_emotions_outlined, 'Stickers'),
-//                 const SizedBox(width: 8),
-//                 _tabButton(2, Icons.palette_outlined, 'Color'),
-//                 const Spacer(),
-//                 // Quick add text button
-//                 GestureDetector(
-//                   onTap: _addTextLayer,
-//                   child: Container(
-//                     padding: const EdgeInsets.symmetric(
-//                       horizontal: 14,
-//                       vertical: 8,
-//                     ),
-//                     decoration: BoxDecoration(
-//                       gradient: const LinearGradient(
-//                         colors: [Color(0xFF6C63FF), Color(0xFF5A52D5)],
-//                       ),
-//                       borderRadius: BorderRadius.circular(20),
-//                     ),
-//                     child: const Row(
-//                       mainAxisSize: MainAxisSize.min,
-//                       children: [
-//                         Icon(Icons.add, color: Colors.white, size: 16),
-//                         SizedBox(width: 4),
-//                         Text(
-//                           'Add Text',
-//                           style: TextStyle(
-//                             color: Colors.white,
-//                             fontSize: 12,
-//                             fontWeight: FontWeight.w600,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           const SizedBox(height: 12),
-
-//           // ── Tab content ──
-//           AnimatedSwitcher(
-//             duration: const Duration(milliseconds: 200),
-//             child: _buildTabContent(),
-//           ),
-//           const SizedBox(height: 16),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _tabButton(int index, IconData icon, String label) {
-//     final isActive = _activeTab == index;
-//     return GestureDetector(
-//       onTap: () => setState(() => _activeTab = index),
-//       child: Container(
-//         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-//         decoration: BoxDecoration(
-//           color: isActive
-//               ? const Color(0xFF6C63FF).withOpacity(0.12)
-//               : Colors.grey[100],
-//           borderRadius: BorderRadius.circular(20),
-//           border: isActive
-//               ? Border.all(color: const Color(0xFF6C63FF), width: 1.5)
-//               : null,
-//         ),
-//         child: Row(
-//           mainAxisSize: MainAxisSize.min,
-//           children: [
-//             Icon(
-//               icon,
-//               size: 16,
-//               color: isActive ? const Color(0xFF6C63FF) : Colors.grey[600],
-//             ),
-//             const SizedBox(width: 4),
-//             Text(
-//               label,
-//               style: TextStyle(
-//                 fontSize: 12,
-//                 fontWeight: FontWeight.w600,
-//                 color: isActive ? const Color(0xFF6C63FF) : Colors.grey[600],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildTabContent() {
-//     switch (_activeTab) {
-//       case 0:
-//         return _buildTextTab();
-//       case 1:
-//         return _buildStickerTab();
-//       case 2:
-//         return _buildColorTab();
-//       default:
-//         return const SizedBox.shrink();
-//     }
-//   }
-
-//   Widget _buildTextTab() {
-//     final placeholders = widget.logoData.placeholders
-//         .where((p) => p.type == 'text')
-//         .toList();
-//     final textLayers = _layers.where((l) => l.type == LayerType.text).toList();
-//     final allItems = [
-//       ...placeholders.map(
-//         (p) => _PlaceholderChipData(
-//           id: p.id,
-//           label: p.label,
-//           text: _textValues[p.id] ?? p.defaultValue,
-//           onTap: () => _openPlaceholderEditor(p),
-//         ),
-//       ),
-//       ...textLayers.map(
-//         (l) => _PlaceholderChipData(
-//           id: l.id,
-//           label: 'Custom',
-//           text: l.content,
-//           onTap: () {
-//             setState(() => _selectedLayerId = l.id);
-//             _openLayerTextEditor(l);
-//           },
-//         ),
-//       ),
-//     ];
-
-//     return SizedBox(
-//       height: 70,
-//       child: ListView.separated(
-//         scrollDirection: Axis.horizontal,
-//         padding: const EdgeInsets.symmetric(horizontal: 20),
-//         itemCount: allItems.length,
-//         separatorBuilder: (_, __) => const SizedBox(width: 10),
-//         itemBuilder: (_, i) {
-//           final item = allItems[i];
-//           return GestureDetector(
-//             onTap: item.onTap,
-//             child: Container(
-//               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-//               decoration: BoxDecoration(
-//                 gradient: const LinearGradient(
-//                   colors: [Color(0xFF6C63FF), Color(0xFF5A52D5)],
-//                 ),
-//                 borderRadius: BorderRadius.circular(30),
-//                 boxShadow: [
-//                   BoxShadow(
-//                     color: const Color(0xFF6C63FF).withOpacity(0.3),
-//                     blurRadius: 8,
-//                     offset: const Offset(0, 2),
-//                   ),
-//                 ],
-//               ),
-//               child: Row(
-//                 mainAxisSize: MainAxisSize.min,
-//                 children: [
-//                   const Icon(Icons.edit, color: Colors.white, size: 15),
-//                   const SizedBox(width: 8),
-//                   Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     mainAxisSize: MainAxisSize.min,
-//                     children: [
-//                       Text(
-//                         item.label,
-//                         style: const TextStyle(
-//                           fontSize: 10,
-//                           color: Colors.white70,
-//                         ),
-//                       ),
-//                       Text(
-//                         item.text.length > 14
-//                             ? '${item.text.substring(0, 14)}…'
-//                             : item.text,
-//                         style: const TextStyle(
-//                           fontSize: 12,
-//                           fontWeight: FontWeight.w600,
-//                           color: Colors.white,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   Widget _buildStickerTab() {
-//     return SizedBox(
-//       height: 80,
-//       child: ListView.builder(
-//         scrollDirection: Axis.horizontal,
-//         padding: const EdgeInsets.symmetric(horizontal: 20),
-//         itemCount: _stickers.length,
-//         itemBuilder: (_, i) {
-//           return GestureDetector(
-//             onTap: () => _addSticker(_stickers[i]),
-//             child: Container(
-//               width: 60,
-//               height: 60,
-//               margin: const EdgeInsets.only(right: 10),
-//               decoration: BoxDecoration(
-//                 color: Colors.grey[100],
-//                 borderRadius: BorderRadius.circular(14),
-//                 border: Border.all(color: Colors.grey[200]!, width: 1),
-//               ),
-//               child: Center(
-//                 child: Text(_stickers[i], style: const TextStyle(fontSize: 28)),
-//               ),
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   Widget _buildColorTab() {
-//     final sel = _selectedLayer;
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(horizontal: 20),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         mainAxisSize: MainAxisSize.min,
-//         children: [
-//           if (sel == null)
-//             Text(
-//               'Tap a text layer on the canvas to select it, then pick a color.',
-//               style: TextStyle(
-//                 fontSize: 12,
-//                 color: Colors.grey[500],
-//                 fontStyle: FontStyle.italic,
-//               ),
-//             )
-//           else
-//             Text(
-//               'Color for "${sel.content.length > 12 ? '${sel.content.substring(0, 12)}…' : sel.content}"',
-//               style: const TextStyle(
-//                 fontSize: 13,
-//                 fontWeight: FontWeight.w600,
-//                 color: Color(0xFF2D3142),
-//               ),
-//             ),
-//           const SizedBox(height: 10),
-//           Wrap(
-//             spacing: 10,
-//             runSpacing: 10,
-//             children: _colorPalette.map((color) {
-//               final isSelected = sel != null && sel.color.value == color.value;
-//               return GestureDetector(
-//                 onTap: sel == null
-//                     ? null
-//                     : () => setState(() => sel.color = color),
-//                 child: AnimatedContainer(
-//                   duration: const Duration(milliseconds: 150),
-//                   width: 36,
-//                   height: 36,
-//                   decoration: BoxDecoration(
-//                     color: color,
-//                     shape: BoxShape.circle,
-//                     border: Border.all(
-//                       color: isSelected
-//                           ? const Color(0xFF6C63FF)
-//                           : Colors.grey[300]!,
-//                       width: isSelected ? 3 : 1,
-//                     ),
-//                     boxShadow: [
-//                       BoxShadow(
-//                         color: color.withOpacity(0.4),
-//                         blurRadius: 4,
-//                         offset: const Offset(0, 2),
-//                       ),
-//                     ],
-//                   ),
-//                   child: isSelected
-//                       ? Icon(
-//                           Icons.check,
-//                           size: 18,
-//                           color: color == Colors.white
-//                               ? Colors.black
-//                               : Colors.white,
-//                         )
-//                       : null,
-//                 ),
-//               );
-//             }).toList(),
-//           ),
-//           const SizedBox(height: 4),
-//         ],
-//       ),
-//     );
-//   }
-
-//   /// Returns a contrasting shadow color (dark for light text, light for dark text).
-//   /// This ensures text is always legible regardless of the logo background.
-//   Color _contrastShadowColor(Color textColor) {
-//     final luminance = textColor.computeLuminance();
-//     return luminance > 0.4
-//         ? Colors.black.withOpacity(0.65) // dark shadow for light text
-//         : Colors.white.withOpacity(0.65); // light glow for dark text
-//   }
-
-//   Alignment _alignFromTextAlign(TextAlign ta) {
-//     switch (ta) {
-//       case TextAlign.left:
-//         return Alignment.centerLeft;
-//       case TextAlign.right:
-//         return Alignment.centerRight;
-//       default:
-//         return Alignment.center;
-//     }
-//   }
-// }
-
-// // Helper model for text tab chips
-// class _PlaceholderChipData {
-//   final String id;
-//   final String label;
-//   final String text;
-//   final VoidCallback onTap;
-//   _PlaceholderChipData({
-//     required this.id,
-//     required this.label,
-//     required this.text,
-//     required this.onTap,
-//   });
-// }
-
-// // ─────────────────────────────────────────────
-// //  BACKGROUND PAINTER (image only, no text)
-// // ─────────────────────────────────────────────
-
-// class _BackgroundPainter extends CustomPainter {
-//   final ui.Image image;
-//   _BackgroundPainter({required this.image});
-
-//   @override
-//   void paint(Canvas canvas, Size size) {
-//     final srcRect = Rect.fromLTWH(
-//       0,
-//       0,
-//       image.width.toDouble(),
-//       image.height.toDouble(),
-//     );
-//     final dstRect = Rect.fromLTWH(0, 0, size.width, size.height);
-//     canvas.drawImageRect(image, srcRect, dstRect, Paint());
-//   }
-
-//   @override
-//   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-// }
-
-// // ─────────────────────────────────────────────
-// //  TEXT EDITOR BOTTOM SHEET
-// // ─────────────────────────────────────────────
-
-// class _TextEditorBottomSheet extends StatefulWidget {
-//   final String label;
-//   final TextEditingController controller;
-//   final String currentText;
-//   final int maxLength;
-//   final bool isRequired;
-//   final Function(String) onSave;
-
-//   const _TextEditorBottomSheet({
-//     required this.label,
-//     required this.controller,
-//     required this.currentText,
-//     required this.maxLength,
-//     required this.isRequired,
-//     required this.onSave,
-//   });
-
-//   @override
-//   State<_TextEditorBottomSheet> createState() => _TextEditorBottomSheetState();
-// }
-
-// class _TextEditorBottomSheetState extends State<_TextEditorBottomSheet> {
-//   late String _currentText;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _currentText = widget.currentText;
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Padding(
-//       padding: EdgeInsets.only(
-//         bottom: MediaQuery.of(context).viewInsets.bottom,
-//       ),
-//       child: Container(
-//         decoration: const BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-//         ),
-//         padding: const EdgeInsets.all(24),
-//         child: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           children: [
-//             Container(
-//               width: 40,
-//               height: 4,
-//               decoration: BoxDecoration(
-//                 color: Colors.grey[300],
-//                 borderRadius: BorderRadius.circular(2),
-//               ),
-//             ),
-//             const SizedBox(height: 20),
-//             Text(
-//               widget.label,
-//               style: const TextStyle(
-//                 fontSize: 20,
-//                 fontWeight: FontWeight.bold,
-//                 color: Color(0xFF2D3142),
-//               ),
-//             ),
-//             const SizedBox(height: 6),
-//             Text(
-//               widget.isRequired ? 'Required field' : 'Optional',
-//               style: TextStyle(
-//                 fontSize: 12,
-//                 color: widget.isRequired ? Colors.orange : Colors.grey,
-//               ),
-//             ),
-//             const SizedBox(height: 20),
-//             TextField(
-//               controller: widget.controller,
-//               autofocus: true,
-//               maxLength: widget.maxLength,
-//               maxLines: 2,
-//               decoration: InputDecoration(
-//                 hintText: 'Enter text...',
-//                 border: OutlineInputBorder(
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 focusedBorder: OutlineInputBorder(
-//                   borderRadius: BorderRadius.circular(12),
-//                   borderSide: const BorderSide(
-//                     color: Color(0xFF6C63FF),
-//                     width: 2,
-//                   ),
-//                 ),
-//               ),
-//               onChanged: (v) => setState(() => _currentText = v),
-//             ),
-//             const SizedBox(height: 16),
-//             Row(
-//               children: [
-//                 Expanded(
-//                   child: OutlinedButton(
-//                     onPressed: () => Navigator.pop(context),
-//                     style: OutlinedButton.styleFrom(
-//                       padding: const EdgeInsets.symmetric(vertical: 14),
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(12),
-//                       ),
-//                     ),
-//                     child: const Text('Cancel'),
-//                   ),
-//                 ),
-//                 const SizedBox(width: 12),
-//                 Expanded(
-//                   child: ElevatedButton(
-//                     onPressed: () {
-//                       widget.onSave(_currentText);
-//                       Navigator.pop(context);
-//                     },
-//                     style: ElevatedButton.styleFrom(
-//                       backgroundColor: const Color(0xFF6C63FF),
-//                       padding: const EdgeInsets.symmetric(vertical: 14),
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(12),
-//                       ),
-//                     ),
-//                     child: const Text(
-//                       'Apply',
-//                       style: TextStyle(fontWeight: FontWeight.w600),
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -1262,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:gal/gal.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 // ══════════════════════════════════════════════════════════════
 //  pubspec.yaml dependencies needed:
@@ -1273,8 +17,80 @@ import 'package:http/http.dart' as http;
 // ══════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────
-//  DATA MODELS
+//  DATA MODELS (Updated for your API)
 // ─────────────────────────────────────────────
+
+class _TextOverlayPainter extends CustomPainter {
+  final List<EditableLayer> layers;
+  final ui.Image? bgImage;
+
+  _TextOverlayPainter({required this.layers, required this.bgImage});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw background image
+    if (bgImage != null) {
+      canvas.drawImageRect(
+        bgImage!,
+        Rect.fromLTWH(
+          0,
+          0,
+          bgImage!.width.toDouble(),
+          bgImage!.height.toDouble(),
+        ),
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Paint(),
+      );
+    }
+
+    // Draw text layers — mirrors Canvas2D fillText exactly
+    for (final layer in layers) {
+      if (layer.type != LayerType.text) continue;
+
+      final tp = TextPainter(
+        textDirection: TextDirection.ltr,
+        textAlign: layer.textAlign,
+      );
+
+      tp.text = TextSpan(text: layer.content, style: layer.textStyle);
+
+      tp.layout(maxWidth: size.width);
+
+      // Canvas2D: fillText(text, x, y)
+      //   x = center of text (textAlign: center)
+      //   y = baseline
+      // TextPainter: paint(canvas, offset)
+      //   offset = top-left of text
+      //
+      // So: offsetX = centerX - textWidth/2
+      //     offsetY = baselineY - tp.computeDistanceToActualBaseline()
+
+      final double centerX = layer.position.dx; // stored as scaled center
+      final double baselineY = layer.position.dy; // stored as scaled baseline
+
+      final double textWidth = tp.width;
+      double offsetX;
+      if (layer.textAlign == TextAlign.center) {
+        offsetX = centerX - textWidth / 2;
+      } else if (layer.textAlign == TextAlign.right) {
+        offsetX = centerX - textWidth;
+      } else {
+        offsetX = centerX; // left align: x is left edge
+      }
+
+      // Get the actual ascent of this font/size
+      final baseline = tp.computeDistanceToActualBaseline(
+        TextBaseline.alphabetic,
+      );
+      final double offsetY = baselineY - baseline;
+
+      tp.paint(canvas, Offset(offsetX, offsetY));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TextOverlayPainter old) => true;
+}
 
 class LogoPlaceholder {
   final String id;
@@ -1350,37 +166,33 @@ class LogoPlaceholder {
 class LogoData {
   final String id;
   final String name;
-  final String category;
   final String imageUrl;
-  final String imageType;
+  final String previewImageUrl;
   final List<LogoPlaceholder> placeholders;
-  final bool isPremium;
-  final List<String> tags;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   LogoData({
     required this.id,
     required this.name,
-    required this.category,
     required this.imageUrl,
-    required this.imageType,
+    required this.previewImageUrl,
     required this.placeholders,
-    required this.isPremium,
-    required this.tags,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory LogoData.fromJson(Map<String, dynamic> json) {
-    final logo = json['logo'];
     return LogoData(
-      id: logo['_id'],
-      name: logo['name'],
-      category: logo['category'],
-      imageUrl: logo['image']['url'],
-      imageType: logo['image']['type'],
-      placeholders: (logo['placeholders'] as List)
+      id: json['_id'],
+      name: json['name'],
+      imageUrl: json['image'],
+      previewImageUrl: json['previewImage'],
+      placeholders: (json['placeholders'] as List)
           .map((p) => LogoPlaceholder.fromJson(p))
           .toList(),
-      isPremium: logo['metadata']['isPremium'] ?? false,
-      tags: List<String>.from(logo['metadata']['tags'] ?? []),
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
     );
   }
 }
@@ -1424,9 +236,6 @@ final List<GFontEntry> kGoogleFonts = [
 
 // ─────────────────────────────────────────────
 //  UNIFIED EDITABLE LAYER
-//  Both API placeholder texts and user-added text/stickers
-//  are represented as EditableLayer so they share the same
-//  drag / pinch / color / font pipeline.
 // ─────────────────────────────────────────────
 
 enum LayerType { text, sticker }
@@ -1445,6 +254,8 @@ class EditableLayer {
   String fontFamily;
   TextAlign textAlign;
 
+  double centerX;
+
   // true = originally from the API (cannot be deleted, shown as "Logo Text")
   final bool isPlaceholder;
   final int maxLength;
@@ -1461,6 +272,7 @@ class EditableLayer {
     this.textAlign = TextAlign.center,
     this.isPlaceholder = false,
     this.maxLength = 80,
+    this.centerX = -1,
   });
 
   /// Resolved TextStyle using the chosen Google Font.
@@ -1493,7 +305,208 @@ class EditableLayer {
 }
 
 // ─────────────────────────────────────────────
-//  MAIN SCREEN
+//  LOGOS GRID SCREEN
+// ─────────────────────────────────────────────
+
+class LogosGridScreen extends StatefulWidget {
+  final String userId;
+  final String categoryId;
+
+  const LogosGridScreen({
+    Key? key,
+    required this.userId,
+    required this.categoryId,
+  }) : super(key: key);
+
+  @override
+  State<LogosGridScreen> createState() => _LogosGridScreenState();
+}
+
+class _LogosGridScreenState extends State<LogosGridScreen> {
+  List<LogoData> _logos = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLogos();
+  }
+
+  Future<void> _fetchLogos() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final url = Uri.parse(
+        'http://31.97.206.144:4061/api/admin/getlogos/${widget.userId}?logoCategoryId=${widget.categoryId}',
+      );
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _logos = data.map((json) => LogoData.fromJson(json)).toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage =
+              'Failed to load logos. Status code: ${response.statusCode}';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Choose a Logo'),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        elevation: 2,
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: _fetchLogos, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+
+    if (_logos.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'No logos found',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.8,
+      ),
+      itemCount: _logos.length,
+      itemBuilder: (context, index) {
+        final logo = _logos[index];
+        return _buildLogoCard(logo);
+      },
+    );
+  }
+
+  Widget _buildLogoCard(LogoData logo) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          // Navigate to editor screen with selected logo
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LogoEditorScreen(logoData: logo),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: Image.network(
+                  logo.previewImageUrl,
+                  fit: BoxFit.fill,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(
+                        Icons.broken_image,
+                        size: 48,
+                        color: Colors.grey,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                logo.name,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+//  LOGO EDITOR SCREEN
 // ─────────────────────────────────────────────
 
 class LogoEditorScreen extends StatefulWidget {
@@ -1513,8 +526,15 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
   bool _isCapturing = false;
   bool _isLoading = true;
   ui.Image? _loadedImage;
+  Size _originalImageSize = Size(1080, 1080);
 
   static const double _canvasSize = 320.0;
+
+  // Replace the fixed _canvasSize with dynamic width/height
+  static const double _canvasWidth = 320.0;
+  double get _canvasHeight => _originalImageSize == Size.zero
+      ? 320.0
+      : 320.0 * (_originalImageSize.height / _originalImageSize.width);
 
   // bottom panel tab: 0=Text 1=Stickers 2=Fonts
   int _activeTab = 0;
@@ -1573,32 +593,11 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
   @override
   void initState() {
     super.initState();
-    _initLayers();
+    // _initLayers();
     _loadImage();
   }
 
   /// Convert every API placeholder into an EditableLayer.
-  void _initLayers() {
-    for (final p in widget.logoData.placeholders) {
-      if (p.type != 'text') continue;
-      _layers.add(
-        EditableLayer(
-          id: p.id,
-          type: LayerType.text,
-          content: p.defaultValue,
-          position: p.position,
-          fontSize: p.style.fontSize ?? 24,
-          color: p.style.color ?? Colors.white,
-          fontWeight: p.style.fontWeight ?? FontWeight.bold,
-          fontFamily: 'Montserrat',
-          textAlign: p.textAlign,
-          isPlaceholder: true,
-          maxLength: p.maxLength,
-        ),
-      );
-    }
-  }
-
   Future<void> _loadImage() async {
     try {
       final res = await http.get(Uri.parse(widget.logoData.imageUrl));
@@ -1608,8 +607,13 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
         if (mounted) {
           setState(() {
             _loadedImage = frame.image;
+            _originalImageSize = Size(
+              frame.image.width.toDouble(),
+              frame.image.height.toDouble(),
+            );
             _isLoading = false;
           });
+          _initLayers(); // ✅ Now called AFTER real size is known
         }
       } else {
         if (mounted) setState(() => _isLoading = false);
@@ -1619,7 +623,66 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
     }
   }
 
+  void _initLayers() {
+    _layers.clear();
+
+    final srcWidth = 840;
+    final srcHeight = 859;
+    final scaleX = _canvasWidth / srcWidth;
+    final scaleY = _canvasHeight / srcHeight;
+
+    for (final p in widget.logoData.placeholders) {
+      if (p.type != 'text') continue;
+
+      final scaledFontSize = ((p.style.fontSize ?? 24) * scaleX).clamp(
+        8.0,
+        120.0,
+      );
+
+      // Store EXACT scaled values — no ascent offset here
+      // CustomPainter will handle baseline correctly using TextPainter
+      final scaledCenterX = p.position.dx * scaleX; // center X
+      final scaledBaselineY = p.position.dy * scaleY; // baseline Y
+
+      _layers.add(
+        EditableLayer(
+          id: p.id,
+          type: LayerType.text,
+          content: p.defaultValue,
+          // dx = scaled center X (for center-aligned text)
+          // dy = scaled baseline Y  ← raw, no offset subtracted
+          position: Offset(scaledCenterX, scaledBaselineY),
+          centerX: scaledCenterX,
+          fontSize: scaledFontSize,
+          color: p.style.color ?? Colors.white,
+          fontWeight: p.style.fontWeight ?? FontWeight.bold,
+          fontFamily: p.style.fontFamily ?? 'Poppins',
+          textAlign: p.textAlign,
+          isPlaceholder: true,
+          maxLength: p.maxLength,
+        ),
+      );
+    }
+  }
+
   // ── Helpers ──────────────────────────────────────────────────
+  Offset scalePosition(
+    Offset originalPosition,
+    Size originalSize,
+    Size targetSize,
+  ) {
+    return Offset(
+      (originalPosition.dx / originalSize.width) * targetSize.width,
+      (originalPosition.dy / originalSize.height) * targetSize.height,
+    );
+  }
+
+  Size scaleSize(Size originalSize, Size originalImageSize, Size targetSize) {
+    return Size(
+      (originalSize.width / originalImageSize.width) * targetSize.width,
+      (originalSize.height / originalImageSize.height) * targetSize.height,
+    );
+  }
 
   EditableLayer? get _selected => _selectedId == null
       ? null
@@ -1653,10 +716,14 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       type: LayerType.text,
       content: 'New Text',
-      position: const Offset(60, 130),
+      position: Offset(
+        _canvasWidth / 2 - 50, // Center horizontally
+        _canvasHeight / 2, // Center vertically
+      ),
       fontSize: 22,
       color: Colors.white,
       fontFamily: 'Montserrat',
+      textAlign: TextAlign.center,
     );
     setState(() {
       _layers.add(layer);
@@ -1813,32 +880,6 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
             icon: const Icon(Icons.delete_outline, color: Colors.red),
             onPressed: _deleteSelected,
           ),
-        if (widget.logoData.isPremium)
-          Container(
-            margin: const EdgeInsets.only(right: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.stars, size: 14, color: Colors.white),
-                SizedBox(width: 4),
-                Text(
-                  'PREMIUM',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
         IconButton(
           icon: _isSaving
               ? const SizedBox(
@@ -1871,8 +912,8 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
     return Center(
       child: Container(
         margin: const EdgeInsets.all(20),
-        width: _canvasSize,
-        height: _canvasSize,
+        width: _canvasWidth, // Use _canvasWidth instead of _canvasSize
+        height: _canvasHeight, // Use dynamic height
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -1889,26 +930,19 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
           child: RepaintBoundary(
             key: _canvasKey,
             child: SizedBox(
-              width: _canvasSize,
-              height: _canvasSize,
+              width: _canvasWidth,
+              height: _canvasHeight,
               child: Stack(
                 clipBehavior: Clip.hardEdge,
                 children: [
-                  // Solid white base — ensures clean export background
                   Positioned.fill(child: Container(color: Colors.white)),
-
-                  // Logo background image
                   if (_loadedImage != null)
                     Positioned.fill(
                       child: CustomPaint(
                         painter: _BgPainter(image: _loadedImage!),
                       ),
                     ),
-
-                  // All layers (placeholders + user-added)
                   ..._layers.map(_layerWidget),
-
-                  // Deselect tap (hidden during capture)
                   if (!_isCapturing)
                     Positioned.fill(
                       child: GestureDetector(
@@ -1929,33 +963,83 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
     final isSelected = layer.id == _selectedId && !_isCapturing;
     final isText = layer.type == LayerType.text;
 
+    // For text - allow free movement in both X and Y
+    if (isText) {
+      return Positioned(
+        left: layer.position.dx,
+        top: layer.position.dy,
+        child: GestureDetector(
+          onTap: () {
+            _select(layer.id);
+            _openEditSheet(layer);
+          },
+          onScaleStart: (_) => _fontSizeAtScaleStart = layer.fontSize,
+          onScaleUpdate: (d) {
+            setState(() {
+              if (d.pointerCount == 1) {
+                // Allow movement in BOTH X and Y directions
+                layer.position = Offset(
+                  (layer.position.dx + d.focalPointDelta.dx).clamp(
+                    0.0,
+                    _canvasWidth - 20, // Keep within canvas bounds
+                  ),
+                  (layer.position.dy + d.focalPointDelta.dy).clamp(
+                    0.0,
+                    _canvasHeight - 20,
+                  ),
+                );
+              } else if (d.pointerCount >= 2) {
+                layer.fontSize = (_fontSizeAtScaleStart * d.scale).clamp(
+                  8.0,
+                  120.0,
+                );
+              }
+            });
+          },
+          onScaleEnd: (_) {},
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: isSelected
+                ? BoxDecoration(
+                    border: Border.all(
+                      color: const Color(0xFF6C63FF),
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  )
+                : null,
+            child: Text(
+              layer.content,
+              style: layer.textStyle.copyWith(shadows: layer.visibilityShadows),
+              textAlign: layer.textAlign,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Sticker layer - also allow free movement
     return Positioned(
       left: layer.position.dx,
       top: layer.position.dy,
       child: GestureDetector(
-        onTap: () {
-          _select(layer.id);
-          if (isText) _openEditSheet(layer);
-        },
-        // Remove onPanUpdate and use onScaleUpdate for both
+        onTap: () => _select(layer.id),
         onScaleStart: (_) => _fontSizeAtScaleStart = layer.fontSize,
         onScaleUpdate: (d) {
           setState(() {
-            // Handle drag (pan) - when pointerCount is 1
             if (d.pointerCount == 1) {
+              // Allow movement in BOTH X and Y
               layer.position = Offset(
                 (layer.position.dx + d.focalPointDelta.dx).clamp(
                   0.0,
-                  _canvasSize - 20,
+                  _canvasWidth - 20,
                 ),
                 (layer.position.dy + d.focalPointDelta.dy).clamp(
                   0.0,
-                  _canvasSize - 20,
+                  _canvasHeight - 20,
                 ),
               );
-            }
-            // Handle pinch (scale) - when pointerCount is 2
-            else if (d.pointerCount >= 2) {
+            } else if (d.pointerCount >= 2) {
               layer.fontSize = (_fontSizeAtScaleStart * d.scale).clamp(
                 8.0,
                 120.0,
@@ -1963,7 +1047,6 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
             }
           });
         },
-        onScaleEnd: (_) {},
         child: Container(
           padding: const EdgeInsets.all(6),
           decoration: isSelected
@@ -1975,15 +1058,10 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
                   borderRadius: BorderRadius.circular(8),
                 )
               : null,
-          child: isText
-              ? Text(
-                  layer.content,
-                  style: layer.textStyle.copyWith(
-                    shadows: layer.visibilityShadows,
-                  ),
-                  textAlign: layer.textAlign,
-                )
-              : Text(layer.content, style: TextStyle(fontSize: layer.fontSize)),
+          child: Text(
+            layer.content,
+            style: TextStyle(fontSize: layer.fontSize),
+          ),
         ),
       ),
     );
@@ -2319,7 +1397,6 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
 
 // ─────────────────────────────────────────────
 //  LAYER EDIT BOTTOM SHEET
-//  Three tabs: Text input | Color picker | Font picker
 // ─────────────────────────────────────────────
 
 class _LayerEditSheet extends StatefulWidget {
@@ -2648,7 +1725,7 @@ class _LayerEditSheetState extends State<_LayerEditSheet>
 }
 
 // ─────────────────────────────────────────────
-//  BACKGROUND PAINTER  (image only, no text)
+//  BACKGROUND PAINTER
 // ─────────────────────────────────────────────
 
 class _BgPainter extends CustomPainter {
