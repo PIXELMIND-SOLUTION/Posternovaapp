@@ -45,22 +45,22 @@ class WeeklyTemplatesProvider extends ChangeNotifier {
     bool forceRefresh = false,
   }) async {
     final cacheKey = 'weekly_$userId';
-
-    // Check cache if not forcing refresh
-    if (!forceRefresh && _cache.containsKey(cacheKey)) {
-      final cached = _cache[cacheKey]!;
-      if (DateTime.now().difference(cached.timestamp) < _cacheDuration) {
-        print('✅ Using cached weekly posters data');
-        _weeklyPosters = cached.data;
-        _isLoading = false;
-        _isInitialized = true;
-        notifyListeners();
-        return true;
-      } else {
-        // Cache expired, remove it
-        _cache.remove(cacheKey);
-      }
-    }
+    print("haggagagagagaagagagagagaga");
+    // // Check cache if not forcing refresh
+    // if (!forceRefresh && _cache.containsKey(cacheKey)) {
+    //   final cached = _cache[cacheKey]!;
+    //   if (DateTime.now().difference(cached.timestamp) < _cacheDuration) {
+    //     print('✅ Using cached weekly posters data');
+    //     _weeklyPosters = cached.data;
+    //     _isLoading = false;
+    //     _isInitialized = true;
+    //     notifyListeners();
+    //     return true;
+    //   } else {
+    //     // Cache expired, remove it
+    //     _cache.remove(cacheKey);
+    //   }
+    // }
 
     _isLoading = true;
     _error = null;
@@ -68,15 +68,12 @@ class WeeklyTemplatesProvider extends ChangeNotifier {
 
     try {
       print('🌐 Fetching weekly posters from API for user: $userId');
-      final response = await http
-          .get(
-            Uri.parse(
-              'http://31.97.206.144:4061/api/poster/weeklyposters/$userId',
-            ),
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await http.get(
+        Uri.parse('http://31.97.206.144:4061/api/poster/weeklyposters/$userId'),
+      );
 
       print('📡 Weekly posters API Status: ${response.statusCode}');
+      print('📡 Weekly posters API Status: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);

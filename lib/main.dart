@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:posternova/providers/adminamount/admin_amount_provider.dart';
 import 'package:posternova/providers/auth/google_provider.dart';
 import 'package:posternova/providers/banner/banner_provider.dart';
 import 'package:posternova/providers/category/categories_provider.dart';
+import 'package:posternova/providers/celebration/celebration_provider.dart';
 import 'package:posternova/providers/festival/festival_posters_provider.dart';
 import 'package:posternova/providers/topics/hot_topic_provider.dart';
+import 'package:posternova/providers/usage/usage_provider.dart';
 import 'package:posternova/providers/weekly/weekly_templates_provider.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
@@ -117,6 +120,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BannerProvider()), // A
         ChangeNotifierProvider(create: (_) => FestivalPostersProvider()),
         ChangeNotifierProvider(create: (_) => CategoriesProvider()),
+        ChangeNotifierProvider(create: (_) => CelebrationProvider()),
+        ChangeNotifierProvider(create: (_) => AdminAmountProvider()),
+
+        ChangeNotifierProvider(create: (_) => UsageProvider()..init()),
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {

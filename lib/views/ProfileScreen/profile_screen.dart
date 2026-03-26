@@ -8,6 +8,7 @@ import 'package:posternova/views/AI/chat_ai.dart';
 import 'package:posternova/views/AuthModule/auth_screen.dart';
 import 'package:posternova/views/ProfileScreen/edit_profile.dart';
 import 'package:posternova/views/ProfileScreen/settings_screen.dart';
+import 'package:posternova/views/SecondPhase/wallet/wallet.dart';
 import 'package:posternova/views/about/about_screen.dart';
 import 'package:posternova/views/backgroundremover/background_remover.dart';
 import 'package:posternova/views/business/business_card_screen.dart';
@@ -73,58 +74,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
   //   }
   // }
 
-
   Future<void> _fetchProfileData() async {
-  setState(() => _isLoadingProfile = true);
+    setState(() => _isLoadingProfile = true);
 
-  try {
-    // Try AuthProvider first, fall back to local storage
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    String? userId = authProvider.user?.user.id;
-
-    // Fallback to stored data if provider hasn't rehydrated yet
-    if (userId == null) {
-      final userData = await AuthPreferences.getUserData();
-      userId = userData?.user.id;
-    }
-
-    if (userId == null) {
-      setState(() => _isLoadingProfile = false);
-      return;
-    }
-
-    final response = await http.get(
-      Uri.parse('$_baseUrl/get-profile/$userId'),
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        _profileData = data;
-        _isLoadingProfile = false;
-      });
-    } else {
-      // Fallback: use locally stored name
-      final userData = await AuthPreferences.getUserData();
-      setState(() {
-        _profileData = {'name': userData?.user.name, 'mobile': userData?.user.mobile};
-        _isLoadingProfile = false;
-      });
-    }
-  } catch (e) {
-    print('Error fetching profile: $e');
-    // Fallback to stored data on error
     try {
-      final userData = await AuthPreferences.getUserData();
-      setState(() {
-        _profileData = {'name': userData?.user.name, 'mobile': userData?.user.mobile};
-        _isLoadingProfile = false;
-      });
-    } catch (_) {
-      setState(() => _isLoadingProfile = false);
+      // Try AuthProvider first, fall back to local storage
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      String? userId = authProvider.user?.user.id;
+
+      // Fallback to stored data if provider hasn't rehydrated yet
+      if (userId == null) {
+        final userData = await AuthPreferences.getUserData();
+        userId = userData?.user.id;
+      }
+
+      if (userId == null) {
+        setState(() => _isLoadingProfile = false);
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/get-profile/$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _profileData = data;
+          _isLoadingProfile = false;
+        });
+      } else {
+        // Fallback: use locally stored name
+        final userData = await AuthPreferences.getUserData();
+        setState(() {
+          _profileData = {
+            'name': userData?.user.name,
+            'mobile': userData?.user.mobile,
+          };
+          _isLoadingProfile = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+      // Fallback to stored data on error
+      try {
+        final userData = await AuthPreferences.getUserData();
+        setState(() {
+          _profileData = {
+            'name': userData?.user.name,
+            'mobile': userData?.user.mobile,
+          };
+          _isLoadingProfile = false;
+        });
+      } catch (_) {
+        setState(() => _isLoadingProfile = false);
+      }
     }
   }
-}
 
   // Refresh profile data after returning from edit screen
   void _refreshProfileAfterEdit() {
@@ -136,12 +142,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         final user = authProvider.user;
-        
+
         // Use API data if available, otherwise fall back to auth provider
-        final userName = _profileData?['name'] ?? user?.user.name ?? 'Guest User';
-        final userMobile = _profileData?['mobile'] ?? user?.user.mobile ?? 'Not available';
+        final userName =
+            _profileData?['name'] ?? user?.user.name ?? 'Guest User';
+        final userMobile =
+            _profileData?['mobile'] ?? user?.user.mobile ?? 'Not available';
         final userEmail = _profileData?['email'] ?? user?.user.email ?? '';
-        final profileImageUrl = _profileData?['profileImage'] ?? user?.user.profileImage;
+        final profileImageUrl =
+            _profileData?['profileImage'] ?? user?.user.profileImage;
 
         return Scaffold(
           body: Container(
@@ -195,20 +204,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       height: 120,
                                       child: Center(
                                         child: CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            Colors.purple,
-                                          ),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.purple,
+                                              ),
                                         ),
                                       ),
                                     )
-                                  : profileImageUrl != null && profileImageUrl.isNotEmpty
-                                      ? ClipOval(
-                                          child: Image.network(
-                                            profileImageUrl,
-                                            width: 120,
-                                            height: 120,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) {
+                                  : profileImageUrl != null &&
+                                        profileImageUrl.isNotEmpty
+                                  ? ClipOval(
+                                      child: Image.network(
+                                        profileImageUrl,
+                                        width: 120,
+                                        height: 120,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
                                               return Container(
                                                 width: 120,
                                                 height: 120,
@@ -220,44 +232,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 ),
                                               );
                                             },
-                                            loadingBuilder: (context, child, loadingProgress) {
-                                              if (loadingProgress == null) return child;
-                                              return Container(
-                                                width: 120,
-                                                height: 120,
-                                                color: Colors.grey[800],
-                                                child: Center(
-                                                  child: CircularProgressIndicator(
-                                                    value: loadingProgress.expectedTotalBytes != null
-                                                        ? loadingProgress.cumulativeBytesLoaded /
-                                                            loadingProgress.expectedTotalBytes!
-                                                        : null,
-                                                    color: Colors.purple,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        )
-                                      : Container(
-                                          width: 120,
-                                          height: 120,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return Container(
+                                            width: 120,
+                                            height: 120,
                                             color: Colors.grey[800],
-                                          ),
-                                          child: const Icon(
-                                            Icons.person,
-                                            size: 60,
-                                            color: Colors.white,
-                                          ),
-                                        ),
+                                            child: Center(
+                                              child: CircularProgressIndicator(
+                                                value:
+                                                    loadingProgress
+                                                            .expectedTotalBytes !=
+                                                        null
+                                                    ? loadingProgress
+                                                              .cumulativeBytesLoaded /
+                                                          loadingProgress
+                                                              .expectedTotalBytes!
+                                                    : null,
+                                                color: Colors.purple,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.grey[800],
+                                      ),
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                             ),
                             Positioned(
                               bottom: 0,
                               right: 0,
                               child: GestureDetector(
-                                onTap: () => _pickAndUploadImage(context, authProvider),
+                                onTap: () =>
+                                    _pickAndUploadImage(context, authProvider),
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
@@ -297,7 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
-                        
+
                         // Mobile Number
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -317,7 +336,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ],
                         ),
-                        
+
                         // Email (if available)
                         // if (userEmail.isNotEmpty) ...[
                         //   const SizedBox(height: 6),
@@ -343,7 +362,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         //     ],
                         //   ),
                         // ],
-
                         const SizedBox(height: 110),
 
                         // Menu Options with Plan Check
@@ -351,27 +369,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           builder: (context, myPlanProvider, child) {
                             return Column(
                               children: [
-
-                                  _buildMenuItem(
+                                _buildMenuItem(
                                   icon: Icons.person,
                                   title: 'profile',
                                   onTap: () async {
                                     final result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const EditProfile(),
+                                        builder: (context) =>
+                                            const EditProfile(),
                                       ),
                                     );
-                                    
+
                                     // Refresh profile data if edit was successful
                                     if (result == true) {
                                       _refreshProfileAfterEdit();
                                     }
                                   },
                                   isPremiumRequired: false,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
                                 ),
-
 
                                 _buildMenuItem(
                                   icon: Icons.policy,
@@ -407,7 +425,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   },
                                 ),
 
-                               
                                 _buildMenuItem(
                                   icon: Icons.info_outline,
                                   title: 'about',
@@ -420,7 +437,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     );
                                   },
                                   isPremiumRequired: false,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
+                                ),
+
+                                _buildMenuItem(
+                                  icon: Icons.wallet,
+                                  title: 'Wallet',
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const WalletScreen(),
+                                      ),
+                                    );
+
+                                    // Refresh profile data if edit was successful
+                                    if (result == true) {
+                                      _refreshProfileAfterEdit();
+                                    }
+                                  },
+                                  isPremiumRequired: false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
                                 ),
                                 _buildMenuItem(
                                   icon: Icons.request_page,
@@ -430,7 +470,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => CreateInvoiceScreen(),
+                                          builder: (context) =>
+                                              CreateInvoiceScreen(),
                                         ),
                                       );
                                     } else {
@@ -438,12 +479,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     }
                                   },
                                   isPremiumRequired: true,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
                                 ),
 
-
-
-                                 _buildMenuItem(
+                                _buildMenuItem(
                                   icon: Icons.credit_card,
                                   title: 'Business Card',
                                   onTap: () {
@@ -451,7 +491,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => BusinessCardScreen(),
+                                          builder: (context) =>
+                                              BusinessCardScreen(),
                                         ),
                                       );
                                     } else {
@@ -459,11 +500,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     }
                                   },
                                   isPremiumRequired: true,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
                                 ),
 
-
-                                 _buildMenuItem(
+                                _buildMenuItem(
                                   icon: Icons.emoji_emotions,
                                   title: 'stickers',
                                   onTap: () {
@@ -471,7 +512,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => WhatsAppStickerScreen(),
+                                          builder: (context) =>
+                                              WhatsAppStickerScreen(),
                                         ),
                                       );
                                     } else {
@@ -479,7 +521,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     }
                                   },
                                   isPremiumRequired: true,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
                                 ),
 
                                 //  _buildMenuItem(
@@ -516,7 +559,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     }
                                   },
                                   isPremiumRequired: true,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
                                 ),
 
                                 // _buildMenuItem(
@@ -538,8 +582,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 //   isPurchased: myPlanProvider.isPurchase ?? false,
                                 // ),
 
-
-
                                 // _buildMenuItem(
                                 //   icon: Icons.chat,
                                 //   title: 'chat',
@@ -558,8 +600,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 //   isPremiumRequired: true,
                                 //   isPurchased: myPlanProvider.isPurchase ?? false,
                                 // ),
-
-
                                 _buildMenuItem(
                                   icon: Icons.delete,
                                   title: 'delete_account',
@@ -567,7 +607,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => DeleteAccountScreen(),
+                                        builder: (context) =>
+                                            DeleteAccountScreen(),
                                       ),
                                     );
                                   },
@@ -580,7 +621,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => ReferEarnScreen(),
+                                          builder: (context) =>
+                                              ReferEarnScreen(),
                                         ),
                                       );
                                     } else {
@@ -588,7 +630,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     }
                                   },
                                   isPremiumRequired: true,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
                                 ),
                                 _buildMenuItem(
                                   icon: Icons.crop,
@@ -598,7 +641,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => BackgroundRemoverScreen(),
+                                          builder: (context) =>
+                                              BackgroundRemoverScreen(),
                                         ),
                                       );
                                     } else {
@@ -606,16 +650,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     }
                                   },
                                   isPremiumRequired: true,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
                                 ),
 
                                 _buildMenuItem(
                                   icon: Icons.logout,
                                   title: 'logout',
-                                  onTap: () => _handleLogout(context, authProvider),
+                                  onTap: () =>
+                                      _handleLogout(context, authProvider),
                                   isDestructive: true,
                                   isPremiumRequired: false,
-                                  isPurchased: myPlanProvider.isPurchase ?? false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
                                 ),
                               ],
                             );
@@ -1163,8 +1210,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: isDestructive
               ? Colors.red.withOpacity(0.3)
               : isLocked
-                  ? Colors.amber.withOpacity(0.3)
-                  : Colors.purple.withOpacity(0.2),
+              ? Colors.amber.withOpacity(0.3)
+              : Colors.purple.withOpacity(0.2),
         ),
       ),
       child: Material(
@@ -1177,8 +1224,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: isDestructive
                   ? Colors.red.withOpacity(0.2)
                   : isLocked
-                      ? Colors.amber.withOpacity(0.2)
-                      : Colors.purple.withOpacity(0.2),
+                  ? Colors.amber.withOpacity(0.2)
+                  : Colors.purple.withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -1186,8 +1233,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: isDestructive
                   ? Colors.red.shade300
                   : isLocked
-                      ? Colors.amber.shade300
-                      : Colors.purple.shade300,
+                  ? Colors.amber.shade300
+                  : Colors.purple.shade300,
               size: 24,
             ),
           ),
@@ -1197,8 +1244,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: isDestructive
                   ? Colors.red.shade300
                   : isLocked
-                      ? Colors.grey.shade400
-                      : Colors.white,
+                  ? Colors.grey.shade400
+                  : Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),

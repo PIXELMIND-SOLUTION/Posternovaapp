@@ -14,6 +14,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:posternova/helper/storage_helper.dart';
+import 'package:posternova/providers/adminamount/admin_amount_provider.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:provider/provider.dart';
@@ -471,7 +472,8 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   Offset _resizeStartOffset = Offset.zero;
   double _resizeStartFontSize = 24;
   bool _isLoadingProfile = false;
-
+  int _posterPrice = 0; // Default fallback price
+  String _posterName = 'Poster';
   String? userId;
 
   @override
@@ -483,6 +485,8 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     _planProvider = Provider.of<MyPlanProvider>(context, listen: false);
     _checkPurchaseStatus();
     _fetchProfileData();
+    _fetchPosterPriceFromProvider();
+
     _brandElements = [
       BrandElement(
         id: 'logo',
@@ -569,6 +573,27 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
     _brandInfo = BrandInfo();
     // _loadBrandInfoFromUser();
+  }
+
+  void _fetchPosterPriceFromProvider() async {
+    final adminProvider = Provider.of<AdminAmountProvider>(
+      context,
+      listen: false,
+    );
+    await adminProvider.fetchAdminAmounts();
+    // Try to get poster price
+    final posterAmount = adminProvider.getAmountByName('Poster');
+    if (posterAmount != null) {
+      _posterPrice = posterAmount.amount;
+      _posterName = posterAmount.name;
+    } else {
+      // Try to get Business Card or any other as fallback
+      final businessCard = adminProvider.getAmountByName('Business Card');
+      if (businessCard != null) {
+        _posterPrice = businessCard.amount;
+        _posterName = businessCard.name;
+      }
+    }
   }
 
   void _preventScreenshots() {
@@ -1118,16 +1143,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                   color: Color(0xFF1F2937),
                 ),
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Get access to download your posters and videos.\nOnly ₹20 for lifetime access!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                  height: 1.5,
-                ),
-              ),
               const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -1156,8 +1171,8 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                         color: const Color(0xFF10B981).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        '₹20',
+                      child: Text(
+                        '₹$_posterPrice',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -1206,8 +1221,8 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Pay ₹20',
+                      child: Text(
+                        'Pay ₹$_posterPrice',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),

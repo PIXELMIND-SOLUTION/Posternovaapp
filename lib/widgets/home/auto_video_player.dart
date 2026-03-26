@@ -1,9 +1,5 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// AUTO PLAY REEL VIDEO
-// ─────────────────────────────────────────────────────────────────────────────
-
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:posternova/views/reels/exo_video_player.dart';
 
 class AutoPlayReelVideo extends StatefulWidget {
   final String videoUrl;
@@ -14,56 +10,9 @@ class AutoPlayReelVideo extends StatefulWidget {
 }
 
 class _AutoPlayReelVideoState extends State<AutoPlayReelVideo> {
-  VideoPlayerController? _controller;
-  bool _initialized = false;
-  bool _hasError = false;
-
   @override
-  void initState() {
-    super.initState();
-    _initVideo();
-  }
-
-  Future<void> _initVideo() async {
-    if (widget.videoUrl.isEmpty) {
-      setState(() => _hasError = true);
-      return;
-    }
-    try {
-      // Check if it's an asset or network URL
-      if (widget.videoUrl.startsWith('assets/')) {
-        _controller = VideoPlayerController.asset(widget.videoUrl);
-      } else {
-        _controller = VideoPlayerController.networkUrl(
-          Uri.parse(widget.videoUrl),
-        );
-      }
-
-      await _controller!.initialize();
-      if (!mounted) return;
-
-      _controller!
-        ..setLooping(true)
-        ..setVolume(0)
-        ..play();
-
-      print("Video playing: ${_controller!.value.isPlaying}"); // Debug log
-      setState(() => _initialized = true);
-    } catch (e) {
-      print("Video error: $e");
-      if (mounted) setState(() => _hasError = true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  // REMOVED the extra @override here - this was the syntax error!
   Widget build(BuildContext context) {
-    if (_hasError || !_initialized || _controller == null) {
+    if (widget.videoUrl.isEmpty) {
       return Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -82,14 +31,10 @@ class _AutoPlayReelVideoState extends State<AutoPlayReelVideo> {
       );
     }
 
-    // Fix: Use FittedBox to ensure video fills the container properly
-    return FittedBox(
-      fit: BoxFit.cover,
-      child: SizedBox(
-        width: _controller!.value.size.width,
-        height: _controller!.value.size.height,
-        child: VideoPlayer(_controller!),
-      ),
+    // Add GestureDetector to the container that wraps ExoVideoPlayer
+    return Container(
+      color: Colors.black,
+      child: ExoVideoPlayer(url: widget.videoUrl, autoPlay: false),
     );
   }
 }

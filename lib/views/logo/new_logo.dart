@@ -7,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:posternova/helper/storage_helper.dart';
+
 // ══════════════════════════════════════════════════════════════
 //  pubspec.yaml dependencies needed:
 //
@@ -600,6 +602,13 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
   /// Convert every API placeholder into an EditableLayer.
   Future<void> _loadImage() async {
     try {
+      String? username;
+      final userData = await AuthPreferences.getUserData();
+      if (userData != null) {
+        setState(() {
+          username = userData.user.name;
+        });
+      }
       final res = await http.get(Uri.parse(widget.logoData.imageUrl));
       if (res.statusCode == 200) {
         final codec = await ui.instantiateImageCodec(res.bodyBytes);
@@ -613,7 +622,7 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
             );
             _isLoading = false;
           });
-          _initLayers(); // ✅ Now called AFTER real size is known
+          _initLayers(username); // ✅ Now called AFTER real size is known
         }
       } else {
         if (mounted) setState(() => _isLoading = false);
@@ -623,7 +632,7 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
     }
   }
 
-  void _initLayers() {
+  void _initLayers(String? username) {
     _layers.clear();
 
     final srcWidth = 840;
@@ -634,35 +643,87 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
     for (final p in widget.logoData.placeholders) {
       if (p.type != 'text') continue;
 
-      final scaledFontSize = ((p.style.fontSize ?? 24) * scaleX).clamp(
-        8.0,
-        120.0,
+      // Get the actual text content (replace with your dynamic text source)
+      String content =
+          p.defaultValue ?? "YOUR NAME"; // or whatever your dynamic text is
+
+      // API position is ALWAYS the center point
+      final centerPoint = Offset(
+        p.position.dx * scaleX * 0.6,
+        p.position.dy * scaleY * 0.72,
       );
 
-      // Store EXACT scaled values — no ascent offset here
-      // CustomPainter will handle baseline correctly using TextPainter
-      final scaledCenterX = p.position.dx * scaleX; // center X
-      final scaledBaselineY = p.position.dy * scaleY; // baseline Y
+      final scaledFontSize = ((75) * scaleX).clamp(8.0, 120.0);
 
       _layers.add(
         EditableLayer(
           id: p.id,
           type: LayerType.text,
-          content: p.defaultValue,
-          // dx = scaled center X (for center-aligned text)
-          // dy = scaled baseline Y  ← raw, no offset subtracted
-          position: Offset(scaledCenterX, scaledBaselineY),
-          centerX: scaledCenterX,
+          content: content,
+          position: centerPoint, // Store as center point
+          centerX: centerPoint.dx,
           fontSize: scaledFontSize,
           color: p.style.color ?? Colors.white,
           fontWeight: p.style.fontWeight ?? FontWeight.bold,
-          fontFamily: p.style.fontFamily ?? 'Poppins',
-          textAlign: p.textAlign,
+          fontFamily: p.style.fontFamily ?? 'Montserrat',
+          textAlign: p.textAlign, // This controls how we use the center point
           isPlaceholder: true,
           maxLength: p.maxLength,
         ),
       );
     }
+  }
+
+  Offset _calculateDynamicPosition({
+    required Offset originalPosition,
+    required String textContent,
+    required double maxWidth,
+    required double scaleX,
+    required double scaleY,
+    required TextAlign textAlign,
+  }) {
+    // Scale the original position
+    double scaledX = originalPosition.dx * scaleX * 0.15;
+    double scaledY = originalPosition.dy * scaleY * 0.75;
+
+    // Calculate approximate text width
+    const double avgCharWidth = 12.0;
+    double textWidth = textContent.length * avgCharWidth;
+
+    // Adjust X position based on text length and alignment
+    switch (textAlign) {
+      case TextAlign.center:
+        // For center-aligned text, we might need to adjust if text is too long
+        if (textWidth > maxWidth * 0.8) {
+          // If text is very long, shift left slightly to keep within bounds
+          scaledX = scaledX.clamp(maxWidth * 0.2, maxWidth - (maxWidth * 0.2));
+        }
+        break;
+
+      case TextAlign.left:
+      case TextAlign.start:
+        // For left-aligned text, ensure it doesn't go out of bounds
+        scaledX = scaledX.clamp(10.0, maxWidth - textWidth - 10);
+        break;
+
+      case TextAlign.right:
+      case TextAlign.end:
+        // For right-aligned text, adjust based on text length
+        scaledX = scaledX.clamp(textWidth + 10, maxWidth - 10);
+        break;
+
+      case TextAlign.justify:
+        // For justify, treat like left alignment for positioning
+        scaledX = scaledX.clamp(10.0, maxWidth - textWidth - 10);
+        break;
+    }
+
+    // Adjust Y position based on text length
+    if (textContent.length > 20) {
+      scaledY = scaledY - 10;
+    }
+
+    return Offset(scaledX, scaledY);
   }
 
   // ── Helpers ──────────────────────────────────────────────────
@@ -961,13 +1022,48 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
 
   Widget _layerWidget(EditableLayer layer) {
     final isSelected = layer.id == _selectedId && !_isCapturing;
-    final isText = layer.type == LayerType.text;
 
-    // For text - allow free movement in both X and Y
-    if (isText) {
+    if (layer.type == LayerType.text) {
+      // Measure text to get dimensions
+      final textPainter = TextPainter(
+        text: TextSpan(text: layer.content, style: layer.textStyle),
+        textDirection: TextDirection.ltr,
+        maxLines: null,
+      );
+      textPainter.layout(maxWidth: _canvasWidth);
+
+      final textWidth = textPainter.width;
+      final textHeight = textPainter.height;
+
+      // Calculate position based on anchor point and alignment
+      double left = layer.position.dx;
+      double top = layer.position.dy;
+
+      switch (layer.textAlign) {
+        case TextAlign.center:
+          // Anchor point is the center - adjust left so text is centered on anchor
+          left = layer.position.dx - (textWidth / 2);
+          break;
+        case TextAlign.right:
+        case TextAlign.end:
+          // Anchor point is the right edge - adjust left so text ends at anchor
+          left = layer.position.dx - textWidth;
+          break;
+        case TextAlign.left:
+        case TextAlign.start:
+        case TextAlign.justify:
+          // Anchor point is the left edge - no adjustment needed
+          left = layer.position.dx;
+          break;
+      }
+
+      // Keep text within bounds
+      left = left.clamp(0.0, _canvasWidth - textWidth);
+      top = top.clamp(0.0, _canvasHeight - textHeight);
+
       return Positioned(
-        left: layer.position.dx,
-        top: layer.position.dy,
+        left: left,
+        top: top,
         child: GestureDetector(
           onTap: () {
             _select(layer.id);
@@ -977,16 +1073,14 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
           onScaleUpdate: (d) {
             setState(() {
               if (d.pointerCount == 1) {
-                // Allow movement in BOTH X and Y directions
+                // Move the anchor point when dragging
+                double newX = layer.position.dx + d.focalPointDelta.dx;
+                double newY = layer.position.dy + d.focalPointDelta.dy;
+
+                // Clamp anchor point within canvas
                 layer.position = Offset(
-                  (layer.position.dx + d.focalPointDelta.dx).clamp(
-                    0.0,
-                    _canvasWidth - 20, // Keep within canvas bounds
-                  ),
-                  (layer.position.dy + d.focalPointDelta.dy).clamp(
-                    0.0,
-                    _canvasHeight - 20,
-                  ),
+                  newX.clamp(0.0, _canvasWidth),
+                  newY.clamp(0.0, _canvasHeight),
                 );
               } else if (d.pointerCount >= 2) {
                 layer.fontSize = (_fontSizeAtScaleStart * d.scale).clamp(
@@ -996,7 +1090,6 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
               }
             });
           },
-          onScaleEnd: (_) {},
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: isSelected
@@ -1018,7 +1111,7 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
       );
     }
 
-    // Sticker layer - also allow free movement
+    // Sticker layer
     return Positioned(
       left: layer.position.dx,
       top: layer.position.dy,
@@ -1028,7 +1121,6 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
         onScaleUpdate: (d) {
           setState(() {
             if (d.pointerCount == 1) {
-              // Allow movement in BOTH X and Y
               layer.position = Offset(
                 (layer.position.dx + d.focalPointDelta.dx).clamp(
                   0.0,

@@ -1426,23 +1426,832 @@
 //   }
 // }
 
+// import 'dart:convert';
+// import 'dart:math' as math;
+// import 'package:flutter/material.dart';
+// import 'package:http/http.dart' as http;
+// import 'package:marquee/marquee.dart';
+// import 'package:posternova/helper/storage_helper.dart';
+// import 'package:posternova/showplans/show_pan_screen.dart';
+// import 'package:posternova/views/PosterModule/home.dart';
+// import 'package:posternova/views/category/category_screen.dart';
+// import 'package:posternova/views/category/special_category.dart';
+// import 'package:posternova/views/chat/customer_list.dart';
+// import 'package:posternova/views/createposter/poster_screen.dart';
+// import 'package:posternova/views/customer/customer_screen.dart';
+// import 'package:posternova/views/reels/reels_screen.dart';
+// import 'package:posternova/widgets/language_widget.dart';
+// import 'package:provider/provider.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:upgrader/upgrader.dart';
+
+// // ─────────────────────────────────────────────
+// //  Notch Painter
+// // ─────────────────────────────────────────────
+// class _NotchNavPainter extends CustomPainter {
+//   final Color color;
+//   final double notchRadius;
+//   final double borderRadius;
+
+//   _NotchNavPainter({
+//     required this.color,
+//     this.notchRadius = 34.0,
+//     this.borderRadius = 20.0,
+//   });
+
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     final paint = Paint()
+//       ..color = color
+//       ..style = PaintingStyle.fill;
+
+//     final double centerX = size.width / 2;
+//     final double notchCurveDepth = notchRadius + 10;
+
+//     final path = Path();
+
+//     // Start from top-left with rounded corner
+//     path.moveTo(borderRadius, 0);
+
+//     // Top-left to just before the notch
+//     path.lineTo(centerX - notchRadius - 18, 0);
+
+//     // Left curve into the notch
+//     path.quadraticBezierTo(
+//       centerX - notchRadius - 4,
+//       0,
+//       centerX - notchRadius + 2,
+//       notchCurveDepth * 0.35,
+//     );
+
+//     // Arc across the notch (semicircle cutout)
+//     path.arcToPoint(
+//       Offset(centerX + notchRadius - 2, notchCurveDepth * 0.35),
+//       radius: Radius.circular(notchRadius + 6),
+//       clockwise: false,
+//     );
+
+//     // Right curve out of the notch
+//     path.quadraticBezierTo(
+//       centerX + notchRadius + 4,
+//       0,
+//       centerX + notchRadius + 18,
+//       0,
+//     );
+
+//     // Top-right corner
+//     path.lineTo(size.width - borderRadius, 0);
+//     path.quadraticBezierTo(size.width, 0, size.width, borderRadius);
+
+//     // Right side down
+//     path.lineTo(size.width, size.height);
+
+//     // Bottom
+//     path.lineTo(0, size.height);
+
+//     // Left side up
+//     path.lineTo(0, borderRadius);
+//     path.quadraticBezierTo(0, 0, borderRadius, 0);
+
+//     path.close();
+
+//     // Shadow
+//     canvas.drawShadow(path, Colors.black.withOpacity(0.5), 8, false);
+//     canvas.drawPath(path, paint);
+//   }
+
+//   @override
+//   bool shouldRepaint(_NotchNavPainter oldDelegate) =>
+//       oldDelegate.color != color;
+// }
+
+// // ─────────────────────────────────────────────
+// //  Nav Item Model
+// // ─────────────────────────────────────────────
+// class _NavItem {
+//   final IconData icon;
+//   final IconData activeIcon;
+//   final String label;
+//   final int index;
+//   final bool isCenter;
+
+//   const _NavItem({
+//     required this.icon,
+//     required this.activeIcon,
+//     required this.label,
+//     required this.index,
+//     this.isCenter = false,
+//   });
+// }
+
+// // ─────────────────────────────────────────────
+// //  Main Navigation Screen
+// // ─────────────────────────────────────────────
+// class MainNavigationScreen extends StatefulWidget {
+//   const MainNavigationScreen({Key? key}) : super(key: key);
+
+//   @override
+//   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+// }
+
+// class _MainNavigationScreenState extends State<MainNavigationScreen>
+//     with TickerProviderStateMixin {
+//   int _currentIndex = 0;
+
+//   String? currentUserId;
+//   String? userId;
+//   Map<String, dynamic> birthdayData = {};
+//   List<dynamic> customers = [];
+//   bool isLoadingCustomers = false;
+//   bool isLoadingWishes = false;
+
+//   bool _showWishesSection = true;
+//   bool _showCustomerCelebrationsSection = true;
+
+//   late AnimationController _proJiggleController;
+//   late Animation<double> _proJiggleAnimation;
+
+//   final List<Widget> _screens = [
+//     const HomeScreen(),
+//     // const CategoryScreen(),
+//     const SpecialCategory(),
+//     const CustomerList(),
+//     // const PosterScreen(),
+//     const ReelsScreen(),
+//     const CustomerScreen(),
+//   ];
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _initializeData();
+//     _setupProAnimation();
+//   }
+
+//   void _setupProAnimation() {
+//     _proJiggleController = AnimationController(
+//       vsync: this,
+//       duration: const Duration(milliseconds: 450),
+//     );
+
+//     _proJiggleAnimation =
+//         TweenSequence<double>([
+//           TweenSequenceItem(tween: Tween(begin: 0.0, end: -0.18), weight: 1),
+//           TweenSequenceItem(tween: Tween(begin: -0.18, end: 0.18), weight: 2),
+//           TweenSequenceItem(tween: Tween(begin: 0.18, end: -0.12), weight: 2),
+//           TweenSequenceItem(tween: Tween(begin: -0.12, end: 0.12), weight: 2),
+//           TweenSequenceItem(tween: Tween(begin: 0.12, end: 0.0), weight: 1),
+//         ]).animate(
+//           CurvedAnimation(
+//             parent: _proJiggleController,
+//             curve: Curves.easeInOut,
+//           ),
+//         );
+
+//     Future.delayed(const Duration(seconds: 2), _startJiggleLoop);
+//   }
+
+//   void _startJiggleLoop() {
+//     if (!mounted) return;
+//     _proJiggleController.forward(from: 0).then((_) {
+//       Future.delayed(const Duration(seconds: 3), _startJiggleLoop);
+//     });
+//   }
+
+//   @override
+//   void dispose() {
+//     _proJiggleController.dispose();
+//     super.dispose();
+//   }
+
+//   Future<void> _initializeData() async {
+//     await _resetSectionPreferences();
+//     await _loadUserId();
+//     await Future.delayed(const Duration(milliseconds: 300));
+//     if (userId != null) await fetchCustomers();
+//   }
+
+//   Future<void> _resetSectionPreferences() async {
+//     final prefs = await SharedPreferences.getInstance();
+//     await prefs.setBool('show_wishes_section', true);
+//     await prefs.setBool('show_customer_celebrations', true);
+//     setState(() {
+//       _showWishesSection = true;
+//       _showCustomerCelebrationsSection = true;
+//     });
+//   }
+
+//   Future<void> _loadUserId() async {
+//     setState(() => isLoadingWishes = true);
+//     try {
+//       final userData = await AuthPreferences.getUserData();
+//       if (userData != null) {
+//         setState(() {
+//           currentUserId = userData.user.id;
+//           userId = userData.user.id;
+//         });
+//         final response = await http.get(
+//           Uri.parse(
+//             'http://31.97.206.144:4061/api/users/wishes/$currentUserId',
+//           ),
+//         );
+//         if (response.statusCode == 200) {
+//           final data = jsonDecode(response.body);
+//           setState(() {
+//             birthdayData = Map<String, dynamic>.from(data);
+//             isLoadingWishes = false;
+//           });
+//         } else {
+//           setState(() => isLoadingWishes = false);
+//         }
+//       } else {
+//         setState(() => isLoadingWishes = false);
+//       }
+//     } catch (e) {
+//       setState(() => isLoadingWishes = false);
+//     }
+//   }
+
+//   Future<void> fetchCustomers() async {
+//     if (userId == null) {
+//       await Future.delayed(const Duration(milliseconds: 500));
+//       if (userId == null) return;
+//     }
+//     setState(() => isLoadingCustomers = true);
+//     try {
+//       final response = await http.get(
+//         Uri.parse('http://31.97.206.144:4061/api/users/allcustomers/$userId'),
+//       );
+//       if (response.statusCode == 200) {
+//         final data = json.decode(response.body);
+//         setState(() {
+//           customers = data['customers'] ?? [];
+//           isLoadingCustomers = false;
+//         });
+//       } else {
+//         setState(() => isLoadingCustomers = false);
+//       }
+//     } catch (e) {
+//       setState(() => isLoadingCustomers = false);
+//     }
+//   }
+
+//   Future<void> _saveWishesSectionPreference(bool show) async {
+//     final prefs = await SharedPreferences.getInstance();
+//     await prefs.setBool('show_wishes_section', show);
+//   }
+
+//   Future<void> _saveCustomerCelebrationsPreference(bool show) async {
+//     final prefs = await SharedPreferences.getInstance();
+//     await prefs.setBool('show_customer_celebrations', show);
+//   }
+
+//   // ── Wishes Banner ──────────────────────────────────────────────────────────
+//   Widget _buildWishesSection(String langCode) {
+//     if (isLoadingWishes) {
+//       return _loadingBanner(
+//         LocalizationService.translate('loading_wishes', langCode),
+//       );
+//     }
+//     if (!_showWishesSection ||
+//         birthdayData['wishes'] == null ||
+//         (birthdayData['wishes'] is List && birthdayData['wishes'].isEmpty)) {
+//       return const SizedBox.shrink();
+//     }
+//     return _marqueeBanner(
+//       gradient: const LinearGradient(
+//         colors: [Color(0xFFE0F7FA), Color.fromARGB(255, 236, 178, 242)],
+//         begin: Alignment.topLeft,
+//         end: Alignment.bottomRight,
+//       ),
+//       shadowColor: const Color.fromRGBO(103, 58, 183, 1),
+//       borderColor: const Color(0xFF80DEEA),
+//       iconBg: const Color(0xFF00838F),
+//       iconData: Icons.celebration,
+//       closeIconColor: const Color(0xFF00838F),
+//       textColor: const Color(0xFF004D40),
+//       text: (birthdayData['wishes'] is List)
+//           ? birthdayData['wishes'].join("  •  ")
+//           : birthdayData['wishes'].toString(),
+//       onClose: () {
+//         setState(() => _showWishesSection = false);
+//         _saveWishesSectionPreference(false);
+//       },
+//     );
+//   }
+
+//   // ── Customer Celebrations Banner ───────────────────────────────────────────
+//   Widget _buildCustomerCelebrationsSection(String langCode) {
+//     if (isLoadingCustomers) {
+//       return _loadingBanner(
+//         LocalizationService.translate('loading_celebrations', langCode),
+//       );
+//     }
+
+//     List<String> celebrations = [];
+//     if (customers.isNotEmpty) {
+//       final today = DateTime.now();
+//       final happyBirthday = LocalizationService.translate(
+//         'happy_birthday',
+//         langCode,
+//       );
+//       final happyAnniversary = LocalizationService.translate(
+//         'happy_anniversary',
+//         langCode,
+//       );
+
+//       for (var customer in customers) {
+//         if (customer['dob'] != null && customer['dob'].isNotEmpty) {
+//           try {
+//             final dob = DateTime.parse(customer['dob']);
+//             if (dob.month == today.month && dob.day == today.day) {
+//               final age = today.year - dob.year;
+//               celebrations.add(
+//                 age > 0
+//                     ? "🎂 $happyBirthday ${customer['name']}! ($age${_suffix(age)})"
+//                     : "🎂 $happyBirthday ${customer['name']}!",
+//               );
+//             }
+//           } catch (_) {}
+//         }
+//         if (customer['anniversaryDate'] != null &&
+//             customer['anniversaryDate'].isNotEmpty) {
+//           try {
+//             final ann = DateTime.parse(customer['anniversaryDate']);
+//             if (ann.month == today.month && ann.day == today.day) {
+//               final years = today.year - ann.year;
+//               celebrations.add(
+//                 years > 0
+//                     ? "💐 $happyAnniversary ${customer['name']}! ($years${_suffix(years)})"
+//                     : "💐 $happyAnniversary ${customer['name']}!",
+//               );
+//             }
+//           } catch (_) {}
+//         }
+//       }
+//     }
+
+//     if (!_showCustomerCelebrationsSection || celebrations.isEmpty) {
+//       return const SizedBox.shrink();
+//     }
+
+//     return _marqueeBanner(
+//       gradient: const LinearGradient(
+//         colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+//         begin: Alignment.topLeft,
+//         end: Alignment.bottomRight,
+//       ),
+//       shadowColor: const Color(0xFFFF6F00),
+//       borderColor: const Color(0xFFFFB74D),
+//       iconBg: const Color(0xFFE65100),
+//       iconData: Icons.cake,
+//       closeIconColor: const Color(0xFFE65100),
+//       textColor: const Color(0xFFBF360C),
+//       text: celebrations.join("  •  "),
+//       onClose: () {
+//         setState(() => _showCustomerCelebrationsSection = false);
+//         _saveCustomerCelebrationsPreference(false);
+//       },
+//     );
+//   }
+
+//   String _suffix(int n) {
+//     if (n % 10 == 1 && n != 11) return 'st';
+//     if (n % 10 == 2 && n != 12) return 'nd';
+//     if (n % 10 == 3 && n != 13) return 'rd';
+//     return 'th';
+//   }
+
+//   Widget _loadingBanner(String text) => Container(
+//     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+//     padding: const EdgeInsets.all(12),
+//     decoration: BoxDecoration(
+//       color: Colors.grey[200],
+//       borderRadius: BorderRadius.circular(16),
+//     ),
+//     child: Row(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         const SizedBox(
+//           width: 16,
+//           height: 16,
+//           child: CircularProgressIndicator(strokeWidth: 2),
+//         ),
+//         const SizedBox(width: 12),
+//         Text(text, style: const TextStyle(fontSize: 12)),
+//       ],
+//     ),
+//   );
+
+//   Widget _marqueeBanner({
+//     required LinearGradient gradient,
+//     required Color shadowColor,
+//     required Color borderColor,
+//     required Color iconBg,
+//     required IconData iconData,
+//     required Color closeIconColor,
+//     required Color textColor,
+//     required String text,
+//     required VoidCallback onClose,
+//   }) => Container(
+//     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+//     padding: const EdgeInsets.all(12),
+//     decoration: BoxDecoration(
+//       gradient: gradient,
+//       borderRadius: BorderRadius.circular(16),
+//       boxShadow: [
+//         BoxShadow(
+//           color: shadowColor.withOpacity(0.3),
+//           blurRadius: 8,
+//           offset: const Offset(0, 2),
+//         ),
+//       ],
+//       border: Border.all(color: borderColor, width: 1),
+//     ),
+//     child: Row(
+//       children: [
+//         Container(
+//           padding: const EdgeInsets.all(8),
+//           decoration: BoxDecoration(
+//             color: iconBg,
+//             borderRadius: BorderRadius.circular(8),
+//           ),
+//           child: Icon(iconData, color: Colors.white, size: 18),
+//         ),
+//         const SizedBox(width: 12),
+//         Expanded(
+//           child: SizedBox(
+//             height: 22,
+//             child: Marquee(
+//               text: text,
+//               style: TextStyle(
+//                 fontSize: 13,
+//                 fontWeight: FontWeight.w600,
+//                 color: textColor,
+//               ),
+//               scrollAxis: Axis.horizontal,
+//               crossAxisAlignment: CrossAxisAlignment.center,
+//               blankSpace: 40.0,
+//               velocity: 35.0,
+//               pauseAfterRound: const Duration(seconds: 2),
+//               startPadding: 10.0,
+//               accelerationDuration: const Duration(seconds: 1),
+//               accelerationCurve: Curves.easeInOut,
+//               decelerationDuration: const Duration(milliseconds: 600),
+//               decelerationCurve: Curves.easeOut,
+//             ),
+//           ),
+//         ),
+//         const SizedBox(width: 8),
+//         GestureDetector(
+//           onTap: onClose,
+//           child: Container(
+//             padding: const EdgeInsets.all(4),
+//             decoration: BoxDecoration(
+//               color: Colors.white.withOpacity(0.3),
+//               shape: BoxShape.circle,
+//             ),
+//             child: Icon(Icons.close, color: closeIconColor, size: 16),
+//           ),
+//         ),
+//       ],
+//     ),
+//   );
+
+//   // ── PRO Badge ──────────────────────────────────────────────────────────────
+//   // Widget _buildProBadge() {
+//   //   return Positioned(
+//   //     right: 4,
+//   //     bottom: 164,
+//   //     child: GestureDetector(
+//   //       onTap: () {
+
+//   //         Navigator.push(context, MaterialPageRoute(builder: (context)=>ShowPlanScreen()));
+//   //         // Navigate to Pro screen
+//   //       },
+//   //       child: AnimatedBuilder(
+//   //         animation: _proJiggleAnimation,
+//   //         builder: (context, child) => Transform.rotate(
+//   //           angle: _proJiggleAnimation.value,
+//   //           child: child,
+//   //         ),
+//   //         child: Container(
+//   //           width: 58,
+//   //           height: 58,
+//   //           decoration: BoxDecoration(
+//   //             shape: BoxShape.circle,
+//   //             gradient: const RadialGradient(
+//   //               colors: [
+//   //                 Color(0xFFFFE566),
+//   //                 Color(0xFFFFA000),
+//   //                 Color(0xFFE65100),
+//   //               ],
+//   //               center: Alignment.topLeft,
+//   //               radius: 1.5,
+//   //             ),
+//   //             border: Border.all(color: const Color(0xFF6A0DAD), width: 3),
+//   //             boxShadow: [
+//   //               BoxShadow(
+//   //                 color: const Color(0xFFFF6F00).withOpacity(0.55),
+//   //                 blurRadius: 10,
+//   //                 spreadRadius: 1,
+//   //               ),
+//   //             ],
+//   //           ),
+//   //           child: const Column(
+//   //             mainAxisAlignment: MainAxisAlignment.center,
+//   //             children: [
+//   //               Icon(Icons.workspace_premium, color: Colors.white, size: 20),
+//   //               SizedBox(height: 1),
+//   //               Text(
+//   //                 'PRO',
+//   //                 style: TextStyle(
+//   //                   color: Colors.white,
+//   //                   fontSize: 10,
+//   //                   fontWeight: FontWeight.w900,
+//   //                   letterSpacing: 1.2,
+//   //                   height: 1.0,
+//   //                 ),
+//   //               ),
+//   //             ],
+//   //           ),
+//   //         ),
+//   //       ),
+//   //     ),
+//   //   );
+//   // }
+
+//   Widget _buildProBadge() {
+//     return GestureDetector(
+//       onTap: () {
+//         Navigator.push(
+//           context,
+//           MaterialPageRoute(builder: (context) => const ShowPlanScreen()),
+//         );
+//       },
+//       child: AnimatedBuilder(
+//         animation: _proJiggleAnimation,
+//         builder: (context, child) =>
+//             Transform.rotate(angle: _proJiggleAnimation.value, child: child),
+//         child: Container(
+//           width: 58,
+//           height: 58,
+//           decoration: BoxDecoration(
+//             shape: BoxShape.circle,
+//             gradient: const RadialGradient(
+//               colors: [Color(0xFFFFE566), Color(0xFFFFA000), Color(0xFFE65100)],
+//               center: Alignment.topLeft,
+//               radius: 1.5,
+//             ),
+//             border: Border.all(color: const Color(0xFF6A0DAD), width: 3),
+//             boxShadow: [
+//               BoxShadow(
+//                 color: const Color(0xFFFF6F00).withOpacity(0.55),
+//                 blurRadius: 10,
+//                 spreadRadius: 1,
+//               ),
+//             ],
+//           ),
+//           child: const Column(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               Icon(Icons.workspace_premium, color: Colors.white, size: 20),
+//               SizedBox(height: 1),
+//               Text(
+//                 'PRO',
+//                 style: TextStyle(
+//                   color: Colors.white,
+//                   fontSize: 10,
+//                   fontWeight: FontWeight.w900,
+//                   letterSpacing: 1.2,
+//                   height: 1.0,
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+//   // ── Curved Notch Bottom Nav ────────────────────────────────────────────────
+//   Widget _buildCurvedNotchNavBar(String langCode) {
+//     const navBgColor = Color(0xFF1C1C2E);
+//     const double navHeight = 62.0;
+//     const double fabSize = 56.0;
+//     const double notchRadius = 36.0;
+
+//     final items = [
+//       _NavItem(
+//         icon: Icons.home_outlined,
+//         activeIcon: Icons.home,
+//         label: LocalizationService.translate('home', langCode),
+//         index: 0,
+//       ),
+//       _NavItem(
+//         icon: Icons.grid_view_outlined,
+//         activeIcon: Icons.grid_view,
+//         label: LocalizationService.translate('category', langCode),
+//         index: 1,
+//       ),
+//       _NavItem(
+//         icon: Icons.edit_outlined,
+//         activeIcon: Icons.edit,
+//         label: 'Create',
+//         index: 2,
+//         isCenter: true,
+//       ),
+//       _NavItem(
+//         icon: Icons.contact_page_outlined,
+//         activeIcon: Icons.contact_page,
+//         label: 'reels',
+//         index: 3,
+//       ),
+//       _NavItem(
+//         icon: Icons.people_outline,
+//         activeIcon: Icons.people,
+//         label: 'customers',
+//         index: 4,
+//       ),
+//     ];
+
+//     return SizedBox(
+//       height: navHeight + 24 + MediaQuery.of(context).padding.bottom,
+//       child: Stack(
+//         clipBehavior: Clip.none,
+//         alignment: Alignment.topCenter,
+//         children: [
+//           // ── Painted notch background ──
+//           Positioned(
+//             bottom: 0,
+//             left: 0,
+//             right: 0,
+//             child: CustomPaint(
+//               painter: _NotchNavPainter(
+//                 color: navBgColor,
+//                 notchRadius: notchRadius,
+//                 borderRadius: 20,
+//               ),
+//               child: SizedBox(
+//                 height: navHeight + MediaQuery.of(context).padding.bottom,
+//                 child: Padding(
+//                   padding: EdgeInsets.only(
+//                     bottom: MediaQuery.of(context).padding.bottom,
+//                   ),
+//                   child: Row(
+//                     children: items.map((item) {
+//                       if (item.isCenter) {
+//                         // Empty space for the FAB
+//                         return const Expanded(child: SizedBox());
+//                       }
+//                       final isActive = _currentIndex == item.index;
+//                       return Expanded(
+//                         child: GestureDetector(
+//                           onTap: () =>
+//                               setState(() => _currentIndex = item.index),
+//                           behavior: HitTestBehavior.opaque,
+//                           child: Column(
+//                             mainAxisAlignment: MainAxisAlignment.center,
+//                             children: [
+//                               Icon(
+//                                 isActive ? item.activeIcon : item.icon,
+//                                 color: isActive
+//                                     ? const Color(0xFF448AFF)
+//                                     : Colors.grey.shade500,
+//                                 size: 26,
+//                               ),
+//                               const SizedBox(height: 3),
+//                               Text(
+//                                 item.label,
+//                                 style: TextStyle(
+//                                   fontSize: 11,
+//                                   color: isActive
+//                                       ? const Color(0xFF448AFF)
+//                                       : Colors.grey.shade500,
+//                                   fontWeight: isActive
+//                                       ? FontWeight.w700
+//                                       : FontWeight.w400,
+//                                 ),
+//                                 maxLines: 1,
+//                                 overflow: TextOverflow.ellipsis,
+//                               ),
+//                             ],
+//                           ),
+//                         ),
+//                       );
+//                     }).toList(),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+
+//           // ── Floating Create FAB ──
+//           Positioned(
+//             top: 0,
+//             child: GestureDetector(
+//               onTap: () => setState(() => _currentIndex = 2),
+//               child: Container(
+//                 width: fabSize,
+//                 height: fabSize,
+//                 decoration: BoxDecoration(
+//                   shape: BoxShape.circle,
+//                   color: navBgColor,
+//                   border: Border.all(color: const Color(0xFF2E2E48), width: 3),
+//                   boxShadow: [
+//                     BoxShadow(
+//                       color: Colors.black.withOpacity(0.35),
+//                       blurRadius: 10,
+//                       offset: const Offset(0, 4),
+//                     ),
+//                   ],
+//                 ),
+//                 child: Icon(
+//                   _currentIndex == 2 ? Icons.edit : Icons.edit_outlined,
+//                   color: _currentIndex == 2
+//                       ? const Color(0xFFFFA000)
+//                       : Colors.white,
+//                   size: 26,
+//                 ),
+//               ),
+//             ),
+//           ),
+
+//           // ── "Create" label below FAB ──
+//           Positioned(
+//             bottom: MediaQuery.of(context).padding.bottom + 8,
+//             child: AppText(
+//               'chat',
+//               style: TextStyle(
+//                 fontSize: 11,
+//                 color: _currentIndex == 2
+//                     ? const Color(0xFFFFA000)
+//                     : Colors.grey.shade500,
+//                 fontWeight: _currentIndex == 2
+//                     ? FontWeight.w700
+//                     : FontWeight.w400,
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   // ── Build ──────────────────────────────────────────────────────────────────
+//   @override
+//   Widget build(BuildContext context) {
+//     return UpgradeAlert(
+//       upgrader: Upgrader(durationUntilAlertAgain: const Duration(days: 1)),
+//       dialogStyle: UpgradeDialogStyle.material,
+//       showLater: true,
+//       showIgnore: false,
+//       child: Scaffold(
+//         // backgroundColor: Colors.black,
+//         body: _screens[_currentIndex],
+//         bottomNavigationBar: Consumer<LanguageProvider>(
+//           builder: (context, languageProvider, child) {
+//             final langCode = languageProvider.locale.languageCode;
+//             return Column(
+//               mainAxisSize: MainAxisSize.min,
+//               children: [
+//                 _buildWishesSection(langCode),
+//                 _buildCustomerCelebrationsSection(langCode),
+//                 Stack(
+//                   clipBehavior: Clip.none,
+//                   alignment: Alignment.topRight,
+//                   children: [
+//                     _buildCurvedNotchNavBar(langCode),
+//                     Positioned(
+//                       right: 4,
+//                       top:
+//                           -20, // adjust this value to position it above the navbar
+//                       child: _buildProBadge(),
+//                     ),
+//                   ],
+//                 ),
+//               ],
+//             );
+//           },
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:marquee/marquee.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/showplans/show_pan_screen.dart';
 import 'package:posternova/views/PosterModule/home.dart';
-import 'package:posternova/views/category/category_screen.dart';
 import 'package:posternova/views/category/special_category.dart';
 import 'package:posternova/views/chat/customer_list.dart';
-import 'package:posternova/views/createposter/poster_screen.dart';
-import 'package:posternova/views/customer/customer_screen.dart';
 import 'package:posternova/views/reels/reels_screen.dart';
+import 'package:posternova/views/customer/customer_screen.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:upgrader/upgrader.dart';
 
 // ─────────────────────────────────────────────
@@ -1558,25 +2367,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     with TickerProviderStateMixin {
   int _currentIndex = 0;
 
-  String? currentUserId;
-  String? userId;
-  Map<String, dynamic> birthdayData = {};
-  List<dynamic> customers = [];
-  bool isLoadingCustomers = false;
-  bool isLoadingWishes = false;
-
-  bool _showWishesSection = true;
-  bool _showCustomerCelebrationsSection = true;
-
   late AnimationController _proJiggleController;
   late Animation<double> _proJiggleAnimation;
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    // const CategoryScreen(),
     const SpecialCategory(),
     const CustomerList(),
-    // const PosterScreen(),
     const ReelsScreen(),
     const CustomerScreen(),
   ];
@@ -1584,7 +2381,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   @override
   void initState() {
     super.initState();
-    _initializeData();
     _setupProAnimation();
   }
 
@@ -1624,363 +2420,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     super.dispose();
   }
 
-  Future<void> _initializeData() async {
-    await _resetSectionPreferences();
-    await _loadUserId();
-    await Future.delayed(const Duration(milliseconds: 300));
-    if (userId != null) await fetchCustomers();
-  }
-
-  Future<void> _resetSectionPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('show_wishes_section', true);
-    await prefs.setBool('show_customer_celebrations', true);
-    setState(() {
-      _showWishesSection = true;
-      _showCustomerCelebrationsSection = true;
-    });
-  }
-
-  Future<void> _loadUserId() async {
-    setState(() => isLoadingWishes = true);
-    try {
-      final userData = await AuthPreferences.getUserData();
-      if (userData != null) {
-        setState(() {
-          currentUserId = userData.user.id;
-          userId = userData.user.id;
-        });
-        final response = await http.get(
-          Uri.parse(
-            'http://31.97.206.144:4061/api/users/wishes/$currentUserId',
-          ),
-        );
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          setState(() {
-            birthdayData = Map<String, dynamic>.from(data);
-            isLoadingWishes = false;
-          });
-        } else {
-          setState(() => isLoadingWishes = false);
-        }
-      } else {
-        setState(() => isLoadingWishes = false);
-      }
-    } catch (e) {
-      setState(() => isLoadingWishes = false);
-    }
-  }
-
-  Future<void> fetchCustomers() async {
-    if (userId == null) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (userId == null) return;
-    }
-    setState(() => isLoadingCustomers = true);
-    try {
-      final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/users/allcustomers/$userId'),
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          customers = data['customers'] ?? [];
-          isLoadingCustomers = false;
-        });
-      } else {
-        setState(() => isLoadingCustomers = false);
-      }
-    } catch (e) {
-      setState(() => isLoadingCustomers = false);
-    }
-  }
-
-  Future<void> _saveWishesSectionPreference(bool show) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('show_wishes_section', show);
-  }
-
-  Future<void> _saveCustomerCelebrationsPreference(bool show) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('show_customer_celebrations', show);
-  }
-
-  // ── Wishes Banner ──────────────────────────────────────────────────────────
-  Widget _buildWishesSection(String langCode) {
-    if (isLoadingWishes) {
-      return _loadingBanner(
-        LocalizationService.translate('loading_wishes', langCode),
-      );
-    }
-    if (!_showWishesSection ||
-        birthdayData['wishes'] == null ||
-        (birthdayData['wishes'] is List && birthdayData['wishes'].isEmpty)) {
-      return const SizedBox.shrink();
-    }
-    return _marqueeBanner(
-      gradient: const LinearGradient(
-        colors: [Color(0xFFE0F7FA), Color.fromARGB(255, 236, 178, 242)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      shadowColor: const Color.fromRGBO(103, 58, 183, 1),
-      borderColor: const Color(0xFF80DEEA),
-      iconBg: const Color(0xFF00838F),
-      iconData: Icons.celebration,
-      closeIconColor: const Color(0xFF00838F),
-      textColor: const Color(0xFF004D40),
-      text: (birthdayData['wishes'] is List)
-          ? birthdayData['wishes'].join("  •  ")
-          : birthdayData['wishes'].toString(),
-      onClose: () {
-        setState(() => _showWishesSection = false);
-        _saveWishesSectionPreference(false);
-      },
-    );
-  }
-
-  // ── Customer Celebrations Banner ───────────────────────────────────────────
-  Widget _buildCustomerCelebrationsSection(String langCode) {
-    if (isLoadingCustomers) {
-      return _loadingBanner(
-        LocalizationService.translate('loading_celebrations', langCode),
-      );
-    }
-
-    List<String> celebrations = [];
-    if (customers.isNotEmpty) {
-      final today = DateTime.now();
-      final happyBirthday = LocalizationService.translate(
-        'happy_birthday',
-        langCode,
-      );
-      final happyAnniversary = LocalizationService.translate(
-        'happy_anniversary',
-        langCode,
-      );
-
-      for (var customer in customers) {
-        if (customer['dob'] != null && customer['dob'].isNotEmpty) {
-          try {
-            final dob = DateTime.parse(customer['dob']);
-            if (dob.month == today.month && dob.day == today.day) {
-              final age = today.year - dob.year;
-              celebrations.add(
-                age > 0
-                    ? "🎂 $happyBirthday ${customer['name']}! ($age${_suffix(age)})"
-                    : "🎂 $happyBirthday ${customer['name']}!",
-              );
-            }
-          } catch (_) {}
-        }
-        if (customer['anniversaryDate'] != null &&
-            customer['anniversaryDate'].isNotEmpty) {
-          try {
-            final ann = DateTime.parse(customer['anniversaryDate']);
-            if (ann.month == today.month && ann.day == today.day) {
-              final years = today.year - ann.year;
-              celebrations.add(
-                years > 0
-                    ? "💐 $happyAnniversary ${customer['name']}! ($years${_suffix(years)})"
-                    : "💐 $happyAnniversary ${customer['name']}!",
-              );
-            }
-          } catch (_) {}
-        }
-      }
-    }
-
-    if (!_showCustomerCelebrationsSection || celebrations.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return _marqueeBanner(
-      gradient: const LinearGradient(
-        colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      shadowColor: const Color(0xFFFF6F00),
-      borderColor: const Color(0xFFFFB74D),
-      iconBg: const Color(0xFFE65100),
-      iconData: Icons.cake,
-      closeIconColor: const Color(0xFFE65100),
-      textColor: const Color(0xFFBF360C),
-      text: celebrations.join("  •  "),
-      onClose: () {
-        setState(() => _showCustomerCelebrationsSection = false);
-        _saveCustomerCelebrationsPreference(false);
-      },
-    );
-  }
-
-  String _suffix(int n) {
-    if (n % 10 == 1 && n != 11) return 'st';
-    if (n % 10 == 2 && n != 12) return 'nd';
-    if (n % 10 == 3 && n != 13) return 'rd';
-    return 'th';
-  }
-
-  Widget _loadingBanner(String text) => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-        const SizedBox(width: 12),
-        Text(text, style: const TextStyle(fontSize: 12)),
-      ],
-    ),
-  );
-
-  Widget _marqueeBanner({
-    required LinearGradient gradient,
-    required Color shadowColor,
-    required Color borderColor,
-    required Color iconBg,
-    required IconData iconData,
-    required Color closeIconColor,
-    required Color textColor,
-    required String text,
-    required VoidCallback onClose,
-  }) => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      gradient: gradient,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: shadowColor.withOpacity(0.3),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-      border: Border.all(color: borderColor, width: 1),
-    ),
-    child: Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: iconBg,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(iconData, color: Colors.white, size: 18),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: SizedBox(
-            height: 22,
-            child: Marquee(
-              text: text,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
-              scrollAxis: Axis.horizontal,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              blankSpace: 40.0,
-              velocity: 35.0,
-              pauseAfterRound: const Duration(seconds: 2),
-              startPadding: 10.0,
-              accelerationDuration: const Duration(seconds: 1),
-              accelerationCurve: Curves.easeInOut,
-              decelerationDuration: const Duration(milliseconds: 600),
-              decelerationCurve: Curves.easeOut,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: onClose,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.close, color: closeIconColor, size: 16),
-          ),
-        ),
-      ],
-    ),
-  );
-
   // ── PRO Badge ──────────────────────────────────────────────────────────────
-  // Widget _buildProBadge() {
-  //   return Positioned(
-  //     right: 4,
-  //     bottom: 164,
-  //     child: GestureDetector(
-  //       onTap: () {
-
-  //         Navigator.push(context, MaterialPageRoute(builder: (context)=>ShowPlanScreen()));
-  //         // Navigate to Pro screen
-  //       },
-  //       child: AnimatedBuilder(
-  //         animation: _proJiggleAnimation,
-  //         builder: (context, child) => Transform.rotate(
-  //           angle: _proJiggleAnimation.value,
-  //           child: child,
-  //         ),
-  //         child: Container(
-  //           width: 58,
-  //           height: 58,
-  //           decoration: BoxDecoration(
-  //             shape: BoxShape.circle,
-  //             gradient: const RadialGradient(
-  //               colors: [
-  //                 Color(0xFFFFE566),
-  //                 Color(0xFFFFA000),
-  //                 Color(0xFFE65100),
-  //               ],
-  //               center: Alignment.topLeft,
-  //               radius: 1.5,
-  //             ),
-  //             border: Border.all(color: const Color(0xFF6A0DAD), width: 3),
-  //             boxShadow: [
-  //               BoxShadow(
-  //                 color: const Color(0xFFFF6F00).withOpacity(0.55),
-  //                 blurRadius: 10,
-  //                 spreadRadius: 1,
-  //               ),
-  //             ],
-  //           ),
-  //           child: const Column(
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             children: [
-  //               Icon(Icons.workspace_premium, color: Colors.white, size: 20),
-  //               SizedBox(height: 1),
-  //               Text(
-  //                 'PRO',
-  //                 style: TextStyle(
-  //                   color: Colors.white,
-  //                   fontSize: 10,
-  //                   fontWeight: FontWeight.w900,
-  //                   letterSpacing: 1.2,
-  //                   height: 1.0,
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Widget _buildProBadge() {
     return GestureDetector(
       onTap: () {
@@ -1994,8 +2434,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         builder: (context, child) =>
             Transform.rotate(angle: _proJiggleAnimation.value, child: child),
         child: Container(
-          width: 58,
-          height: 58,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const RadialGradient(
@@ -2062,21 +2502,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         isCenter: true,
       ),
       _NavItem(
-        icon: Icons.contact_page_outlined,
-        activeIcon: Icons.contact_page,
-        label: 'reels',
+        icon: Icons.ondemand_video_outlined,
+        activeIcon: Icons.ondemand_video,
+        label: 'Reels',
         index: 3,
       ),
       _NavItem(
         icon: Icons.people_outline,
         activeIcon: Icons.people,
-        label: 'customers',
+        label: 'Customers',
         index: 4,
       ),
     ];
 
     return SizedBox(
       height: navHeight + 24 + MediaQuery.of(context).padding.bottom,
+
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
@@ -2181,7 +2622,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
           Positioned(
             bottom: MediaQuery.of(context).padding.bottom + 8,
             child: AppText(
-              'chat',
+              'Create',
               style: TextStyle(
                 fontSize: 11,
                 color: _currentIndex == 2
@@ -2207,29 +2648,31 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       showLater: true,
       showIgnore: false,
       child: Scaffold(
-        // backgroundColor: Colors.black,
+        extendBody: true, // 🔥 required for notch
+
         body: _screens[_currentIndex],
+
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+
+        // floatingActionButton: FloatingActionButton(
+        //   onPressed: () => setState(() => _currentIndex = 2),
+        //   backgroundColor: const Color(0xFF1C1C2E),
+        //   child: Icon(
+        //     _currentIndex == 2 ? Icons.edit : Icons.edit_outlined,
+        //     color: _currentIndex == 2 ? const Color(0xFFFFA000) : Colors.white,
+        //   ),
+        // ),
         bottomNavigationBar: Consumer<LanguageProvider>(
           builder: (context, languageProvider, child) {
             final langCode = languageProvider.locale.languageCode;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
+
+            return Stack(
+              clipBehavior: Clip.none,
               children: [
-                _buildWishesSection(langCode),
-                _buildCustomerCelebrationsSection(langCode),
-                Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.topRight,
-                  children: [
-                    _buildCurvedNotchNavBar(langCode),
-                    Positioned(
-                      right: 4,
-                      top:
-                          -20, // adjust this value to position it above the navbar
-                      child: _buildProBadge(),
-                    ),
-                  ],
-                ),
+                _buildCurvedNotchNavBar(langCode),
+
+                // ✅ Keep your PRO badge
+                Positioned(right: 4, top: -30, child: _buildProBadge()),
               ],
             );
           },
