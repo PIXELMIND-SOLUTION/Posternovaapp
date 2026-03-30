@@ -19,7 +19,7 @@ class WeeklyTemplate {
 
   factory WeeklyTemplate.fromJson(Map<String, dynamic> json, String day) {
     return WeeklyTemplate(
-      id: json['id']?.toString() ?? '',
+      id: json['_id']?.toString() ?? '',
       imageUrl: json['images']?[0] ?? '',
       categoryName: json['categoryName'] ?? '',
       name: json['name'],

@@ -36,12 +36,12 @@ class FestivalPostersProvider extends ChangeNotifier {
   }
 
   // Initialize with current date
-  Future<void> initialize(DateTime date) async {
-    if (!_initialLoadDone) {
-      await fetchFestivalPosters(date);
-      _initialLoadDone = true;
-    }
-  }
+  // Future<void> initialize(DateTime date) async {
+  //   if (!_initialLoadDone) {
+  //     await fetchFestivalPosters(date);
+  //     _initialLoadDone = true;
+  //   }
+  // }
 
   // Change date and fetch posters
   Future<bool> changeDate(DateTime newDate) async {
@@ -71,16 +71,6 @@ class FestivalPostersProvider extends ChangeNotifier {
   }) async {
     final dateKey = _formatDateKey(date);
 
-    // If we have cached data for this date and not forcing refresh, return cached data
-    if (!forceRefresh && hasCachedDataForDate(date)) {
-      print('✅ Using cached data for date: $dateKey');
-      _festivalPosters = _cachedPosters[dateKey]!;
-      _selectedDate = date;
-      _isLoading = false;
-      notifyListeners(); // Make sure to notify even when using cache
-      return true;
-    }
-
     _isLoading = true;
     _error = null;
     // Clear old data immediately to show loading state
@@ -92,15 +82,13 @@ class FestivalPostersProvider extends ChangeNotifier {
       final formattedDate = _formatDate(date);
       print('🌐 Making API request for date: $formattedDate');
 
-      final response = await http
-          .post(
-            Uri.parse('http://31.97.206.144:4061/api/poster/festival'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'festivalDate': formattedDate}),
-          )
-          .timeout(const Duration(seconds: 10));
+      final response = await http.post(
+        Uri.parse('http://31.97.206.144:4061/api/poster/festival'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'festivalDate': formattedDate}),
+      );
 
-      print('📡 API Response Status: ${response.statusCode}');
+      print('📡 API Response Statusss: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);

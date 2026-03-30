@@ -15,10 +15,10 @@ class _CreatePostState extends State<CreatePost> with TickerProviderStateMixin {
   final List<Map<String, String>> postTypes = const [
     {"title": "square_post", "size": "2400*2400", "icon": "square"},
     {"title": "story_post", "size": "750*1334", "icon": "portrait"},
-    {"title": "cover_picture", "size": "812*312", "icon": "landscape"},
+    // {"title": "cover_picture", "size": "812*312", "icon": "landscape"},
     {"title": "display_picture", "size": "1200*1200", "icon": "account"},
     {"title": "instagram_post", "size": "1080*1350", "icon": "instagram"},
-    {"title": "youtube_thumbnail", "size": "1280*720", "icon": "video"},
+    // {"title": "youtube_thumbnail", "size": "1280*720", "icon": "video"},
     {"title": "a4_size", "size": "2480*3507", "icon": "document"},
     {"title": "certificate", "size": "850*1100", "icon": "award"},
   ];

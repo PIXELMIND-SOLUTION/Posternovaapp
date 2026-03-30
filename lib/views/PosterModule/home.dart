@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:marquee/marquee.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/models/banner_model.dart';
 import 'package:posternova/models/category_model.dart';
@@ -43,6 +44,7 @@ import 'package:posternova/widgets/voice_assistant_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -77,6 +79,9 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isReelsLoading = true;
   bool _isStoriesLoading = true;
   bool _isInitialLoad = true;
+
+  List<String> _wishesList = [];
+  bool _isLoadingWishes = false;
 
   static bool _hasShownReferAndEarnModal = false;
   static bool _hasLoadedOnce = false;
@@ -134,6 +139,11 @@ class _HomeScreenState extends State<HomeScreen>
     'Sunday',
   ];
 
+  bool _showWishesSection = true;
+  bool _showCustomerCelebrationsSection = true;
+  List<String> _customerCelebrationsList = [];
+  bool _isLoadingCelebrations = false;
+
   // ══════════════════════════════════════════════════════════════════════════
   // LIFECYCLE
   // ══════════════════════════════════════════════════════════════════════════
@@ -169,6 +179,120 @@ class _HomeScreenState extends State<HomeScreen>
     _connectivitySubscription?.cancel();
     VoiceGreetingHelper.stop();
     super.dispose();
+  }
+
+  Future<void> _fetchWishes() async {
+    if (userId == null) return;
+
+    setState(() => _isLoadingWishes = true);
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://31.97.206.144:4061/api/users/wishes/$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _wishesList = data['wishes'] != null
+              ? List<String>.from(data['wishes'])
+              : [];
+          _isLoadingWishes = false;
+        });
+      } else {
+        setState(() => _isLoadingWishes = false);
+      }
+    } catch (e) {
+      print('Error fetching wishes: $e');
+      setState(() => _isLoadingWishes = false);
+    }
+  }
+
+  Future<void> _fetchCustomerCelebrations() async {
+    if (userId == null) return;
+
+    setState(() => _isLoadingCelebrations = true);
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://31.97.206.144:4061/api/users/allcustomers/$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final customers = data['customers'] ?? [];
+        final today = DateTime.now();
+        final List<String> celebrations = [];
+
+        for (var customer in customers) {
+          // Check birthdays
+          if (customer['dob'] != null && customer['dob'].isNotEmpty) {
+            try {
+              final dob = DateTime.parse(customer['dob']);
+              if (dob.month == today.month && dob.day == today.day) {
+                final age = today.year - dob.year;
+                final suffix = _getAgeSuffix(age);
+                celebrations.add(
+                  "🎂 Happy ${age}${suffix} Birthday ${customer['name']}!",
+                );
+              }
+            } catch (_) {}
+          }
+
+          // Check anniversaries
+          if (customer['anniversaryDate'] != null &&
+              customer['anniversaryDate'].isNotEmpty) {
+            try {
+              final anniversary = DateTime.parse(customer['anniversaryDate']);
+              if (anniversary.month == today.month &&
+                  anniversary.day == today.day) {
+                final years = today.year - anniversary.year;
+                final suffix = _getAgeSuffix(years);
+                celebrations.add(
+                  "💐 Happy ${years}${suffix} Anniversary ${customer['name']}!",
+                );
+              }
+            } catch (_) {}
+          }
+        }
+
+        setState(() {
+          _customerCelebrationsList = celebrations;
+          _isLoadingCelebrations = false;
+        });
+      } else {
+        setState(() => _isLoadingCelebrations = false);
+      }
+    } catch (e) {
+      print('Error fetching celebrations: $e');
+      setState(() => _isLoadingCelebrations = false);
+    }
+  }
+
+  String _getAgeSuffix(int age) {
+    if (age % 10 == 1 && age != 11) return 'st';
+    if (age % 10 == 2 && age != 12) return 'nd';
+    if (age % 10 == 3 && age != 13) return 'rd';
+    return 'th';
+  }
+
+  void _saveWishesPreference(bool show) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('show_wishes_section', show);
+  }
+
+  void _saveCelebrationsPreference(bool show) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('show_customer_celebrations', show);
+  }
+
+  Future<void> _loadSectionPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _showWishesSection = prefs.getBool('show_wishes_section') ?? true;
+      _showCustomerCelebrationsSection =
+          prefs.getBool('show_customer_celebrations') ?? true;
+    });
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -267,14 +391,17 @@ class _HomeScreenState extends State<HomeScreen>
 
     await Future.wait([
       _loadUserId().catchError((e) => debugPrint('loadUserId: $e')),
+      _loadSectionPreferences(), // Add this
+      _fetchWishes(), // Add this
+      _fetchFestivalPosters(
+        selectedDate,
+      ).catchError((e) => debugPrint('festivalPosters: $e')),
       _fetchnewposters().catchError((e) => debugPrint('fetchPosters: $e')),
       _initializeProviders().catchError((e) => debugPrint('providers: $e')),
       _fetchWeeklyPosters().catchError((e) => debugPrint('weeklyPosters: $e')),
       _fetchBanners().catchError((e) => debugPrint('banners: $e')),
       _initializeUser().catchError((e) => debugPrint('initializeUser: $e')),
-      _fetchFestivalPosters(
-        selectedDate,
-      ).catchError((e) => debugPrint('festivalPosters: $e')),
+
       _fetchReels().catchError((e) => debugPrint('reels: $e')),
     ]);
 
@@ -626,6 +753,8 @@ class _HomeScreenState extends State<HomeScreen>
           onRefresh: () async {
             if (!_requireNetwork()) return;
             await Future.wait([
+              _fetchWishes(),
+              _fetchCustomerCelebrations(),
               Provider.of<FestivalPostersProvider>(
                 context,
                 listen: false,
@@ -815,11 +944,16 @@ class _HomeScreenState extends State<HomeScreen>
   // ══════════════════════════════════════════════════════════════════════════
 
   PreferredSizeWidget _buildAppBar() {
+    // Determine if we should show the message ticker
+    final bool showMessageTicker = !_isLoadingWishes && _wishesList.isNotEmpty;
+
+    // Calculate dynamic height: 64 for profile row + (8 spacing + 32 for ticker if visible)
+    final double appBarHeight = 64 + (showMessageTicker ? 8 + 32 : 0);
+
     return PreferredSize(
-      preferredSize: const Size.fromHeight(64),
+      preferredSize: Size.fromHeight(appBarHeight),
       child: Container(
         decoration: BoxDecoration(
-          // Use celebration gradient on AppBar when theme active, else brand blue
           gradient: _hasTheme && _celebrationConfig?.gradientColors != null
               ? LinearGradient(
                   colors: _celebrationConfig!.gradientColors!,
@@ -840,177 +974,273 @@ class _HomeScreenState extends State<HomeScreen>
           bottom: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
+            child: Column(
               children: [
-                GestureDetector(
-                  onTap: () {
-                    if (!_requireNetwork()) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ProfileScreen()),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.white,
-                      backgroundImage:
-                          (userImage != null && userImage!.isNotEmpty)
-                          ? NetworkImage(userImage!) as ImageProvider
-                          : null,
-                      child: (userImage == null || userImage!.isEmpty)
-                          ? const Icon(
-                              Icons.person,
-                              color: Color(0xFFFFC107),
-                              size: 22,
-                            )
-                          : null,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const AppText(
-                        'welcome_back',
-                        style: TextStyle(fontSize: 11, color: Colors.black54),
-                      ),
-                      Text(
-                        username ?? 'User',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                          letterSpacing: 0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                if (!_hasNetwork)
-                  Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade600,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.wifi_off_rounded,
-                          color: Colors.white,
-                          size: 12,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Offline',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(width: 6),
-
-                /// 🔥 ACTIVE TIME
-                const ActiveTimeWidget(),
-
-                const SizedBox(width: 6),
-                Stack(
-                  clipBehavior: Clip.none,
+                // First row - Profile and actions (always visible)
+                Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: Colors.black87,
-                        size: 26,
-                      ),
-                      onPressed: () {
+                    GestureDetector(
+                      onTap: () {
                         if (!_requireNetwork()) return;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                NotificationScreen(userId: userId.toString()),
+                            builder: (context) => ProfileScreen(),
                           ),
                         );
                       },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 38,
-                        minHeight: 38,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.white,
+                          backgroundImage:
+                              (userImage != null && userImage!.isNotEmpty)
+                              ? NetworkImage(userImage!) as ImageProvider
+                              : null,
+                          child: (userImage == null || userImage!.isEmpty)
+                              ? const Icon(
+                                  Icons.person,
+                                  color: Color(0xFFFFC107),
+                                  size: 22,
+                                )
+                              : null,
+                        ),
                       ),
                     ),
-                    Positioned(
-                      right: 4,
-                      top: 4,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Text(
-                            '3',
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const AppText(
+                            'welcome_back',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              color: Colors.black54,
                             ),
                           ),
+                          Text(
+                            username ?? 'User',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                              letterSpacing: 0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (!_hasNetwork)
+                      Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade600,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.wifi_off_rounded,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Offline',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(width: 6),
+                    const ActiveTimeWidget(),
+                    const SizedBox(width: 6),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: Colors.black87,
+                            size: 26,
+                          ),
+                          onPressed: () {
+                            if (!_requireNetwork()) return;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NotificationScreen(
+                                  userId: userId.toString(),
+                                ),
+                              ),
+                            );
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 38,
+                            minHeight: 38,
+                          ),
+                        ),
+                        // Positioned(
+                        //   right: 4,
+                        //   top: 4,
+                        //   child: Container(
+                        //     width: 16,
+                        //     height: 16,
+                        //     decoration: const BoxDecoration(
+                        //       color: Colors.red,
+                        //       shape: BoxShape.circle,
+                        //     ),
+                        //     child: const Center(
+                        //       child: Text(
+                        //         '3',
+                        //         style: TextStyle(
+                        //           color: Colors.white,
+                        //           fontSize: 9,
+                        //           fontWeight: FontWeight.bold,
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        if (!_requireNetwork()) return;
+                        _showLanguageSelector(context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.language_rounded,
+                          color: Colors.black87,
+                          size: 22,
                         ),
                       ),
                     ),
                   ],
                 ),
-                GestureDetector(
-                  onTap: () {
-                    if (!_requireNetwork()) return;
-                    _showLanguageSelector(context);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.language_rounded,
-                      color: Colors.black87,
-                      size: 22,
-                    ),
-                  ),
-                ),
+
+                // Second row - Birthday and Anniversary messages ticker (only if there are wishes)
+                if (showMessageTicker) ...[
+                  const SizedBox(height: 8),
+                  _buildMessageTicker(),
+                ],
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMessageTicker() {
+    if (_isLoadingWishes) {
+      return Container(
+        height: 32,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.25),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Loading wishes...',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_wishesList.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      height: 32,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.3),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.celebration,
+              color: Color.fromARGB(255, 255, 49, 8),
+              size: 14,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: SizedBox(
+              height: 30,
+              child: Marquee(
+                text: _wishesList.join("  •  "),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+                scrollAxis: Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                blankSpace: 40.0,
+                velocity: 30.0,
+                pauseAfterRound: const Duration(seconds: 2),
+                accelerationDuration: const Duration(seconds: 1),
+                decelerationDuration: const Duration(milliseconds: 600),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1500,7 +1730,8 @@ class _HomeScreenState extends State<HomeScreen>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => PosterEditorScreen(posterAsset: bgImageUrl),
+            builder: (_) =>
+                PosterEditorScreen(posterAsset: bgImageUrl, itemid: poster.id),
           ),
         );
       },
@@ -1726,7 +1957,10 @@ class _HomeScreenState extends State<HomeScreen>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => PosterEditorScreen(posterAsset: bgImageUrl),
+                builder: (_) => PosterEditorScreen(
+                  posterAsset: bgImageUrl,
+                  itemid: poster.id,
+                ),
               ),
             );
             // } else {
@@ -2115,16 +2349,16 @@ class _HomeScreenState extends State<HomeScreen>
                             return GestureDetector(
                               onTap: () {
                                 if (!_requireNetwork()) return;
-                                if (myPlanProvider.isPurchase)
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          DetailsScreen(category: category),
-                                    ),
-                                  );
-                                else
-                                  _showPremiumDialog();
+                                // if (myPlanProvider.isPurchase)
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        DetailsScreen(category: category),
+                                  ),
+                                );
+                                // else
+                                //   _showPremiumDialog();
                               },
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -2187,17 +2421,20 @@ class _HomeScreenState extends State<HomeScreen>
         return GestureDetector(
           onTap: () {
             if (!_requireNetwork()) return;
-            if (myPlanProvider.isPurchase) {
-              final bgImageUrl = poster.images[0] ?? '';
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PosterEditorScreen(posterAsset: bgImageUrl),
+            // if (myPlanProvider.isPurchase) {
+            final bgImageUrl = poster.images[0] ?? '';
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PosterEditorScreen(
+                  posterAsset: bgImageUrl,
+                  itemid: poster.id,
                 ),
-              );
-            } else {
-              _showPremiumDialog();
-            }
+              ),
+            );
+            // } else {
+            //   _showPremiumDialog();
+            // }
           },
           child: Container(
             width: w,
@@ -2684,6 +2921,165 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildWishesBanner() {
+    if (_isLoadingWishes) {
+      return _buildLoadingBanner('Loading wishes...');
+    }
+
+    if (!_showWishesSection || _wishesList.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return _buildMarqueeBanner(
+      gradient: const LinearGradient(
+        colors: [Color(0xFFE0F7FA), Color(0xFFF3E5F5)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      shadowColor: Color(0xFF673AB7),
+      borderColor: Color(0xFF80DEEA),
+      iconBg: Color(0xFF00838F),
+      iconData: Icons.celebration,
+      closeIconColor: Color(0xFF00838F),
+      textColor: Color(0xFF004D40),
+      text: _wishesList.join("  •  "),
+      onClose: () {
+        setState(() => _showWishesSection = false);
+        _saveWishesPreference(false);
+      },
+    );
+  }
+
+  Widget _buildCelebrationsBanner() {
+    if (_isLoadingCelebrations) {
+      return _buildLoadingBanner('Loading celebrations...');
+    }
+
+    if (!_showCustomerCelebrationsSection ||
+        _customerCelebrationsList.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return _buildMarqueeBanner(
+      gradient: const LinearGradient(
+        colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      shadowColor: Color(0xFFFF6F00),
+      borderColor: Color(0xFFFFB74D),
+      iconBg: Color(0xFFE65100),
+      iconData: Icons.cake,
+      closeIconColor: Color(0xFFE65100),
+      textColor: Color(0xFFBF360C),
+      text: _customerCelebrationsList.join("  •  "),
+      onClose: () {
+        setState(() => _showCustomerCelebrationsSection = false);
+        _saveCelebrationsPreference(false);
+      },
+    );
+  }
+
+  Widget _buildLoadingBanner(String text) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 12),
+          Text(text, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMarqueeBanner({
+    required LinearGradient gradient,
+    required Color shadowColor,
+    required Color borderColor,
+    required Color iconBg,
+    required IconData iconData,
+    required Color closeIconColor,
+    required Color textColor,
+    required String text,
+    required VoidCallback onClose,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(iconData, color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SizedBox(
+              height: 22,
+              child: Marquee(
+                text: text,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+                scrollAxis: Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                blankSpace: 40.0,
+                velocity: 35.0,
+                pauseAfterRound: const Duration(seconds: 2),
+                startPadding: 10.0,
+                accelerationDuration: const Duration(seconds: 1),
+                accelerationCurve: Curves.easeInOut,
+                decelerationDuration: const Duration(milliseconds: 600),
+                decelerationCurve: Curves.easeOut,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onClose,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.close, color: closeIconColor, size: 16),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

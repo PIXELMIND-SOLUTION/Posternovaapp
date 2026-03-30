@@ -1189,18 +1189,22 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
           const SizedBox(height: 12),
 
           // Tab row + Add Text button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _tabBtn(0, Icons.text_fields_rounded, 'Text'),
-                const SizedBox(width: 8),
-                _tabBtn(1, Icons.emoji_emotions_outlined, 'Stickers'),
-                const SizedBox(width: 8),
-                _tabBtn(2, Icons.font_download_outlined, 'Fonts'),
-                const Spacer(),
-                _addTextBtn(),
-              ],
+          SizedBox(
+            height: 60, // Set a fixed height
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _tabBtn(0, Icons.text_fields_rounded, 'Text'),
+                  const SizedBox(width: 8),
+                  _tabBtn(1, Icons.emoji_emotions_outlined, 'Stickers'),
+                  const SizedBox(width: 8),
+                  _tabBtn(2, Icons.font_download_outlined, 'Fonts'),
+                  const Spacer(),
+                  _addTextBtn(),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),

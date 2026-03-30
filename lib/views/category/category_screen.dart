@@ -1705,7 +1705,10 @@ class _CategoryScreenState extends State<CategoryScreen>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => PosterEditorScreen(posterAsset: bgImageUrl),
+                    builder: (_) => PosterEditorScreen(
+                      posterAsset: bgImageUrl,
+                      itemid: poster.id,
+                    ),
                   ),
                 );
               } else {

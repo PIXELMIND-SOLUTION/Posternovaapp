@@ -1,1571 +1,3 @@
-// // // import 'package:flutter/material.dart';
-// // // import 'package:posternova/providers/auth/login_provider.dart';
-// // // import 'dart:async';
-// // // import 'package:posternova/views/AuthModule/auth_screen.dart';
-// // // import 'package:posternova/views/NavBar/navbar_screen.dart';
-// // // import 'package:posternova/helper/storage_helper.dart';
-// // // import 'package:provider/provider.dart';
-
-// // // class SplashScreen extends StatefulWidget {
-// // //   const SplashScreen({Key? key}) : super(key: key);
-
-// // //   @override
-// // //   State<SplashScreen> createState() => _SplashScreenState();
-// // // }
-
-// // // class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
-// // //   late AnimationController _fadeController;
-// // //   late AnimationController _scaleController;
-// // //   late AnimationController _rotateController;
-// // //   late Animation<double> _fadeAnimation;
-// // //   late Animation<double> _scaleAnimation;
-// // //   late Animation<double> _rotateAnimation;
-
-// // //   @override
-// // //   void initState() {
-// // //     super.initState();
-    
-// // //     // Fade animation
-// // //     _fadeController = AnimationController(
-// // //       duration: const Duration(milliseconds: 1500),
-// // //       vsync: this,
-// // //     );
-// // //     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-// // //       CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
-// // //     );
-
-// // //     // Scale animation
-// // //     _scaleController = AnimationController(
-// // //       duration: const Duration(milliseconds: 1000),
-// // //       vsync: this,
-// // //     );
-// // //     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-// // //       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
-// // //     );
-
-// // //     // Rotate animation
-// // //     _rotateController = AnimationController(
-// // //       duration: const Duration(milliseconds: 2000),
-// // //       vsync: this,
-// // //     );
-// // //     _rotateAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-// // //       CurvedAnimation(parent: _rotateController, curve: Curves.easeInOut),
-// // //     );
-
-// // //     // Start animations
-// // //     _fadeController.forward();
-// // //     _scaleController.forward();
-// // //     _rotateController.repeat();
-
-// // //     // Check login status and navigate
-// // //     _checkLoginAndNavigate();
-// // //   }
-
-// // //   Future<void> _checkLoginAndNavigate() async {
-// // //     // Wait for animations to complete
-// // //     await Future.delayed(const Duration(seconds: 3));
-    
-// // //     if (!mounted) return;
-
-// // //     try {
-// // //       // Initialize auth provider
-// // //       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-// // //       await authProvider.initialize();
-
-// // //       // Check if user is logged in
-// // //       final isLoggedIn = await AuthPreferences.isLoggedIn();
-// // //       final userData = await AuthPreferences.getUserData();
-
-// // //       if (!mounted) return;
-
-// // //       if (isLoggedIn && userData != null) {
-// // //         // User is logged in, navigate to main screen
-// // //         Navigator.pushReplacement(
-// // //           context,
-// // //           MaterialPageRoute(builder: (context) => MainNavigationScreen()),
-// // //         );
-// // //         print('Navigate to Main Navigation Screen - User is logged in');
-// // //       } else {
-// // //         // User is not logged in, navigate to auth screen
-// // //         Navigator.pushReplacement(
-// // //           context,
-// // //           MaterialPageRoute(builder: (context) => const AuthScreen()),
-// // //         );
-// // //         print('Navigate to Auth Screen - User not logged in');
-// // //       }
-// // //     } catch (e) {
-// // //       print('Error checking login status: $e');
-// // //       // On error, navigate to auth screen
-// // //       if (mounted) {
-// // //         Navigator.pushReplacement(
-// // //           context,
-// // //           MaterialPageRoute(builder: (context) => const AuthScreen()),
-// // //         );
-// // //       }
-// // //     }
-// // //   }
-
-// // //   @override
-// // //   void dispose() {
-// // //     _fadeController.dispose();
-// // //     _scaleController.dispose();
-// // //     _rotateController.dispose();
-// // //     super.dispose();
-// // //   }
-
-// // //   @override
-// // //   Widget build(BuildContext context) {
-// // //     return Scaffold(
-// // //       body: Container(
-// // //         width: double.infinity,
-// // //         height: double.infinity,
-// // //         decoration: const BoxDecoration(
-// // //           gradient: LinearGradient(
-// // //             begin: Alignment.topLeft,
-// // //             end: Alignment.bottomRight,
-// // //             colors: [
-// // //               Color(0xFF0A0E21),
-// // //               Color(0xFF1D1E33),
-// // //               Color(0xFF2D1B69),
-// // //               Color(0xFF1D1E33),
-// // //               Color(0xFF0A0E21),
-// // //             ],
-// // //             stops: [0.0, 0.25, 0.5, 0.75, 1.0],
-// // //           ),
-// // //         ),
-// // //         child: Stack(
-// // //           children: [
-// // //             // Animated background particles
-// // //             ...List.generate(20, (index) {
-// // //               return AnimatedParticle(
-// // //                 delay: index * 100,
-// // //                 size: (index % 3 + 1) * 3.0,
-// // //               );
-// // //             }),
-            
-// // //             // Main content
-// // //             Center(
-// // //               child: FadeTransition(
-// // //                 opacity: _fadeAnimation,
-// // //                 child: Column(
-// // //                   mainAxisAlignment: MainAxisAlignment.center,
-// // //                   children: [
-// // //                     // Animated Logo
-// // //                     ScaleTransition(
-// // //                       scale: _scaleAnimation,
-// // //                       child: RotationTransition(
-// // //                         turns: _rotateAnimation,
-// // //                         child: Container(
-// // //                           padding: const EdgeInsets.all(30),
-// // //                           decoration: BoxDecoration(
-// // //                             shape: BoxShape.circle,
-// // //                             gradient: LinearGradient(
-// // //                               colors: [
-// // //                                 Colors.purple.shade400,
-// // //                                 Colors.blue.shade400,
-// // //                                 Colors.pink.shade400,
-// // //                               ],
-// // //                             ),
-// // //                             boxShadow: [
-// // //                               BoxShadow(
-// // //                                 color: Colors.purple.withOpacity(0.6),
-// // //                                 blurRadius: 40,
-// // //                                 spreadRadius: 10,
-// // //                               ),
-// // //                               BoxShadow(
-// // //                                 color: Colors.blue.withOpacity(0.4),
-// // //                                 blurRadius: 60,
-// // //                                 spreadRadius: 15,
-// // //                               ),
-// // //                             ],
-// // //                           ),
-// // //                           child: const Icon(
-// // //                             Icons.auto_awesome,
-// // //                             size: 80,
-// // //                             color: Colors.white,
-// // //                           ),
-// // //                         ),
-// // //                       ),
-// // //                     ),
-                    
-// // //                     const SizedBox(height: 40),
-                    
-// // //                     // App Name
-// // //                     ShaderMask(
-// // //                       shaderCallback: (bounds) => LinearGradient(
-// // //                         colors: [
-// // //                           Colors.purple.shade300,
-// // //                           Colors.blue.shade300,
-// // //                           Colors.pink.shade300,
-// // //                         ],
-// // //                       ).createShader(bounds),
-// // //                       child: const Text(
-// // //                         'Editezy',
-// // //                         style: TextStyle(
-// // //                           fontSize: 48,
-// // //                           fontWeight: FontWeight.bold,
-// // //                           color: Colors.white,
-// // //                           letterSpacing: 3,
-// // //                         ),
-// // //                       ),
-// // //                     ),
-                    
-// // //                     const SizedBox(height: 15),
-                    
-// // //                     // Tagline
-// // //                     Text(
-// // //                       'Create • Design • Inspire',
-// // //                       style: TextStyle(
-// // //                         fontSize: 16,
-// // //                         color: Colors.grey.shade400,
-// // //                         letterSpacing: 2,
-// // //                         fontWeight: FontWeight.w300,
-// // //                       ),
-// // //                     ),
-                    
-// // //                     const SizedBox(height: 60),
-                    
-// // //                     // Loading indicator
-// // //                     SizedBox(
-// // //                       width: 200,
-// // //                       child: TweenAnimationBuilder<double>(
-// // //                         tween: Tween(begin: 0.0, end: 1.0),
-// // //                         duration: const Duration(seconds: 3),
-// // //                         builder: (context, value, child) {
-// // //                           return Column(
-// // //                             children: [
-// // //                               LinearProgressIndicator(
-// // //                                 value: value,
-// // //                                 backgroundColor: Colors.grey.shade800,
-// // //                                 valueColor: AlwaysStoppedAnimation<Color>(
-// // //                                   Colors.purple.shade300,
-// // //                                 ),
-// // //                                 minHeight: 3,
-// // //                               ),
-// // //                             ],
-// // //                           );
-// // //                         },
-// // //                       ),
-// // //                     ),
-// // //                   ],
-// // //                 ),
-// // //               ),
-// // //             ),
-            
-// // //             // Bottom text
-// // //             Positioned(
-// // //               bottom: 40,
-// // //               left: 0,
-// // //               right: 0,
-// // //               child: FadeTransition(
-// // //                 opacity: _fadeAnimation,
-// // //                 child: Center(
-// // //                   child: Text(
-// // //                     'Powered by Pixelmindsolutions',
-// // //                     style: TextStyle(
-// // //                       fontSize: 12,
-// // //                       color: Colors.grey.shade600,
-// // //                       letterSpacing: 1.5,
-// // //                     ),
-// // //                   ),
-// // //                 ),
-// // //               ),
-// // //             ),
-// // //           ],
-// // //         ),
-// // //       ),
-// // //     );
-// // //   }
-// // // }
-
-// // // // Animated particle widget for background effect
-// // // class AnimatedParticle extends StatefulWidget {
-// // //   final int delay;
-// // //   final double size;
-
-// // //   const AnimatedParticle({
-// // //     Key? key,
-// // //     required this.delay,
-// // //     required this.size,
-// // //   }) : super(key: key);
-
-// // //   @override
-// // //   State<AnimatedParticle> createState() => _AnimatedParticleState();
-// // // }
-
-// // // class _AnimatedParticleState extends State<AnimatedParticle> with SingleTickerProviderStateMixin {
-// // //   late AnimationController _controller;
-// // //   late Animation<double> _animation;
-// // //   late double left;
-// // //   late double top;
-
-// // //   @override
-// // //   void initState() {
-// // //     super.initState();
-    
-// // //     left = (widget.delay % 10) * 40.0;
-// // //     top = (widget.delay % 15) * 50.0;
-    
-// // //     _controller = AnimationController(
-// // //       duration: Duration(milliseconds: 3000 + widget.delay),
-// // //       vsync: this,
-// // //     );
-    
-// // //     _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-    
-// // //     Future.delayed(Duration(milliseconds: widget.delay), () {
-// // //       if (mounted) {
-// // //         _controller.repeat(reverse: true);
-// // //       }
-// // //     });
-// // //   }
-
-// // //   @override
-// // //   void dispose() {
-// // //     _controller.dispose();
-// // //     super.dispose();
-// // //   }
-
-// // //   @override
-// // //   Widget build(BuildContext context) {
-// // //     return Positioned(
-// // //       left: left,
-// // //       top: top,
-// // //       child: FadeTransition(
-// // //         opacity: _animation,
-// // //         child: Container(
-// // //           width: widget.size,
-// // //           height: widget.size,
-// // //           decoration: BoxDecoration(
-// // //             shape: BoxShape.circle,
-// // //             color: Colors.purple.withOpacity(0.3),
-// // //             boxShadow: [
-// // //               BoxShadow(
-// // //                 color: Colors.purple.withOpacity(0.4),
-// // //                 blurRadius: 10,
-// // //                 spreadRadius: 2,
-// // //               ),
-// // //             ],
-// // //           ),
-// // //         ),
-// // //       ),
-// // //     );
-// // //   }
-// // // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // import 'package:flutter/material.dart';
-// // import 'package:posternova/providers/auth/login_provider.dart';
-// // import 'dart:async';
-// // import 'package:posternova/views/AuthModule/auth_screen.dart';
-// // import 'package:posternova/views/NavBar/navbar_screen.dart';
-// // import 'package:posternova/helper/storage_helper.dart';
-// // import 'package:provider/provider.dart';
-
-// // class SplashScreen extends StatefulWidget {
-// //   const SplashScreen({Key? key}) : super(key: key);
-
-// //   @override
-// //   State<SplashScreen> createState() => _SplashScreenState();
-// // }
-
-// // class _SplashScreenState extends State<SplashScreen>
-// //     with TickerProviderStateMixin {
-// //   // Dot indicator index (auto-advances like a page swipe)
-// //   int _currentDot = 0;
-// //   Timer? _dotTimer;
-
-// //   // Animations
-// //   late AnimationController _logoController;
-// //   late AnimationController _textController;
-// //   late AnimationController _shimmerController;
-
-// //   late Animation<double> _logoFade;
-// //   late Animation<double> _logoScale;
-// //   late Animation<Offset> _nameSlide;
-// //   late Animation<double> _nameFade;
-// //   late Animation<Offset> _taglineSlide;
-// //   late Animation<double> _taglineFade;
-// //   late Animation<double> _shimmer;
-
-// //   static const Color _purple = Color(0xFF7C3AED);
-// //   static const Color _blue = Color(0xFF2563EB);
-
-// //   @override
-// //   void initState() {
-// //     super.initState();
-
-// //     // Logo fade + scale pop
-// //     _logoController = AnimationController(
-// //       vsync: this,
-// //       duration: const Duration(milliseconds: 900),
-// //     );
-// //     _logoFade = Tween<double>(begin: 0, end: 1).animate(
-// //       CurvedAnimation(parent: _logoController, curve: Curves.easeOut),
-// //     );
-// //     _logoScale = Tween<double>(begin: 0.5, end: 1).animate(
-// //       CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
-// //     );
-
-// //     // Text slide-up (name first, tagline shortly after)
-// //     _textController = AnimationController(
-// //       vsync: this,
-// //       duration: const Duration(milliseconds: 1000),
-// //     );
-// //     _nameSlide = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
-// //         .animate(CurvedAnimation(
-// //       parent: _textController,
-// //       curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
-// //     ));
-// //     _nameFade = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-// //       parent: _textController,
-// //       curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-// //     ));
-// //     _taglineSlide = Tween<Offset>(
-// //             begin: const Offset(0, 1.5), end: Offset.zero)
-// //         .animate(CurvedAnimation(
-// //       parent: _textController,
-// //       curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
-// //     ));
-// //     _taglineFade = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-// //       parent: _textController,
-// //       curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-// //     ));
-
-// //     // Shimmer sweep on app name
-// //     _shimmerController = AnimationController(
-// //       vsync: this,
-// //       duration: const Duration(milliseconds: 1800),
-// //     );
-// //     _shimmer = Tween<double>(begin: -1.5, end: 2.5).animate(
-// //       CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
-// //     );
-
-// //     // Kick off animations
-// //     _logoController.forward();
-// //     Future.delayed(const Duration(milliseconds: 500),
-// //         () { if (mounted) _textController.forward(); });
-// //     Future.delayed(const Duration(milliseconds: 1000),
-// //         () { if (mounted) _shimmerController.repeat(period: const Duration(seconds: 3)); });
-
-// //     // Auto-advance dots (4 dots, changes every 700ms)
-// //     _dotTimer = Timer.periodic(const Duration(milliseconds: 700), (t) {
-// //       if (!mounted) { t.cancel(); return; }
-// //       if (_currentDot < 3) {
-// //         setState(() => _currentDot++);
-// //       } else {
-// //         t.cancel();
-// //       }
-// //     });
-
-// //     // _checkLoginAndNavigate();
-// //   }
-
-// //   Future<void> _checkLoginAndNavigate() async {
-// //     await Future.delayed(const Duration(seconds: 3));
-// //     if (!mounted) return;
-// //     try {
-// //       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-// //       await authProvider.initialize();
-// //       final isLoggedIn = await AuthPreferences.isLoggedIn();
-// //       final userData = await AuthPreferences.getUserData();
-// //       if (!mounted) return;
-// //       if (isLoggedIn && userData != null) {
-// //         Navigator.pushReplacement(
-// //           context,
-// //           MaterialPageRoute(builder: (_) => MainNavigationScreen()),
-// //         );
-// //       } else {
-// //         Navigator.pushReplacement(
-// //           context,
-// //           MaterialPageRoute(builder: (_) => const AuthScreen()),
-// //         );
-// //       }
-// //     } catch (_) {
-// //       if (mounted) {
-// //         Navigator.pushReplacement(
-// //           context,
-// //           MaterialPageRoute(builder: (_) => const AuthScreen()),
-// //         );
-// //       }
-// //     }
-// //   }
-
-// //   @override
-// //   void dispose() {
-// //     _dotTimer?.cancel();
-// //     _logoController.dispose();
-// //     _textController.dispose();
-// //     _shimmerController.dispose();
-// //     super.dispose();
-// //   }
-
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     return Scaffold(
-// //       backgroundColor: Colors.white,
-// //       body: SafeArea(
-// //         child: Column(
-// //           children: [
-// //             // ── MAIN CONTENT (logo + name) ─────────────────────────
-// //             Expanded(
-// //               child: Center(
-// //                 child: Column(
-// //                   mainAxisSize: MainAxisSize.min,
-// //                   children: [
-// //                     // Logo image
-// //                     FadeTransition(
-// //                       opacity: _logoFade,
-// //                       child: ScaleTransition(
-// //                         scale: _logoScale,
-// //                         child: SizedBox(
-// //                           width: 180,
-// //                           height: 160,
-// //                           child: Image.asset(
-// //                             'assets/images/appstore.png', // <-- your logo asset
-// //                             fit: BoxFit.contain,
-// //                             errorBuilder: (_, __, ___) => Container(
-// //                               width: 150,
-// //                               height: 150,
-// //                               decoration: BoxDecoration(
-// //                                 borderRadius: BorderRadius.circular(28),
-// //                                 gradient: const LinearGradient(
-// //                                   colors: [_purple, _blue],
-// //                                   begin: Alignment.topLeft,
-// //                                   end: Alignment.bottomRight,
-// //                                 ),
-// //                               ),
-// //                               child: const Icon(Icons.edit,
-// //                                   size: 70, color: Colors.white),
-// //                             ),
-// //                           ),
-// //                         ),
-// //                       ),
-// //                     ),
-
-// //                     const SizedBox(height: 28),
-
-// //                     // App name — slide up + shimmer
-// //                     ClipRect(
-// //                       child: SlideTransition(
-// //                         position: _nameSlide,
-// //                         child: FadeTransition(
-// //                           opacity: _nameFade,
-// //                           child: AnimatedBuilder(
-// //                             animation: _shimmer,
-// //                             builder: (_, __) => ShaderMask(
-// //                               shaderCallback: (bounds) => LinearGradient(
-// //                                 begin: Alignment(_shimmer.value - 1, 0),
-// //                                 end: Alignment(_shimmer.value + 1, 0),
-// //                                 colors: const [
-// //                                   _purple,
-// //                                   Color(0xFF60A5FA),
-// //                                   Color(0xFFEC4899),
-// //                                   _purple,
-// //                                 ],
-// //                                 stops: const [0.0, 0.4, 0.6, 1.0],
-// //                               ).createShader(bounds),
-// //                               child: const Text(
-// //                                 'EditEzy',
-// //                                 style: TextStyle(
-// //                                   fontSize: 50,
-// //                                   fontWeight: FontWeight.bold,
-// //                                   color: Colors.white, // overridden by shader
-// //                                   letterSpacing: 3,
-// //                                 ),
-// //                               ),
-// //                             ),
-// //                           ),
-// //                         ),
-// //                       ),
-// //                     ),
-
-// //                     const SizedBox(height: 10),
-
-// //                     // Tagline — slide up slightly after name
-// //                     ClipRect(
-// //                       child: SlideTransition(
-// //                         position: _taglineSlide,
-// //                         child: FadeTransition(
-// //                           opacity: _taglineFade,
-// //                           child: Text(
-// //                             'Create • Design • Inspire',
-// //                             style: TextStyle(
-// //                               fontSize: 14,
-// //                               color: Colors.grey.shade500,
-// //                               letterSpacing: 1.5,
-// //                             ),
-// //                           ),
-// //                         ),
-// //                       ),
-// //                     ),
-// //                   ],
-// //                 ),
-// //               ),
-// //             ),
-
-// //             // ── BOTTOM SECTION ────────────────────────────────────
-// //             Padding(
-// //               padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-// //               child: Column(
-// //                 children: [
-// //                   // Page indicator dots
-// //                   Row(
-// //                     mainAxisAlignment: MainAxisAlignment.center,
-// //                     children: List.generate(4, (i) {
-// //                       final isActive = i == _currentDot;
-// //                       return AnimatedContainer(
-// //                         duration: const Duration(milliseconds: 300),
-// //                         curve: Curves.easeInOut,
-// //                         margin: const EdgeInsets.symmetric(horizontal: 5),
-// //                         width: isActive ? 22 : 8,
-// //                         height: 8,
-// //                         decoration: BoxDecoration(
-// //                           color: isActive ? _purple : Colors.grey.shade300,
-// //                           borderRadius: BorderRadius.circular(4),
-// //                         ),
-// //                       );
-// //                     }),
-// //                   ),
-
-// //                   const SizedBox(height: 30),
-
-// //                   // Agree & Continue button
-// //                   SizedBox(
-// //                     width: double.infinity,
-// //                     height: 54,
-// //                     child: ElevatedButton(
-// //                       onPressed: () {
-// //                         Navigator.pushReplacement(
-// //                           context,
-// //                           MaterialPageRoute(builder: (_) => const AuthScreen()),
-// //                         );
-// //                       },
-// //                       style: ElevatedButton.styleFrom(
-// //                         backgroundColor: _purple,
-// //                         foregroundColor: Colors.white,
-// //                         elevation: 0,
-// //                         shape: RoundedRectangleBorder(
-// //                           borderRadius: BorderRadius.circular(14),
-// //                         ),
-// //                       ),
-// //                       child: const Text(
-// //                         'Agree to terms & Continue',
-// //                         style: TextStyle(
-// //                           fontSize: 16,
-// //                           fontWeight: FontWeight.w600,
-// //                           letterSpacing: 0.3,
-// //                         ),
-// //                       ),
-// //                     ),
-// //                   ),
-
-// //                   const SizedBox(height: 16),
-
-// //                   // Terms & Privacy policies link
-// //                   GestureDetector(
-// //                     onTap: () {
-// //                       // TODO: open terms URL
-// //                     },
-// //                     child: const Text(
-// //                       'Terms & Privacy policies',
-// //                       style: TextStyle(
-// //                         fontSize: 13,
-// //                         color: _blue,
-// //                         decoration: TextDecoration.underline,
-// //                         decorationColor: _blue,
-// //                       ),
-// //                     ),
-// //                   ),
-
-// //                   const SizedBox(height: 8),
-// //                 ],
-// //               ),
-// //             ),
-// //           ],
-// //         ),
-// //       ),
-// //     );
-// //   }
-// // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import 'package:flutter/material.dart';
-// import 'package:posternova/providers/auth/login_provider.dart';
-// import 'dart:async';
-// import 'dart:math' as math;
-// import 'package:posternova/views/AuthModule/auth_screen.dart';
-// import 'package:posternova/views/NavBar/navbar_screen.dart';
-// import 'package:posternova/helper/storage_helper.dart';
-// import 'package:provider/provider.dart';
-
-// class SplashScreen extends StatefulWidget {
-//   const SplashScreen({Key? key}) : super(key: key);
-
-//   @override
-//   State<SplashScreen> createState() => _SplashScreenState();
-// }
-
-// class _SplashScreenState extends State<SplashScreen>
-//     with TickerProviderStateMixin {
-//   int _currentDot = 0;
-//   Timer? _dotTimer;
-
-//   // Controllers
-//   late AnimationController _logoController;
-//   late AnimationController _textWaveController;
-//   late AnimationController _shimmerController;
-//   late AnimationController _taglineController;
-//   late AnimationController _buttonController;
-//   late AnimationController _floatController;
-//   late AnimationController _glowController;
-
-//   // Logo animations
-//   late Animation<double> _logoScale;
-//   late Animation<double> _logoFade;
-//   late Animation<double> _logoRotate;
-
-//   // Shimmer on name
-//   late Animation<double> _shimmer;
-
-//   // Tagline
-//   late Animation<Offset> _taglineSlide;
-//   late Animation<double> _taglineFade;
-
-//   // Button
-//   late Animation<double> _buttonScale;
-//   late Animation<double> _buttonFade;
-
-//   // Logo floating
-//   late Animation<double> _float;
-
-//   // Glow pulse
-//   late Animation<double> _glow;
-
-//   final String _appName = 'EditEzy';
-
-//   static const Color _tealDark  = Color(0xFF0077A8);
-//   static const Color _tealLight = Color(0xFF00BCD4);
-//   static const Color _accent    = Color(0xFF00E5FF);
-//   static const Color _bgTop     = Color(0xFFF0FAFE);
-//   static const Color _bgBottom  = Color(0xFFFFFFFF);
-
-//   @override
-//   void initState() {
-//     super.initState();
-
-//     _logoController = AnimationController(
-//         vsync: this, duration: const Duration(milliseconds: 1000));
-//     _logoFade = Tween<double>(begin: 0, end: 1).animate(
-//         CurvedAnimation(parent: _logoController, curve: const Interval(0.0, 0.6, curve: Curves.easeOut)));
-//     _logoScale = Tween<double>(begin: 0.3, end: 1).animate(
-//         CurvedAnimation(parent: _logoController, curve: Curves.elasticOut));
-//     _logoRotate = Tween<double>(begin: -0.15, end: 0).animate(
-//         CurvedAnimation(parent: _logoController, curve: const Interval(0.0, 0.7, curve: Curves.easeOut)));
-
-//     _textWaveController = AnimationController(
-//         vsync: this, duration: const Duration(milliseconds: 2000))
-//       ..repeat();
-
-//     _shimmerController = AnimationController(
-//         vsync: this, duration: const Duration(milliseconds: 2200));
-//     _shimmer = Tween<double>(begin: -2, end: 3).animate(
-//         CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut));
-
-//     _taglineController = AnimationController(
-//         vsync: this, duration: const Duration(milliseconds: 700));
-//     _taglineSlide = Tween<Offset>(
-//             begin: const Offset(0, 1.4), end: Offset.zero)
-//         .animate(CurvedAnimation(
-//             parent: _taglineController, curve: Curves.easeOutCubic));
-//     _taglineFade = Tween<double>(begin: 0, end: 1).animate(
-//         CurvedAnimation(parent: _taglineController, curve: Curves.easeOut));
-
-//     _buttonController = AnimationController(
-//         vsync: this, duration: const Duration(milliseconds: 600));
-//     _buttonScale = Tween<double>(begin: 0.7, end: 1).animate(
-//         CurvedAnimation(parent: _buttonController, curve: Curves.easeOutBack));
-//     _buttonFade = Tween<double>(begin: 0, end: 1).animate(
-//         CurvedAnimation(parent: _buttonController, curve: Curves.easeOut));
-
-//     _floatController = AnimationController(
-//         vsync: this, duration: const Duration(milliseconds: 2400))
-//       ..repeat(reverse: true);
-//     _float = Tween<double>(begin: -8, end: 8).animate(
-//         CurvedAnimation(parent: _floatController, curve: Curves.easeInOut));
-
-//     _glowController = AnimationController(
-//         vsync: this, duration: const Duration(milliseconds: 1600))
-//       ..repeat(reverse: true);
-//     _glow = Tween<double>(begin: 0.3, end: 0.9).animate(
-//         CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
-
-//     _logoController.forward();
-//     Future.delayed(const Duration(milliseconds: 700), () {
-//       if (mounted) {
-//         _shimmerController.repeat(period: const Duration(seconds: 3));
-//       }
-//     });
-//     Future.delayed(const Duration(milliseconds: 900), () {
-//       if (mounted) _taglineController.forward();
-//     });
-//     Future.delayed(const Duration(milliseconds: 1300), () {
-//       if (mounted) _buttonController.forward();
-//     });
-
-//     _dotTimer = Timer.periodic(const Duration(milliseconds: 750), (t) {
-//       if (!mounted) { t.cancel(); return; }
-//       if (_currentDot < 3) {
-//         setState(() => _currentDot++);
-//       } else {
-//         t.cancel();
-//       }
-//     });
-//   }
-
-//   Future<void> _checkLoginAndNavigate() async {
-//     await Future.delayed(const Duration(seconds: 4));
-//     if (!mounted) return;
-//     try {
-//       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-//       await authProvider.initialize();
-//       final isLoggedIn = await AuthPreferences.isLoggedIn();
-//       final userData   = await AuthPreferences.getUserData();
-//       if (!mounted) return;
-//       if (isLoggedIn && userData != null) {
-//         Navigator.pushReplacement(context,
-//             MaterialPageRoute(builder: (_) => MainNavigationScreen()));
-//       } else {
-//         Navigator.pushReplacement(context,
-//             MaterialPageRoute(builder: (_) => const AuthScreen()));
-//       }
-//     } catch (_) {
-//       if (mounted) {
-//         Navigator.pushReplacement(context,
-//             MaterialPageRoute(builder: (_) => const AuthScreen()));
-//       }
-//     }
-//   }
-
-//   /// Shows the Truecaller-style verification bottom sheet
-//   void _showVerificationBottomSheet() {
-//     showModalBottomSheet(
-//       context: context,
-//       isScrollControlled: true,
-//       backgroundColor: Colors.transparent,
-//       barrierColor: Colors.black.withOpacity(0.5),
-//       builder: (context) => _VerificationBottomSheet(
-//         onUseNumber: () {
-//           Navigator.pop(context);
-//           Navigator.pushReplacement(
-//             context,
-//             MaterialPageRoute(builder: (_) => const AuthScreen()),
-//           );
-//         },
-//         onSkip: () {
-//           Navigator.pop(context);
-//           Navigator.pushReplacement(
-//             context,
-//             MaterialPageRoute(builder: (_) => const AuthScreen()),
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   @override
-//   void dispose() {
-//     _dotTimer?.cancel();
-//     _logoController.dispose();
-//     _textWaveController.dispose();
-//     _shimmerController.dispose();
-//     _taglineController.dispose();
-//     _buttonController.dispose();
-//     _floatController.dispose();
-//     _glowController.dispose();
-//     super.dispose();
-//   }
-
-//   Widget _waveLetter(String letter, int index, Animation<double> wave,
-//       Animation<double> shimmerAnim) {
-//     return AnimatedBuilder(
-//       animation: Listenable.merge([wave, shimmerAnim]),
-//       builder: (_, __) {
-//         final offset = math.sin(
-//                 (wave.value * 2 * math.pi) + (index * 0.6)) *
-//             10.0;
-//         final t = ((shimmerAnim.value - index * 0.25) % 4) / 4;
-//         final Color letterColor = Color.lerp(
-//               _tealDark,
-//               _accent,
-//               (math.sin(t * math.pi).clamp(0.0, 1.0)),
-//             ) ??
-//             _tealDark;
-
-//         return Transform.translate(
-//           offset: Offset(0, offset),
-//           child: Text(
-//             letter,
-//             style: TextStyle(
-//               fontSize: 52,
-//               fontWeight: FontWeight.w900,
-//               color: letterColor,
-//               letterSpacing: 1,
-//               shadows: [
-//                 Shadow(
-//                   color: _tealLight.withOpacity(0.5),
-//                   blurRadius: 12,
-//                   offset: const Offset(0, 3),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         );
-//       },
-//     );
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Container(
-//         width: double.infinity,
-//         height: double.infinity,
-//         decoration: const BoxDecoration(
-//           gradient: LinearGradient(
-//             begin: Alignment.topCenter,
-//             end: Alignment.bottomCenter,
-//             colors: [_bgTop, _bgBottom],
-//           ),
-//         ),
-//         child: SafeArea(
-//           child: Column(
-//             children: [
-//               Expanded(
-//                 child: Center(
-//                   child: Column(
-//                     mainAxisSize: MainAxisSize.min,
-//                     children: [
-//                       AnimatedBuilder(
-//                         animation:
-//                             Listenable.merge([_glow, _float, _logoController]),
-//                         builder: (_, __) {
-//                           return Transform.translate(
-//                             offset: Offset(0, _float.value),
-//                             child: FadeTransition(
-//                               opacity: _logoFade,
-//                               child: Transform.scale(
-//                                 scale: _logoScale.value,
-//                                 child: Transform.rotate(
-//                                   angle: _logoRotate.value,
-//                                   child: Stack(
-//                                     alignment: Alignment.center,
-//                                     children: [
-//                                       Container(
-//                                         width: 180,
-//                                         height: 180,
-//                                         decoration: BoxDecoration(
-//                                           shape: BoxShape.circle,
-//                                           boxShadow: [
-//                                             BoxShadow(
-//                                               color: _tealLight
-//                                                   .withOpacity(_glow.value * 0.5),
-//                                               blurRadius: 50,
-//                                               spreadRadius: 10,
-//                                             ),
-//                                             BoxShadow(
-//                                               color: _accent
-//                                                   .withOpacity(_glow.value * 0.3),
-//                                               blurRadius: 80,
-//                                               spreadRadius: 20,
-//                                             ),
-//                                           ],
-//                                         ),
-//                                       ),
-//                                       Container(
-//                                         width: 150,
-//                                         height: 150,
-//                                         decoration: BoxDecoration(
-//                                           borderRadius:
-//                                               BorderRadius.circular(32),
-//                                           boxShadow: [
-//                                             BoxShadow(
-//                                               color: _tealDark.withOpacity(0.25),
-//                                               blurRadius: 24,
-//                                               offset: const Offset(0, 8),
-//                                             ),
-//                                           ],
-//                                         ),
-//                                         child: ClipRRect(
-//                                           borderRadius:
-//                                               BorderRadius.circular(32),
-//                                           child: Image.asset(
-//                                             'assets/appstore.png',
-//                                             fit: BoxFit.cover,
-//                                             errorBuilder: (_, __, ___) =>
-//                                                 Container(
-//                                               decoration: BoxDecoration(
-//                                                 borderRadius:
-//                                                     BorderRadius.circular(32),
-//                                                 gradient: const LinearGradient(
-//                                                   colors: [
-//                                                     _tealDark,
-//                                                     _tealLight
-//                                                   ],
-//                                                   begin: Alignment.topLeft,
-//                                                   end: Alignment.bottomRight,
-//                                                 ),
-//                                               ),
-//                                               child: const Icon(Icons.edit,
-//                                                   size: 70,
-//                                                   color: Colors.white),
-//                                             ),
-//                                           ),
-//                                         ),
-//                                       ),
-//                                     ],
-//                                   ),
-//                                 ),
-//                               ),
-//                             ),
-//                           );
-//                         },
-//                       ),
-
-//                       const SizedBox(height: 36),
-
-//                       Row(
-//                         mainAxisAlignment: MainAxisAlignment.center,
-//                         crossAxisAlignment: CrossAxisAlignment.end,
-//                         children: List.generate(
-//                           _appName.length,
-//                           (i) => _waveLetter(
-//                               _appName[i], i, _textWaveController, _shimmer),
-//                         ),
-//                       ),
-
-//                       const SizedBox(height: 12),
-
-//                       ClipRect(
-//                         child: SlideTransition(
-//                           position: _taglineSlide,
-//                           child: FadeTransition(
-//                             opacity: _taglineFade,
-//                             child: Row(
-//                               mainAxisAlignment: MainAxisAlignment.center,
-//                               children: [
-//                                 _dot(_tealDark),
-//                                 const SizedBox(width: 8),
-//                                 Text('Create', style: _tagStyle(_tealDark)),
-//                                 const SizedBox(width: 8),
-//                                 _dot(_tealLight),
-//                                 const SizedBox(width: 8),
-//                                 Text('Design', style: _tagStyle(_tealLight)),
-//                                 const SizedBox(width: 8),
-//                                 _dot(_accent),
-//                                 const SizedBox(width: 8),
-//                                 Text('Inspire', style: _tagStyle(_accent)),
-//                                 const SizedBox(width: 8),
-//                                 _dot(_tealDark),
-//                               ],
-//                             ),
-//                           ),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-
-//               // ── BOTTOM SECTION ────────────────────────────────
-//               Padding(
-//                 padding: const EdgeInsets.fromLTRB(28, 0, 28, 20),
-//                 child: Column(
-//                   children: [
-//                     Row(
-//                       mainAxisAlignment: MainAxisAlignment.center,
-//                       children: List.generate(4, (i) {
-//                         final active = i == _currentDot;
-//                         return AnimatedContainer(
-//                           duration: const Duration(milliseconds: 350),
-//                           curve: Curves.easeInOut,
-//                           margin: const EdgeInsets.symmetric(horizontal: 5),
-//                           width: active ? 24 : 8,
-//                           height: 8,
-//                           decoration: BoxDecoration(
-//                             borderRadius: BorderRadius.circular(4),
-//                             color: active
-//                                 ? _tealDark
-//                                 : Colors.grey.shade300,
-//                           ),
-//                         );
-//                       }),
-//                     ),
-
-//                     const SizedBox(height: 28),
-
-//                     // Agree button — now shows bottom sheet
-//                     ScaleTransition(
-//                       scale: _buttonScale,
-//                       child: FadeTransition(
-//                         opacity: _buttonFade,
-//                         child: SizedBox(
-//                           width: double.infinity,
-//                           height: 56,
-//                           child: DecoratedBox(
-//                             decoration: BoxDecoration(
-//                               borderRadius: BorderRadius.circular(16),
-//                               gradient: const LinearGradient(
-//                                 colors: [_tealDark, _tealLight],
-//                                 begin: Alignment.centerLeft,
-//                                 end: Alignment.centerRight,
-//                               ),
-//                               boxShadow: [
-//                                 BoxShadow(
-//                                   color: _tealDark.withOpacity(0.4),
-//                                   blurRadius: 18,
-//                                   offset: const Offset(0, 6),
-//                                 ),
-//                               ],
-//                             ),
-//                             child: ElevatedButton(
-//                               onPressed: _showVerificationBottomSheet, // ← updated
-//                               style: ElevatedButton.styleFrom(
-//                                 backgroundColor: Colors.transparent,
-//                                 shadowColor: Colors.transparent,
-//                                 shape: RoundedRectangleBorder(
-//                                   borderRadius: BorderRadius.circular(16),
-//                                 ),
-//                               ),
-//                               child: const Text(
-//                                 'Agree to terms & Continue',
-//                                 style: TextStyle(
-//                                   fontSize: 16,
-//                                   fontWeight: FontWeight.w700,
-//                                   color: Colors.white,
-//                                   letterSpacing: 0.4,
-//                                 ),
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-
-//                     const SizedBox(height: 18),
-
-//                     FadeTransition(
-//                       opacity: _buttonFade,
-//                       child: GestureDetector(
-//                         onTap: () {
-//                           // TODO: open terms
-//                         },
-//                         child: const Text(
-//                           'Terms & Privacy policies',
-//                           style: TextStyle(
-//                             fontSize: 13,
-//                             color: _tealDark,
-//                             decoration: TextDecoration.underline,
-//                             decorationColor: _tealDark,
-//                             fontWeight: FontWeight.w500,
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-
-//                     const SizedBox(height: 6),
-//                   ],
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   TextStyle _tagStyle(Color color) => TextStyle(
-//         fontSize: 13,
-//         color: color,
-//         letterSpacing: 1.2,
-//         fontWeight: FontWeight.w500,
-//       );
-
-//   Widget _dot(Color color) => Container(
-//         width: 4,
-//         height: 4,
-//         decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-//       );
-// }
-
-
-// // ══════════════════════════════════════════════════════════════════
-// //  Verification Bottom Sheet  (matches the screenshot exactly)
-// // ══════════════════════════════════════════════════════════════════
-// class _VerificationBottomSheet extends StatefulWidget {
-//   final VoidCallback onUseNumber;
-//   final VoidCallback onSkip;
-
-//   const _VerificationBottomSheet({
-//     required this.onUseNumber,
-//     required this.onSkip,
-//   });
-
-//   @override
-//   State<_VerificationBottomSheet> createState() =>
-//       _VerificationBottomSheetState();
-// }
-
-// class _VerificationBottomSheetState extends State<_VerificationBottomSheet>
-//     with SingleTickerProviderStateMixin {
-//   bool _expanded = false;
-//   late AnimationController _slideController;
-//   late Animation<Offset> _slideAnimation;
-
-//   // Replace with real number from device / Truecaller SDK
-//   static const String _phoneNumber = '9961593179';
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _slideController = AnimationController(
-//       vsync: this,
-//       duration: const Duration(milliseconds: 400),
-//     );
-//     _slideAnimation = Tween<Offset>(
-//       begin: const Offset(0, 1),
-//       end: Offset.zero,
-//     ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
-//     _slideController.forward();
-//   }
-
-//   @override
-//   void dispose() {
-//     _slideController.dispose();
-//     super.dispose();
-//   }
-
-//     static const Color _tealDark  = Color(0xFF0077A8);
-//   static const Color _tealLight = Color(0xFF00BCD4);
-//   static const Color _accent    = Color(0xFF00E5FF);
-//   static const Color _bgTop     = Color(0xFFF0FAFE);
-//   static const Color _bgBottom  = Color(0xFFFFFFFF);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return SlideTransition(
-//       position: _slideAnimation,
-//       child: Container(
-//         decoration: const BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.only(
-//             topLeft: Radius.circular(24),
-//             topRight: Radius.circular(24),
-//           ),
-//         ),
-//         child: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           children: [
-//             // ── Drag handle ──
-//             const SizedBox(height: 12),
-//             // Container(
-//             //   width: 40,
-//             //   height: 4,
-//             //   decoration: BoxDecoration(
-//             //     color: Colors.grey.shade300,
-//             //     borderRadius: BorderRadius.circular(2),
-//             //   ),
-//             // ),
-//             const SizedBox(height: 24),
-
-//             // ── Social icons row ──
-//             // Padding(
-//             //   padding: const EdgeInsets.symmetric(horizontal: 32),
-//             //   child: Row(
-//             //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//             //     children: [
-//             //       _socialIcon(Icons.camera_alt_outlined),        // Instagram
-//             //       _socialIcon(Icons.facebook_outlined),          // Facebook
-//             //       _socialIcon(Icons.chat_bubble_outline),        // WhatsApp
-//             //       _socialIcon(Icons.business_center_outlined),   // LinkedIn
-//             //       _socialIcon(Icons.flutter_dash),               // Twitter/X
-//             //     ],
-//             //   ),
-//             // ),
-
-//             const SizedBox(height: 20),
-
-//             // ── Headline ──
-//             // const Padding(
-//             //   padding: EdgeInsets.symmetric(horizontal: 32),
-//             //   child: Text(
-//             //     'Share with your audience in a\nSingle Click',
-//             //     textAlign: TextAlign.center,
-//             //     style: TextStyle(
-//             //       fontSize: 18,
-//             //       fontWeight: FontWeight.w700,
-//             //       color: Colors.black87,
-//             //       height: 1.4,
-//             //     ),
-//             //   ),
-//             // ),
-
-//             // const SizedBox(height: 24),
-
-//             // ── White card section ──
-//             Container(
-//               decoration: const BoxDecoration(
-//                 color: Colors.white,
-//                 borderRadius: BorderRadius.only(
-//                   topLeft: Radius.circular(24),
-//                   topRight: Radius.circular(24),
-//                 ),
-//                 boxShadow: [
-//                   BoxShadow(
-//                     color: Color(0x1A000000),
-//                     blurRadius: 20,
-//                     offset: Offset(0, -4),
-//                   ),
-//                 ],
-//               ),
-//               padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 mainAxisSize: MainAxisSize.min,
-//                 children: [
-//                   const Text(
-//                     'Hi,',
-//                     style: TextStyle(
-//                       fontSize: 26,
-//                       fontWeight: FontWeight.w800,
-//                       color: Colors.black,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 6),
-//                   const Text(
-//                     'To get started, please verify mobile number',
-//                     style: TextStyle(
-//                       fontSize: 15,
-//                       color: Colors.black54,
-//                       fontWeight: FontWeight.w400,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 20),
-
-//                   // ── USE NUMBER button ──
-//                   SizedBox(
-//                     width: double.infinity,
-//                     height: 56,
-//                     child: ElevatedButton(
-//                       onPressed: widget.onUseNumber,
-//                       style: ElevatedButton.styleFrom(
-//                         backgroundColor: _tealDark,
-//                         foregroundColor: Colors.white,
-//                         elevation: 0,
-//                         shape: RoundedRectangleBorder(
-//                           borderRadius: BorderRadius.circular(50),
-//                         ),
-//                       ),
-//                       child: Text(
-//                         'USE $_phoneNumber',
-//                         style: const TextStyle(
-//                           fontSize: 16,
-//                           fontWeight: FontWeight.w700,
-//                           letterSpacing: 0.5,
-//                           color: Colors.white,
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-
-//                   const SizedBox(height: 16),
-
-//                   // ── SKIP ──
-//                   Center(
-//                     child: GestureDetector(
-//                       onTap: widget.onSkip,
-//                       child: const Padding(
-//                         padding: EdgeInsets.symmetric(vertical: 4),
-//                         child: Text(
-//                           'SKIP',
-//                           style: TextStyle(
-//                             fontSize: 14,
-//                             fontWeight: FontWeight.w600,
-//                             color: Colors.black45,
-//                             letterSpacing: 1.2,
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-
-//                   const SizedBox(height: 20),
-
-//                   // ── Divider ──
-//                   Divider(color: Colors.grey.shade200, height: 1),
-//                   const SizedBox(height: 14),
-
-//                   // ── Consent text ──
-//                   Row(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Expanded(
-//                         child: RichText(
-//                           text: TextSpan(
-//                             style: const TextStyle(
-//                               fontSize: 11.5,
-//                               color: Colors.black45,
-//                               height: 1.5,
-//                             ),
-//                             children: [
-//                               const TextSpan(
-//                                   text:
-//                                       'By continuing you consent to share your name and number with '),
-//                               const TextSpan(
-//                                 text: 'EditEzy',
-//                                 style: TextStyle(
-//                                     fontWeight: FontWeight.w700,
-//                                     color: Colors.black54),
-//                               ),
-//                               const TextSpan(text: ', and agree to the '),
-//                               TextSpan(
-//                                 text: 'privacy policy',
-//                                 style: const TextStyle(
-//                                     color: Color(0xFF0077A8),
-//                                     decoration: TextDecoration.underline),
-//                               ),
-//                               const TextSpan(text: ' and '),
-//                               TextSpan(
-//                                 text: 'terms of service',
-//                                 style: const TextStyle(
-//                                     color: Color(0xFF0077A8),
-//                                     decoration: TextDecoration.underline),
-//                               ),
-//                               const TextSpan(text: ' of '),
-//                               const TextSpan(
-//                                 text: 'EditEzy',
-//                                 style: TextStyle(
-//                                     fontWeight: FontWeight.w700,
-//                                     color: Colors.black54),
-//                               ),
-//                               const TextSpan(text: '.'),
-//                             ],
-//                           ),
-//                         ),
-//                       ),
-//                       const SizedBox(width: 8),
-//                       GestureDetector(
-//                         onTap: () => setState(() => _expanded = !_expanded),
-//                         child: Icon(
-//                           _expanded
-//                               ? Icons.keyboard_arrow_up
-//                               : Icons.keyboard_arrow_down,
-//                           color: Colors.black38,
-//                           size: 22,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-
-//                   const SizedBox(height: 14),
-
-//                   // ── Truecaller badge ──
-//                   Center(
-//                     child: Row(
-//                       mainAxisSize: MainAxisSize.min,
-//                       children: [
-//                         Text(
-//                           'Instant Verification by ',
-//                           style: TextStyle(
-//                             fontSize: 12,
-//                             color: Colors.grey.shade500,
-//                           ),
-//                         ),
-//                         Text(
-//                           'truecaller',
-//                           style: TextStyle(
-//                             fontSize: 13,
-//                             fontWeight: FontWeight.w800,
-//                             color: Colors.grey.shade700,
-//                             fontStyle: FontStyle.italic,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-
-//                   const SizedBox(height: 20),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _socialIcon(IconData icon) {
-//     return Container(
-//       width: 52,
-//       height: 52,
-//       decoration: BoxDecoration(
-//         color: const Color(0xFF8B6914),
-//         borderRadius: BorderRadius.circular(12),
-//       ),
-//       child: Icon(icon, color: Colors.white, size: 26),
-//     );
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'dart:async';
@@ -1621,61 +53,90 @@ class _SplashScreenState extends State<SplashScreen>
 
   final String _appName = 'EditEzy';
 
-  static const Color _tealDark  = Color(0xFF0077A8);
+  static const Color _tealDark = Color(0xFF0077A8);
   static const Color _tealLight = Color(0xFF00BCD4);
-  static const Color _accent    = Color(0xFF00E5FF);
-  static const Color _bgTop     = Color(0xFFF0FAFE);
-  static const Color _bgBottom  = Color(0xFFFFFFFF);
+  static const Color _accent = Color(0xFF00E5FF);
+  static const Color _bgTop = Color(0xFFF0FAFE);
+  static const Color _bgBottom = Color(0xFFFFFFFF);
 
   @override
   void initState() {
     super.initState();
 
     _logoController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1000));
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
     _logoFade = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _logoController, curve: const Interval(0.0, 0.6, curve: Curves.easeOut)));
+      CurvedAnimation(
+        parent: _logoController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
     _logoScale = Tween<double>(begin: 0.3, end: 1).animate(
-        CurvedAnimation(parent: _logoController, curve: Curves.elasticOut));
+      CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
+    );
     _logoRotate = Tween<double>(begin: -0.15, end: 0).animate(
-        CurvedAnimation(parent: _logoController, curve: const Interval(0.0, 0.7, curve: Curves.easeOut)));
+      CurvedAnimation(
+        parent: _logoController,
+        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+      ),
+    );
 
     _textWaveController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2000))
-      ..repeat();
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
 
     _shimmerController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2200));
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    );
     _shimmer = Tween<double>(begin: -2, end: 3).animate(
-        CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut));
+      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
+    );
 
     _taglineController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
-    _taglineSlide = Tween<Offset>(
-            begin: const Offset(0, 1.4), end: Offset.zero)
-        .animate(CurvedAnimation(
-            parent: _taglineController, curve: Curves.easeOutCubic));
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _taglineSlide = Tween<Offset>(begin: const Offset(0, 1.4), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _taglineController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _taglineFade = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _taglineController, curve: Curves.easeOut));
+      CurvedAnimation(parent: _taglineController, curve: Curves.easeOut),
+    );
 
     _buttonController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
     _buttonScale = Tween<double>(begin: 0.7, end: 1).animate(
-        CurvedAnimation(parent: _buttonController, curve: Curves.easeOutBack));
+      CurvedAnimation(parent: _buttonController, curve: Curves.easeOutBack),
+    );
     _buttonFade = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _buttonController, curve: Curves.easeOut));
+      CurvedAnimation(parent: _buttonController, curve: Curves.easeOut),
+    );
 
     _floatController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2400))
-      ..repeat(reverse: true);
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    )..repeat(reverse: true);
     _float = Tween<double>(begin: -8, end: 8).animate(
-        CurvedAnimation(parent: _floatController, curve: Curves.easeInOut));
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+    );
 
     _glowController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1600))
-      ..repeat(reverse: true);
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
     _glow = Tween<double>(begin: 0.3, end: 0.9).animate(
-        CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
 
     _logoController.forward();
 
@@ -1692,7 +153,10 @@ class _SplashScreenState extends State<SplashScreen>
     });
 
     _dotTimer = Timer.periodic(const Duration(milliseconds: 750), (t) {
-      if (!mounted) { t.cancel(); return; }
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
       if (_currentDot < 3) {
         setState(() => _currentDot++);
       } else {
@@ -1716,7 +180,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     try {
       final isLoggedIn = await AuthPreferences.isLoggedIn();
-      final userData   = await AuthPreferences.getUserData();
+      final userData = await AuthPreferences.getUserData();
 
       if (!mounted) return;
 
@@ -1740,28 +204,32 @@ class _SplashScreenState extends State<SplashScreen>
   /// Shows the Truecaller-style verification bottom sheet.
   void _showVerificationBottomSheet() {
     if (_isCheckingLogin) return; // debounce
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.5),
-      builder: (context) => _VerificationBottomSheet(
-        onUseNumber: () {
-          Navigator.pop(context);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const AuthScreen()),
-          );
-        },
-        onSkip: () {
-          Navigator.pop(context);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const AuthScreen()),
-          );
-        },
-      ),
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const AuthScreen()),
     );
+    // showModalBottomSheet(
+    //   context: context,
+    //   isScrollControlled: true,
+    //   backgroundColor: Colors.transparent,
+    //   barrierColor: Colors.black.withOpacity(0.5),
+    //   builder: (context) => _VerificationBottomSheet(
+    //     onUseNumber: () {
+    //       Navigator.pop(context);
+    //       Navigator.pushReplacement(
+    //         context,
+    //         MaterialPageRoute(builder: (_) => const AuthScreen()),
+    //       );
+    //     },
+    //     onSkip: () {
+    //       Navigator.pop(context);
+    //       Navigator.pushReplacement(
+    //         context,
+    //         MaterialPageRoute(builder: (_) => const AuthScreen()),
+    //       );
+    //     },
+    //   ),
+    // );
   }
 
   @override
@@ -1777,16 +245,20 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  Widget _waveLetter(String letter, int index, Animation<double> wave,
-      Animation<double> shimmerAnim) {
+  Widget _waveLetter(
+    String letter,
+    int index,
+    Animation<double> wave,
+    Animation<double> shimmerAnim,
+  ) {
     return AnimatedBuilder(
       animation: Listenable.merge([wave, shimmerAnim]),
       builder: (_, __) {
-        final offset = math.sin(
-                (wave.value * 2 * math.pi) + (index * 0.6)) *
-            10.0;
+        final offset =
+            math.sin((wave.value * 2 * math.pi) + (index * 0.6)) * 10.0;
         final t = ((shimmerAnim.value - index * 0.25) % 4) / 4;
-        final Color letterColor = Color.lerp(
+        final Color letterColor =
+            Color.lerp(
               _tealDark,
               _accent,
               (math.sin(t * math.pi).clamp(0.0, 1.0)),
@@ -1840,8 +312,11 @@ class _SplashScreenState extends State<SplashScreen>
                     children: [
                       // Floating logo with glow
                       AnimatedBuilder(
-                        animation:
-                            Listenable.merge([_glow, _float, _logoController]),
+                        animation: Listenable.merge([
+                          _glow,
+                          _float,
+                          _logoController,
+                        ]),
                         builder: (_, __) {
                           return Transform.translate(
                             offset: Offset(0, _float.value),
@@ -1862,14 +337,16 @@ class _SplashScreenState extends State<SplashScreen>
                                           shape: BoxShape.circle,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: _tealLight
-                                                  .withOpacity(_glow.value * 0.5),
+                                              color: _tealLight.withOpacity(
+                                                _glow.value * 0.5,
+                                              ),
                                               blurRadius: 50,
                                               spreadRadius: 10,
                                             ),
                                             BoxShadow(
-                                              color: _accent
-                                                  .withOpacity(_glow.value * 0.3),
+                                              color: _accent.withOpacity(
+                                                _glow.value * 0.3,
+                                              ),
                                               blurRadius: 80,
                                               spreadRadius: 20,
                                             ),
@@ -1881,40 +358,51 @@ class _SplashScreenState extends State<SplashScreen>
                                         width: 150,
                                         height: 150,
                                         decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(32),
+                                          borderRadius: BorderRadius.circular(
+                                            32,
+                                          ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: _tealDark.withOpacity(0.25),
+                                              color: _tealDark.withOpacity(
+                                                0.25,
+                                              ),
                                               blurRadius: 24,
                                               offset: const Offset(0, 8),
                                             ),
                                           ],
                                         ),
                                         child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(32),
+                                          borderRadius: BorderRadius.circular(
+                                            32,
+                                          ),
                                           child: Image.asset(
                                             'assets/appstore.png',
                                             fit: BoxFit.cover,
                                             errorBuilder: (_, __, ___) =>
                                                 Container(
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(32),
-                                                gradient: const LinearGradient(
-                                                  colors: [
-                                                    _tealDark,
-                                                    _tealLight
-                                                  ],
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          32,
+                                                        ),
+                                                    gradient:
+                                                        const LinearGradient(
+                                                          colors: [
+                                                            _tealDark,
+                                                            _tealLight,
+                                                          ],
+                                                          begin:
+                                                              Alignment.topLeft,
+                                                          end: Alignment
+                                                              .bottomRight,
+                                                        ),
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.edit,
+                                                    size: 70,
+                                                    color: Colors.white,
+                                                  ),
                                                 ),
-                                              ),
-                                              child: const Icon(Icons.edit,
-                                                  size: 70,
-                                                  color: Colors.white),
-                                            ),
                                           ),
                                         ),
                                       ),
@@ -1936,7 +424,11 @@ class _SplashScreenState extends State<SplashScreen>
                         children: List.generate(
                           _appName.length,
                           (i) => _waveLetter(
-                              _appName[i], i, _textWaveController, _shimmer),
+                            _appName[i],
+                            i,
+                            _textWaveController,
+                            _shimmer,
+                          ),
                         ),
                       ),
 
@@ -1992,9 +484,7 @@ class _SplashScreenState extends State<SplashScreen>
                           height: 8,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
-                            color: active
-                                ? _tealDark
-                                : Colors.grey.shade300,
+                            color: active ? _tealDark : Colors.grey.shade300,
                           ),
                         );
                       }),
@@ -2083,19 +573,18 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   TextStyle _tagStyle(Color color) => TextStyle(
-        fontSize: 13,
-        color: color,
-        letterSpacing: 1.2,
-        fontWeight: FontWeight.w500,
-      );
+    fontSize: 13,
+    color: color,
+    letterSpacing: 1.2,
+    fontWeight: FontWeight.w500,
+  );
 
   Widget _dot(Color color) => Container(
-        width: 4,
-        height: 4,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-      );
+    width: 4,
+    height: 4,
+    decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+  );
 }
-
 
 // ══════════════════════════════════════════════════════════════════
 //  Verification Bottom Sheet  (Truecaller-style)
@@ -2123,7 +612,7 @@ class _VerificationBottomSheetState extends State<_VerificationBottomSheet>
   // Replace with real number from device / Truecaller SDK
   static const String _phoneNumber = '9961593179';
 
-  static const Color _tealDark  = Color(0xFF0077A8);
+  static const Color _tealDark = Color(0xFF0077A8);
   static const Color _tealLight = Color(0xFF00BCD4);
 
   @override
@@ -2133,11 +622,10 @@ class _VerificationBottomSheetState extends State<_VerificationBottomSheet>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-        parent: _slideController, curve: Curves.easeOutCubic));
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
     _slideController.forward();
   }
 
@@ -2271,34 +759,39 @@ class _VerificationBottomSheetState extends State<_VerificationBottomSheet>
                             ),
                             children: [
                               const TextSpan(
-                                  text:
-                                      'By continuing you consent to share your name and number with '),
+                                text:
+                                    'By continuing you consent to share your name and number with ',
+                              ),
                               const TextSpan(
                                 text: 'EditEzy',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black54),
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black54,
+                                ),
                               ),
                               const TextSpan(text: ', and agree to the '),
                               TextSpan(
                                 text: 'privacy policy',
                                 style: const TextStyle(
-                                    color: Color(0xFF0077A8),
-                                    decoration: TextDecoration.underline),
+                                  color: Color(0xFF0077A8),
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                               const TextSpan(text: ' and '),
                               TextSpan(
                                 text: 'terms of service',
                                 style: const TextStyle(
-                                    color: Color(0xFF0077A8),
-                                    decoration: TextDecoration.underline),
+                                  color: Color(0xFF0077A8),
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                               const TextSpan(text: ' of '),
                               const TextSpan(
                                 text: 'EditEzy',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black54),
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black54,
+                                ),
                               ),
                               const TextSpan(text: '.'),
                             ],

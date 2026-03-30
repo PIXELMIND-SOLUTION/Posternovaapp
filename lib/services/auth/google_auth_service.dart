@@ -8,9 +8,7 @@ import 'package:posternova/helper/network_helper.dart';
 import 'dart:io';
 
 class GoogleAuthService {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   // Google Sign-In data that will be sent to backend
@@ -41,12 +39,11 @@ class GoogleAuthService {
       );
 
       // Sign in to Firebase
-      final UserCredential userCredential =
-          await _firebaseAuth.signInWithCredential(credential);
-      
+      final UserCredential userCredential = await _firebaseAuth
+          .signInWithCredential(credential);
+
       // Get Firebase ID token for backend verification
-      final String? firebaseIdToken =
-          await userCredential.user?.getIdToken();
+      final String? firebaseIdToken = await userCredential.user?.getIdToken();
 
       // Prepare data to send to backend
       final Map<String, dynamic> googleData = {
@@ -59,7 +56,7 @@ class GoogleAuthService {
           'photoUrl': photoUrl,
           'accessToken': googleAuth.accessToken,
           'idToken': googleAuth.idToken,
-        }
+        },
       };
 
       return googleData;
@@ -76,36 +73,34 @@ class GoogleAuthService {
   }
 
   // Send Google data to backend
-Future<http.Response?> sendGoogleDataToBackend(
-  Map<String, dynamic> googleData,
-  String fcmToken,
-) async {
-  try {
+  Future<http.Response?> sendGoogleDataToBackend(
+    Map<String, dynamic> googleData,
+    String fcmToken,
+  ) async {
+    try {
+      final requestBody = {
+        "provider": "google",
+        "firebaseIdToken": googleData["firebaseIdToken"],
+        "fcmToken": fcmToken,
+      };
 
-    final requestBody = {
-      "provider": "google",
-      "firebaseIdToken": googleData["firebaseIdToken"],
-      "fcmToken": fcmToken,
-    };
+      print("Request Body: $requestBody");
 
-    print("Request Body: $requestBody");
+      final response = await http.post(
+        Uri.parse(ApiConstants.googleSignIn),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
+      );
 
-    final response = await http.post(
-      Uri.parse(ApiConstants.googleSignIn),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(requestBody),
-    );
+      print("Status: ${response.statusCode}");
+      print("Body: ${response.body}");
 
-    print("Status: ${response.statusCode}");
-    print("Body: ${response.body}");
-
-    return response;
-
-  } catch (e) {
-    print("Error: $e");
-    rethrow;
+      return response;
+    } catch (e) {
+      print("Error: $e");
+      rethrow;
+    }
   }
-}
 
   // Sign out from Google
   Future<void> signOut() async {

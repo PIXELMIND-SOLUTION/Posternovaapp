@@ -19,7 +19,7 @@ class FestivalPoster {
 
   factory FestivalPoster.fromJson(Map<String, dynamic> json, DateTime date) {
     return FestivalPoster(
-      id: json['id']?.toString() ?? '',
+      id: json['_id']?.toString() ?? '',
       imageUrl: json['images']?[0] ?? '',
       categoryName: json['categoryName'] ?? 'Festival',
       designData: json['designData'],

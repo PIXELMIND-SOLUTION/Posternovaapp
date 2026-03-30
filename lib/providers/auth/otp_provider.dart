@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:posternova/models/otp_model.dart';
+import 'package:posternova/models/user_model.dart';
+import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/services/FCM/fcm_service.dart';
 import 'package:posternova/services/auth/otp_service.dart';
+import 'package:provider/provider.dart';
 
 class SmsProvider extends ChangeNotifier {
   final SmsService _smsService = SmsService();
@@ -45,7 +50,11 @@ class SmsProvider extends ChangeNotifier {
   }
 
   /// VERIFY OTP (FCM SAFE)
-  Future<void> verifyOtp(String otp, String mobile) async {
+  Future<void> verifyOtp(
+    String otp,
+    String mobile,
+    BuildContext context, // ✅ ADD CONTEXT
+  ) async {
     _setLoading(true);
     _clearError();
 
@@ -59,7 +68,25 @@ class SmsProvider extends ChangeNotifier {
 
       _otpResponse = response;
 
-      if (response.statusCode != 200) {
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // ✅ Extract user
+        final user = User.fromJson(data['user']);
+
+        // ✅ Convert to LoginResponse (your app model)
+        final loginResponse = LoginResponse(
+          message: data['message'] ?? '',
+          token: '', // API not giving token
+          user: user,
+          otp: '',
+        );
+
+        // ✅ Save user (IMPORTANT 🔥)
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+        authProvider.setUser(loginResponse);
+      } else {
         _errorMessage = response.body;
       }
     } catch (e) {

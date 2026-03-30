@@ -8,6 +8,7 @@ import 'package:posternova/views/AI/chat_ai.dart';
 import 'package:posternova/views/AuthModule/auth_screen.dart';
 import 'package:posternova/views/ProfileScreen/edit_profile.dart';
 import 'package:posternova/views/ProfileScreen/settings_screen.dart';
+import 'package:posternova/views/SecondPhase/PaymentHystory/payment_hystory.dart';
 import 'package:posternova/views/SecondPhase/wallet/wallet.dart';
 import 'package:posternova/views/about/about_screen.dart';
 import 'package:posternova/views/backgroundremover/background_remover.dart';
@@ -462,6 +463,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   isPurchased:
                                       myPlanProvider.isPurchase ?? false,
                                 ),
+
+                                _buildMenuItem(
+                                  icon: Icons.wallet,
+                                  title: 'Hystory',
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PaymentHistoryScreen(
+                                          userId:
+                                              '68d4ee631503cc1836dbc673', // Replace with actual user ID
+                                        ),
+                                      ),
+                                    );
+
+                                    // Refresh profile data if edit was successful
+                                    if (result == true) {
+                                      _refreshProfileAfterEdit();
+                                    }
+                                  },
+                                  isPremiumRequired: false,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
+                                ),
+
                                 _buildMenuItem(
                                   icon: Icons.request_page,
                                   title: 'invoice',

@@ -2648,20 +2648,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       showLater: true,
       showIgnore: false,
       child: Scaffold(
-        extendBody: true, // 🔥 required for notch
-
+        extendBody: true,
         body: _screens[_currentIndex],
-
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-        // floatingActionButton: FloatingActionButton(
-        //   onPressed: () => setState(() => _currentIndex = 2),
-        //   backgroundColor: const Color(0xFF1C1C2E),
-        //   child: Icon(
-        //     _currentIndex == 2 ? Icons.edit : Icons.edit_outlined,
-        //     color: _currentIndex == 2 ? const Color(0xFFFFA000) : Colors.white,
-        //   ),
-        // ),
+        floatingActionButton: _currentIndex == 4
+            ? null // Hide the PRO badge and show Add Customer FAB from CustomerScreen
+            : null, // You can add other FABs here if needed
         bottomNavigationBar: Consumer<LanguageProvider>(
           builder: (context, languageProvider, child) {
             final langCode = languageProvider.locale.languageCode;
@@ -2671,8 +2663,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
               children: [
                 _buildCurvedNotchNavBar(langCode),
 
-                // ✅ Keep your PRO badge
-                Positioned(right: 4, top: -30, child: _buildProBadge()),
+                // ✅ Show PRO badge only when NOT on Customer screen (index 4)
+                if (_currentIndex != 4)
+                  Positioned(right: 4, top: -30, child: _buildProBadge()),
               ],
             );
           },

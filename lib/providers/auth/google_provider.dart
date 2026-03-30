@@ -11,9 +11,8 @@ import 'package:provider/provider.dart';
 
 class GoogleProvider extends ChangeNotifier {
   final GoogleAuthService _googleAuthService = GoogleAuthService();
-    final FCMService _fcmService = FCMService();
+  final FCMService _fcmService = FCMService();
 
-  
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic>? _googleUserData;
@@ -33,7 +32,10 @@ class GoogleProvider extends ChangeNotifier {
     try {
       // Get Google user data
       final googleData = await _googleAuthService.signInWithGoogle();
-      
+
+      debugPrint("===== GOOGLE USER DATA =====");
+      debugPrint(googleData.toString());
+
       if (googleData == null) {
         // User canceled sign-in
         _isLoading = false;
@@ -44,31 +46,34 @@ class GoogleProvider extends ChangeNotifier {
       _googleUserData = googleData;
       notifyListeners();
 
-             final String fcmToken =
+      final String fcmToken =
           await _fcmService.getFCMTokenSafe() ?? 'default_fcm_token';
 
       // Send data to backend
-      final response = await _googleAuthService.sendGoogleDataToBackend(googleData,fcmToken);
+      final response = await _googleAuthService.sendGoogleDataToBackend(
+        googleData,
+        fcmToken,
+      );
       _googleSignInResponse = response;
 
       if (response != null && response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
+
         // Parse the response
         final loginResponse = LoginResponse.fromJson(data);
-        
+
         // Save user data to SharedPreferences
         await AuthPreferences.saveUserData(loginResponse);
-        
+
         // Update AuthProvider
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         authProvider.setUser(loginResponse);
-        
+
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        _error = 'Google Sign-In failed: ${response?.statusCode}';
+        _error = 'Google Sign-In faileddddd: ${response?.statusCode}';
         _isLoading = false;
         notifyListeners();
         return false;

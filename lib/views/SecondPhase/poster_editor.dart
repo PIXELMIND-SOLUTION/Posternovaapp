@@ -17,7 +17,9 @@ import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/providers/adminamount/admin_amount_provider.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/providers/plans/my_plan_provider.dart';
+import 'package:posternova/views/SecondPhase/payment_service.dart';
 import 'package:provider/provider.dart';
+import 'package:image/image.dart' as img;
 
 // ─────────────────────────────────────────────
 //  DATA MODELS
@@ -38,6 +40,11 @@ enum AnimationType {
   wobble,
   rollin,
 }
+
+// In your widget state
+enum ItemType { poster, video }
+
+ItemType _selectedItemType = ItemType.poster;
 
 enum EffectType { none, blur, grayscale, sepia, brightness, contrast }
 
@@ -139,7 +146,7 @@ class BrandInfo {
   BrandInfo({
     this.name = 'NAME',
     this.phone = 'Mobile',
-    this.address = 'Address',
+    this.address = '',
     this.logoAsset = '',
   });
 }
@@ -244,8 +251,12 @@ class FrameStyle {
 
 class PosterEditorScreen extends StatefulWidget {
   final String posterAsset;
-  const PosterEditorScreen({Key? key, required this.posterAsset})
-    : super(key: key);
+  final String itemid;
+  const PosterEditorScreen({
+    Key? key,
+    required this.posterAsset,
+    required this.itemid,
+  }) : super(key: key);
 
   @override
   State<PosterEditorScreen> createState() => _PosterEditorScreenState();
@@ -275,6 +286,274 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   int _selectedFrame = -1;
   String? _uploadedImagePath;
   String? _uploadedLogoPath;
+
+  // Add this method to process payment
+  Future<void> _processPayment() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final userData = await AuthPreferences.getUserData();
+      if (userData == null) throw Exception('User not logged in');
+
+      final tempDir = await getTemporaryDirectory();
+      String mediaPath;
+
+      // ================= 🎥 VIDEO CASE =================
+      if (_isAnimated) {
+        final framesDir = Directory(
+          '${tempDir.path}/frames_${DateTime.now().millisecondsSinceEpoch}',
+        );
+        await framesDir.create(recursive: true);
+
+        const int fps = 30;
+        const int durationSec = 3;
+        final int totalFrames = fps * durationSec;
+
+        print("🎥 Generating $totalFrames frames...");
+
+        final bool wasAnimating = _animController.isAnimating;
+        if (wasAnimating) {
+          _animController.stop();
+          _brandAnimController.stop();
+        }
+
+        for (int i = 0; i < totalFrames; i++) {
+          // ✅ Proper animation progress
+          final double progress = i / totalFrames;
+
+          double animValue;
+          switch (_selectedAnimation) {
+            case AnimationType.none:
+              animValue = 1.0;
+              break;
+            case AnimationType.rotate:
+            case AnimationType.flipIn:
+            case AnimationType.wobble:
+            case AnimationType.rollin:
+              animValue = progress;
+              break;
+            default:
+              animValue = (sin(progress * pi) * 0.5) + 0.5;
+          }
+
+          _animController.value = animValue;
+          _brandAnimController.value = progress;
+
+          setState(() {});
+
+          // ✅ CRITICAL FIX (UI sync)
+          await WidgetsBinding.instance.endOfFrame;
+          await Future.delayed(const Duration(milliseconds: 5));
+
+          final boundary =
+              _posterKey.currentContext?.findRenderObject()
+                  as RenderRepaintBoundary?;
+
+          if (boundary == null) throw Exception("Poster not found");
+
+          final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+          final byteData = await image.toByteData(
+            format: ui.ImageByteFormat.png,
+          );
+
+          final frameFile = File(
+            '${framesDir.path}/frame_${i.toString().padLeft(4, '0')}.png',
+          );
+
+          await frameFile.writeAsBytes(byteData!.buffer.asUint8List());
+        }
+
+        // ✅ Check frames
+        final frames = framesDir.listSync();
+        print("📂 Frames generated: ${frames.length}");
+        if (frames.isEmpty) throw Exception("No frames generated");
+
+        final outputPath =
+            '${tempDir.path}/video_${DateTime.now().millisecondsSinceEpoch}.mp4';
+
+        print("🎬 Running FFmpeg...");
+
+        final command =
+            '-y -framerate $fps '
+            '-i "${framesDir.path}/frame_%04d.png" '
+            '-c:v libx264 -pix_fmt yuv420p '
+            '-crf 23 -preset ultrafast '
+            '"$outputPath"';
+
+        final session = await FFmpegKit.execute(command);
+        final returnCode = await session.getReturnCode();
+
+        if (!ReturnCode.isSuccess(returnCode)) {
+          final logs = await session.getAllLogsAsString();
+          print("❌ FFmpeg failed");
+          print(logs);
+          throw Exception("Video generation failed");
+        }
+
+        final file = File(outputPath);
+
+        if (!await file.exists() || await file.length() == 0) {
+          throw Exception("Generated video is empty");
+        }
+
+        mediaPath = outputPath;
+
+        print("✅ VIDEO CREATED: $mediaPath");
+        print("VIDEO SIZE: ${await file.length()} bytes");
+
+        if (wasAnimating && mounted) {
+          _animController.repeat(reverse: true);
+          _brandAnimController.repeat();
+        }
+      }
+      // ================= 🖼️ IMAGE CASE =================
+      else {
+        final boundary =
+            _posterKey.currentContext?.findRenderObject()
+                as RenderRepaintBoundary?;
+
+        if (boundary == null) throw Exception("Poster not found");
+
+        final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+        if (byteData == null) throw Exception("Failed to capture image");
+
+        final file = File(
+          '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.png',
+        );
+
+        await file.writeAsBytes(byteData.buffer.asUint8List());
+
+        if (!await file.exists() || await file.length() == 0) {
+          throw Exception("Generated image is empty");
+        }
+
+        mediaPath = file.path;
+
+        print("🖼️ IMAGE CREATED: $mediaPath");
+        print("IMAGE SIZE: ${await file.length()} bytes");
+      }
+
+      final mediaFile = File(mediaPath);
+
+      print("========== FINAL FILE ==========");
+      print("PATH: $mediaPath");
+      print("SIZE: ${await mediaFile.length()} bytes");
+      print("================================");
+
+      String itemName = _isAnimated ? 'video' : 'poster';
+
+      final paymentService = PaymentService(
+        onSuccess: () {
+          Navigator.pop(context);
+          _showPaymentSuccess();
+        },
+        onFailure: () {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment failed. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+      );
+
+      await paymentService.initiatePayment(
+        userId: userData.user.id,
+        itemName: itemName,
+        itemId: widget.itemid,
+        amount: _posterPrice.toDouble(),
+        mediaFile: mediaFile,
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      Navigator.pop(context);
+
+      print("❌ PROCESS PAYMENT ERROR: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showPaymentSuccess() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF10B981),
+                  size: 48,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Payment Successful!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'You now have full access to download your posters and videos.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // Update purchase status
+                    _planProvider!.setPurchaseStatus(true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   final List<FrameStyle> _frames = const [
     FrameStyle(
@@ -1237,8 +1516,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   }
 
   void _showPaymentDialog() {
-    // You can integrate your payment gateway here
-    // For now, show a success dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1256,14 +1533,14 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.check_circle_rounded,
+                  Icons.payment_rounded,
                   color: Color(0xFF10B981),
                   size: 48,
                 ),
               ),
               const SizedBox(height: 20),
               const Text(
-                'Payment Successful!',
+                'Complete Payment',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -1271,19 +1548,18 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'You now have full access to download your posters and videos.',
+              Text(
+                'Pay ₹$_posterPrice to download',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    // Update purchase status
-                    _planProvider!.setPurchaseStatus(true);
+                  onPressed: () async {
+                    Navigator.pop(context); // Close dialog
+                    await _processPayment();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1),
@@ -1293,9 +1569,17 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                     ),
                   ),
                   child: const Text(
-                    'Continue',
+                    'Pay Now',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Color(0xFF6B7280)),
                 ),
               ),
             ],
@@ -2470,6 +2754,19 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     }
   }
 
+  // In pay button
+  // void _handlePayButton() async {
+  //   String itemName = _selectedItemType == ItemType.poster ? 'poster' : 'video';
+
+  //   await PaymentService.initiatePayment(
+  //     userId: currentUserId,
+  //     itemName: itemName,
+  //     itemId: currentItemId,
+  //     amount: _selectedItemType == ItemType.poster ? 5.0 : 10.0, // Different amounts
+  //     mediaFile: selectedMediaFile,
+  //   );
+  // }
+
   void _showBrandElementOptions(BrandElement elem) {
     showModalBottomSheet(
       context: context,
@@ -2617,6 +2914,1555 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     );
   }
 
+  // // 1. Classic
+  // Widget _frameClassic(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 8),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 14,
+  //         left: 14,
+  //         child: GestureDetector(
+  //           onTap: () => _pickImage(forLogo: true),
+  //           child: _logoWidget(f.borderColor, size: 52),
+  //         ),
+  //       ),
+  //     Positioned(
+  //       bottom: 0,
+  //       left: 0,
+  //       right: 0,
+  //       child: GestureDetector(
+  //         onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //         child: Container(
+  //           color: f.footerBg ?? f.borderColor,
+  //           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               if (_brandInfo.name.isNotEmpty)
+  //                 _bt(_brandInfo.name, 14, Colors.white, FontWeight.bold, 0),
+  //               if (_brandInfo.name.isNotEmpty) const SizedBox(height: 2),
+  //               if (_brandInfo.phone.isNotEmpty)
+  //                 _br(Icons.phone, _brandInfo.phone, 11, Colors.white70, 1),
+  //               if (_brandInfo.address.isNotEmpty)
+  //                 _br(
+  //                   Icons.location_on,
+  //                   _brandInfo.address,
+  //                   10,
+  //                   Colors.white60,
+  //                   2,
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
+  // // 2. Golden Banner
+  // Widget _frameBanner(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Container(
+  //             color: f.headerBg ?? f.borderColor,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //             child: Row(
+  //               children: [
+  //                 GestureDetector(
+  //                   onTap: () => _pickImage(forLogo: true),
+  //                   child: _logoWidget(Colors.white.withOpacity(0.2), size: 40),
+  //                 ),
+  //                 const SizedBox(width: 10),
+  //                 if (_brandInfo.name.isNotEmpty)
+  //                   _bt(_brandInfo.name, 15, Colors.white, FontWeight.bold, 0),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     Positioned(
+  //       bottom: 0,
+  //       left: 0,
+  //       right: 0,
+  //       child: GestureDetector(
+  //         onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //         child: Container(
+  //           color: (f.footerBg ?? f.borderColor).withOpacity(0.9),
+  //           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               // Brand name section
+  //               if (_brandInfo.name.isNotEmpty)
+  //                 Padding(
+  //                   padding: const EdgeInsets.only(bottom: 4),
+  //                   child: _bt(
+  //                     _brandInfo.name,
+  //                     13,
+  //                     Colors.white,
+  //                     FontWeight.w600,
+  //                     0,
+  //                   ),
+  //                 ),
+  //               // Row for phone and address
+  //               Row(
+  //                 children: [
+  //                   if (_brandInfo.phone.isNotEmpty)
+  //                     Expanded(
+  //                       child: _br(
+  //                         Icons.phone,
+  //                         _brandInfo.phone,
+  //                         11,
+  //                         Colors.white,
+  //                         1,
+  //                       ),
+  //                     ),
+  //                   if (_brandInfo.phone.isNotEmpty &&
+  //                       _brandInfo.address.isNotEmpty)
+  //                     const SizedBox(width: 8),
+  //                   if (_brandInfo.address.isNotEmpty)
+  //                     Expanded(
+  //                       child: _br(
+  //                         Icons.location_on,
+  //                         _brandInfo.address,
+  //                         10,
+  //                         Colors.white70,
+  //                         2,
+  //                       ),
+  //                     ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.symmetric(
+  //           vertical: BorderSide(color: f.borderColor, width: 4),
+  //         ),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
+  // // 3. Modern
+  // Widget _frameModern(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Positioned(
+  //       left: 0,
+  //       top: 0,
+  //       bottom: 0,
+  //       child: Container(width: 8, color: f.borderColor),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         bottom: 16,
+  //         left: 16,
+  //         right: 16,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Container(
+  //             decoration: BoxDecoration(
+  //               color: (f.headerBg ?? f.borderColor).withOpacity(0.85),
+  //               borderRadius: BorderRadius.circular(8),
+  //             ),
+  //             padding: const EdgeInsets.all(10),
+  //             child: Row(
+  //               children: [
+  //                 GestureDetector(
+  //                   onTap: () => _pickImage(forLogo: true),
+  //                   child: _logoWidget(Colors.white.withOpacity(0.2), size: 44),
+  //                 ),
+  //                 const SizedBox(width: 10),
+  //                 Expanded(
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       // Brand name section
+  //                       if (_brandInfo.name.isNotEmpty)
+  //                         _bt(
+  //                           _brandInfo.name,
+  //                           14,
+  //                           Colors.white,
+  //                           FontWeight.bold,
+  //                           0,
+  //                         ),
+  //                       // Phone section
+  //                       if (_brandInfo.phone.isNotEmpty)
+  //                         _br(
+  //                           Icons.phone,
+  //                           _brandInfo.phone,
+  //                           11,
+  //                           Colors.white70,
+  //                           1,
+  //                         ),
+  //                       // Address section
+  //                       if (_brandInfo.address.isNotEmpty)
+  //                         _br(
+  //                           Icons.location_on,
+  //                           _brandInfo.address,
+  //                           10,
+  //                           Colors.white60,
+  //                           2,
+  //                         ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 14,
+  //         right: 14,
+  //         child: GestureDetector(
+  //           onTap: () => _pickImage(forLogo: true),
+  //           child: _logoWidget(f.borderColor, size: 50),
+  //         ),
+  //       ),
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.symmetric(
+  //           horizontal: BorderSide(color: f.borderColor, width: 4),
+  //         ),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
+  // // 4. Elegant
+  // Widget _frameElegant(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 6),
+  //       ),
+  //     ),
+  //     Positioned.fill(
+  //       child: Container(
+  //         margin: const EdgeInsets.all(10),
+  //         decoration: BoxDecoration(
+  //           border: Border.all(color: f.borderColor.withOpacity(0.5), width: 1),
+  //         ),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 16,
+  //         left: 0,
+  //         right: 0,
+  //         child: Center(
+  //           child: GestureDetector(
+  //             onTap: () => _pickImage(forLogo: true),
+  //             child: _logoWidget(f.borderColor, size: 56),
+  //           ),
+  //         ),
+  //       ),
+  //     Positioned(
+  //       bottom: 0,
+  //       left: 0,
+  //       right: 0,
+  //       child: GestureDetector(
+  //         onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //         child: Container(
+  //           color: f.footerBg ?? f.borderColor,
+  //           padding: const EdgeInsets.symmetric(vertical: 8),
+  //           child: Column(
+  //             children: [
+  //               if (_brandInfo.name.isNotEmpty)
+  //                 _bt(_brandInfo.name, 14, Colors.white, FontWeight.bold, 0),
+  //               if (_brandInfo.name.isNotEmpty) const SizedBox(height: 2),
+  //               if (_brandInfo.phone.isNotEmpty)
+  //                 _bt(
+  //                   _brandInfo.phone,
+  //                   11,
+  //                   Colors.white70,
+  //                   FontWeight.normal,
+  //                   1,
+  //                 ),
+  //               if (_brandInfo.address.isNotEmpty)
+  //                 _bt(
+  //                   _brandInfo.address.length > 30
+  //                       ? '${_brandInfo.address.substring(0, 30)}…'
+  //                       : _brandInfo.address,
+  //                   10,
+  //                   Colors.white60,
+  //                   FontWeight.normal,
+  //                   2,
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
+  // // 5. Neon
+  // Widget _frameNeon(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 3),
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: f.borderColor.withOpacity(0.5),
+  //             blurRadius: 12,
+  //             spreadRadius: 2,
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 12,
+  //         left: 12,
+  //         child: Container(
+  //           decoration: BoxDecoration(
+  //             shape: BoxShape.circle,
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: f.borderColor.withOpacity(0.8),
+  //                 blurRadius: 12,
+  //               ),
+  //             ],
+  //           ),
+  //           child: GestureDetector(
+  //             onTap: () => _pickImage(forLogo: true),
+  //             child: _logoWidget(f.borderColor, size: 50),
+  //           ),
+  //         ),
+  //       ),
+  //     Positioned(
+  //       bottom: 12,
+  //       left: 12,
+  //       right: 12,
+  //       child: GestureDetector(
+  //         onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //         child: Container(
+  //           decoration: BoxDecoration(
+  //             color: Colors.black.withOpacity(0.7),
+  //             border: Border.all(color: f.borderColor, width: 1),
+  //             borderRadius: BorderRadius.circular(6),
+  //           ),
+  //           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               if (_brandInfo.name.isNotEmpty)
+  //                 _bt(_brandInfo.name, 14, f.borderColor, FontWeight.bold, 0),
+  //               if (_brandInfo.phone.isNotEmpty)
+  //                 _br(Icons.phone, _brandInfo.phone, 11, Colors.white70, 1),
+  //               if (_brandInfo.address.isNotEmpty)
+  //                 _br(
+  //                   Icons.location_on,
+  //                   _brandInfo.address,
+  //                   10,
+  //                   Colors.white54,
+  //                   2,
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
+  // // 6. Minimal
+  // Widget _frameMinimal(FrameStyle f, {bool showLogo = false}) {
+  //   const sz = 24.0, th = 3.0;
+  //   final c = f.borderColor;
+  //   return Stack(
+  //     children: [
+  //       Positioned(top: 8, left: 8, child: _corner(c, sz, th, true, true)),
+  //       Positioned(top: 8, right: 8, child: _corner(c, sz, th, true, false)),
+  //       Positioned(bottom: 8, left: 8, child: _corner(c, sz, th, false, true)),
+  //       Positioned(
+  //         bottom: 8,
+  //         right: 8,
+  //         child: _corner(c, sz, th, false, false),
+  //       ),
+  //       if (showLogo)
+  //         Positioned(
+  //           top: 20,
+  //           right: 20,
+  //           child: GestureDetector(
+  //             onTap: () => _pickImage(forLogo: true),
+  //             child: _logoWidget(c, size: 46),
+  //           ),
+  //         ),
+  //       Positioned(
+  //         bottom: 20,
+  //         left: 20,
+  //         right: 60,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               if (_brandInfo.name.isNotEmpty)
+  //                 _bt(_brandInfo.name, 15, Colors.white, FontWeight.bold, 0),
+  //               if (_brandInfo.phone.isNotEmpty)
+  //                 _br(Icons.phone, _brandInfo.phone, 11, Colors.white70, 1),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  // // 7. Card
+  // Widget _frameCard(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 5),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         bottom: 14,
+  //         left: 14,
+  //         right: 14,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Container(
+  //             decoration: BoxDecoration(
+  //               color: (f.footerBg ?? f.borderColor).withOpacity(0.92),
+  //               borderRadius: BorderRadius.circular(12),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black.withOpacity(0.3),
+  //                   blurRadius: 8,
+  //                   offset: const Offset(0, 4),
+  //                 ),
+  //               ],
+  //             ),
+  //             padding: const EdgeInsets.all(12),
+  //             child: Row(
+  //               children: [
+  //                 GestureDetector(
+  //                   onTap: () => _pickImage(forLogo: true),
+  //                   child: _logoWidget(
+  //                     Colors.white.withOpacity(0.15),
+  //                     size: 48,
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 12),
+  //                 Expanded(
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       if (_brandInfo.name.isNotEmpty)
+  //                         _bt(
+  //                           _brandInfo.name,
+  //                           14,
+  //                           Colors.white,
+  //                           FontWeight.bold,
+  //                           0,
+  //                         ),
+  //                       if (_brandInfo.name.isNotEmpty)
+  //                         const SizedBox(height: 2),
+  //                       if (_brandInfo.phone.isNotEmpty)
+  //                         _br(
+  //                           Icons.phone,
+  //                           _brandInfo.phone,
+  //                           11,
+  //                           Colors.white60,
+  //                           1,
+  //                         ),
+  //                       if (_brandInfo.address.isNotEmpty)
+  //                         _br(
+  //                           Icons.location_on,
+  //                           _brandInfo.address,
+  //                           10,
+  //                           Colors.white60,
+  //                           2,
+  //                         ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //   ],
+  // );
+
+  // // 8. Ribbon
+  // Widget _frameRibbon(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 4),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Container(
+  //             height: 52,
+  //             color: f.headerBg ?? f.borderColor,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             child: Row(
+  //               children: [
+  //                 GestureDetector(
+  //                   onTap: () => _pickImage(forLogo: true),
+  //                   child: _logoWidget(Colors.white.withOpacity(0.2), size: 38),
+  //                 ),
+  //                 const SizedBox(width: 10),
+  //                 Column(
+  //                   mainAxisAlignment: MainAxisAlignment.center,
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     if (_brandInfo.name.isNotEmpty)
+  //                       _bt(
+  //                         _brandInfo.name,
+  //                         14,
+  //                         Colors.white,
+  //                         FontWeight.bold,
+  //                         0,
+  //                       ),
+  //                     if (_brandInfo.phone.isNotEmpty)
+  //                       _bt(
+  //                         _brandInfo.phone,
+  //                         11,
+  //                         Colors.white70,
+  //                         FontWeight.normal,
+  //                         1,
+  //                       ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     if (_brandInfo.address.isNotEmpty)
+  //       Positioned(
+  //         bottom: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Container(
+  //             color: (f.headerBg ?? f.borderColor).withOpacity(0.8),
+  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+  //             child: _br(
+  //               Icons.location_on,
+  //               _brandInfo.address,
+  //               10,
+  //               Colors.white70,
+  //               2,
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //   ],
+  // );
+
+  // // 9. Diagonal
+  // Widget _frameDiagonal(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 4),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         bottom: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: ClipPath(
+  //             clipper: _DiagonalClipper(),
+  //             child: Container(
+  //               height: 80,
+  //               color: f.footerBg ?? f.borderColor,
+  //               padding: const EdgeInsets.fromLTRB(14, 20, 14, 8),
+  //               child: Row(
+  //                 children: [
+  //                   GestureDetector(
+  //                     onTap: () => _pickImage(forLogo: true),
+  //                     child: _logoWidget(
+  //                       Colors.white.withOpacity(0.2),
+  //                       size: 36,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(width: 8),
+  //                   Expanded(
+  //                     child: Column(
+  //                       crossAxisAlignment: CrossAxisAlignment.start,
+  //                       mainAxisAlignment: MainAxisAlignment.center,
+  //                       children: [
+  //                         if (_brandInfo.name.isNotEmpty)
+  //                           _bt(
+  //                             _brandInfo.name,
+  //                             13,
+  //                             Colors.white,
+  //                             FontWeight.bold,
+  //                             0,
+  //                           ),
+  //                         if (_brandInfo.phone.isNotEmpty)
+  //                           _br(
+  //                             Icons.phone,
+  //                             _brandInfo.phone,
+  //                             10,
+  //                             Colors.white70,
+  //                             1,
+  //                           ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 14,
+  //         right: 14,
+  //         child: GestureDetector(
+  //           onTap: () => _pickImage(forLogo: true),
+  //           child: _logoWidget(f.borderColor, size: 46),
+  //         ),
+  //       ),
+  //   ],
+  // );
+
+  // // 10. Wave/Curved
+  // Widget _frameCurved(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 3),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         bottom: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: ClipPath(
+  //             clipper: _WaveClipper(),
+  //             child: Container(
+  //               height: 90,
+  //               color: f.footerBg ?? f.borderColor,
+  //               alignment: Alignment.bottomCenter,
+  //               padding: const EdgeInsets.fromLTRB(14, 28, 14, 8),
+  //               child: Row(
+  //                 mainAxisAlignment: MainAxisAlignment.center,
+  //                 children: [
+  //                   GestureDetector(
+  //                     onTap: () => _pickImage(forLogo: true),
+  //                     child: _logoWidget(
+  //                       Colors.white.withOpacity(0.2),
+  //                       size: 36,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(width: 10),
+  //                   Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     mainAxisSize: MainAxisSize.min,
+  //                     children: [
+  //                       if (_brandInfo.name.isNotEmpty)
+  //                         _bt(
+  //                           _brandInfo.name,
+  //                           13,
+  //                           Colors.white,
+  //                           FontWeight.bold,
+  //                           0,
+  //                         ),
+  //                       if (_brandInfo.phone.isNotEmpty)
+  //                         _bt(
+  //                           _brandInfo.phone,
+  //                           10,
+  //                           Colors.white70,
+  //                           FontWeight.normal,
+  //                           1,
+  //                         ),
+  //                     ],
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //   ],
+  // );
+
+  // // 11. Side Strip
+  // Widget _frameSideStrip(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     if (showLogo)
+  //       Positioned(
+  //         right: 0,
+  //         top: 0,
+  //         bottom: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Container(
+  //             width: 52,
+  //             color: f.footerBg ?? f.borderColor,
+  //             child: Column(
+  //               mainAxisAlignment: MainAxisAlignment.center,
+  //               children: [
+  //                 GestureDetector(
+  //                   onTap: () => _pickImage(forLogo: true),
+  //                   child: _logoWidget(Colors.white.withOpacity(0.2), size: 38),
+  //                 ),
+  //                 if (_brandInfo.name.isNotEmpty) ...[
+  //                   const SizedBox(height: 8),
+  //                   RotatedBox(
+  //                     quarterTurns: 1,
+  //                     child: _bt(
+  //                       _brandInfo.name,
+  //                       11,
+  //                       Colors.white,
+  //                       FontWeight.bold,
+  //                       0,
+  //                     ),
+  //                   ),
+  //                 ],
+  //                 if (_brandInfo.phone.isNotEmpty) ...[
+  //                   const SizedBox(height: 6),
+  //                   RotatedBox(
+  //                     quarterTurns: 1,
+  //                     child: _bt(
+  //                       _brandInfo.phone,
+  //                       9,
+  //                       Colors.white70,
+  //                       FontWeight.normal,
+  //                       1,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border(
+  //           top: BorderSide(color: f.borderColor, width: 4),
+  //           bottom: BorderSide(color: f.borderColor, width: 4),
+  //           left: BorderSide(color: f.borderColor, width: 4),
+  //         ),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
+  // // 12. Split
+  // Widget _frameSplit(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 4),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         bottom: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Row(
+  //             children: [
+  //               Expanded(
+  //                 child: Container(
+  //                   color: f.borderColor,
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 10,
+  //                     vertical: 8,
+  //                   ),
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       GestureDetector(
+  //                         onTap: () => _pickImage(forLogo: true),
+  //                         child: _logoWidget(
+  //                           Colors.white.withOpacity(0.25),
+  //                           size: 36,
+  //                         ),
+  //                       ),
+  //                       if (_brandInfo.name.isNotEmpty) ...[
+  //                         const SizedBox(height: 4),
+  //                         _bt(
+  //                           _brandInfo.name,
+  //                           12,
+  //                           Colors.white,
+  //                           FontWeight.bold,
+  //                           0,
+  //                         ),
+  //                       ],
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+  //               Expanded(
+  //                 child: Container(
+  //                   color: (f.footerBg ?? f.borderColor).withOpacity(0.8),
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 10,
+  //                     vertical: 8,
+  //                   ),
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     mainAxisAlignment: MainAxisAlignment.center,
+  //                     children: [
+  //                       if (_brandInfo.phone.isNotEmpty)
+  //                         _br(
+  //                           Icons.phone,
+  //                           _brandInfo.phone,
+  //                           10,
+  //                           Colors.white,
+  //                           1,
+  //                         ),
+  //                       if (_brandInfo.phone.isNotEmpty &&
+  //                           _brandInfo.address.isNotEmpty)
+  //                         const SizedBox(height: 4),
+  //                       if (_brandInfo.address.isNotEmpty)
+  //                         _br(
+  //                           Icons.location_on,
+  //                           _brandInfo.address,
+  //                           9,
+  //                           Colors.white70,
+  //                           2,
+  //                         ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //   ],
+  // );
+
+  // // 13. Badge
+  // Widget _frameBadge(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 5),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 10,
+  //         left: 0,
+  //         right: 0,
+  //         child: Center(
+  //           child: GestureDetector(
+  //             onTap: () => _pickImage(forLogo: true),
+  //             child: Container(
+  //               width: 66,
+  //               height: 66,
+  //               decoration: BoxDecoration(
+  //                 shape: BoxShape.circle,
+  //                 color: f.headerBg ?? f.borderColor,
+  //                 border: Border.all(color: Colors.white, width: 3),
+  //                 boxShadow: [
+  //                   BoxShadow(
+  //                     color: Colors.black.withOpacity(0.3),
+  //                     blurRadius: 8,
+  //                   ),
+  //                 ],
+  //               ),
+  //               child: _uploadedLogoPath != null
+  //                   ? ClipOval(
+  //                       child: Image.file(
+  //                         File(_uploadedLogoPath!),
+  //                         fit: BoxFit.cover,
+  //                       ),
+  //                     )
+  //                   : const Center(
+  //                       child: Text(
+  //                         'LOGO',
+  //                         style: TextStyle(
+  //                           fontSize: 9,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: Colors.white,
+  //                         ),
+  //                       ),
+  //                     ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     Positioned(
+  //       bottom: 0,
+  //       left: 0,
+  //       right: 0,
+  //       child: GestureDetector(
+  //         onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //         child: Container(
+  //           color: f.footerBg ?? f.borderColor,
+  //           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //           child: Row(
+  //             children: [
+  //               Expanded(
+  //                 child: Column(
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     if (_brandInfo.name.isNotEmpty)
+  //                       _bt(
+  //                         _brandInfo.name,
+  //                         13,
+  //                         Colors.white,
+  //                         FontWeight.bold,
+  //                         0,
+  //                       ),
+  //                     if (_brandInfo.phone.isNotEmpty)
+  //                       _br(
+  //                         Icons.phone,
+  //                         _brandInfo.phone,
+  //                         10,
+  //                         Colors.white70,
+  //                         1,
+  //                       ),
+  //                   ],
+  //                 ),
+  //               ),
+  //               if (_brandInfo.address.isNotEmpty)
+  //                 Flexible(
+  //                   child: _br(
+  //                     Icons.location_on,
+  //                     _brandInfo.address,
+  //                     9,
+  //                     Colors.white60,
+  //                     2,
+  //                   ),
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
+  // // 14. Gradient
+  // Widget _frameGradient(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     if (showLogo)
+  //       Positioned(
+  //         bottom: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Container(
+  //             height: 110,
+  //             decoration: BoxDecoration(
+  //               gradient: LinearGradient(
+  //                 begin: Alignment.topCenter,
+  //                 end: Alignment.bottomCenter,
+  //                 colors: [
+  //                   Colors.transparent,
+  //                   (f.footerBg ?? f.borderColor).withOpacity(0.95),
+  //                 ],
+  //               ),
+  //             ),
+  //             padding: const EdgeInsets.fromLTRB(14, 30, 14, 10),
+  //             child: Row(
+  //               children: [
+  //                 GestureDetector(
+  //                   onTap: () => _pickImage(forLogo: true),
+  //                   child: _logoWidget(f.borderColor, size: 44),
+  //                 ),
+  //                 const SizedBox(width: 10),
+  //                 Expanded(
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     mainAxisAlignment: MainAxisAlignment.end,
+  //                     children: [
+  //                       if (_brandInfo.name.isNotEmpty)
+  //                         _bt(
+  //                           _brandInfo.name,
+  //                           14,
+  //                           Colors.white,
+  //                           FontWeight.bold,
+  //                           0,
+  //                         ),
+  //                       if (_brandInfo.phone.isNotEmpty)
+  //                         _br(
+  //                           Icons.phone,
+  //                           _brandInfo.phone,
+  //                           11,
+  //                           Colors.white70,
+  //                           1,
+  //                         ),
+  //                       if (_brandInfo.address.isNotEmpty)
+  //                         _br(
+  //                           Icons.location_on,
+  //                           _brandInfo.address,
+  //                           10,
+  //                           Colors.white60,
+  //                           2,
+  //                         ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 3),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
+  // // 15. Zigzag
+  // Widget _frameZigzag(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 4),
+  //       ),
+  //     ),
+  //     Positioned(
+  //       top: 0,
+  //       left: 0,
+  //       right: 0,
+  //       child: SizedBox(
+  //         height: 14,
+  //         child: CustomPaint(painter: _ZigzagPainter(color: f.borderColor)),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 16,
+  //         left: 12,
+  //         child: GestureDetector(
+  //           onTap: () => _pickImage(forLogo: true),
+  //           child: _logoWidget(f.borderColor, size: 48),
+  //         ),
+  //       ),
+  //     Positioned(
+  //       bottom: 0,
+  //       left: 0,
+  //       right: 0,
+  //       child: GestureDetector(
+  //         onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //         child: Container(
+  //           color: f.footerBg ?? f.borderColor,
+  //           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+  //           child: Row(
+  //             children: [
+  //               if (_brandInfo.name.isNotEmpty)
+  //                 Expanded(
+  //                   child: _bt(
+  //                     _brandInfo.name,
+  //                     13,
+  //                     Colors.white,
+  //                     FontWeight.bold,
+  //                     0,
+  //                   ),
+  //                 ),
+  //               Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.end,
+  //                 children: [
+  //                   if (_brandInfo.phone.isNotEmpty)
+  //                     _bt(
+  //                       _brandInfo.phone,
+  //                       10,
+  //                       Colors.white70,
+  //                       FontWeight.normal,
+  //                       1,
+  //                     ),
+  //                   if (_brandInfo.address.isNotEmpty)
+  //                     _bt(
+  //                       _brandInfo.address.length > 20
+  //                           ? '${_brandInfo.address.substring(0, 20)}…'
+  //                           : _brandInfo.address,
+  //                       9,
+  //                       Colors.white60,
+  //                       FontWeight.normal,
+  //                       2,
+  //                     ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
+  // // 16. Shadow
+  // Widget _frameShadow(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 4),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         bottom: 14,
+  //         left: 14,
+  //         right: 14,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Container(
+  //             decoration: BoxDecoration(
+  //               color: f.footerBg ?? f.borderColor,
+  //               borderRadius: BorderRadius.circular(6),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black.withOpacity(0.5),
+  //                   blurRadius: 12,
+  //                   offset: const Offset(4, 4),
+  //                 ),
+  //                 BoxShadow(
+  //                   color: f.borderColor.withOpacity(0.3),
+  //                   blurRadius: 4,
+  //                   offset: const Offset(-2, -2),
+  //                 ),
+  //               ],
+  //             ),
+  //             padding: const EdgeInsets.all(10),
+  //             child: Row(
+  //               children: [
+  //                 GestureDetector(
+  //                   onTap: () => _pickImage(forLogo: true),
+  //                   child: _logoWidget(
+  //                     Colors.white.withOpacity(0.15),
+  //                     size: 44,
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 10),
+  //                 Expanded(
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       if (_brandInfo.name.isNotEmpty)
+  //                         _bt(
+  //                           _brandInfo.name,
+  //                           13,
+  //                           Colors.white,
+  //                           FontWeight.bold,
+  //                           0,
+  //                         ),
+  //                       if (_brandInfo.phone.isNotEmpty)
+  //                         _br(
+  //                           Icons.phone,
+  //                           _brandInfo.phone,
+  //                           10,
+  //                           Colors.white70,
+  //                           1,
+  //                         ),
+  //                       if (_brandInfo.address.isNotEmpty)
+  //                         _br(
+  //                           Icons.location_on,
+  //                           _brandInfo.address,
+  //                           9,
+  //                           Colors.white60,
+  //                           2,
+  //                         ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //   ],
+  // );
+
+  // // 17. Stripe
+  // Widget _frameStripe(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 4),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         bottom: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Container(height: 8, color: f.accentColor.withOpacity(0.7)),
+  //               Container(
+  //                 color: f.footerBg ?? f.borderColor,
+  //                 padding: const EdgeInsets.symmetric(
+  //                   horizontal: 12,
+  //                   vertical: 6,
+  //                 ),
+  //                 child: Row(
+  //                   children: [
+  //                     GestureDetector(
+  //                       onTap: () => _pickImage(forLogo: true),
+  //                       child: _logoWidget(
+  //                         Colors.white.withOpacity(0.2),
+  //                         size: 38,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 8),
+  //                     if (_brandInfo.name.isNotEmpty)
+  //                       Expanded(
+  //                         child: _bt(
+  //                           _brandInfo.name,
+  //                           13,
+  //                           Colors.white,
+  //                           FontWeight.bold,
+  //                           0,
+  //                         ),
+  //                       ),
+  //                     if (_brandInfo.phone.isNotEmpty)
+  //                       _bt(
+  //                         _brandInfo.phone,
+  //                         10,
+  //                         Colors.white70,
+  //                         FontWeight.normal,
+  //                         1,
+  //                       ),
+  //                   ],
+  //                 ),
+  //               ),
+  //               Container(height: 6, color: f.accentColor.withOpacity(0.5)),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //   ],
+  // );
+
+  // // 18. Arch
+  // Widget _frameArch(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.borderColor, width: 4),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: ClipPath(
+  //             clipper: _ArchClipper(),
+  //             child: Container(
+  //               height: 70,
+  //               color: f.headerBg ?? f.borderColor,
+  //               padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
+  //               child: Row(
+  //                 children: [
+  //                   GestureDetector(
+  //                     onTap: () => _pickImage(forLogo: true),
+  //                     child: _logoWidget(
+  //                       Colors.white.withOpacity(0.2),
+  //                       size: 36,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(width: 10),
+  //                   Column(
+  //                     mainAxisAlignment: MainAxisAlignment.center,
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       if (_brandInfo.name.isNotEmpty)
+  //                         _bt(
+  //                           _brandInfo.name,
+  //                           13,
+  //                           Colors.white,
+  //                           FontWeight.bold,
+  //                           0,
+  //                         ),
+  //                       if (_brandInfo.phone.isNotEmpty)
+  //                         _bt(
+  //                           _brandInfo.phone,
+  //                           10,
+  //                           Colors.white70,
+  //                           FontWeight.normal,
+  //                           1,
+  //                         ),
+  //                     ],
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     if (_brandInfo.address.isNotEmpty)
+  //       Positioned(
+  //         bottom: 0,
+  //         left: 0,
+  //         right: 0,
+  //         child: GestureDetector(
+  //           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //           child: Container(
+  //             color: (f.footerBg ?? f.borderColor).withOpacity(0.85),
+  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  //             child: _br(
+  //               Icons.location_on,
+  //               _brandInfo.address,
+  //               10,
+  //               Colors.white70,
+  //               2,
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //   ],
+  // );
+
+  // // 19. Filmstrip
+  // Widget _frameFilmstrip(FrameStyle f, {bool showLogo = false}) {
+  //   Widget holes() => Column(
+  //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //     children: List.generate(
+  //       10,
+  //       (i) => Container(
+  //         width: 12,
+  //         height: 10,
+  //         decoration: BoxDecoration(
+  //           color: Colors.white.withOpacity(0.15),
+  //           borderRadius: BorderRadius.circular(2),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  //   return Stack(
+  //     children: [
+  //       Positioned(
+  //         left: 0,
+  //         top: 0,
+  //         bottom: 0,
+  //         child: Container(width: 22, color: f.borderColor, child: holes()),
+  //       ),
+  //       Positioned(
+  //         right: 0,
+  //         top: 0,
+  //         bottom: 0,
+  //         child: Container(width: 22, color: f.borderColor, child: holes()),
+  //       ),
+  //       if (showLogo)
+  //         Positioned(
+  //           bottom: 0,
+  //           left: 22,
+  //           right: 22,
+  //           child: GestureDetector(
+  //             onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //             child: Container(
+  //               color: f.footerBg ?? f.borderColor,
+  //               padding: const EdgeInsets.symmetric(
+  //                 horizontal: 10,
+  //                 vertical: 7,
+  //               ),
+  //               child: Row(
+  //                 children: [
+  //                   GestureDetector(
+  //                     onTap: () => _pickImage(forLogo: true),
+  //                     child: _logoWidget(
+  //                       f.accentColor.withOpacity(0.3),
+  //                       size: 36,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(width: 8),
+  //                   Expanded(
+  //                     child: Column(
+  //                       crossAxisAlignment: CrossAxisAlignment.start,
+  //                       children: [
+  //                         if (_brandInfo.name.isNotEmpty)
+  //                           _bt(
+  //                             _brandInfo.name,
+  //                             12,
+  //                             f.accentColor,
+  //                             FontWeight.bold,
+  //                             0,
+  //                           ),
+  //                         if (_brandInfo.phone.isNotEmpty)
+  //                           _bt(
+  //                             _brandInfo.phone,
+  //                             9,
+  //                             Colors.white70,
+  //                             FontWeight.normal,
+  //                             1,
+  //                           ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //     ],
+  //   );
+  // }
+
+  // // 20. Luxury
+  // Widget _frameLuxury(FrameStyle f, {bool showLogo = false}) => Stack(
+  //   children: [
+  //     Container(
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: f.accentColor, width: 6),
+  //       ),
+  //     ),
+  //     Positioned.fill(
+  //       child: Container(
+  //         margin: const EdgeInsets.all(10),
+  //         decoration: BoxDecoration(
+  //           border: Border.all(
+  //             color: f.accentColor.withOpacity(0.5),
+  //             width: 1.5,
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //     Positioned(top: 14, left: 14, child: _luxuryCorner(f.accentColor)),
+  //     Positioned(
+  //       top: 14,
+  //       right: 14,
+  //       child: Transform.flip(flipX: true, child: _luxuryCorner(f.accentColor)),
+  //     ),
+  //     Positioned(
+  //       bottom: 88,
+  //       left: 14,
+  //       child: Transform.flip(flipY: true, child: _luxuryCorner(f.accentColor)),
+  //     ),
+  //     Positioned(
+  //       bottom: 88,
+  //       right: 14,
+  //       child: Transform.flip(
+  //         flipX: true,
+  //         flipY: true,
+  //         child: _luxuryCorner(f.accentColor),
+  //       ),
+  //     ),
+  //     if (showLogo)
+  //       Positioned(
+  //         top: 14,
+  //         left: 0,
+  //         right: 0,
+  //         child: Center(
+  //           child: GestureDetector(
+  //             onTap: () => _pickImage(forLogo: true),
+  //             child: _logoWidget(f.accentColor, size: 54),
+  //           ),
+  //         ),
+  //       ),
+  //     Positioned(
+  //       bottom: 0,
+  //       left: 0,
+  //       right: 0,
+  //       child: GestureDetector(
+  //         onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+  //         child: Container(
+  //           decoration: BoxDecoration(
+  //             color: f.footerBg ?? f.borderColor,
+  //             border: Border(top: BorderSide(color: f.accentColor, width: 2)),
+  //           ),
+  //           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+  //           child: Column(
+  //             children: [
+  //               if (_brandInfo.name.isNotEmpty)
+  //                 _bt(_brandInfo.name, 14, f.accentColor, FontWeight.bold, 0),
+  //               if (_brandInfo.phone.isNotEmpty ||
+  //                   _brandInfo.address.isNotEmpty)
+  //                 const SizedBox(height: 3),
+  //               if (_brandInfo.phone.isNotEmpty ||
+  //                   _brandInfo.address.isNotEmpty)
+  //                 Row(
+  //                   mainAxisAlignment: MainAxisAlignment.center,
+  //                   children: [
+  //                     if (_brandInfo.phone.isNotEmpty) ...[
+  //                       Icon(
+  //                         Icons.phone,
+  //                         size: 10,
+  //                         color: f.accentColor.withOpacity(0.7),
+  //                       ),
+  //                       const SizedBox(width: 4),
+  //                       _bt(
+  //                         _brandInfo.phone,
+  //                         11,
+  //                         Colors.white70,
+  //                         FontWeight.normal,
+  //                         1,
+  //                       ),
+  //                     ],
+  //                     if (_brandInfo.phone.isNotEmpty &&
+  //                         _brandInfo.address.isNotEmpty)
+  //                       const SizedBox(width: 12),
+  //                     if (_brandInfo.address.isNotEmpty) ...[
+  //                       Icon(
+  //                         Icons.location_on,
+  //                         size: 10,
+  //                         color: f.accentColor.withOpacity(0.7),
+  //                       ),
+  //                       const SizedBox(width: 4),
+  //                       Flexible(
+  //                         child: _bt(
+  //                           _brandInfo.address.length > 22
+  //                               ? '${_brandInfo.address.substring(0, 22)}…'
+  //                               : _brandInfo.address,
+  //                           10,
+  //                           Colors.white60,
+  //                           FontWeight.normal,
+  //                           2,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ],
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   ],
+  // );
+
   // 1. Classic
   Widget _frameClassic(FrameStyle f, {bool showLogo = false}) => Stack(
     children: [
@@ -2646,11 +4492,23 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_brandInfo.name.isNotEmpty)
-                  _bt(_brandInfo.name, 14, Colors.white, FontWeight.bold, 0),
-                if (_brandInfo.name.isNotEmpty) const SizedBox(height: 2),
-                if (_brandInfo.phone.isNotEmpty)
-                  _br(Icons.phone, _brandInfo.phone, 11, Colors.white70, 1),
+                _bt(
+                  _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                  14,
+                  Colors.white,
+                  FontWeight.bold,
+                  0,
+                ),
+                const SizedBox(height: 2),
+                _br(
+                  Icons.phone,
+                  _brandInfo.phone.isNotEmpty
+                      ? _brandInfo.phone
+                      : 'Phone Number',
+                  11,
+                  Colors.white70,
+                  1,
+                ),
                 if (_brandInfo.address.isNotEmpty)
                   _br(
                     Icons.location_on,
@@ -2687,8 +4545,13 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                     child: _logoWidget(Colors.white.withOpacity(0.2), size: 40),
                   ),
                   const SizedBox(width: 10),
-                  if (_brandInfo.name.isNotEmpty)
-                    _bt(_brandInfo.name, 15, Colors.white, FontWeight.bold, 0),
+                  _bt(
+                    _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                    15,
+                    Colors.white,
+                    FontWeight.bold,
+                    0,
+                  ),
                 ],
               ),
             ),
@@ -2703,31 +4566,46 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           child: Container(
             color: (f.footerBg ?? f.borderColor).withOpacity(0.9),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_brandInfo.phone.isNotEmpty)
-                  Expanded(
-                    child: _br(
-                      Icons.phone,
-                      _brandInfo.phone,
-                      11,
-                      Colors.white,
-                      1,
-                    ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: _bt(
+                    _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                    13,
+                    Colors.white,
+                    FontWeight.w600,
+                    0,
                   ),
-                if (_brandInfo.phone.isNotEmpty &&
-                    _brandInfo.address.isNotEmpty)
-                  const SizedBox(width: 8),
-                if (_brandInfo.address.isNotEmpty)
-                  Expanded(
-                    child: _br(
-                      Icons.location_on,
-                      _brandInfo.address,
-                      10,
-                      Colors.white70,
-                      2,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _br(
+                        Icons.phone,
+                        _brandInfo.phone.isNotEmpty
+                            ? _brandInfo.phone
+                            : 'Phone Number',
+                        11,
+                        Colors.white,
+                        1,
+                      ),
                     ),
-                  ),
+                    if (_brandInfo.address.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _br(
+                          Icons.location_on,
+                          _brandInfo.address,
+                          10,
+                          Colors.white70,
+                          2,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -2752,62 +4630,64 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         bottom: 0,
         child: Container(width: 8, color: f.borderColor),
       ),
-      if (showLogo)
-        Positioned(
-          bottom: 16,
-          left: 16,
-          right: 16,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: Container(
-              decoration: BoxDecoration(
-                color: (f.headerBg ?? f.borderColor).withOpacity(0.85),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.all(10),
-              child: Row(
-                children: [
+      Positioned(
+        bottom: 16,
+        left: 16,
+        right: 16,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: Container(
+            decoration: BoxDecoration(
+              color: (f.headerBg ?? f.borderColor).withOpacity(0.85),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                if (showLogo)
                   GestureDetector(
                     onTap: () => _pickImage(forLogo: true),
                     child: _logoWidget(Colors.white.withOpacity(0.2), size: 44),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (_brandInfo.name.isNotEmpty)
-                          _bt(
-                            _brandInfo.name,
-                            14,
-                            Colors.white,
-                            FontWeight.bold,
-                            0,
-                          ),
-                        if (_brandInfo.phone.isNotEmpty)
-                          _br(
-                            Icons.phone,
-                            _brandInfo.phone,
-                            11,
-                            Colors.white70,
-                            1,
-                          ),
-                        if (_brandInfo.address.isNotEmpty)
-                          _br(
-                            Icons.location_on,
-                            _brandInfo.address,
-                            10,
-                            Colors.white60,
-                            2,
-                          ),
-                      ],
-                    ),
+                if (showLogo) const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _bt(
+                        _brandInfo.name.isNotEmpty
+                            ? _brandInfo.name
+                            : 'Brand Name',
+                        14,
+                        Colors.white,
+                        FontWeight.bold,
+                        0,
+                      ),
+                      _br(
+                        Icons.phone,
+                        _brandInfo.phone.isNotEmpty
+                            ? _brandInfo.phone
+                            : 'Phone Number',
+                        11,
+                        Colors.white70,
+                        1,
+                      ),
+                      if (_brandInfo.address.isNotEmpty)
+                        _br(
+                          Icons.location_on,
+                          _brandInfo.address,
+                          10,
+                          Colors.white60,
+                          2,
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
       if (showLogo)
         Positioned(
           top: 14,
@@ -2866,17 +4746,23 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
               children: [
-                if (_brandInfo.name.isNotEmpty)
-                  _bt(_brandInfo.name, 14, Colors.white, FontWeight.bold, 0),
-                if (_brandInfo.name.isNotEmpty) const SizedBox(height: 2),
-                if (_brandInfo.phone.isNotEmpty)
-                  _bt(
-                    _brandInfo.phone,
-                    11,
-                    Colors.white70,
-                    FontWeight.normal,
-                    1,
-                  ),
+                _bt(
+                  _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                  14,
+                  Colors.white,
+                  FontWeight.bold,
+                  0,
+                ),
+                const SizedBox(height: 2),
+                _bt(
+                  _brandInfo.phone.isNotEmpty
+                      ? _brandInfo.phone
+                      : 'Phone Number',
+                  11,
+                  Colors.white70,
+                  FontWeight.normal,
+                  1,
+                ),
                 if (_brandInfo.address.isNotEmpty)
                   _bt(
                     _brandInfo.address.length > 30
@@ -2946,10 +4832,22 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_brandInfo.name.isNotEmpty)
-                  _bt(_brandInfo.name, 14, f.borderColor, FontWeight.bold, 0),
-                if (_brandInfo.phone.isNotEmpty)
-                  _br(Icons.phone, _brandInfo.phone, 11, Colors.white70, 1),
+                _bt(
+                  _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                  14,
+                  f.borderColor,
+                  FontWeight.bold,
+                  0,
+                ),
+                _br(
+                  Icons.phone,
+                  _brandInfo.phone.isNotEmpty
+                      ? _brandInfo.phone
+                      : 'Phone Number',
+                  11,
+                  Colors.white70,
+                  1,
+                ),
                 if (_brandInfo.address.isNotEmpty)
                   _br(
                     Icons.location_on,
@@ -2991,18 +4889,46 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           ),
         Positioned(
           bottom: 20,
-          left: 20,
           right: 60,
           child: GestureDetector(
             onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_brandInfo.name.isNotEmpty)
-                  _bt(_brandInfo.name, 15, Colors.white, FontWeight.bold, 0),
-                if (_brandInfo.phone.isNotEmpty)
-                  _br(Icons.phone, _brandInfo.phone, 11, Colors.white70, 1),
-              ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(
+                  0.3,
+                ), // Semi-transparent background
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.6),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _bt(
+                    _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                    15,
+                    Colors.white,
+                    FontWeight.bold,
+                    0,
+                  ),
+                  _br(
+                    Icons.phone,
+                    _brandInfo.phone.isNotEmpty
+                        ? _brandInfo.phone
+                        : 'Phone Number',
+                    11,
+                    Colors.white70,
+                    1,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -3018,28 +4944,28 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           border: Border.all(color: f.borderColor, width: 5),
         ),
       ),
-      if (showLogo)
-        Positioned(
-          bottom: 14,
-          left: 14,
-          right: 14,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: Container(
-              decoration: BoxDecoration(
-                color: (f.footerBg ?? f.borderColor).withOpacity(0.92),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
+      Positioned(
+        bottom: 14,
+        left: 14,
+        right: 14,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: Container(
+            decoration: BoxDecoration(
+              color: (f.footerBg ?? f.borderColor).withOpacity(0.92),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                if (showLogo)
                   GestureDetector(
                     onTap: () => _pickImage(forLogo: true),
                     child: _logoWidget(
@@ -3047,45 +4973,46 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                       size: 48,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (_brandInfo.name.isNotEmpty)
-                          _bt(
-                            _brandInfo.name,
-                            14,
-                            Colors.white,
-                            FontWeight.bold,
-                            0,
-                          ),
-                        if (_brandInfo.name.isNotEmpty)
-                          const SizedBox(height: 2),
-                        if (_brandInfo.phone.isNotEmpty)
-                          _br(
-                            Icons.phone,
-                            _brandInfo.phone,
-                            11,
-                            Colors.white60,
-                            1,
-                          ),
-                        if (_brandInfo.address.isNotEmpty)
-                          _br(
-                            Icons.location_on,
-                            _brandInfo.address,
-                            10,
-                            Colors.white60,
-                            2,
-                          ),
-                      ],
-                    ),
+                if (showLogo) const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _bt(
+                        _brandInfo.name.isNotEmpty
+                            ? _brandInfo.name
+                            : 'Brand Name',
+                        14,
+                        Colors.white,
+                        FontWeight.bold,
+                        0,
+                      ),
+                      const SizedBox(height: 2),
+                      _br(
+                        Icons.phone,
+                        _brandInfo.phone.isNotEmpty
+                            ? _brandInfo.phone
+                            : 'Phone Number',
+                        11,
+                        Colors.white60,
+                        1,
+                      ),
+                      if (_brandInfo.address.isNotEmpty)
+                        _br(
+                          Icons.location_on,
+                          _brandInfo.address,
+                          10,
+                          Colors.white60,
+                          2,
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
     ],
   );
 
@@ -3097,51 +5024,75 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           border: Border.all(color: f.borderColor, width: 4),
         ),
       ),
-      if (showLogo)
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: Container(
-              height: 52,
-              color: f.headerBg ?? f.borderColor,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: Container(
+            height: 52,
+            color: f.headerBg ?? f.borderColor,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                if (showLogo)
                   GestureDetector(
                     onTap: () => _pickImage(forLogo: true),
                     child: _logoWidget(Colors.white.withOpacity(0.2), size: 38),
                   ),
-                  const SizedBox(width: 10),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (_brandInfo.name.isNotEmpty)
-                        _bt(
-                          _brandInfo.name,
-                          14,
-                          Colors.white,
-                          FontWeight.bold,
-                          0,
-                        ),
-                      if (_brandInfo.phone.isNotEmpty)
-                        _bt(
-                          _brandInfo.phone,
-                          11,
-                          Colors.white70,
-                          FontWeight.normal,
-                          1,
-                        ),
-                    ],
-                  ),
-                ],
-              ),
+              ],
             ),
           ),
         ),
+      ),
+
+      Positioned(
+        top: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: Container(
+            height: 52,
+            color: f.headerBg ?? f.borderColor,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                if (showLogo)
+                  GestureDetector(
+                    onTap: () => _pickImage(forLogo: true),
+                    child: _logoWidget(Colors.white.withOpacity(0.2), size: 38),
+                  ),
+                if (showLogo) const SizedBox(width: 10),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _bt(
+                      _brandInfo.name.isNotEmpty
+                          ? _brandInfo.name
+                          : 'Brand Name',
+                      14,
+                      Colors.white,
+                      FontWeight.bold,
+                      0,
+                    ),
+                    _bt(
+                      _brandInfo.phone.isNotEmpty
+                          ? _brandInfo.phone
+                          : 'Phone Number',
+                      11,
+                      Colors.white70,
+                      FontWeight.normal,
+                      1,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       if (_brandInfo.address.isNotEmpty)
         Positioned(
           bottom: 0,
@@ -3173,21 +5124,21 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           border: Border.all(color: f.borderColor, width: 4),
         ),
       ),
-      if (showLogo)
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: ClipPath(
-              clipper: _DiagonalClipper(),
-              child: Container(
-                height: 80,
-                color: f.footerBg ?? f.borderColor,
-                padding: const EdgeInsets.fromLTRB(14, 20, 14, 8),
-                child: Row(
-                  children: [
+      Positioned(
+        bottom: 0,
+        left: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: ClipPath(
+            clipper: _DiagonalClipper(),
+            child: Container(
+              height: 80,
+              color: f.footerBg ?? f.borderColor,
+              padding: const EdgeInsets.fromLTRB(14, 20, 14, 8),
+              child: Row(
+                children: [
+                  if (showLogo)
                     GestureDetector(
                       onTap: () => _pickImage(forLogo: true),
                       child: _logoWidget(
@@ -3195,37 +5146,39 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                         size: 36,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (_brandInfo.name.isNotEmpty)
-                            _bt(
-                              _brandInfo.name,
-                              13,
-                              Colors.white,
-                              FontWeight.bold,
-                              0,
-                            ),
-                          if (_brandInfo.phone.isNotEmpty)
-                            _br(
-                              Icons.phone,
-                              _brandInfo.phone,
-                              10,
-                              Colors.white70,
-                              1,
-                            ),
-                        ],
-                      ),
+                  if (showLogo) const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _bt(
+                          _brandInfo.name.isNotEmpty
+                              ? _brandInfo.name
+                              : 'Brand Name',
+                          13,
+                          Colors.white,
+                          FontWeight.bold,
+                          0,
+                        ),
+                        _br(
+                          Icons.phone,
+                          _brandInfo.phone.isNotEmpty
+                              ? _brandInfo.phone
+                              : 'Phone Number',
+                          10,
+                          Colors.white70,
+                          1,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
+      ),
       if (showLogo)
         Positioned(
           top: 14,
@@ -3246,23 +5199,23 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           border: Border.all(color: f.borderColor, width: 3),
         ),
       ),
-      if (showLogo)
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: ClipPath(
-              clipper: _WaveClipper(),
-              child: Container(
-                height: 90,
-                color: f.footerBg ?? f.borderColor,
-                alignment: Alignment.bottomCenter,
-                padding: const EdgeInsets.fromLTRB(14, 28, 14, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+      Positioned(
+        bottom: 0,
+        left: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: ClipPath(
+            clipper: _WaveClipper(),
+            child: Container(
+              height: 90,
+              color: f.footerBg ?? f.borderColor,
+              alignment: Alignment.bottomCenter,
+              padding: const EdgeInsets.fromLTRB(14, 28, 14, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (showLogo)
                     GestureDetector(
                       onTap: () => _pickImage(forLogo: true),
                       child: _logoWidget(
@@ -3270,89 +5223,89 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                         size: 36,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_brandInfo.name.isNotEmpty)
-                          _bt(
-                            _brandInfo.name,
-                            13,
-                            Colors.white,
-                            FontWeight.bold,
-                            0,
-                          ),
-                        if (_brandInfo.phone.isNotEmpty)
-                          _bt(
-                            _brandInfo.phone,
-                            10,
-                            Colors.white70,
-                            FontWeight.normal,
-                            1,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
+                  if (showLogo) const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _bt(
+                        _brandInfo.name.isNotEmpty
+                            ? _brandInfo.name
+                            : 'Brand Name',
+                        13,
+                        Colors.white,
+                        FontWeight.bold,
+                        0,
+                      ),
+                      _bt(
+                        _brandInfo.phone.isNotEmpty
+                            ? _brandInfo.phone
+                            : 'Phone Number',
+                        10,
+                        Colors.white70,
+                        FontWeight.normal,
+                        1,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
         ),
+      ),
     ],
   );
 
   // 11. Side Strip
   Widget _frameSideStrip(FrameStyle f, {bool showLogo = false}) => Stack(
     children: [
-      if (showLogo)
-        Positioned(
-          right: 0,
-          top: 0,
-          bottom: 0,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: Container(
-              width: 52,
-              color: f.footerBg ?? f.borderColor,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+      Positioned(
+        right: 0,
+        top: 0,
+        bottom: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: Container(
+            width: 52,
+            color: f.footerBg ?? f.borderColor,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (showLogo)
                   GestureDetector(
                     onTap: () => _pickImage(forLogo: true),
                     child: _logoWidget(Colors.white.withOpacity(0.2), size: 38),
                   ),
-                  if (_brandInfo.name.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    RotatedBox(
-                      quarterTurns: 1,
-                      child: _bt(
-                        _brandInfo.name,
-                        11,
-                        Colors.white,
-                        FontWeight.bold,
-                        0,
-                      ),
-                    ),
-                  ],
-                  if (_brandInfo.phone.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    RotatedBox(
-                      quarterTurns: 1,
-                      child: _bt(
-                        _brandInfo.phone,
-                        9,
-                        Colors.white70,
-                        FontWeight.normal,
-                        1,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                if (showLogo) const SizedBox(height: 8),
+                RotatedBox(
+                  quarterTurns: 1,
+                  child: _bt(
+                    _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                    11,
+                    Colors.white,
+                    FontWeight.bold,
+                    0,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                RotatedBox(
+                  quarterTurns: 1,
+                  child: _bt(
+                    _brandInfo.phone.isNotEmpty
+                        ? _brandInfo.phone
+                        : 'Phone Number',
+                    9,
+                    Colors.white70,
+                    FontWeight.normal,
+                    1,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
       Container(
         decoration: BoxDecoration(
           border: Border(
@@ -3373,25 +5326,25 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           border: Border.all(color: f.borderColor, width: 4),
         ),
       ),
-      if (showLogo)
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    color: f.borderColor,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+      Positioned(
+        bottom: 0,
+        left: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  color: f.borderColor,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (showLogo)
                         GestureDetector(
                           onTap: () => _pickImage(forLogo: true),
                           child: _logoWidget(
@@ -3399,58 +5352,58 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                             size: 36,
                           ),
                         ),
-                        if (_brandInfo.name.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          _bt(
-                            _brandInfo.name,
-                            12,
-                            Colors.white,
-                            FontWeight.bold,
-                            0,
-                          ),
-                        ],
-                      ],
-                    ),
+                      if (showLogo) const SizedBox(height: 4),
+                      _bt(
+                        _brandInfo.name.isNotEmpty
+                            ? _brandInfo.name
+                            : 'Brand Name',
+                        12,
+                        Colors.white,
+                        FontWeight.bold,
+                        0,
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: Container(
-                    color: (f.footerBg ?? f.borderColor).withOpacity(0.8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (_brandInfo.phone.isNotEmpty)
-                          _br(
-                            Icons.phone,
-                            _brandInfo.phone,
-                            10,
-                            Colors.white,
-                            1,
-                          ),
-                        if (_brandInfo.phone.isNotEmpty &&
-                            _brandInfo.address.isNotEmpty)
-                          const SizedBox(height: 4),
-                        if (_brandInfo.address.isNotEmpty)
-                          _br(
-                            Icons.location_on,
-                            _brandInfo.address,
-                            9,
-                            Colors.white70,
-                            2,
-                          ),
+              ),
+              Expanded(
+                child: Container(
+                  color: (f.footerBg ?? f.borderColor).withOpacity(0.8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _br(
+                        Icons.phone,
+                        _brandInfo.phone.isNotEmpty
+                            ? _brandInfo.phone
+                            : 'Phone Number',
+                        10,
+                        Colors.white,
+                        1,
+                      ),
+                      if (_brandInfo.address.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        _br(
+                          Icons.location_on,
+                          _brandInfo.address,
+                          9,
+                          Colors.white70,
+                          2,
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
+      ),
     ],
   );
 
@@ -3520,22 +5473,24 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_brandInfo.name.isNotEmpty)
-                        _bt(
-                          _brandInfo.name,
-                          13,
-                          Colors.white,
-                          FontWeight.bold,
-                          0,
-                        ),
-                      if (_brandInfo.phone.isNotEmpty)
-                        _br(
-                          Icons.phone,
-                          _brandInfo.phone,
-                          10,
-                          Colors.white70,
-                          1,
-                        ),
+                      _bt(
+                        _brandInfo.name.isNotEmpty
+                            ? _brandInfo.name
+                            : 'Brand Name',
+                        13,
+                        Colors.white,
+                        FontWeight.bold,
+                        0,
+                      ),
+                      _br(
+                        Icons.phone,
+                        _brandInfo.phone.isNotEmpty
+                            ? _brandInfo.phone
+                            : 'Phone Number',
+                        10,
+                        Colors.white70,
+                        1,
+                      ),
                     ],
                   ),
                 ),
@@ -3560,70 +5515,72 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   // 14. Gradient
   Widget _frameGradient(FrameStyle f, {bool showLogo = false}) => Stack(
     children: [
-      if (showLogo)
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: Container(
-              height: 110,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    (f.footerBg ?? f.borderColor).withOpacity(0.95),
-                  ],
-                ),
+      Positioned(
+        bottom: 0,
+        left: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: Container(
+            height: 110,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  (f.footerBg ?? f.borderColor).withOpacity(0.95),
+                ],
               ),
-              padding: const EdgeInsets.fromLTRB(14, 30, 14, 10),
-              child: Row(
-                children: [
+            ),
+            padding: const EdgeInsets.fromLTRB(14, 30, 14, 10),
+            child: Row(
+              children: [
+                if (showLogo)
                   GestureDetector(
                     onTap: () => _pickImage(forLogo: true),
                     child: _logoWidget(f.borderColor, size: 44),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (_brandInfo.name.isNotEmpty)
-                          _bt(
-                            _brandInfo.name,
-                            14,
-                            Colors.white,
-                            FontWeight.bold,
-                            0,
-                          ),
-                        if (_brandInfo.phone.isNotEmpty)
-                          _br(
-                            Icons.phone,
-                            _brandInfo.phone,
-                            11,
-                            Colors.white70,
-                            1,
-                          ),
-                        if (_brandInfo.address.isNotEmpty)
-                          _br(
-                            Icons.location_on,
-                            _brandInfo.address,
-                            10,
-                            Colors.white60,
-                            2,
-                          ),
-                      ],
-                    ),
+                if (showLogo) const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _bt(
+                        _brandInfo.name.isNotEmpty
+                            ? _brandInfo.name
+                            : 'Brand Name',
+                        14,
+                        Colors.white,
+                        FontWeight.bold,
+                        0,
+                      ),
+                      _br(
+                        Icons.phone,
+                        _brandInfo.phone.isNotEmpty
+                            ? _brandInfo.phone
+                            : 'Phone Number',
+                        11,
+                        Colors.white70,
+                        1,
+                      ),
+                      if (_brandInfo.address.isNotEmpty)
+                        _br(
+                          Icons.location_on,
+                          _brandInfo.address,
+                          10,
+                          Colors.white60,
+                          2,
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
       Container(
         decoration: BoxDecoration(
           border: Border.all(color: f.borderColor, width: 3),
@@ -3669,27 +5626,27 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             child: Row(
               children: [
-                if (_brandInfo.name.isNotEmpty)
-                  Expanded(
-                    child: _bt(
-                      _brandInfo.name,
-                      13,
-                      Colors.white,
-                      FontWeight.bold,
-                      0,
-                    ),
+                Expanded(
+                  child: _bt(
+                    _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                    13,
+                    Colors.white,
+                    FontWeight.bold,
+                    0,
                   ),
+                ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    if (_brandInfo.phone.isNotEmpty)
-                      _bt(
-                        _brandInfo.phone,
-                        10,
-                        Colors.white70,
-                        FontWeight.normal,
-                        1,
-                      ),
+                    _bt(
+                      _brandInfo.phone.isNotEmpty
+                          ? _brandInfo.phone
+                          : 'Phone Number',
+                      10,
+                      Colors.white70,
+                      FontWeight.normal,
+                      1,
+                    ),
                     if (_brandInfo.address.isNotEmpty)
                       _bt(
                         _brandInfo.address.length > 20
@@ -3718,33 +5675,33 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           border: Border.all(color: f.borderColor, width: 4),
         ),
       ),
-      if (showLogo)
-        Positioned(
-          bottom: 14,
-          left: 14,
-          right: 14,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: Container(
-              decoration: BoxDecoration(
-                color: f.footerBg ?? f.borderColor,
-                borderRadius: BorderRadius.circular(6),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
-                    blurRadius: 12,
-                    offset: const Offset(4, 4),
-                  ),
-                  BoxShadow(
-                    color: f.borderColor.withOpacity(0.3),
-                    blurRadius: 4,
-                    offset: const Offset(-2, -2),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(10),
-              child: Row(
-                children: [
+      Positioned(
+        bottom: 14,
+        left: 14,
+        right: 14,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: Container(
+            decoration: BoxDecoration(
+              color: f.footerBg ?? f.borderColor,
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 12,
+                  offset: const Offset(4, 4),
+                ),
+                BoxShadow(
+                  color: f.borderColor.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(-2, -2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                if (showLogo)
                   GestureDetector(
                     onTap: () => _pickImage(forLogo: true),
                     child: _logoWidget(
@@ -3752,43 +5709,45 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                       size: 44,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (_brandInfo.name.isNotEmpty)
-                          _bt(
-                            _brandInfo.name,
-                            13,
-                            Colors.white,
-                            FontWeight.bold,
-                            0,
-                          ),
-                        if (_brandInfo.phone.isNotEmpty)
-                          _br(
-                            Icons.phone,
-                            _brandInfo.phone,
-                            10,
-                            Colors.white70,
-                            1,
-                          ),
-                        if (_brandInfo.address.isNotEmpty)
-                          _br(
-                            Icons.location_on,
-                            _brandInfo.address,
-                            9,
-                            Colors.white60,
-                            2,
-                          ),
-                      ],
-                    ),
+                if (showLogo) const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _bt(
+                        _brandInfo.name.isNotEmpty
+                            ? _brandInfo.name
+                            : 'Brand Name',
+                        13,
+                        Colors.white,
+                        FontWeight.bold,
+                        0,
+                      ),
+                      _br(
+                        Icons.phone,
+                        _brandInfo.phone.isNotEmpty
+                            ? _brandInfo.phone
+                            : 'Phone Number',
+                        10,
+                        Colors.white70,
+                        1,
+                      ),
+                      if (_brandInfo.address.isNotEmpty)
+                        _br(
+                          Icons.location_on,
+                          _brandInfo.address,
+                          9,
+                          Colors.white60,
+                          2,
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
     ],
   );
 
@@ -3800,25 +5759,25 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           border: Border.all(color: f.borderColor, width: 4),
         ),
       ),
-      if (showLogo)
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(height: 8, color: f.accentColor.withOpacity(0.7)),
-                Container(
-                  color: f.footerBg ?? f.borderColor,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: Row(
-                    children: [
+      Positioned(
+        bottom: 0,
+        left: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(height: 8, color: f.accentColor.withOpacity(0.7)),
+              Container(
+                color: f.footerBg ?? f.borderColor,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                child: Row(
+                  children: [
+                    if (showLogo)
                       GestureDetector(
                         onTap: () => _pickImage(forLogo: true),
                         child: _logoWidget(
@@ -3826,33 +5785,35 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                           size: 38,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      if (_brandInfo.name.isNotEmpty)
-                        Expanded(
-                          child: _bt(
-                            _brandInfo.name,
-                            13,
-                            Colors.white,
-                            FontWeight.bold,
-                            0,
-                          ),
-                        ),
-                      if (_brandInfo.phone.isNotEmpty)
-                        _bt(
-                          _brandInfo.phone,
-                          10,
-                          Colors.white70,
-                          FontWeight.normal,
-                          1,
-                        ),
-                    ],
-                  ),
+                    if (showLogo) const SizedBox(width: 8),
+                    Expanded(
+                      child: _bt(
+                        _brandInfo.name.isNotEmpty
+                            ? _brandInfo.name
+                            : 'Brand Name',
+                        13,
+                        Colors.white,
+                        FontWeight.bold,
+                        0,
+                      ),
+                    ),
+                    _bt(
+                      _brandInfo.phone.isNotEmpty
+                          ? _brandInfo.phone
+                          : 'Phone Number',
+                      10,
+                      Colors.white70,
+                      FontWeight.normal,
+                      1,
+                    ),
+                  ],
                 ),
-                Container(height: 6, color: f.accentColor.withOpacity(0.5)),
-              ],
-            ),
+              ),
+              Container(height: 6, color: f.accentColor.withOpacity(0.5)),
+            ],
           ),
         ),
+      ),
     ],
   );
 
@@ -3864,21 +5825,21 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           border: Border.all(color: f.borderColor, width: 4),
         ),
       ),
-      if (showLogo)
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-            child: ClipPath(
-              clipper: _ArchClipper(),
-              child: Container(
-                height: 70,
-                color: f.headerBg ?? f.borderColor,
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
-                child: Row(
-                  children: [
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: ClipPath(
+            clipper: _ArchClipper(),
+            child: Container(
+              height: 70,
+              color: f.headerBg ?? f.borderColor,
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
+              child: Row(
+                children: [
+                  if (showLogo)
                     GestureDetector(
                       onTap: () => _pickImage(forLogo: true),
                       child: _logoWidget(
@@ -3886,35 +5847,56 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                         size: 36,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (_brandInfo.name.isNotEmpty)
-                          _bt(
-                            _brandInfo.name,
-                            13,
-                            Colors.white,
-                            FontWeight.bold,
-                            0,
-                          ),
-                        if (_brandInfo.phone.isNotEmpty)
-                          _bt(
-                            _brandInfo.phone,
-                            10,
-                            Colors.white70,
-                            FontWeight.normal,
-                            1,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
+                ],
               ),
             ),
           ),
         ),
+      ),
+
+      Positioned(
+        top: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+          child: ClipPath(
+            clipper: _ArchClipper(),
+            child: Container(
+              height: 70,
+              color: f.headerBg ?? f.borderColor,
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
+              child: Row(
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _bt(
+                        _brandInfo.name.isNotEmpty
+                            ? _brandInfo.name
+                            : 'Brand Name',
+                        13,
+                        Colors.white,
+                        FontWeight.bold,
+                        0,
+                      ),
+                      _bt(
+                        _brandInfo.phone.isNotEmpty
+                            ? _brandInfo.phone
+                            : 'Phone Number',
+                        10,
+                        Colors.white70,
+                        FontWeight.normal,
+                        1,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       if (_brandInfo.address.isNotEmpty)
         Positioned(
           bottom: 0,
@@ -3968,21 +5950,18 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           bottom: 0,
           child: Container(width: 22, color: f.borderColor, child: holes()),
         ),
-        if (showLogo)
-          Positioned(
-            bottom: 0,
-            left: 22,
-            right: 22,
-            child: GestureDetector(
-              onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
-              child: Container(
-                color: f.footerBg ?? f.borderColor,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
-                ),
-                child: Row(
-                  children: [
+        Positioned(
+          bottom: 0,
+          left: 22,
+          right: 22,
+          child: GestureDetector(
+            onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
+            child: Container(
+              color: f.footerBg ?? f.borderColor,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              child: Row(
+                children: [
+                  if (showLogo)
                     GestureDetector(
                       onTap: () => _pickImage(forLogo: true),
                       child: _logoWidget(
@@ -3990,35 +5969,37 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                         size: 36,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_brandInfo.name.isNotEmpty)
-                            _bt(
-                              _brandInfo.name,
-                              12,
-                              f.accentColor,
-                              FontWeight.bold,
-                              0,
-                            ),
-                          if (_brandInfo.phone.isNotEmpty)
-                            _bt(
-                              _brandInfo.phone,
-                              9,
-                              Colors.white70,
-                              FontWeight.normal,
-                              1,
-                            ),
-                        ],
-                      ),
+                  if (showLogo) const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _bt(
+                          _brandInfo.name.isNotEmpty
+                              ? _brandInfo.name
+                              : 'Brand Name',
+                          12,
+                          f.accentColor,
+                          FontWeight.bold,
+                          0,
+                        ),
+                        _bt(
+                          _brandInfo.phone.isNotEmpty
+                              ? _brandInfo.phone
+                              : 'Phone Number',
+                          9,
+                          Colors.white70,
+                          FontWeight.normal,
+                          1,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
+        ),
       ],
     );
   }
@@ -4088,55 +6069,54 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Column(
               children: [
-                if (_brandInfo.name.isNotEmpty)
-                  _bt(_brandInfo.name, 14, f.accentColor, FontWeight.bold, 0),
-                if (_brandInfo.phone.isNotEmpty ||
-                    _brandInfo.address.isNotEmpty)
-                  const SizedBox(height: 3),
-                if (_brandInfo.phone.isNotEmpty ||
-                    _brandInfo.address.isNotEmpty)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (_brandInfo.phone.isNotEmpty) ...[
-                        Icon(
-                          Icons.phone,
-                          size: 10,
-                          color: f.accentColor.withOpacity(0.7),
-                        ),
-                        const SizedBox(width: 4),
-                        _bt(
-                          _brandInfo.phone,
-                          11,
-                          Colors.white70,
+                _bt(
+                  _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                  14,
+                  f.accentColor,
+                  FontWeight.bold,
+                  0,
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.phone,
+                      size: 10,
+                      color: f.accentColor.withOpacity(0.7),
+                    ),
+                    const SizedBox(width: 4),
+                    _bt(
+                      _brandInfo.phone.isNotEmpty
+                          ? _brandInfo.phone
+                          : 'Phone Number',
+                      11,
+                      Colors.white70,
+                      FontWeight.normal,
+                      1,
+                    ),
+                    if (_brandInfo.address.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.location_on,
+                        size: 10,
+                        color: f.accentColor.withOpacity(0.7),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: _bt(
+                          _brandInfo.address.length > 22
+                              ? '${_brandInfo.address.substring(0, 22)}…'
+                              : _brandInfo.address,
+                          10,
+                          Colors.white60,
                           FontWeight.normal,
-                          1,
+                          2,
                         ),
-                      ],
-                      if (_brandInfo.phone.isNotEmpty &&
-                          _brandInfo.address.isNotEmpty)
-                        const SizedBox(width: 12),
-                      if (_brandInfo.address.isNotEmpty) ...[
-                        Icon(
-                          Icons.location_on,
-                          size: 10,
-                          color: f.accentColor.withOpacity(0.7),
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: _bt(
-                            _brandInfo.address.length > 22
-                                ? '${_brandInfo.address.substring(0, 22)}…'
-                                : _brandInfo.address,
-                            10,
-                            Colors.white60,
-                            FontWeight.normal,
-                            2,
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
-                  ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -4268,6 +6248,155 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
   // ── TEXT WIDGET ───────────────────────────
 
+  // Widget _buildTextWidget(OverlayTextItem item) {
+  //   final isSelected = _selectedTextId == item.id;
+  //   return Positioned(
+  //     left: item.position.dx,
+  //     top: item.position.dy,
+  //     child: GestureDetector(
+  //       onTap: () {
+  //         setState(() {
+  //           _selectedTextId = item.id;
+  //           _selectedBrandItemId = null;
+  //         });
+  //         _openTextEditor(item);
+  //       },
+  //       onPanUpdate: (d) {
+  //         setState(() {
+  //           final idx = _texts.indexWhere((t) => t.id == item.id);
+  //           if (idx != -1)
+  //             _texts[idx] = _texts[idx].copyWith(
+  //               position: item.position + Offset(d.delta.dx, d.delta.dy),
+  //             );
+  //         });
+  //       },
+  //       child: Stack(
+  //         clipBehavior: Clip.none,
+  //         children: [
+  //           if (isSelected)
+  //             Positioned(
+  //               top: -14,
+  //               left: -4,
+  //               child: GestureDetector(
+  //                 onTap: () => setState(() {
+  //                   _texts.removeWhere((t) => t.id == item.id);
+  //                   _selectedTextId = null;
+  //                 }),
+  //                 child: Container(
+  //                   width: 22,
+  //                   height: 22,
+  //                   decoration: const BoxDecoration(
+  //                     color: Colors.red,
+  //                     shape: BoxShape.circle,
+  //                   ),
+  //                   child: const Icon(
+  //                     Icons.close,
+  //                     size: 13,
+  //                     color: Colors.white,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           Container(
+  //             decoration: isSelected
+  //                 ? BoxDecoration(
+  //                     border: Border.all(color: Colors.blueAccent, width: 1.5),
+  //                     color: Colors.blue.withOpacity(0.05),
+  //                   )
+  //                 : null,
+  //             padding: const EdgeInsets.all(4),
+  //             child: Container(
+  //               decoration: item.hasBorder
+  //                   ? BoxDecoration(
+  //                       border: Border.all(color: item.color, width: 1),
+  //                     )
+  //                   : null,
+  //               color: item.backgroundColor == Colors.transparent
+  //                   ? null
+  //                   : item.backgroundColor,
+  //               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+  //               child: Transform.rotate(
+  //                 angle: item.rotation,
+  //                 child: Text(
+  //                   item.text,
+  //                   textAlign: item.align,
+  //                   style: TextStyle(
+  //                     fontSize: item.fontSize,
+  //                     color: item.color,
+  //                     fontWeight: item.isBold
+  //                         ? FontWeight.bold
+  //                         : FontWeight.normal,
+  //                     fontStyle: item.isItalic
+  //                         ? FontStyle.italic
+  //                         : FontStyle.normal,
+  //                     decoration: item.isUnderline
+  //                         ? TextDecoration.underline
+  //                         : TextDecoration.none,
+  //                     shadows: item.hasShadow
+  //                         ? [
+  //                             const Shadow(
+  //                               color: Colors.black38,
+  //                               offset: Offset(2, 2),
+  //                               blurRadius: 4,
+  //                             ),
+  //                           ]
+  //                         : null,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //           if (isSelected)
+  //             Positioned(
+  //               right: -6,
+  //               bottom: -6,
+  //               child: GestureDetector(
+  //                 onPanStart: (d) {
+  //                   _resizingTextId = item.id;
+  //                   _resizeStartOffset = d.globalPosition;
+  //                   _resizeStartFontSize = item.fontSize;
+  //                 },
+  //                 onPanUpdate: (d) {
+  //                   if (_resizingTextId != item.id) return;
+  //                   final delta =
+  //                       (d.globalPosition.dx -
+  //                           _resizeStartOffset.dx +
+  //                           d.globalPosition.dy -
+  //                           _resizeStartOffset.dy) /
+  //                       2;
+  //                   final newSize = (_resizeStartFontSize + delta).clamp(
+  //                     8.0,
+  //                     96.0,
+  //                   );
+  //                   setState(() {
+  //                     final idx = _texts.indexWhere((t) => t.id == item.id);
+  //                     if (idx != -1)
+  //                       _texts[idx] = _texts[idx].copyWith(fontSize: newSize);
+  //                   });
+  //                 },
+  //                 onPanEnd: (_) => _resizingTextId = null,
+  //                 child: Container(
+  //                   width: 20,
+  //                   height: 20,
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.blueAccent,
+  //                     shape: BoxShape.circle,
+  //                     border: Border.all(color: Colors.white, width: 1.5),
+  //                   ),
+  //                   child: const Icon(
+  //                     Icons.open_in_full,
+  //                     size: 11,
+  //                     color: Colors.white,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildTextWidget(OverlayTextItem item) {
     final isSelected = _selectedTextId == item.id;
     return Positioned(
@@ -4326,14 +6455,20 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                   : null,
               padding: const EdgeInsets.all(4),
               child: Container(
+                // Fixed: Don't use both color and decoration simultaneously
                 decoration: item.hasBorder
                     ? BoxDecoration(
                         border: Border.all(color: item.color, width: 1),
+                        color: item.backgroundColor == Colors.transparent
+                            ? null
+                            : item.backgroundColor,
                       )
                     : null,
-                color: item.backgroundColor == Colors.transparent
-                    ? null
-                    : item.backgroundColor,
+                color:
+                    !item.hasBorder &&
+                        item.backgroundColor != Colors.transparent
+                    ? item.backgroundColor
+                    : null,
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 child: Transform.rotate(
                   angle: item.rotation,
@@ -6075,145 +8210,296 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
   // ── LAYERS SHEET ─────────────────────────
 
+  // void _showLayersSheet() {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: false,
+  //     builder: (_) => StatefulBuilder(
+  //       builder: (ctx, setSheet) => Container(
+  //         color: Colors.white,
+  //         child: Column(
+  //           children: [
+  //             const Padding(
+  //               padding: EdgeInsets.all(12),
+  //               child: Text(
+  //                 'Layers',
+  //                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+  //               ),
+  //             ),
+  //             const Divider(height: 1),
+  //             ListTile(
+  //               leading: const Icon(
+  //                 Icons.image_outlined,
+  //                 color: Colors.blueGrey,
+  //               ),
+  //               title: const Text('Poster Background'),
+  //               trailing: GestureDetector(
+  //                 onTap: () => _pickImage(forLogo: false),
+  //                 child: const Icon(
+  //                   Icons.swap_horiz,
+  //                   color: Colors.blueAccent,
+  //                   size: 20,
+  //                 ),
+  //               ),
+  //             ),
+  //             ..._brandElements.map(
+  //               (e) => ListTile(
+  //                 leading: Icon(
+  //                   e.type == BrandElementType.logo
+  //                       ? Icons.circle
+  //                       : e.type == BrandElementType.name
+  //                       ? Icons.account_circle
+  //                       : e.type == BrandElementType.phone
+  //                       ? Icons.phone
+  //                       : Icons.location_on,
+  //                   color: Colors.amber,
+  //                 ),
+  //                 title: Text(
+  //                   e.type.name[0].toUpperCase() + e.type.name.substring(1),
+  //                 ),
+  //                 subtitle: Text(
+  //                   e.isVisible ? 'Visible' : 'Hidden',
+  //                   style: TextStyle(
+  //                     fontSize: 11,
+  //                     color: e.isVisible ? Colors.green : Colors.red,
+  //                   ),
+  //                 ),
+  //                 trailing: IconButton(
+  //                   icon: Icon(
+  //                     e.isVisible ? Icons.visibility : Icons.visibility_off,
+  //                     size: 18,
+  //                     color: e.isVisible ? Colors.teal : Colors.grey,
+  //                   ),
+  //                   onPressed: () {
+  //                     setState(() {
+  //                       final i = _brandElements.indexWhere(
+  //                         (x) => x.id == e.id,
+  //                       );
+  //                       if (i != -1)
+  //                         _brandElements[i] = _brandElements[i].copyWith(
+  //                           isVisible: !e.isVisible,
+  //                         );
+  //                     });
+  //                     setSheet(() {});
+  //                   },
+  //                 ),
+  //               ),
+  //             ),
+  //             // Overlay brand items in layers
+  //             ..._overlayBrandItems.map(
+  //               (e) => ListTile(
+  //                 leading: Icon(
+  //                   e.type == BrandElementType.logo
+  //                       ? Icons.image
+  //                       : e.type == BrandElementType.name
+  //                       ? Icons.badge
+  //                       : e.type == BrandElementType.phone
+  //                       ? Icons.phone_android
+  //                       : Icons.pin_drop,
+  //                   color: Colors.purple,
+  //                 ),
+  //                 title: Text(
+  //                   'Canvas: ${e.type.name[0].toUpperCase()}${e.type.name.substring(1)}',
+  //                 ),
+  //                 subtitle: Text(
+  //                   e.isVisible ? 'Visible on canvas' : 'Hidden',
+  //                   style: TextStyle(
+  //                     fontSize: 11,
+  //                     color: e.isVisible ? Colors.green : Colors.red,
+  //                   ),
+  //                 ),
+  //                 trailing: IconButton(
+  //                   icon: Icon(
+  //                     e.isVisible ? Icons.visibility : Icons.visibility_off,
+  //                     size: 18,
+  //                     color: e.isVisible ? Colors.purple : Colors.grey,
+  //                   ),
+  //                   onPressed: () {
+  //                     setState(() {
+  //                       final i = _overlayBrandItems.indexWhere(
+  //                         (x) => x.id == e.id,
+  //                       );
+  //                       if (i != -1)
+  //                         _overlayBrandItems[i] = _overlayBrandItems[i]
+  //                             .copyWith(isVisible: !e.isVisible);
+  //                     });
+  //                     setSheet(() {});
+  //                   },
+  //                 ),
+  //               ),
+  //             ),
+  //             ..._texts.map(
+  //               (t) => ListTile(
+  //                 leading: const Icon(Icons.text_fields, color: Colors.teal),
+  //                 title: Text(
+  //                   t.text,
+  //                   maxLines: 1,
+  //                   overflow: TextOverflow.ellipsis,
+  //                 ),
+  //                 trailing: IconButton(
+  //                   icon: const Icon(
+  //                     Icons.delete_outline,
+  //                     size: 18,
+  //                     color: Colors.red,
+  //                   ),
+  //                   onPressed: () {
+  //                     setState(() => _texts.removeWhere((x) => x.id == t.id));
+  //                     setSheet(() {});
+  //                   },
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   void _showLayersSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled:
+          true, // Optional: allows sheet to expand if content is tall
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheet) => Container(
           color: Colors.white,
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(12),
-                child: Text(
-                  'Layers',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                ),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(
-                  Icons.image_outlined,
-                  color: Colors.blueGrey,
-                ),
-                title: const Text('Poster Background'),
-                trailing: GestureDetector(
-                  onTap: () => _pickImage(forLogo: false),
-                  child: const Icon(
-                    Icons.swap_horiz,
-                    color: Colors.blueAccent,
-                    size: 20,
+          child: SingleChildScrollView(
+            // Add this widget
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    'Layers',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),
-              ),
-              ..._brandElements.map(
-                (e) => ListTile(
-                  leading: Icon(
-                    e.type == BrandElementType.logo
-                        ? Icons.circle
-                        : e.type == BrandElementType.name
-                        ? Icons.account_circle
-                        : e.type == BrandElementType.phone
-                        ? Icons.phone
-                        : Icons.location_on,
-                    color: Colors.amber,
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.image_outlined,
+                    color: Colors.blueGrey,
                   ),
-                  title: Text(
-                    e.type.name[0].toUpperCase() + e.type.name.substring(1),
-                  ),
-                  subtitle: Text(
-                    e.isVisible ? 'Visible' : 'Hidden',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: e.isVisible ? Colors.green : Colors.red,
+                  title: const Text('Poster Background'),
+                  trailing: GestureDetector(
+                    onTap: () => _pickImage(forLogo: false),
+                    child: const Icon(
+                      Icons.swap_horiz,
+                      color: Colors.blueAccent,
+                      size: 20,
                     ),
                   ),
-                  trailing: IconButton(
-                    icon: Icon(
-                      e.isVisible ? Icons.visibility : Icons.visibility_off,
-                      size: 18,
-                      color: e.isVisible ? Colors.teal : Colors.grey,
+                ),
+                ..._brandElements.map(
+                  (e) => ListTile(
+                    leading: Icon(
+                      e.type == BrandElementType.logo
+                          ? Icons.circle
+                          : e.type == BrandElementType.name
+                          ? Icons.account_circle
+                          : e.type == BrandElementType.phone
+                          ? Icons.phone
+                          : Icons.location_on,
+                      color: Colors.amber,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        final i = _brandElements.indexWhere(
-                          (x) => x.id == e.id,
-                        );
-                        if (i != -1)
-                          _brandElements[i] = _brandElements[i].copyWith(
-                            isVisible: !e.isVisible,
+                    title: Text(
+                      e.type.name[0].toUpperCase() + e.type.name.substring(1),
+                    ),
+                    subtitle: Text(
+                      e.isVisible ? 'Visible' : 'Hidden',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: e.isVisible ? Colors.green : Colors.red,
+                      ),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(
+                        e.isVisible ? Icons.visibility : Icons.visibility_off,
+                        size: 18,
+                        color: e.isVisible ? Colors.teal : Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          final i = _brandElements.indexWhere(
+                            (x) => x.id == e.id,
                           );
-                      });
-                      setSheet(() {});
-                    },
-                  ),
-                ),
-              ),
-              // Overlay brand items in layers
-              ..._overlayBrandItems.map(
-                (e) => ListTile(
-                  leading: Icon(
-                    e.type == BrandElementType.logo
-                        ? Icons.image
-                        : e.type == BrandElementType.name
-                        ? Icons.badge
-                        : e.type == BrandElementType.phone
-                        ? Icons.phone_android
-                        : Icons.pin_drop,
-                    color: Colors.purple,
-                  ),
-                  title: Text(
-                    'Canvas: ${e.type.name[0].toUpperCase()}${e.type.name.substring(1)}',
-                  ),
-                  subtitle: Text(
-                    e.isVisible ? 'Visible on canvas' : 'Hidden',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: e.isVisible ? Colors.green : Colors.red,
+                          if (i != -1)
+                            _brandElements[i] = _brandElements[i].copyWith(
+                              isVisible: !e.isVisible,
+                            );
+                        });
+                        setSheet(() {});
+                      },
                     ),
                   ),
-                  trailing: IconButton(
-                    icon: Icon(
-                      e.isVisible ? Icons.visibility : Icons.visibility_off,
-                      size: 18,
-                      color: e.isVisible ? Colors.purple : Colors.grey,
+                ),
+                // Overlay brand items in layers
+                ..._overlayBrandItems.map(
+                  (e) => ListTile(
+                    leading: Icon(
+                      e.type == BrandElementType.logo
+                          ? Icons.image
+                          : e.type == BrandElementType.name
+                          ? Icons.badge
+                          : e.type == BrandElementType.phone
+                          ? Icons.phone_android
+                          : Icons.pin_drop,
+                      color: Colors.purple,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        final i = _overlayBrandItems.indexWhere(
-                          (x) => x.id == e.id,
-                        );
-                        if (i != -1)
-                          _overlayBrandItems[i] = _overlayBrandItems[i]
-                              .copyWith(isVisible: !e.isVisible);
-                      });
-                      setSheet(() {});
-                    },
+                    title: Text(
+                      'Canvas: ${e.type.name[0].toUpperCase()}${e.type.name.substring(1)}',
+                    ),
+                    subtitle: Text(
+                      e.isVisible ? 'Visible on canvas' : 'Hidden',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: e.isVisible ? Colors.green : Colors.red,
+                      ),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(
+                        e.isVisible ? Icons.visibility : Icons.visibility_off,
+                        size: 18,
+                        color: e.isVisible ? Colors.purple : Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          final i = _overlayBrandItems.indexWhere(
+                            (x) => x.id == e.id,
+                          );
+                          if (i != -1)
+                            _overlayBrandItems[i] = _overlayBrandItems[i]
+                                .copyWith(isVisible: !e.isVisible);
+                        });
+                        setSheet(() {});
+                      },
+                    ),
                   ),
                 ),
-              ),
-              ..._texts.map(
-                (t) => ListTile(
-                  leading: const Icon(Icons.text_fields, color: Colors.teal),
-                  title: Text(
-                    t.text,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: Colors.red,
+                ..._texts.map(
+                  (t) => ListTile(
+                    leading: const Icon(Icons.text_fields, color: Colors.teal),
+                    title: Text(
+                      t.text,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    onPressed: () {
-                      setState(() => _texts.removeWhere((x) => x.id == t.id));
-                      setSheet(() {});
-                    },
+                    trailing: IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: Colors.red,
+                      ),
+                      onPressed: () {
+                        setState(() => _texts.removeWhere((x) => x.id == t.id));
+                        setSheet(() {});
+                      },
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

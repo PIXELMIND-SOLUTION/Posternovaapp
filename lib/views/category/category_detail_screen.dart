@@ -151,6 +151,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => PosterEditorScreen(
                                     posterAsset: bgImageUrl,
+                                    itemid: poster.id,
                                   ),
                                 ),
                               );
@@ -298,6 +299,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                                 builder: (_) =>
                                                     PosterEditorScreen(
                                                       posterAsset: bgImageUrl,
+                                                      itemid: poster.id,
                                                     ),
                                               ),
                                             );
