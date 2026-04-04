@@ -466,7 +466,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                 _buildMenuItem(
                                   icon: Icons.wallet,
-                                  title: 'Hystory',
+                                  title: 'History',
                                   onTap: () async {
                                     final result = await Navigator.push(
                                       context,

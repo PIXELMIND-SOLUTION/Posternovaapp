@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:posternova/views/reels/exo_video_player.dart';
 
-class AutoPlayReelVideo extends StatefulWidget {
-  final String videoUrl;
-  const AutoPlayReelVideo({required this.videoUrl});
+class AutoPlayReelVideo extends StatelessWidget {
+  final String thumbnailUrl;
 
-  @override
-  State<AutoPlayReelVideo> createState() => _AutoPlayReelVideoState();
-}
+  const AutoPlayReelVideo({super.key, required this.thumbnailUrl});
 
-class _AutoPlayReelVideoState extends State<AutoPlayReelVideo> {
   @override
   Widget build(BuildContext context) {
-    if (widget.videoUrl.isEmpty) {
+    if (thumbnailUrl.isEmpty) {
       return Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -31,10 +26,42 @@ class _AutoPlayReelVideoState extends State<AutoPlayReelVideo> {
       );
     }
 
-    // Add GestureDetector to the container that wraps ExoVideoPlayer
     return Container(
       color: Colors.black,
-      child: ExoVideoPlayer(url: widget.videoUrl, autoPlay: false),
+      child: Image.network(
+        thumbnailUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.broken_image_rounded,
+                color: Colors.white38,
+                size: 36,
+              ),
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: Colors.grey[900],
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white54,
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

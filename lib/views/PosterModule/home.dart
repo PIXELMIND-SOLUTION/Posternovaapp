@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isLoadingWishes = false;
 
   static bool _hasShownReferAndEarnModal = false;
-  static bool _hasLoadedOnce = false;
+  // static bool _hasLoadedOnce = false;
 
   List<dynamic> festivaldata = [];
   List<dynamic> canvaposter = [];
@@ -156,19 +156,19 @@ class _HomeScreenState extends State<HomeScreen>
     _checkNetwork().then((_) {
       _loadUserData();
       _loadUserId();
-      if (!_hasLoadedOnce) {
-        Future.microtask(() async => await _initializeAllData());
-        _hasLoadedOnce = true;
-      } else {
-        setState(() {
-          _isBannerLoading = false;
-          _isWeeklyLoading = false;
-          _isFestivalLoading = false;
-          _isReelsLoading = false;
-          _isStoriesLoading = false;
-          _isInitialLoad = false;
-        });
-      }
+      // if (!_hasLoadedOnce) {
+      Future.microtask(() async => await _initializeAllData());
+      // _hasLoadedOnce = true;
+      // } else {
+      //   setState(() {
+      //     _isBannerLoading = false;
+      //     _isWeeklyLoading = false;
+      //     _isFestivalLoading = false;
+      //     _isReelsLoading = false;
+      //     _isStoriesLoading = false;
+      //     _isInitialLoad = false;
+      //   });
+      // }
     });
   }
 
@@ -2142,7 +2142,7 @@ class _HomeScreenState extends State<HomeScreen>
               // Wrap AutoPlayReelVideo with IgnorePointer to let taps pass through
               IgnorePointer(
                 ignoring: true,
-                child: AutoPlayReelVideo(videoUrl: videoUrl),
+                child: AutoPlayReelVideo(thumbnailUrl: reel.thumbnailUrl ?? ''),
               ),
               Positioned(
                 bottom: 0,
