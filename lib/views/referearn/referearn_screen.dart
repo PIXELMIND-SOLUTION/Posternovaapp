@@ -25,15 +25,20 @@
 //   static const Color primaryColor = Color(0xFF6842FF);
 //   static const Color lightBlueColor = Color(0xFFE0F7FA);
 
-//   static const TextStyle titleTextStyle = TextStyle(
+//   // Remove hardcoded text styles - use theme-aware colors instead
+//   TextStyle get titleTextStyle => TextStyle(
 //     fontSize: 20,
 //     fontWeight: FontWeight.bold,
-//     color: Colors.black87,
+//     // color: Theme.of(context).textTheme.bodyLarge?.color,
+//         color: Colors.black,
+
 //   );
-//   static const TextStyle contentTextStyle = TextStyle(
+
+//   TextStyle get contentTextStyle => TextStyle(
 //     fontSize: 14,
-//     color: Colors.black54,
+//     color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
 //   );
+
 //   static const TextStyle buttonTextStyle = TextStyle(
 //     color: Colors.white,
 //     fontWeight: FontWeight.w600,
@@ -86,7 +91,7 @@
 //         final data = json.decode(response.body);
 //         setState(() {
 //           walletAmount = (data['wallet'] ?? 0).toDouble();
-//           totalEarning = walletAmount; // adjust if business logic differs
+//           totalEarning = walletAmount;
 //           isWalletLoading = false;
 //         });
 //       } else {
@@ -159,61 +164,9 @@
 //     }
 //   }
 
-//   //   Future<void> shareReferralCode() async {
-//   //     if (referralCode != 'Loading...' &&
-//   //         referralCode != 'Error loading code' &&
-//   //         referralCode != 'Network error') {
-//   //       try {
-//   //         final String shareMessage = '''
-//   // 🎉 Join me on our amazing app and get instant rewards! 🎉
-
-//   // Use my referral code: $referralCode
-
-//   // ✨ What you get:
-//   // • 30 Credits instantly when you sign up
-//   // • 50 More credits when you make your first purchase
-//   // • Amazing deals and offers
-
-//   // Download the app now and start earning!
-
-//   // #ReferAndEarn #InstantRewards
-//   //         ''';
-
-//   //         await Share.share(
-//   //           shareMessage,
-//   //           subject: 'Join me and earn instant rewards!',
-//   //         );
-
-//   //         showSnackBar(context, 'Shared successfully!');
-//   //       } catch (e) {
-//   //         showSnackBar(context, 'Error sharing referral code');
-//   //       }
-//   //     }
-//   //   }
-
-// //   void shareReferralCode() {
-// //     if (referralCode != null && referralCode!.isNotEmpty) {
-// //       final shareText =
-// //           '''
-// // 🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
-
-// // Use my referral code: $referralCode
-
-// // You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
-
-// // Download EditEzy now:
-// // https://play.google.com/store/apps/details?id=com.posternova.posternova
-
-// // Don't miss out on this opportunity! 🚀
-// // ''';
-// //       Share.share(shareText, subject: 'Join EditEzy using my referral code');
-// //     }
-// //   }
-
-
-// void shareReferralCode() {
-//   if (referralCode != null && referralCode!.isNotEmpty) {
-//     final shareText = '''
+//   void shareReferralCode() {
+//     if (referralCode != null && referralCode!.isNotEmpty) {
+//       final shareText = '''
 // 🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
 
 // Use my referral code: *$referralCode*
@@ -225,9 +178,9 @@
 
 // Don't miss out on this opportunity! 🚀
 // ''';
-//     Share.share(shareText, subject: 'Join EditEzy using my referral code');
+//       Share.share(shareText, subject: 'Join EditEzy using my referral code');
+//     }
 //   }
-// }
 
 //   void showShareOptions() {
 //     if (referralCode == 'Loading...' ||
@@ -257,9 +210,13 @@
 //                   ),
 //                 ),
 //                 const SizedBox(height: 16),
-//                 const Text(
+//                 Text(
 //                   'Share your referral code',
-//                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//                   style: TextStyle(
+//                     fontSize: 18,
+//                     fontWeight: FontWeight.bold,
+//                     color: Theme.of(context).textTheme.bodyLarge?.color,
+//                   ),
 //                 ),
 //                 const SizedBox(height: 16),
 //                 Row(
@@ -291,20 +248,25 @@
 //     );
 //   }
 
-//   // ——————————————— UI ———————————————
-
 //   @override
 //   Widget build(BuildContext context) {
+//     final isDark = Theme.of(context).brightness == Brightness.dark;
+
 //     return Scaffold(
-//       backgroundColor: const Color(0xFFF7F8FA),
+//       backgroundColor: isDark ? null : const Color(0xFFF7F8FA),
 //       appBar: AppBar(
 //         elevation: 0,
 //         backgroundColor: Colors.transparent,
 //         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+//           icon: Icon(
+//             Icons.arrow_back_ios,
+//             // color: Theme.of(context).iconTheme.color,
+//                         color: Colors.black,
+
+//           ),
 //           onPressed: () => Navigator.of(context).pop(),
 //         ),
-//         title: const Text('Refer & Earn', style: titleTextStyle),
+//         title: AppText('refer_earn', style: titleTextStyle),
 //         centerTitle: true,
 //       ),
 //       body: RefreshIndicator(
@@ -337,7 +299,6 @@
 //               onShare: showShareOptions,
 //             ),
 //             const SizedBox(height: 16),
-//             // _InfoCard(),
 //             const SizedBox(height: 16),
 //             _HowItWorks(),
 //             const SizedBox(height: 24),
@@ -346,8 +307,8 @@
 //                 Expanded(
 //                   child: OutlinedButton.icon(
 //                     onPressed: isLoading ? null : copyReferralCode,
-//                     icon: const Icon(Icons.copy),
-//                     label: const Text('Copy'),
+//                     icon: const Icon(Icons.copy,color: Colors.black,),
+//                     label: const Text('Copy',style: TextStyle(color: Colors.black),),
 //                     style: OutlinedButton.styleFrom(
 //                       padding: const EdgeInsets.symmetric(vertical: 14),
 //                       shape: RoundedRectangleBorder(
@@ -382,8 +343,6 @@
 //     );
 //   }
 // }
-
-// // ——————————————— Pieces ———————————————
 
 // class _HeaderCard extends StatelessWidget {
 //   final VoidCallback? onRedeemTap;
@@ -463,10 +422,10 @@
 //                 ),
 //                 elevation: 0,
 //               ),
-//               child: const Text(
-//                 'Redeem Now',
+//               child: const AppText(
+//                 'redeem_now',
 //                 style: TextStyle(
-//                   color: Color.fromARGB(255, 255, 255, 255),
+//                   color: Color(0xFF6E62FF),
 //                   fontWeight: FontWeight.w700,
 //                   fontSize: 15,
 //                 ),
@@ -553,9 +512,11 @@
 //         referralCode == 'Error loading code' ||
 //         referralCode == 'Network error';
 
+//     final isDark = Theme.of(context).brightness == Brightness.dark;
+
 //     return Card(
 //       elevation: 0,
-//       color: Colors.white,
+//       color: isDark ? Theme.of(context).cardColor : Colors.white,
 //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
 //       child: Padding(
 //         padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
@@ -574,9 +535,15 @@
 //             Container(
 //               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
 //               decoration: BoxDecoration(
-//                 color: const Color(0xFFF1EEFF),
+//                 color: isDark
+//                     ? const Color(0xFF6842FF).withOpacity(0.15)
+//                     : const Color(0xFFF1EEFF),
 //                 borderRadius: BorderRadius.circular(12),
-//                 border: Border.all(color: const Color(0xFFE5E1FF)),
+//                 border: Border.all(
+//                   color: isDark
+//                       ? const Color(0xFF6842FF).withOpacity(0.3)
+//                       : const Color(0xFFE5E1FF),
+//                 ),
 //               ),
 //               child: Row(
 //                 children: [
@@ -587,10 +554,11 @@
 //                       isLoading ? 'Loading...' : referralCode,
 //                       maxLines: 1,
 //                       overflow: TextOverflow.ellipsis,
-//                       style: const TextStyle(
+//                       style: TextStyle(
 //                         fontSize: 20,
 //                         fontWeight: FontWeight.w800,
 //                         letterSpacing: 1.0,
+//                         color: Theme.of(context).textTheme.bodyLarge?.color,
 //                       ),
 //                     ),
 //                   ),
@@ -625,9 +593,12 @@
 //               ),
 //             ),
 //             const SizedBox(height: 8),
-//             const AppText(
+//             AppText(
 //               'referral_info',
-//               style: _ReferEarnScreenState.contentTextStyle,
+//               style: TextStyle(
+//                 fontSize: 14,
+//                 color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+//               ),
 //               textAlign: TextAlign.start,
 //             ),
 //           ],
@@ -637,69 +608,45 @@
 //   }
 // }
 
-// // class _InfoCard extends StatelessWidget {
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     // return Container(
-// //     //   decoration: _surface(),
-// //     //   padding: const EdgeInsets.all(16),
-// //     //   child: const Column(
-// //     //     crossAxisAlignment: CrossAxisAlignment.start,
-// //     //     children: [
-// //     //       // AppText(
-// //     //       //   'introduce_friend',
-// //     //       //   style: _ReferEarnScreenState.contentTextStyle,
-// //     //       // ),
-// //     //       SizedBox(height: 8),
-// //     //       // AppText(
-// //     //       //   'bonus_credit',
-// //     //       //   style: _ReferEarnScreenState.contentTextStyle,
-// //     //       // ),
-// //     //     ],
-// //     //   ),
-// //     // );
-// //   }
-
-// //   BoxDecoration _surface() => BoxDecoration(
-// //         color: const Color(0xFFFDFEFF),
-// //         borderRadius: BorderRadius.circular(16),
-// //         border: Border.all(color: Colors.grey.shade200),
-// //       );
-// // }
-
 // class _HowItWorks extends StatelessWidget {
 //   @override
 //   Widget build(BuildContext context) {
+//     final isDark = Theme.of(context).brightness == Brightness.dark;
+
 //     final steps = [
 //       _HowItWorksItem(
 //         icon: Icons.person_add_alt_1,
-//         title: 'Invite a friend',
-//         subtitle: 'Share your code using the Share button.',
+//         title: 'invite_friend',
+//         subtitle: 'share_code_button',
 //       ),
 //       _HowItWorksItem(
 //         icon: Icons.edit_note,
-//         title: 'Friend signs up',
-//         subtitle: 'They enter your code during signup or in settings.',
+//         title: 'friend_signs_up',
+//         subtitle: 'enter_code_signup_settings',
 //       ),
 //       _HowItWorksItem(
 //         icon: Icons.volunteer_activism,
-//         title: 'Both get rewards',
-//         subtitle: 'Credits are added after successful first purchase.',
+//         title: 'both_get_rewards',
+//         subtitle: 'credits_after_purchase.',
 //       ),
 //     ];
 
 //     return Card(
 //       elevation: 0,
-//       color: Colors.white,
+//       color: isDark ? Theme.of(context).cardColor : Colors.white,
 //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
 //       child: Padding(
 //         padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
 //         child: Column(
 //           crossAxisAlignment: CrossAxisAlignment.start,
 //           children: [
-//             const Text(
-//               'How it works',
-//               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+//             AppText(
+//               'how_it_works',
+//               style: TextStyle(
+//                 fontSize: 16,
+//                 fontWeight: FontWeight.w700,
+//                 color: Theme.of(context).textTheme.bodyLarge?.color,
+//               ),
 //             ),
 //             const SizedBox(height: 10),
 //             ...steps.map(
@@ -742,19 +689,20 @@
 //           child: Column(
 //             crossAxisAlignment: CrossAxisAlignment.start,
 //             children: [
-//               Text(
+//               AppText(
 //                 title,
-//                 style: const TextStyle(
+//                 style: TextStyle(
 //                   fontWeight: FontWeight.w700,
 //                   fontSize: 14,
+//                   color: Theme.of(context).textTheme.bodyLarge?.color,
 //                 ),
 //               ),
 //               const SizedBox(height: 2),
-//               Text(
+//               AppText(
 //                 subtitle,
-//                 style: const TextStyle(
+//                 style: TextStyle(
 //                   fontSize: 12,
-//                   color: Colors.black54,
+//                   color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
 //                   height: 1.3,
 //                 ),
 //               ),
@@ -796,29 +744,17 @@
 //           const SizedBox(height: 8),
 //           Text(
 //             label,
-//             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+//             style: TextStyle(
+//               fontSize: 12,
+//               fontWeight: FontWeight.w600,
+//               color: Theme.of(context).textTheme.bodyMedium?.color,
+//             ),
 //           ),
 //         ],
 //       ),
 //     );
 //   }
 // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -844,28 +780,9 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
   double walletAmount = 0.0;
   double totalEarning = 0.0;
 
-  static const Color primaryColor = Color(0xFF6842FF);
-  static const Color lightBlueColor = Color(0xFFE0F7FA);
+  static const Color primaryColor = Color(0xFFF5C518);
 
-  // Remove hardcoded text styles - use theme-aware colors instead
-  TextStyle get titleTextStyle => TextStyle(
-    fontSize: 20,
-    fontWeight: FontWeight.bold,
-    // color: Theme.of(context).textTheme.bodyLarge?.color,
-        color: Colors.black,
-
-  );
-  
-  TextStyle get contentTextStyle => TextStyle(
-    fontSize: 14,
-    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-  );
-  
-  static const TextStyle buttonTextStyle = TextStyle(
-    color: Colors.white,
-    fontWeight: FontWeight.w600,
-    fontSize: 16,
-  );
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
   @override
   void initState() {
@@ -972,8 +889,17 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
   }
 
   void showSnackBar(BuildContext context, String text) {
+    final isDarkMode = _isDarkMode;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), duration: const Duration(seconds: 2)),
+      SnackBar(
+        content: Text(
+          text,
+          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+        ),
+        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
@@ -988,7 +914,8 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
 
   void shareReferralCode() {
     if (referralCode != null && referralCode!.isNotEmpty) {
-      final shareText = '''
+      final shareText =
+          '''
 🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
 
 Use my referral code: *$referralCode*
@@ -1011,58 +938,69 @@ Don't miss out on this opportunity! 🚀
       return;
     }
 
+    final isDarkMode = _isDarkMode;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (BuildContext context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  height: 4,
-                  width: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Share your referral code',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _ShareChip(
-                      icon: Icons.share,
-                      label: 'Share',
-                      onTap: () async {
-                        Navigator.pop(context);
-                        shareReferralCode();
-                      },
+        return Container(
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: 4,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? Colors.grey[700]
+                          : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    _ShareChip(
-                      icon: Icons.content_copy,
-                      label: 'Copy',
-                      onTap: () {
-                        Navigator.pop(context);
-                        copyReferralCode();
-                      },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Share your referral code',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black87,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _ShareChip(
+                        icon: Icons.share,
+                        label: 'Share',
+                        onTap: () async {
+                          Navigator.pop(context);
+                          shareReferralCode();
+                        },
+                      ),
+                      _ShareChip(
+                        icon: Icons.content_copy,
+                        label: 'Copy',
+                        onTap: () {
+                          Navigator.pop(context);
+                          copyReferralCode();
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -1072,29 +1010,37 @@ Don't miss out on this opportunity! 🚀
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+    final isDarkMode = _isDarkMode;
+
     return Scaffold(
-      backgroundColor: isDark ? null : const Color(0xFFF7F8FA),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF7F8FA),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
-            // color: Theme.of(context).iconTheme.color,
-                        color: Colors.black,
-
+            color: isDarkMode ? Colors.white : Colors.black87,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: AppText('refer_earn', style: titleTextStyle),
+        title: AppText(
+          'refer_earn',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: isDarkMode ? Colors.white : Colors.black87,
+          ),
+        ),
         centerTitle: true,
       ),
       body: RefreshIndicator(
         onRefresh: () async {
           await Future.wait([fetchReferralCode(), refreshWalletData()]);
         },
+        color: primaryColor,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
@@ -1121,7 +1067,6 @@ Don't miss out on this opportunity! 🚀
               onShare: showShareOptions,
             ),
             const SizedBox(height: 16),
-            const SizedBox(height: 16),
             _HowItWorks(),
             const SizedBox(height: 24),
             Row(
@@ -1129,9 +1074,22 @@ Don't miss out on this opportunity! 🚀
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: isLoading ? null : copyReferralCode,
-                    icon: const Icon(Icons.copy,color: Colors.black,),
-                    label: const Text('Copy',style: TextStyle(color: Colors.black),),
+                    icon: Icon(
+                      Icons.copy,
+                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                    ),
+                    label: Text(
+                      'Copy',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.black87,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: isDarkMode
+                            ? Colors.grey[700]!
+                            : Colors.grey.shade400,
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1146,10 +1104,15 @@ Don't miss out on this opportunity! 🚀
                     icon: const Icon(Icons.share, color: Colors.white),
                     label: const AppText(
                       'share_invite_code',
-                      style: buttonTextStyle,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
+                      foregroundColor: Colors.black87,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1181,18 +1144,23 @@ class _HeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = const Color(0xFFF5C518);
+
     return Container(
       height: 230,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.deepPurple, Colors.deepPurple.withValues(alpha: 0.5)],
+          colors: isDarkMode
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [primaryColor, primaryColor.withOpacity(0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6E62FF).withOpacity(0.25),
+            color: primaryColor.withOpacity(0.25),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -1202,10 +1170,10 @@ class _HeaderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppText(
+          AppText(
             'earn_now',
             style: TextStyle(
-              color: Colors.white,
+              color: isDarkMode ? primaryColor : Colors.black87,
               fontWeight: FontWeight.w700,
               fontSize: 18,
             ),
@@ -1236,18 +1204,18 @@ class _HeaderCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onRedeemTap,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF6E62FF),
+                backgroundColor: isDarkMode ? primaryColor : Colors.white,
+                foregroundColor: isDarkMode ? Colors.black87 : primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 0,
               ),
-              child: const AppText(
+              child: AppText(
                 'redeem_now',
                 style: TextStyle(
-                  color: Color(0xFF6E62FF),
+                  color: isDarkMode ? Colors.black87 : primaryColor,
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
@@ -1268,11 +1236,13 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     final skeleton = Container(
       height: 26,
       width: 70,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.35),
+        color: (isDarkMode ? Colors.white : Colors.black87).withOpacity(0.35),
         borderRadius: BorderRadius.circular(8),
       ),
     );
@@ -1280,9 +1250,13 @@ class _StatTile extends StatelessWidget {
     return Expanded(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
+          color: (isDarkMode ? Colors.white : Colors.black87).withOpacity(0.12),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.2)),
+          border: Border.all(
+            color: (isDarkMode ? Colors.white : Colors.black87).withOpacity(
+              0.2,
+            ),
+          ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Column(
@@ -1292,8 +1266,8 @@ class _StatTile extends StatelessWidget {
                 ? skeleton
                 : Text(
                     value!,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.black87,
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1301,8 +1275,8 @@ class _StatTile extends StatelessWidget {
             const SizedBox(height: 4),
             AppText(
               labelKey,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black54,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -1329,47 +1303,48 @@ class _ReferralCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = const Color(0xFFF5C518);
+
     final bool disabled =
         isLoading ||
         referralCode == 'Error loading code' ||
         referralCode == 'Network error';
-    
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       elevation: 0,
-      color: isDark ? Theme.of(context).cardColor : Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const AppText(
+            AppText(
               'refer_earn_big',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF6842FF),
+                color: primaryColor,
               ),
             ),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               decoration: BoxDecoration(
-                color: isDark 
-                    ? const Color(0xFF6842FF).withOpacity(0.15)
+                color: isDarkMode
+                    ? primaryColor.withOpacity(0.15)
                     : const Color(0xFFF1EEFF),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF6842FF).withOpacity(0.3)
+                  color: isDarkMode
+                      ? primaryColor.withOpacity(0.3)
                       : const Color(0xFFE5E1FF),
                 ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.card_giftcard, color: Colors.deepPurple.shade400),
+                  Icon(Icons.card_giftcard, color: primaryColor),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -1380,7 +1355,7 @@ class _ReferralCard extends StatelessWidget {
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.0,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        color: isDarkMode ? Colors.white : Colors.black87,
                       ),
                     ),
                   ),
@@ -1388,12 +1363,16 @@ class _ReferralCard extends StatelessWidget {
                   IconButton(
                     tooltip: 'Copy',
                     onPressed: disabled ? null : onCopy,
-                    icon: const Icon(Icons.copy),
+                    icon: Icon(
+                      Icons.copy,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
                   ),
                   ElevatedButton(
                     onPressed: disabled ? null : onShare,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple.withOpacity(0.5),
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.black87,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -1406,7 +1385,7 @@ class _ReferralCard extends StatelessWidget {
                     child: const Text(
                       'Share',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.black87,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1419,7 +1398,7 @@ class _ReferralCard extends StatelessWidget {
               'referral_info',
               style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
               ),
               textAlign: TextAlign.start,
             ),
@@ -1433,8 +1412,9 @@ class _ReferralCard extends StatelessWidget {
 class _HowItWorks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = const Color(0xFFF5C518);
+
     final steps = [
       _HowItWorksItem(
         icon: Icons.person_add_alt_1,
@@ -1455,7 +1435,7 @@ class _HowItWorks extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      color: isDark ? Theme.of(context).cardColor : Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
@@ -1467,7 +1447,7 @@ class _HowItWorks extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
+                color: isDarkMode ? Colors.white : Colors.black87,
               ),
             ),
             const SizedBox(height: 10),
@@ -1495,16 +1475,19 @@ class _HowItWorksItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = const Color(0xFFF5C518);
+
     return Row(
       children: [
         Container(
           height: 44,
           width: 44,
           decoration: BoxDecoration(
-            color: const Color(0xFF6842FF).withOpacity(0.1),
+            color: primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: const Color(0xFF6842FF)),
+          child: Icon(icon, color: primaryColor),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -1516,7 +1499,7 @@ class _HowItWorksItem extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                  color: isDarkMode ? Colors.white : Colors.black87,
                 ),
               ),
               const SizedBox(height: 2),
@@ -1524,7 +1507,7 @@ class _HowItWorksItem extends StatelessWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                   height: 1.3,
                 ),
               ),
@@ -1549,6 +1532,9 @@ class _ShareChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = const Color(0xFFF5C518);
+
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,
@@ -1558,10 +1544,10 @@ class _ShareChip extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xFF6842FF).withOpacity(0.08),
+              color: primaryColor.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: const Color(0xFF6842FF), size: 28),
+            child: Icon(icon, color: primaryColor, size: 28),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1569,7 +1555,7 @@ class _ShareChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).textTheme.bodyMedium?.color,
+              color: isDarkMode ? Colors.white70 : Colors.black54,
             ),
           ),
         ],

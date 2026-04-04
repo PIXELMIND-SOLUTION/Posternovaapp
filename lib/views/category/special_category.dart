@@ -86,7 +86,7 @@ class _SpecialCategoryState extends State<SpecialCategory>
     ),
 
     CategoryItem(
-      title: 'Logo Making',
+      title: 'Logo Maker',
       subtitle: 'Create your brand logo',
       icon: Icons.workspace_premium_rounded,
       emoji: '🏷️',

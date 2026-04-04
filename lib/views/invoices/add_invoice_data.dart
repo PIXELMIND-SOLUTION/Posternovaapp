@@ -1,6 +1,7 @@
 // import 'dart:convert';
 // import 'dart:io';
 // import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
 // import 'package:image_picker/image_picker.dart';
 // import 'package:posternova/models/invoice_model.dart';
 // import 'package:posternova/providers/invoices/invoice_provider.dart';
@@ -10,7 +11,6 @@
 // import 'package:speech_to_text/speech_to_text.dart' as stt;
 // import 'package:shared_preferences/shared_preferences.dart';
 
-// // Redesigned, professional AddInvoiceScreen
 // class AddInvoiceData extends StatefulWidget {
 //   const AddInvoiceData({super.key});
 
@@ -27,12 +27,11 @@
 //   bool _isLoading = false;
 //   bool _isGoldShop = false;
 
-//   // User profile data
+//   String _gstRate = '';
+
 //   String _userName = '';
 //   String _userMobile = '';
 //   String _userAddress = '';
-
-//   // Logo image
 //   String? _logoImagePath;
 //   String? _logoImageBase64;
 //   final ImagePicker _picker = ImagePicker();
@@ -45,7 +44,7 @@
 //     'Milliliter',
 //     'Piece',
 //     'Pack',
-//     'Dozen'
+//     'Dozen',
 //   ];
 
 //   @override
@@ -53,7 +52,6 @@
 //     super.initState();
 //     _speech = stt.SpeechToText();
 //     _initializeSpeech();
-
 //     if (_productEntries.isNotEmpty) _productEntries.first.unit = units.first;
 //     _loadUserData();
 //     _checkBusinessType();
@@ -77,6 +75,7 @@
 //         _userName = prefs.getString('user_name') ?? '';
 //         _userMobile = prefs.getString('user_mobile') ?? '';
 //         _userAddress = prefs.getString('user_address') ?? '';
+//         _gstRate = prefs.getString('gst_rate') ?? '';
 
 //         for (var entry in _productEntries) {
 //           entry.nameController.text = _userName;
@@ -125,12 +124,18 @@
 //           });
 //         }
 //         ScaffoldMessenger.of(context).showSnackBar(
-//           const SnackBar(content: Text('Logo saved'), backgroundColor: Colors.green),
+//           const SnackBar(
+//             content: Text('Logo saved successfully'),
+//             backgroundColor: Colors.green,
+//           ),
 //         );
 //       }
 //     } catch (e) {
 //       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Error picking image: $e'), backgroundColor: Colors.red),
+//         SnackBar(
+//           content: Text('Error picking image: $e'),
+//           backgroundColor: Colors.red,
+//         ),
 //       );
 //     }
 //   }
@@ -163,14 +168,16 @@
 //       );
 //       if (available) {
 //         setState(() => _isListening = true);
-//         _speech.listen(onResult: (result) {
-//           if (_activeController != null && mounted) {
-//             setState(() {
-//               _activeController!.text = result.recognizedWords;
-//               _syncUserInfoAcrossEntries();
-//             });
-//           }
-//         });
+//         _speech.listen(
+//           onResult: (result) {
+//             if (_activeController != null && mounted) {
+//               setState(() {
+//                 _activeController!.text = result.recognizedWords;
+//                 _syncUserInfoAcrossEntries();
+//               });
+//             }
+//           },
+//         );
 //       }
 //     } else {
 //       setState(() => _isListening = false);
@@ -196,7 +203,10 @@
 //     for (var e in _productEntries) {
 //       if (e.unit == null) {
 //         ScaffoldMessenger.of(context).showSnackBar(
-//           const SnackBar(content: Text('Select units for all products'), backgroundColor: Colors.red),
+//           const SnackBar(
+//             content: Text('Please select units for all products'),
+//             backgroundColor: Colors.orange,
+//           ),
 //         );
 //         return;
 //       }
@@ -219,22 +229,38 @@
 //           mobilenumber: _productEntries.first.mobileController.text.trim(),
 //           address: _productEntries.first.addressController.text.trim(),
 //           hsn: _productEntries.first.hsnController.text.trim(),
-//           wastage: _isGoldShop ? double.tryParse(entry.wastageController.text) ?? 0.0 : 0.0,
+//           wastage: _isGoldShop
+//               ? double.tryParse(entry.wastageController.text) ?? 0.0
+//               : 0.0,
 //           isGoldItem: _isGoldShop,
 //           description: entry.descriptionController.text.trim(),
 //           imagelogo: _logoImageBase64 ?? '',
 //         );
 //       }).toList();
 
-//       final success = await Provider.of<ProductInvoiceProvider>(context, listen: false).addInvoice(products);
+//       final success = await Provider.of<ProductInvoiceProvider>(
+//         context,
+//         listen: false,
+//       ).addInvoice(products);
 //       if (mounted) {
 //         ScaffoldMessenger.of(context).showSnackBar(
-//           SnackBar(content: Text(success ? 'Invoice created' : 'Failed to create invoice'), backgroundColor: success ? Colors.green : Colors.red),
+//           SnackBar(
+//             content: Text(
+//               success
+//                   ? 'Invoice created successfully'
+//                   : 'Failed to create invoice',
+//             ),
+//             backgroundColor: success ? Colors.green : Colors.red,
+//           ),
 //         );
 //         if (success) Navigator.of(context).pop();
 //       }
 //     } catch (e) {
-//       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+//       if (mounted) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+//         );
+//       }
 //     } finally {
 //       if (mounted) setState(() => _isLoading = false);
 //     }
@@ -242,130 +268,249 @@
 
 //   @override
 //   Widget build(BuildContext context) {
-//     final theme = Theme.of(context);
 //     return Scaffold(
+//       backgroundColor: Colors.grey[50],
 //       appBar: AppBar(
-//         title: const AppText('create_invoice', style: TextStyle(fontWeight: FontWeight.bold)),
+//         backgroundColor: Colors.white,
+//         elevation: 0,
+//         leading: IconButton(
+//           icon: const Icon(Icons.arrow_back, color: Colors.black87),
+//           onPressed: () => Navigator.pop(context),
+//         ),
+//         title: const AppText(
+//           'create_invoice',
+//           style: TextStyle(
+//             color: Colors.black87,
+//             fontSize: 22,
+//             fontWeight: FontWeight.bold,
+//           ),
+//         ),
 //         centerTitle: true,
-//         elevation: 2,
-//         actions: [
-//           IconButton(
-//             tooltip: 'Choose Logo',
-//             onPressed: _pickImage,
-//             icon: const Icon(Icons.image_outlined),
-//           )
-//         ],
+//         bottom: PreferredSize(
+//           preferredSize: const Size.fromHeight(1),
+//           child: Container(color: Colors.grey[200], height: 1),
+//         ),
 //       ),
 //       body: SafeArea(
 //         child: Form(
 //           key: _formKey,
 //           child: Column(
 //             children: [
-//               // Header card with logo and summary
-//               Padding(
-//                 padding: const EdgeInsets.all(12.0),
-//                 child: Card(
-//                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//                   elevation: 2,
-//                   child: Padding(
-//                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-//                     child: Row(
-//                       children: [
-//                         Container(
-//                           width: 72,
-//                           height: 72,
-//                           decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.grey.shade100),
-//                           child: _logoImageBase64 != null
-//                               ? ClipRRect(
-//                                   borderRadius: BorderRadius.circular(10),
-//                                   child: Image.memory(base64Decode(_logoImageBase64!), fit: BoxFit.cover),
-//                                 )
-//                               : _logoImagePath != null
-//                                   ? ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.file(File(_logoImagePath!), fit: BoxFit.cover))
-//                                   : Center(child: Icon(Icons.storefront_outlined, size: 36, color: theme.primaryColor)),
-//                         ),
-//                         const SizedBox(width: 12),
-//                         Expanded(
-//                           child: Column(
-//                             crossAxisAlignment: CrossAxisAlignment.start,
-//                             children: [
-//                               Text(AppText.translate(context, 'invoice_preview'), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-//                               const SizedBox(height: 6),
-//                               Text('${AppText.translate(context, 'customer')}: $_userName', style: theme.textTheme.bodyMedium),
-//                               Text('${AppText.translate(context, 'mobile')}: $_userMobile', style: theme.textTheme.bodyMedium),
-//                             ],
-//                           ),
-//                         ),
-//                         // IconButton(
-//                         //   onPressed: () {
-//                         //     setState(() {
-//                         //       _productEntries.clear();
-//                         //       _productEntries.add(ProductEntry()..unit = units.first);
-//                         //     });
-//                         //   },
-//                         //   icon: const Icon(Icons.refresh_rounded),
-//                         //   tooltip: 'Reset form',
-//                         // )
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//               ),
-
-//               // Flexible list of product cards
-//               Expanded(
-//                 child: Padding(
-//                   padding: const EdgeInsets.symmetric(horizontal: 12.0),
-//                   child: ListView.builder(
-//                     itemCount: _productEntries.length,
-//                     itemBuilder: (context, index) {
-//                       final entry = _productEntries[index];
-//                       return _productCard(entry, index);
-//                     },
-//                   ),
-//                 ),
-//               ),
-
-//               // Bottom action bar
+//               // Business Info Header
 //               Container(
-//                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
 //                 color: Colors.white,
+//                 padding: const EdgeInsets.all(16),
 //                 child: Row(
 //                   children: [
-//                     Expanded(
-//                       child: OutlinedButton.icon(
-//                         onPressed: () {
-//                           setState(() {
-//                             final newEntry = ProductEntry()..unit = units.first;
-//                             // Copy user info
-//                             if (_productEntries.isNotEmpty) {
-//                               final first = _productEntries.first;
-//                               newEntry.nameController.text = first.nameController.text;
-//                               newEntry.mobileController.text = first.mobileController.text;
-//                               newEntry.addressController.text = first.addressController.text;
-//                             }
-//                             _productEntries.add(newEntry);
-//                           });
-//                         },
-//                         icon: const Icon(Icons.add),
-//                         label: const AppText('add_more'),
-//                         style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+//                     GestureDetector(
+//                       onTap: _pickImage,
+//                       child: Container(
+//                         width: 70,
+//                         height: 70,
+//                         decoration: BoxDecoration(
+//                           color: Colors.blue[50],
+//                           borderRadius: BorderRadius.circular(12),
+//                           border: Border.all(
+//                             color: Colors.blue[100]!,
+//                             width: 2,
+//                           ),
+//                         ),
+//                         child: _logoImageBase64 != null
+//                             ? ClipRRect(
+//                                 borderRadius: BorderRadius.circular(10),
+//                                 child: Image.memory(
+//                                   base64Decode(_logoImageBase64!),
+//                                   fit: BoxFit.cover,
+//                                 ),
+//                               )
+//                             : _logoImagePath != null
+//                             ? ClipRRect(
+//                                 borderRadius: BorderRadius.circular(10),
+//                                 child: Image.file(
+//                                   File(_logoImagePath!),
+//                                   fit: BoxFit.cover,
+//                                 ),
+//                               )
+//                             : Icon(
+//                                 Icons.add_photo_alternate_outlined,
+//                                 color: Colors.blue[300],
+//                                 size: 32,
+//                               ),
 //                       ),
 //                     ),
-//                     const SizedBox(width: 12),
-//                     SizedBox(
-//                       width: 160,
-//                       child: ElevatedButton(
-//                         onPressed: _isLoading ? null : _saveInvoice,
-//                         style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-//                         child: _isLoading
-//                             ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-//                             : const AppText('create', style: TextStyle(color: Colors.black)),
+//                     const SizedBox(width: 16),
+//                     Expanded(
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           AppText(
+//                             _userName.isEmpty ? 'business_name' : _userName,
+//                             style: const TextStyle(
+//                               fontSize: 16,
+//                               fontWeight: FontWeight.w600,
+//                               color: Colors.black87,
+//                             ),
+//                           ),
+//                           const SizedBox(height: 4),
+//                           if (_userMobile.isNotEmpty)
+//                             Row(
+//                               children: [
+//                                 Icon(
+//                                   Icons.phone,
+//                                   size: 14,
+//                                   color: Colors.grey[600],
+//                                 ),
+//                                 const SizedBox(width: 4),
+//                                 Text(
+//                                   _userMobile,
+//                                   style: TextStyle(
+//                                     fontSize: 13,
+//                                     color: Colors.grey[700],
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           if (_userAddress.isNotEmpty) ...[
+//                             const SizedBox(height: 2),
+//                             Row(
+//                               children: [
+//                                 Icon(
+//                                   Icons.location_on,
+//                                   size: 14,
+//                                   color: Colors.grey[600],
+//                                 ),
+//                                 const SizedBox(width: 4),
+//                                 Expanded(
+//                                   child: Text(
+//                                     _userAddress,
+//                                     style: TextStyle(
+//                                       fontSize: 13,
+//                                       color: Colors.grey[700],
+//                                     ),
+//                                     maxLines: 1,
+//                                     overflow: TextOverflow.ellipsis,
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           ],
+//                         ],
 //                       ),
 //                     ),
 //                   ],
 //                 ),
-//               )
+//               ),
+
+//               const SizedBox(height: 8),
+
+//               // Product Entries List
+//               Expanded(
+//                 child: ListView.builder(
+//                   padding: const EdgeInsets.symmetric(
+//                     horizontal: 16,
+//                     vertical: 8,
+//                   ),
+//                   itemCount: _productEntries.length,
+//                   itemBuilder: (context, index) {
+//                     final entry = _productEntries[index];
+//                     return _buildModernProductCard(entry, index);
+//                   },
+//                 ),
+//               ),
+
+//               // Bottom Action Bar
+//               Container(
+//                 decoration: BoxDecoration(
+//                   color: Colors.white,
+//                   boxShadow: [
+//                     BoxShadow(
+//                       color: Colors.black.withOpacity(0.05),
+//                       blurRadius: 10,
+//                       offset: const Offset(0, -5),
+//                     ),
+//                   ],
+//                 ),
+//                 padding: const EdgeInsets.all(16),
+//                 child: SafeArea(
+//                   top: false,
+//                   child: Row(
+//                     children: [
+//                       Expanded(
+//                         child: OutlinedButton.icon(
+//                           onPressed: () {
+//                             setState(() {
+//                               final newEntry = ProductEntry()
+//                                 ..unit = units.first;
+//                               if (_productEntries.isNotEmpty) {
+//                                 final first = _productEntries.first;
+//                                 newEntry.nameController.text =
+//                                     first.nameController.text;
+//                                 newEntry.mobileController.text =
+//                                     first.mobileController.text;
+//                                 newEntry.addressController.text =
+//                                     first.addressController.text;
+//                               }
+//                               _productEntries.add(newEntry);
+//                             });
+//                           },
+//                           icon: const Icon(Icons.add_circle_outline),
+//                           label: const AppText('add_more'),
+//                           style: OutlinedButton.styleFrom(
+//                             padding: const EdgeInsets.symmetric(vertical: 16),
+//                             side: BorderSide(
+//                               color: Colors.blue[700]!,
+//                               width: 1.5,
+//                             ),
+//                             foregroundColor: Colors.blue[700],
+//                             shape: RoundedRectangleBorder(
+//                               borderRadius: BorderRadius.circular(12),
+//                             ),
+//                           ),
+//                         ),
+//                       ),
+//                       const SizedBox(width: 12),
+//                       Expanded(
+//                         flex: 2,
+//                         child: ElevatedButton.icon(
+//                           onPressed: _isLoading ? null : _saveInvoice,
+//                           icon: _isLoading
+//                               ? const SizedBox(
+//                                   height: 20,
+//                                   width: 20,
+//                                   child: CircularProgressIndicator(
+//                                     strokeWidth: 2,
+//                                     valueColor: AlwaysStoppedAnimation<Color>(
+//                                       Colors.white,
+//                                     ),
+//                                   ),
+//                                 )
+//                               : const Icon(
+//                                   Icons.check_circle_outline,
+//                                   color: Colors.white,
+//                                 ),
+//                           label: AppText(
+//                             _isLoading ? 'creating' : 'create',
+//                             style: const TextStyle(
+//                               color: Colors.white,
+//                               fontWeight: FontWeight.w600,
+//                               fontSize: 16,
+//                             ),
+//                           ),
+//                           style: ElevatedButton.styleFrom(
+//                             padding: const EdgeInsets.symmetric(vertical: 16),
+//                             backgroundColor: Colors.blue[700],
+//                             disabledBackgroundColor: Colors.blue[300],
+//                             shape: RoundedRectangleBorder(
+//                               borderRadius: BorderRadius.circular(12),
+//                             ),
+//                             elevation: 0,
+//                           ),
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
 //             ],
 //           ),
 //         ),
@@ -373,111 +518,500 @@
 //     );
 //   }
 
-//   Widget _productCard(ProductEntry entry, int index) {
+//   Widget _buildModernProductCard(ProductEntry entry, int index) {
 //     final bool showUserInfo = index == 0;
-//     return Card(
-//       margin: const EdgeInsets.only(bottom: 12, top: 6),
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//       elevation: 1,
-//       child: Padding(
-//         padding: const EdgeInsets.all(12.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Row(
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 16),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(16),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.04),
+//             blurRadius: 10,
+//             offset: const Offset(0, 2),
+//           ),
+//         ],
+//       ),
+//       child: Column(
+//         children: [
+//           // Card Header
+//           Container(
+//             padding: const EdgeInsets.all(16),
+//             decoration: BoxDecoration(
+//               color: Colors.blue[50],
+//               borderRadius: const BorderRadius.only(
+//                 topLeft: Radius.circular(16),
+//                 topRight: Radius.circular(16),
+//               ),
+//             ),
+//             child: Row(
 //               children: [
-//                 Expanded(
-//                   child: Text('${AppText.translate(context, 'item')} ${index + 1}', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+//                 Container(
+//                   padding: const EdgeInsets.symmetric(
+//                     horizontal: 12,
+//                     vertical: 6,
+//                   ),
+//                   decoration: BoxDecoration(
+//                     color: Colors.blue[700],
+//                     borderRadius: BorderRadius.circular(20),
+//                   ),
+//                   child: Text(
+//                     '${AppText.translate(context, 'item')} ${index + 1}',
+//                     style: const TextStyle(
+//                       color: Colors.white,
+//                       fontWeight: FontWeight.w600,
+//                       fontSize: 14,
+//                     ),
+//                   ),
 //                 ),
+//                 const Spacer(),
 //                 if (_productEntries.length > 1)
 //                   IconButton(
 //                     onPressed: () {
 //                       setState(() => _productEntries.removeAt(index));
 //                     },
-//                     icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-//                   )
+//                     icon: const Icon(
+//                       Icons.delete_outline_rounded,
+//                       color: Colors.red,
+//                     ),
+//                     tooltip: 'Remove item',
+//                   ),
 //               ],
 //             ),
-//             const SizedBox(height: 8),
+//           ),
 
-//             if (showUserInfo) ...[
-//               _buildTextField(entry.nameController, 'customer_name', prefix: Icons.person, onChanged: (v) => _syncUserInfoAcrossEntries()),
-//               const SizedBox(height: 10),
-//               Row(children: [
-//                 Expanded(child: _buildTextField(entry.mobileController, 'customer_mobile', prefix: Icons.smartphone, inputType: TextInputType.phone, onChanged: (v) => _syncUserInfoAcrossEntries())),
-//                 const SizedBox(width: 8),
-//                 // IconButton(onPressed: () => _startListening(entry.mobileController), icon: Icon(_isListening && _activeController == entry.mobileController ? Icons.mic : Icons.mic_none))
-//               ]),
-//               const SizedBox(height: 10),
-//               _buildTextField(entry.addressController, 'customer_address', prefix: Icons.location_on, maxLines: 2, onChanged: (v) => _syncUserInfoAcrossEntries()),
-//               const Divider(height: 18),
-//             ],
+//           // Card Content
+//           Padding(
+//             padding: const EdgeInsets.all(16),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 if (showUserInfo) ...[
+//                   _buildSectionTitle('customer_information'),
+//                   const SizedBox(height: 12),
+//                   _buildModernTextField(
+//                     entry.nameController,
+//                     'customer_name',
+//                     Icons.person_outline,
+//                     inputType: TextInputType.text,
+//                     onChanged: (v) => _syncUserInfoAcrossEntries(),
+//                   ),
+//                   const SizedBox(height: 12),
+//                   _buildModernTextField(
+//                     entry.mobileController,
+//                     'customer_mobile',
+//                     Icons.phone_outlined,
+//                     inputType: TextInputType.phone,
+//                     onChanged: (v) => _syncUserInfoAcrossEntries(),
+//                   ),
+//                   const SizedBox(height: 12),
+//                   _buildModernTextField(
+//                     entry.addressController,
+//                     'customer_address',
+//                     Icons.location_on_outlined,
+//                     maxLines: 2,
+//                     onChanged: (v) => _syncUserInfoAcrossEntries(),
+//                   ),
+//                   const SizedBox(height: 20),
+//                   _buildSectionTitle('product_details'),
+//                   const SizedBox(height: 12),
+//                 ],
 
-//             _buildTextField(entry.productNameController, 'product_name', prefix: Icons.shopping_bag),
-//             const SizedBox(height: 10),
-
-//             Row(children: [
-//               Expanded(child: _buildTextField(entry.quantityController, 'quantity', inputType: TextInputType.number)),
-//               const SizedBox(width: 10),
-//               SizedBox(
-//                 width: 140,
-//                 child: DropdownButtonFormField<String>(
-//                   value: entry.unit,
-//                   decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
-//                   items: units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-//                   onChanged: (v) => setState(() => entry.unit = v),
+//                 _buildModernTextField(
+//                   entry.productNameController,
+//                   'product_name',
+//                   Icons.inventory_2_outlined,
+//                   inputType: TextInputType.text,
 //                 ),
-//               ),
-//             ]),
+//                 const SizedBox(height: 12),
 
-//             const SizedBox(height: 10),
-//             _buildTextField(entry.descriptionController, 'description', maxLines: 2),
-//             const SizedBox(height: 10),
+//                 Row(
+//                   children: [
+//                     Expanded(
+//                       flex: 2,
+//                       child: _buildModernTextField(
+//                         entry.quantityController,
+//                         'quantity',
+//                         Icons.format_list_numbered,
+//                         inputType: TextInputType.number,
+//                       ),
+//                     ),
+//                     const SizedBox(width: 12),
+//                     Expanded(
+//                       child: DropdownButtonFormField<String>(
+//                         value: entry.unit,
+//                         isExpanded: true,
+//                         decoration: InputDecoration(
+//                           labelText: 'Unit',
+//                           labelStyle: TextStyle(
+//                             color: Colors.grey[600],
+//                             fontSize: 14,
+//                           ),
+//                           contentPadding: const EdgeInsets.symmetric(
+//                             horizontal: 12,
+//                             vertical: 16,
+//                           ),
+//                           border: OutlineInputBorder(
+//                             borderRadius: BorderRadius.circular(12),
+//                             borderSide: BorderSide(color: Colors.grey[300]!),
+//                           ),
+//                           enabledBorder: OutlineInputBorder(
+//                             borderRadius: BorderRadius.circular(12),
+//                             borderSide: BorderSide(color: Colors.grey[300]!),
+//                           ),
+//                           focusedBorder: OutlineInputBorder(
+//                             borderRadius: BorderRadius.circular(12),
+//                             borderSide: BorderSide(
+//                               color: Colors.blue[700]!,
+//                               width: 2,
+//                             ),
+//                           ),
+//                           filled: true,
+//                           fillColor: Colors.grey[50],
+//                         ),
+//                         items: units
+//                             .map(
+//                               (u) => DropdownMenuItem(
+//                                 value: u,
+//                                 child: Text(
+//                                   u,
+//                                   style: const TextStyle(fontSize: 14),
+//                                 ),
+//                               ),
+//                             )
+//                             .toList(),
+//                         onChanged: (v) => setState(() => entry.unit = v),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
 
-//             if (_isGoldShop) ...[
-//               _buildTextField(entry.wastageController, 'Wastage', inputType: TextInputType.number),
-//               const SizedBox(height: 10),
-//             ],
+//                 const SizedBox(height: 12),
+//                 _buildModernTextField(
+//                   entry.descriptionController,
+//                   'description',
+//                   Icons.description_outlined,
+//                   maxLines: 2,
+//                   isRequired: false,
+//                 ),
 
-//             Row(children: [
-//               Expanded(child: _buildTextField(entry.priceController, 'price', inputType: TextInputType.number, prefix: Icons.currency_rupee)),
-//               const SizedBox(width: 10),
-//               Expanded(child: _buildTextField(entry.offerPriceController, 'offer_price', inputType: TextInputType.number, prefix: Icons.local_offer)),
-//             ]),
-//             const SizedBox(height: 10),
-//             _buildTextField(entry.hsnController, 'hsn', inputType: TextInputType.number),
-//           ],
-//         ),
+//                 if (_isGoldShop) ...[
+//                   const SizedBox(height: 12),
+//                   _buildModernTextField(
+//                     entry.wastageController,
+//                     'Wastage',
+//                     Icons.scale_outlined,
+//                     inputType: TextInputType.number,
+//                   ),
+//                 ],
+
+//                 const SizedBox(height: 20),
+//                 _buildSectionTitle('total_and_taxes'),
+//                 const SizedBox(height: 12),
+
+//                 Row(
+//                   children: [
+//                     Expanded(
+//                       child: _buildModernTextField(
+//                         entry.priceController,
+//                         'price',
+//                         Icons.currency_rupee,
+//                         inputType: TextInputType.number,
+//                       ),
+//                     ),
+//                     const SizedBox(width: 12),
+//                     Expanded(
+//                       child: _buildModernTextField(
+//                         entry.offerPriceController,
+//                         'offer_price',
+//                         Icons.local_offer_outlined,
+//                         inputType: TextInputType.number,
+//                         isRequired: false,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+
+//                 if (_gstRate.isNotEmpty) ...[
+//                   const SizedBox(height: 12),
+//                   Container(
+//                     padding: const EdgeInsets.symmetric(
+//                       horizontal: 16,
+//                       vertical: 12,
+//                     ),
+//                     decoration: BoxDecoration(
+//                       color: Colors.blue[50],
+//                       borderRadius: BorderRadius.circular(12),
+//                       border: Border.all(color: Colors.blue[100]!),
+//                     ),
+//                     child: Row(
+//                       children: [
+//                         Icon(
+//                           Icons.percent_outlined,
+//                           color: Colors.blue[700],
+//                           size: 20,
+//                         ),
+//                         const SizedBox(width: 8),
+//                         Text(
+//                           'GST Rate: $_gstRate%',
+//                           style: TextStyle(
+//                             fontSize: 14,
+//                             fontWeight: FontWeight.w600,
+//                             color: Colors.blue[700],
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 ],
+
+//                 const SizedBox(height: 12),
+//                 _buildModernTextField(
+//                   entry.hsnController,
+//                   'hsn',
+//                   Icons.qr_code,
+//                   inputType: TextInputType.number,
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
 //       ),
 //     );
 //   }
 
-//   Widget _buildTextField(TextEditingController controller, String labelKey,
-//       {TextInputType inputType = TextInputType.text, IconData? prefix, int maxLines = 1, Function(String)? onChanged}) {
+//   Widget _buildSectionTitle(String title) {
+//     return AppText(
+//       title,
+//       style: TextStyle(
+//         fontSize: 15,
+//         fontWeight: FontWeight.w600,
+//         color: Colors.grey[800],
+//       ),
+//     );
+//   }
+
+//   // Widget _buildModernTextField(
+//   //   TextEditingController controller,
+//   //   String labelKey,
+//   //   IconData icon, {
+//   //   TextInputType inputType = TextInputType.text,
+//   //   int maxLines = 1,
+//   //   Function(String)? onChanged,
+//   // }) {
+//   //   final label = AppText.translate(context, labelKey);
+//   //   return TextFormField(
+//   //     controller: controller,
+//   //     keyboardType: inputType,
+//   //     maxLines: maxLines,
+//   //     onChanged: onChanged,
+//   //     style: const TextStyle(fontSize: 15),
+//   //     decoration: InputDecoration(
+//   //       labelText: label,
+//   //       labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+//   //       prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
+//   //       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+//   //       border: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: BorderSide(color: Colors.grey[300]!),
+//   //       ),
+//   //       enabledBorder: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: BorderSide(color: Colors.grey[300]!),
+//   //       ),
+//   //       focusedBorder: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+//   //       ),
+//   //       errorBorder: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: const BorderSide(color: Colors.red),
+//   //       ),
+//   //       focusedErrorBorder: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: const BorderSide(color: Colors.red, width: 2),
+//   //       ),
+//   //       filled: true,
+//   //       fillColor: Colors.grey[50],
+//   //     ),
+//   //     validator: (value) {
+//   //       if (value == null || value.trim().isEmpty) {
+//   //         if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
+//   //           return 'Please enter $label';
+//   //         }
+//   //       }
+//   //       if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
+//   //         try {
+//   //           double.parse(value);
+//   //         } catch (e) {
+//   //           return 'Please enter a valid number';
+//   //         }
+//   //       }
+//   //       return null;
+//   //     },
+//   //   );
+//   // }
+
+//   //   Widget _buildModernTextField(
+//   //   TextEditingController controller,
+//   //   String labelKey,
+//   //   IconData icon, {
+//   //   TextInputType inputType = TextInputType.text,
+//   //   int maxLines = 1,
+//   //   Function(String)? onChanged,
+//   // }) {
+//   //   final label = AppText.translate(context, labelKey);
+//   //   final theme = Theme.of(context);
+//   //   final isDarkMode = theme.brightness == Brightness.dark;
+//   //   final textColor = isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Colors.black87;
+
+//   //   return TextFormField(
+//   //     controller: controller,
+//   //     keyboardType: inputType,
+//   //     maxLines: maxLines,
+//   //     onChanged: onChanged,
+//   //     style: TextStyle(
+//   //       fontSize: 15,
+//   //       color: textColor, // Add this line
+//   //     ),
+//   //     decoration: InputDecoration(
+//   //       labelText: label,
+//   //       labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+//   //       prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
+//   //       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+//   //       border: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: BorderSide(color: Colors.grey[300]!),
+//   //       ),
+//   //       enabledBorder: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: BorderSide(color: Colors.grey[300]!),
+//   //       ),
+//   //       focusedBorder: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+//   //       ),
+//   //       errorBorder: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: const BorderSide(color: Colors.red),
+//   //       ),
+//   //       focusedErrorBorder: OutlineInputBorder(
+//   //         borderRadius: BorderRadius.circular(12),
+//   //         borderSide: const BorderSide(color: Colors.red, width: 2),
+//   //       ),
+//   //       filled: true,
+//   //       fillColor: Colors.grey[50],
+//   //     ),
+//   //     validator: (value) {
+//   //       if (value == null || value.trim().isEmpty) {
+//   //         if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
+//   //           return 'Please enter $label';
+//   //         }
+//   //       }
+//   //       if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
+//   //         try {
+//   //           double.parse(value);
+//   //         } catch (e) {
+//   //           return 'Please enter a valid number';
+//   //         }
+//   //       }
+//   //       return null;
+//   //     },
+//   //   );
+//   // }
+
+//   Widget _buildModernTextField(
+//     TextEditingController controller,
+//     String labelKey,
+//     IconData icon, {
+//     TextInputType inputType = TextInputType.text,
+//     int maxLines = 1,
+//     Function(String)? onChanged,
+//     bool isRequired = true, // Add this parameter
+//   }) {
 //     final label = AppText.translate(context, labelKey);
-//     final isActive = _activeController == controller && _isListening;
+//     final theme = Theme.of(context);
+//     final isDarkMode = theme.brightness == Brightness.dark;
+//     final textColor = isDarkMode
+//         ? const Color.fromARGB(255, 0, 0, 0)
+//         : Colors.black87;
+//     final bool isPhoneField = inputType == TextInputType.phone;
+
 //     return TextFormField(
 //       controller: controller,
 //       keyboardType: inputType,
 //       maxLines: maxLines,
 //       onChanged: onChanged,
+//       style: TextStyle(fontSize: 15, color: textColor),
+//       inputFormatters: isPhoneField
+//           ? [
+//               FilteringTextInputFormatter.digitsOnly,
+//               LengthLimitingTextInputFormatter(10),
+//             ]
+//           : null,
 //       decoration: InputDecoration(
-//         labelText: label,
-//         prefixIcon: prefix != null ? Icon(prefix) : null,
-//         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-//         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-//         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(10)),
-//         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2), borderRadius: BorderRadius.circular(10)),
+//         labelText: isRequired
+//             ? label
+//             : '$label (Optional)', // Add optional indicator
+//         labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+//         prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
+//         contentPadding: const EdgeInsets.symmetric(
+//           horizontal: 16,
+//           vertical: 16,
+//         ),
+//         border: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(12),
+//           borderSide: BorderSide(color: Colors.grey[300]!),
+//         ),
+//         enabledBorder: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(12),
+//           borderSide: BorderSide(color: Colors.grey[300]!),
+//         ),
+//         focusedBorder: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(12),
+//           borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+//         ),
+//         errorBorder: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(12),
+//           borderSide: const BorderSide(color: Colors.red),
+//         ),
+//         focusedErrorBorder: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(12),
+//           borderSide: const BorderSide(color: Colors.red, width: 2),
+//         ),
+//         filled: true,
+//         fillColor: Colors.grey[50],
 //       ),
 //       validator: (value) {
-//         if (value == null || value.trim().isEmpty) {
-//           if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) return 'Enter $label';
+//         // Skip validation if field is not required
+//         if (!isRequired) {
+//           // Still validate number format if it's a number field and has a value
+//           if (inputType == TextInputType.number &&
+//               value != null &&
+//               value.isNotEmpty) {
+//             try {
+//               double.parse(value);
+//             } catch (e) {
+//               return 'Please enter a valid number';
+//             }
+//           }
+//           return null;
 //         }
-//         if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
+
+//         // Original validation for required fields
+//         if (value == null || value.trim().isEmpty) {
+//           if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
+//             return 'Please enter $label';
+//           }
+//         }
+//         if (inputType == TextInputType.number &&
+//             value != null &&
+//             value.isNotEmpty) {
 //           try {
 //             double.parse(value);
 //           } catch (e) {
-//             return 'Enter a valid number';
+//             return 'Please enter a valid number';
 //           }
 //         }
 //         return null;
@@ -520,6 +1054,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posternova/models/invoice_model.dart';
 import 'package:posternova/providers/invoices/invoice_provider.dart';
+import 'package:posternova/views/invoices/image_cropper.dart';
 import 'package:posternova/widgets/invoice_number_widget.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
@@ -561,6 +1096,8 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
     'Pack',
     'Dozen',
   ];
+
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
   @override
   void initState() {
@@ -621,37 +1158,57 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
 
   Future<void> _pickImage() async {
     try {
-      final XFile? image = await _picker.pickImage(
+      final picker = ImagePicker();
+      final XFile? picked = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 600,
-        maxHeight: 600,
-        imageQuality: 85,
+        imageQuality: 90,
       );
-      if (image != null) {
-        final bytes = await image.readAsBytes();
-        final base64Image = base64Encode(bytes);
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('logo_image', base64Image);
-        if (mounted) {
-          setState(() {
-            _logoImagePath = image.path;
-            _logoImageBase64 = base64Image;
-          });
-        }
+
+      if (picked == null) return;
+
+      // Open cropper with optional aspect ratio (e.g., 1:1 for logo)
+      final File? croppedFile = await Navigator.push<File>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ImageCropperScreen(
+            imageFile: File(picked.path),
+            aspectRatio: 1.0, // 1:1 square for logo, set null for free crop
+            title: 'Crop Logo',
+          ),
+        ),
+      );
+
+      if (croppedFile == null) return;
+
+      final bytes = await croppedFile.readAsBytes();
+      final base64Image = base64Encode(bytes);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logo_image', base64Image);
+
+      if (mounted) {
+        setState(() {
+          _logoImagePath = croppedFile.path;
+          _logoImageBase64 = base64Image;
+        });
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logo saved successfully'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logo saved successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error picking image: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
@@ -721,6 +1278,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
           const SnackBar(
             content: Text('Please select units for all products'),
             backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
           ),
         );
         return;
@@ -766,6 +1324,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                   : 'Failed to create invoice',
             ),
             backgroundColor: success ? Colors.green : Colors.red,
+            behavior: SnackBarBehavior.floating,
           ),
         );
         if (success) Navigator.of(context).pop();
@@ -773,7 +1332,11 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -783,13 +1346,18 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = _isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDarkMode ? const Color(0xFF0F172A) : Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDarkMode ? Colors.white : Colors.black87,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const AppText(
@@ -803,7 +1371,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: Colors.grey[200], height: 1),
+          child: Container(
+            color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+            height: 1,
+          ),
         ),
       ),
       body: SafeArea(
@@ -813,7 +1384,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
             children: [
               // Business Info Header
               Container(
-                color: Colors.white,
+                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
@@ -823,10 +1394,14 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                         width: 70,
                         height: 70,
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color: isDarkMode
+                              ? const Color(0xFF0F172A)
+                              : Colors.blue[50],
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.blue[100]!,
+                            color: isDarkMode
+                                ? Colors.grey[700]!
+                                : Colors.blue[100]!,
                             width: 2,
                           ),
                         ),
@@ -848,7 +1423,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                               )
                             : Icon(
                                 Icons.add_photo_alternate_outlined,
-                                color: Colors.blue[300],
+                                color: isDarkMode
+                                    ? Colors.grey[500]
+                                    : Colors.blue[300],
                                 size: 32,
                               ),
                       ),
@@ -860,10 +1437,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                         children: [
                           AppText(
                             _userName.isEmpty ? 'business_name' : _userName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              color: isDarkMode ? Colors.white : Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -873,14 +1450,18 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                                 Icon(
                                   Icons.phone,
                                   size: 14,
-                                  color: Colors.grey[600],
+                                  color: isDarkMode
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600],
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   _userMobile,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.grey[700],
+                                    color: isDarkMode
+                                        ? Colors.grey[400]
+                                        : Colors.grey[700],
                                   ),
                                 ),
                               ],
@@ -892,7 +1473,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                                 Icon(
                                   Icons.location_on,
                                   size: 14,
-                                  color: Colors.grey[600],
+                                  color: isDarkMode
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600],
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
@@ -900,7 +1483,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                                     _userAddress,
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.grey[700],
+                                      color: isDarkMode
+                                          ? Colors.grey[400]
+                                          : Colors.grey[700],
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -936,10 +1521,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
               // Bottom Action Bar
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, -5),
                     ),
@@ -973,10 +1558,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             side: BorderSide(
-                              color: Colors.blue[700]!,
+                              color: const Color(0xFFF5C518),
                               width: 1.5,
                             ),
-                            foregroundColor: Colors.blue[700],
+                            foregroundColor: const Color(0xFFF5C518),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -1013,8 +1598,11 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                           ),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: Colors.blue[700],
-                            disabledBackgroundColor: Colors.blue[300],
+                            backgroundColor: const Color(0xFFF5C518),
+                            foregroundColor: Colors.black87,
+                            disabledBackgroundColor: const Color(
+                              0xFFF5C518,
+                            ).withOpacity(0.6),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -1035,14 +1623,16 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
 
   Widget _buildModernProductCard(ProductEntry entry, int index) {
     final bool showUserInfo = index == 0;
+    final isDarkMode = _isDarkMode;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1054,7 +1644,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue[50],
+              color: isDarkMode ? const Color(0xFF0F172A) : Colors.blue[50],
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -1068,13 +1658,13 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.blue[700],
+                    color: const Color(0xFFF5C518),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     '${AppText.translate(context, 'item')} ${index + 1}',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Colors.black87,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -1157,10 +1747,19 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                       child: DropdownButtonFormField<String>(
                         value: entry.unit,
                         isExpanded: true,
+                        dropdownColor: isDarkMode
+                            ? const Color(0xFF1E293B)
+                            : Colors.white,
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black87,
+                          fontSize: 14,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Unit',
                           labelStyle: TextStyle(
-                            color: Colors.grey[600],
+                            color: isDarkMode
+                                ? Colors.grey[400]
+                                : Colors.grey[600],
                             fontSize: 14,
                           ),
                           contentPadding: const EdgeInsets.symmetric(
@@ -1169,21 +1768,31 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(
+                              color: isDarkMode
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[300]!,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(
+                              color: isDarkMode
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[300]!,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: Colors.blue[700]!,
+                            borderSide: const BorderSide(
+                              color: Color(0xFFF5C518),
                               width: 2,
                             ),
                           ),
                           filled: true,
-                          fillColor: Colors.grey[50],
+                          fillColor: isDarkMode
+                              ? const Color(0xFF0F172A)
+                              : Colors.grey[50],
                         ),
                         items: units
                             .map(
@@ -1191,7 +1800,12 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                                 value: u,
                                 child: Text(
                                   u,
-                                  style: const TextStyle(fontSize: 14),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
                                 ),
                               ),
                             )
@@ -1256,15 +1870,21 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.blue[50],
+                      color: isDarkMode
+                          ? const Color(0xFF0F172A)
+                          : Colors.blue[50],
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue[100]!),
+                      border: Border.all(
+                        color: isDarkMode
+                            ? Colors.grey[700]!
+                            : Colors.blue[100]!,
+                      ),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.percent_outlined,
-                          color: Colors.blue[700],
+                          color: const Color(0xFFF5C518),
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -1273,7 +1893,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.blue[700],
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFFF5C518),
                           ),
                         ),
                       ],
@@ -1297,144 +1919,17 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final isDarkMode = _isDarkMode;
+
     return AppText(
       title,
       style: TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.w600,
-        color: Colors.grey[800],
+        color: isDarkMode ? Colors.white : Colors.grey[800],
       ),
     );
   }
-
-  // Widget _buildModernTextField(
-  //   TextEditingController controller,
-  //   String labelKey,
-  //   IconData icon, {
-  //   TextInputType inputType = TextInputType.text,
-  //   int maxLines = 1,
-  //   Function(String)? onChanged,
-  // }) {
-  //   final label = AppText.translate(context, labelKey);
-  //   return TextFormField(
-  //     controller: controller,
-  //     keyboardType: inputType,
-  //     maxLines: maxLines,
-  //     onChanged: onChanged,
-  //     style: const TextStyle(fontSize: 15),
-  //     decoration: InputDecoration(
-  //       labelText: label,
-  //       labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
-  //       prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
-  //       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-  //       border: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: BorderSide(color: Colors.grey[300]!),
-  //       ),
-  //       enabledBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: BorderSide(color: Colors.grey[300]!),
-  //       ),
-  //       focusedBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
-  //       ),
-  //       errorBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: const BorderSide(color: Colors.red),
-  //       ),
-  //       focusedErrorBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: const BorderSide(color: Colors.red, width: 2),
-  //       ),
-  //       filled: true,
-  //       fillColor: Colors.grey[50],
-  //     ),
-  //     validator: (value) {
-  //       if (value == null || value.trim().isEmpty) {
-  //         if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
-  //           return 'Please enter $label';
-  //         }
-  //       }
-  //       if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
-  //         try {
-  //           double.parse(value);
-  //         } catch (e) {
-  //           return 'Please enter a valid number';
-  //         }
-  //       }
-  //       return null;
-  //     },
-  //   );
-  // }
-
-  //   Widget _buildModernTextField(
-  //   TextEditingController controller,
-  //   String labelKey,
-  //   IconData icon, {
-  //   TextInputType inputType = TextInputType.text,
-  //   int maxLines = 1,
-  //   Function(String)? onChanged,
-  // }) {
-  //   final label = AppText.translate(context, labelKey);
-  //   final theme = Theme.of(context);
-  //   final isDarkMode = theme.brightness == Brightness.dark;
-  //   final textColor = isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Colors.black87;
-
-  //   return TextFormField(
-  //     controller: controller,
-  //     keyboardType: inputType,
-  //     maxLines: maxLines,
-  //     onChanged: onChanged,
-  //     style: TextStyle(
-  //       fontSize: 15,
-  //       color: textColor, // Add this line
-  //     ),
-  //     decoration: InputDecoration(
-  //       labelText: label,
-  //       labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
-  //       prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
-  //       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-  //       border: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: BorderSide(color: Colors.grey[300]!),
-  //       ),
-  //       enabledBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: BorderSide(color: Colors.grey[300]!),
-  //       ),
-  //       focusedBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
-  //       ),
-  //       errorBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: const BorderSide(color: Colors.red),
-  //       ),
-  //       focusedErrorBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: const BorderSide(color: Colors.red, width: 2),
-  //       ),
-  //       filled: true,
-  //       fillColor: Colors.grey[50],
-  //     ),
-  //     validator: (value) {
-  //       if (value == null || value.trim().isEmpty) {
-  //         if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
-  //           return 'Please enter $label';
-  //         }
-  //       }
-  //       if (inputType == TextInputType.number && value != null && value.isNotEmpty) {
-  //         try {
-  //           double.parse(value);
-  //         } catch (e) {
-  //           return 'Please enter a valid number';
-  //         }
-  //       }
-  //       return null;
-  //     },
-  //   );
-  // }
 
   Widget _buildModernTextField(
     TextEditingController controller,
@@ -1443,14 +1938,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
     TextInputType inputType = TextInputType.text,
     int maxLines = 1,
     Function(String)? onChanged,
-    bool isRequired = true, // Add this parameter
+    bool isRequired = true,
   }) {
     final label = AppText.translate(context, labelKey);
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-    final textColor = isDarkMode
-        ? const Color.fromARGB(255, 0, 0, 0)
-        : Colors.black87;
+    final isDarkMode = _isDarkMode;
     final bool isPhoneField = inputType == TextInputType.phone;
 
     return TextFormField(
@@ -1458,7 +1949,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
       keyboardType: inputType,
       maxLines: maxLines,
       onChanged: onChanged,
-      style: TextStyle(fontSize: 15, color: textColor),
+      style: TextStyle(
+        fontSize: 15,
+        color: isDarkMode ? Colors.white : Colors.black87,
+      ),
       inputFormatters: isPhoneField
           ? [
               FilteringTextInputFormatter.digitsOnly,
@@ -1466,26 +1960,35 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
             ]
           : null,
       decoration: InputDecoration(
-        labelText: isRequired
-            ? label
-            : '$label (Optional)', // Add optional indicator
-        labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
-        prefixIcon: Icon(icon, color: Colors.grey[600], size: 22),
+        labelText: isRequired ? label : '$label (Optional)',
+        labelStyle: TextStyle(
+          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+          fontSize: 14,
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+          size: 22,
+        ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(
+            color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(
+            color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue[700]!, width: 2),
+          borderSide: const BorderSide(color: Color(0xFFF5C518), width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -1496,12 +1999,10 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
           borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isDarkMode ? const Color(0xFF0F172A) : Colors.grey[50],
       ),
       validator: (value) {
-        // Skip validation if field is not required
         if (!isRequired) {
-          // Still validate number format if it's a number field and has a value
           if (inputType == TextInputType.number &&
               value != null &&
               value.isNotEmpty) {
@@ -1514,7 +2015,6 @@ class _AddInvoiceScreenState extends State<AddInvoiceData> {
           return null;
         }
 
-        // Original validation for required fields
         if (value == null || value.trim().isEmpty) {
           if (_isGoldShop || !(label == 'Taguru' || label == 'Wastage')) {
             return 'Please enter $label';

@@ -9,17 +9,6 @@ import 'dart:convert';
 
 import 'package:posternova/helper/storage_helper.dart';
 
-// ══════════════════════════════════════════════════════════════
-//  pubspec.yaml dependencies needed:
-//
-//  dependencies:
-//    google_fonts: ^6.2.1
-//    gal: ^2.3.0
-//    http: ^1.2.0
-// ══════════════════════════════════════════════════════════════
-
-// ─────────────────────────────────────────────
-//  DATA MODELS (Updated for your API)
 // ─────────────────────────────────────────────
 
 class _TextOverlayPainter extends CustomPainter {
@@ -211,30 +200,118 @@ class GFontEntry {
 }
 
 final List<GFontEntry> kGoogleFonts = [
+  // Sans Serif
   GFontEntry('Montserrat', GoogleFonts.montserrat),
+  GFontEntry('Poppins', GoogleFonts.poppins),
+  GFontEntry('Inter', GoogleFonts.inter),
   GFontEntry('Roboto', GoogleFonts.roboto),
-  GFontEntry('Playfair Display', GoogleFonts.playfairDisplay),
-  GFontEntry('Raleway', GoogleFonts.raleway),
+  GFontEntry('Open Sans', GoogleFonts.openSans),
   GFontEntry('Lato', GoogleFonts.lato),
-  GFontEntry('Oswald', GoogleFonts.oswald),
-  GFontEntry('Pacifico', GoogleFonts.pacifico),
-  GFontEntry('Dancing Script', GoogleFonts.dancingScript),
+  GFontEntry('Nunito', GoogleFonts.nunito),
+  GFontEntry('Raleway', GoogleFonts.raleway),
+  GFontEntry('Work Sans', GoogleFonts.workSans),
+  GFontEntry('Quicksand', GoogleFonts.quicksand),
+  GFontEntry('Josefin Sans', GoogleFonts.josefinSans),
+  GFontEntry('DM Sans', GoogleFonts.dmSans),
+  GFontEntry('Plus Jakarta Sans', GoogleFonts.plusJakartaSans),
+  GFontEntry('Urbanist', GoogleFonts.urbanist),
+  GFontEntry('Manrope', GoogleFonts.manrope),
+
+  // Serif
+  GFontEntry('Playfair Display', GoogleFonts.playfairDisplay),
+  GFontEntry('Merriweather', GoogleFonts.merriweather),
+  GFontEntry('Cormorant Garamond', GoogleFonts.cormorantGaramond),
+  GFontEntry('Lora', GoogleFonts.lora),
+  GFontEntry('Crimson Text', GoogleFonts.crimsonText),
+  GFontEntry('PT Serif', GoogleFonts.ptSerif),
+  GFontEntry('Libre Baskerville', GoogleFonts.libreBaskerville),
+  GFontEntry('Cinzel', GoogleFonts.cinzel),
+  GFontEntry('Abril Fatface', GoogleFonts.abrilFatface),
+
+  // Display & Decorative
   GFontEntry('Bebas Neue', GoogleFonts.bebasNeue),
   GFontEntry('Righteous', GoogleFonts.righteous),
-  GFontEntry('Abril Fatface', GoogleFonts.abrilFatface),
-  GFontEntry('Lobster', GoogleFonts.lobster),
-  GFontEntry('Cinzel', GoogleFonts.cinzel),
-  GFontEntry('Exo 2', GoogleFonts.exo2),
-  GFontEntry('Nunito', GoogleFonts.nunito),
-  GFontEntry('Poppins', GoogleFonts.poppins),
-  GFontEntry('Source Code Pro', GoogleFonts.sourceCodePro),
+  GFontEntry('Oswald', GoogleFonts.oswald),
+  GFontEntry('Anton', GoogleFonts.anton),
+  GFontEntry('Archivo Black', GoogleFonts.archivoBlack),
   GFontEntry('Titan One', GoogleFonts.titanOne),
-  GFontEntry('Satisfy', GoogleFonts.satisfy),
   GFontEntry('Permanent Marker', GoogleFonts.permanentMarker),
+  GFontEntry('Lobster', GoogleFonts.lobster),
+  GFontEntry('Pacifico', GoogleFonts.pacifico),
+
+  // Handwriting & Script
+  GFontEntry('Dancing Script', GoogleFonts.dancingScript),
+  GFontEntry('Satisfy', GoogleFonts.satisfy),
   GFontEntry('Shadows Into Light', GoogleFonts.shadowsIntoLight),
-  GFontEntry('Comfortaa', GoogleFonts.comfortaa),
-  GFontEntry('Press Start 2P', GoogleFonts.pressStart2p),
+  GFontEntry('Caveat', GoogleFonts.caveat),
+  GFontEntry('Amatic SC', GoogleFonts.amaticSc),
+  GFontEntry('Indie Flower', GoogleFonts.indieFlower),
+
+  // Monospace
+  GFontEntry('Source Code Pro', GoogleFonts.sourceCodePro),
+  GFontEntry('JetBrains Mono', GoogleFonts.jetBrainsMono),
+  GFontEntry('Fira Code', GoogleFonts.firaCode),
+  GFontEntry('Roboto Mono', GoogleFonts.robotoMono),
+
+  // 2026 Trending
+  GFontEntry('Exo 2', GoogleFonts.exo2),
+  GFontEntry('Orbitron', GoogleFonts.orbitron),
+  GFontEntry('Audiowide', GoogleFonts.audiowide),
 ];
+
+Map<String, List<GFontEntry>> _getFontCategories() {
+  return {
+    'Sans Serif': [
+      GFontEntry('Montserrat', GoogleFonts.montserrat),
+      GFontEntry('Poppins', GoogleFonts.poppins),
+      GFontEntry('Inter', GoogleFonts.inter),
+      GFontEntry('Roboto', GoogleFonts.roboto),
+      GFontEntry('Open Sans', GoogleFonts.openSans),
+      GFontEntry('Lato', GoogleFonts.lato),
+      GFontEntry('Nunito', GoogleFonts.nunito),
+      GFontEntry('Raleway', GoogleFonts.raleway),
+    ],
+    'Serif': [
+      GFontEntry('Playfair Display', GoogleFonts.playfairDisplay),
+      GFontEntry('Merriweather', GoogleFonts.merriweather),
+      GFontEntry('Cinzel', GoogleFonts.cinzel),
+      GFontEntry('Abril Fatface', GoogleFonts.abrilFatface),
+    ],
+    'Display & Decorative': [
+      GFontEntry('Bebas Neue', GoogleFonts.bebasNeue),
+      GFontEntry('Righteous', GoogleFonts.righteous),
+      GFontEntry('Oswald', GoogleFonts.oswald),
+      GFontEntry('Anton', GoogleFonts.anton),
+      GFontEntry('Archivo Black', GoogleFonts.archivoBlack),
+      GFontEntry('Titan One', GoogleFonts.titanOne),
+      GFontEntry('Permanent Marker', GoogleFonts.permanentMarker),
+      GFontEntry('Lobster', GoogleFonts.lobster),
+      GFontEntry('Pacifico', GoogleFonts.pacifico),
+      GFontEntry('Paytone One', GoogleFonts.paytoneOne),
+    ],
+    'Handwriting & Script': [
+      GFontEntry('Dancing Script', GoogleFonts.dancingScript),
+      GFontEntry('Satisfy', GoogleFonts.satisfy),
+      GFontEntry('Shadows Into Light', GoogleFonts.shadowsIntoLight),
+      GFontEntry('Caveat', GoogleFonts.caveat),
+    ],
+    'Monospace': [
+      GFontEntry('Source Code Pro', GoogleFonts.sourceCodePro),
+      GFontEntry('JetBrains Mono', GoogleFonts.jetBrainsMono),
+    ],
+    '2026 Trending': [
+      GFontEntry('Inter', GoogleFonts.inter),
+      GFontEntry('Sora', GoogleFonts.sora),
+      GFontEntry('Outfit', GoogleFonts.outfit),
+      GFontEntry('Urbanist', GoogleFonts.urbanist),
+      GFontEntry('Space Grotesk', GoogleFonts.spaceGrotesk),
+      GFontEntry('Plus Jakarta Sans', GoogleFonts.plusJakartaSans),
+      GFontEntry('Manrope', GoogleFonts.manrope),
+      GFontEntry('Syne', GoogleFonts.syne),
+      GFontEntry('Red Hat Display', GoogleFonts.redHatDisplay),
+    ],
+  };
+}
 
 // ─────────────────────────────────────────────
 //  UNIFIED EDITABLE LAYER
@@ -310,203 +387,6 @@ class EditableLayer {
 //  LOGOS GRID SCREEN
 // ─────────────────────────────────────────────
 
-class LogosGridScreen extends StatefulWidget {
-  final String userId;
-  final String categoryId;
-
-  const LogosGridScreen({
-    Key? key,
-    required this.userId,
-    required this.categoryId,
-  }) : super(key: key);
-
-  @override
-  State<LogosGridScreen> createState() => _LogosGridScreenState();
-}
-
-class _LogosGridScreenState extends State<LogosGridScreen> {
-  List<LogoData> _logos = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchLogos();
-  }
-
-  Future<void> _fetchLogos() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final url = Uri.parse(
-        'http://31.97.206.144:4061/api/admin/getlogos/${widget.userId}?logoCategoryId=${widget.categoryId}',
-      );
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          _logos = data.map((json) => LogoData.fromJson(json)).toList();
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage =
-              'Failed to load logos. Status code: ${response.statusCode}';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Error: $e';
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Choose a Logo'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        elevation: 2,
-      ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _fetchLogos, child: const Text('Retry')),
-          ],
-        ),
-      );
-    }
-
-    if (_logos.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No logos found',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return GridView.builder(
-      padding: const EdgeInsets.all(12),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: _logos.length,
-      itemBuilder: (context, index) {
-        final logo = _logos[index];
-        return _buildLogoCard(logo);
-      },
-    );
-  }
-
-  Widget _buildLogoCard(LogoData logo) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () {
-          // Navigate to editor screen with selected logo
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => LogoEditorScreen(logoData: logo),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child: Image.network(
-                  logo.previewImageUrl,
-                  fit: BoxFit.fill,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(
-                        Icons.broken_image,
-                        size: 48,
-                        color: Colors.grey,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                logo.name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ─────────────────────────────────────────────
 //  LOGO EDITOR SCREEN
 // ─────────────────────────────────────────────
@@ -522,6 +402,7 @@ class LogoEditorScreen extends StatefulWidget {
 class _LogoEditorScreenState extends State<LogoEditorScreen> {
   final List<EditableLayer> _layers = [];
   String? _selectedId;
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
   final GlobalKey _canvasKey = GlobalKey();
   bool _isSaving = false;
@@ -545,30 +426,62 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
   double _fontSizeAtScaleStart = 24.0;
 
   static const List<String> _stickers = [
-    '⭐',
-    '🔥',
-    '💎',
-    '🎯',
-    '🏆',
-    '✨',
-    '🎨',
-    '🚀',
-    '💡',
-    '🎵',
-    '❤️',
-    '👑',
-    '🌟',
-    '💪',
-    '🎉',
-    '🌈',
-    '🦋',
-    '🌸',
-    '🍀',
-    '⚡',
-    '🎸',
-    '🎤',
-    '📸',
-    '🎬',
+    // Emotions & Faces (20)
+    '😀', '😂', '😍', '😎', '😢', '😡', '😱', '🥳', '😴', '🤔',
+    '🥺', '🤯', '😇', '🥰', '😘', '🤪', '🥶', '🥵', '🤢', '🤮',
+
+    // Hearts & Love (15)
+    '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
+    '💖', '💗', '💓', '💕', '💞',
+
+    // Stars & Sparkles (10)
+    '⭐', '🌟', '✨', '💫', '⭐️', '🌟', '✨', '⚡', '💥', '🔥',
+
+    // Animals (25)
+    '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+    '🦁', '🐮', '🐷', '🐸', '🐒', '🐔', '🐧', '🐦', '🐤', '🐴',
+    '🐝', '🐛', '🦋', '🐌', '🐞',
+
+    // Food & Drinks (25)
+    '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍒',
+    '🥝', '🍅', '🥑', '🍔', '🍟', '🍕', '🌭', '🥪', '🌮', '🍣',
+    '🍦', '🍩', '🍪', '☕', '🍺',
+
+    // Sports & Activities (15)
+    '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸',
+    '🏒', '🏑', '🥊', '⛳', '🏆',
+
+    // Nature & Weather (20)
+    '☀️', '🌙', '⭐', '🌍', '🌈', '☁️', '⛈️', '❄️', '💨', '🌊',
+    '🌸', '🌺', '🌻', '🌹', '🥀', '🌿', '🍃', '🍂', '🍁', '🌵',
+
+    // Technology & Tools (15)
+    '💻', '📱', '⌚', '📷', '🎥', '💡', '🔋', '💾', '📀', '🎮',
+    '🖥️', '🖨️', '☎️', '📡', '🔌',
+
+    // Transport & Vehicles (15)
+    '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐',
+    '✈️', '🚀', '🛸', '🚢', '🚂',
+
+    // Music & Entertainment (15)
+    '🎵', '🎶', '🎤', '🎧', '🎸', '🎹', '🎺', '🎻', '🥁', '🎬',
+    '🎭', '🎨', '🎪', '🎯', '🎲',
+
+    // Crown & Awards (10)
+    '👑', '💎', '🏆', '🥇', '🥈', '🥉', '🏅', '🎖️', '💍', '👔',
+
+    // Hand Gestures (15)
+    '👋', '✋', '👌', '👍', '👎', '✌️', '🤞', '🤟', '🤘', '👈',
+    '👉', '👆', '👇', '☝️', '💪',
+
+    // Flags & Symbols (15)
+    '🏁', '🚩', '🎌', '🏴', '🏳️', '⚠️', '❌', '✅', '💯', '🔴',
+    '🟠', '🟡', '🟢', '🔵', '🟣',
+
+    // Celebration & Party (10)
+    '🎉', '🎊', '🎈', '🎀', '🎁', '🎂', '🍾', '🥂', '🕯️', '🎆',
+
+    // Total: 200+ stickers
   ];
 
   static const List<Color> _palette = [
@@ -762,10 +675,10 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
   void _deleteSelected() {
     final sel = _selected;
     if (sel == null) return;
-    if (sel.isPlaceholder) {
-      _deselect();
-      return;
-    }
+    // if (sel.isPlaceholder) {
+    //   _deselect();
+    //   return;
+    // }
     setState(() {
       _layers.removeWhere((l) => l.id == _selectedId);
       _selectedId = null;
@@ -886,8 +799,12 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = _isDarkMode;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F8),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF0F2F8),
       appBar: _appBar(),
       body: _isLoading
           ? const Center(
@@ -906,30 +823,93 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
 
   // ── App bar ──────────────────────────────────────────────────
 
+  // PreferredSizeWidget _appBar() {
+  //   final sel = _selected;
+  //   return AppBar(
+  //     backgroundColor: Colors.white,
+  //     elevation: 0,
+  //     leading: IconButton(
+  //       icon: Container(
+  //         padding: const EdgeInsets.all(8),
+  //         decoration: BoxDecoration(
+  //           color: Colors.grey[100],
+  //           borderRadius: BorderRadius.circular(10),
+  //         ),
+  //         child: const Icon(
+  //           Icons.arrow_back_ios_new,
+  //           size: 18,
+  //           color: Color(0xFF2D3142),
+  //         ),
+  //       ),
+  //       onPressed: () => Navigator.pop(context),
+  //     ),
+  //     title: Text(
+  //       widget.logoData.name,
+  //       style: const TextStyle(
+  //         color: Color(0xFF2D3142),
+  //         fontWeight: FontWeight.bold,
+  //         fontSize: 18,
+  //       ),
+  //     ),
+  //     centerTitle: true,
+  //     actions: [
+  //       if (sel != null && !sel.isPlaceholder)
+  //         IconButton(
+  //           icon: const Icon(Icons.delete_outline, color: Colors.red),
+  //           onPressed: _deleteSelected,
+  //         ),
+  //       IconButton(
+  //         icon: _isSaving
+  //             ? const SizedBox(
+  //                 width: 20,
+  //                 height: 20,
+  //                 child: CircularProgressIndicator(strokeWidth: 2),
+  //               )
+  //             : Container(
+  //                 padding: const EdgeInsets.all(8),
+  //                 decoration: BoxDecoration(
+  //                   color: const Color(0xFF6C63FF).withOpacity(0.1),
+  //                   borderRadius: BorderRadius.circular(10),
+  //                 ),
+  //                 child: const Icon(
+  //                   Icons.download_outlined,
+  //                   color: Color(0xFF6C63FF),
+  //                   size: 20,
+  //                 ),
+  //               ),
+  //         onPressed: _isSaving ? null : _save,
+  //       ),
+  //       const SizedBox(width: 6),
+  //     ],
+  //   );
+  // }
+
   PreferredSizeWidget _appBar() {
+    final isDarkMode = _isDarkMode;
     final sel = _selected;
+
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       elevation: 0,
       leading: IconButton(
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: isDarkMode ? const Color(0xFF0F172A) : Colors.grey[100],
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.arrow_back_ios_new,
             size: 18,
-            color: Color(0xFF2D3142),
+            color: isDarkMode ? Colors.white : const Color(0xFF2D3142),
           ),
         ),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
         widget.logoData.name,
-        style: const TextStyle(
-          color: Color(0xFF2D3142),
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : const Color(0xFF2D3142),
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
@@ -969,18 +949,71 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
 
   // ── Canvas ───────────────────────────────────────────────────
 
+  // Widget _canvas() {
+  //   return Center(
+  //     child: Container(
+  //       margin: const EdgeInsets.all(20),
+  //       width: _canvasWidth, // Use _canvasWidth instead of _canvasSize
+  //       height: _canvasHeight, // Use dynamic height
+  //       decoration: BoxDecoration(
+  //         color: Colors.white,
+  //         borderRadius: BorderRadius.circular(20),
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: Colors.black.withOpacity(0.12),
+  //             blurRadius: 24,
+  //             offset: const Offset(0, 6),
+  //           ),
+  //         ],
+  //       ),
+  //       child: ClipRRect(
+  //         borderRadius: BorderRadius.circular(20),
+  //         child: RepaintBoundary(
+  //           key: _canvasKey,
+  //           child: SizedBox(
+  //             width: _canvasWidth,
+  //             height: _canvasHeight,
+  //             child: Stack(
+  //               clipBehavior: Clip.hardEdge,
+  //               children: [
+  //                 Positioned.fill(child: Container(color: Colors.white)),
+  //                 if (_loadedImage != null)
+  //                   Positioned.fill(
+  //                     child: CustomPaint(
+  //                       painter: _BgPainter(image: _loadedImage!),
+  //                     ),
+  //                   ),
+  //                 ..._layers.map(_layerWidget),
+  //                 if (!_isCapturing)
+  //                   Positioned.fill(
+  //                     child: GestureDetector(
+  //                       onTap: _deselect,
+  //                       behavior: HitTestBehavior.translucent,
+  //                     ),
+  //                   ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _canvas() {
+    final isDarkMode = _isDarkMode;
+
     return Center(
       child: Container(
         margin: const EdgeInsets.all(20),
-        width: _canvasWidth, // Use _canvasWidth instead of _canvasSize
-        height: _canvasHeight, // Use dynamic height
+        width: _canvasWidth,
+        height: _canvasHeight,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.12),
               blurRadius: 24,
               offset: const Offset(0, 6),
             ),
@@ -996,7 +1029,13 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
               child: Stack(
                 clipBehavior: Clip.hardEdge,
                 children: [
-                  Positioned.fill(child: Container(color: Colors.white)),
+                  Positioned.fill(
+                    child: Container(
+                      color: isDarkMode
+                          ? const Color(0xFF0F172A)
+                          : Colors.white,
+                    ),
+                  ),
                   if (_loadedImage != null)
                     Positioned.fill(
                       child: CustomPaint(
@@ -1020,8 +1059,148 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
     );
   }
 
+  // Widget _layerWidget(EditableLayer layer) {
+  //   final isSelected = layer.id == _selectedId && !_isCapturing;
+
+  //   if (layer.type == LayerType.text) {
+  //     // Measure text to get dimensions
+  //     final textPainter = TextPainter(
+  //       text: TextSpan(text: layer.content, style: layer.textStyle),
+  //       textDirection: TextDirection.ltr,
+  //       maxLines: null,
+  //     );
+  //     textPainter.layout(maxWidth: _canvasWidth);
+
+  //     final textWidth = textPainter.width;
+  //     final textHeight = textPainter.height;
+
+  //     // Calculate position based on anchor point and alignment
+  //     double left = layer.position.dx;
+  //     double top = layer.position.dy;
+
+  //     switch (layer.textAlign) {
+  //       case TextAlign.center:
+  //         // Anchor point is the center - adjust left so text is centered on anchor
+  //         left = layer.position.dx - (textWidth / 2);
+  //         break;
+  //       case TextAlign.right:
+  //       case TextAlign.end:
+  //         // Anchor point is the right edge - adjust left so text ends at anchor
+  //         left = layer.position.dx - textWidth;
+  //         break;
+  //       case TextAlign.left:
+  //       case TextAlign.start:
+  //       case TextAlign.justify:
+  //         // Anchor point is the left edge - no adjustment needed
+  //         left = layer.position.dx;
+  //         break;
+  //     }
+
+  //     // Keep text within bounds
+  //     left = left.clamp(0.0, _canvasWidth - textWidth);
+  //     top = top.clamp(0.0, _canvasHeight - textHeight);
+
+  //     return Positioned(
+  //       left: left,
+  //       top: top,
+  //       child: GestureDetector(
+  //         onTap: () {
+  //           _select(layer.id);
+  //           _openEditSheet(layer);
+  //         },
+  //         onScaleStart: (_) => _fontSizeAtScaleStart = layer.fontSize,
+  //         onScaleUpdate: (d) {
+  //           setState(() {
+  //             if (d.pointerCount == 1) {
+  //               // Move the anchor point when dragging
+  //               double newX = layer.position.dx + d.focalPointDelta.dx;
+  //               double newY = layer.position.dy + d.focalPointDelta.dy;
+
+  //               // Clamp anchor point within canvas
+  //               layer.position = Offset(
+  //                 newX.clamp(0.0, _canvasWidth),
+  //                 newY.clamp(0.0, _canvasHeight),
+  //               );
+  //             } else if (d.pointerCount >= 2) {
+  //               layer.fontSize = (_fontSizeAtScaleStart * d.scale).clamp(
+  //                 8.0,
+  //                 120.0,
+  //               );
+  //             }
+  //           });
+  //         },
+  //         child: Container(
+  //           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  //           decoration: isSelected
+  //               ? BoxDecoration(
+  //                   border: Border.all(
+  //                     color: const Color(0xFF6C63FF),
+  //                     width: 1.5,
+  //                   ),
+  //                   borderRadius: BorderRadius.circular(8),
+  //                 )
+  //               : null,
+  //           child: Text(
+  //             layer.content,
+  //             style: layer.textStyle.copyWith(shadows: layer.visibilityShadows),
+  //             textAlign: layer.textAlign,
+  //           ),
+  //         ),
+  //       ),
+  //     );
+  //   }
+
+  //   // Sticker layer
+  //   return Positioned(
+  //     left: layer.position.dx,
+  //     top: layer.position.dy,
+  //     child: GestureDetector(
+  //       onTap: () => _select(layer.id),
+  //       onScaleStart: (_) => _fontSizeAtScaleStart = layer.fontSize,
+  //       onScaleUpdate: (d) {
+  //         setState(() {
+  //           if (d.pointerCount == 1) {
+  //             layer.position = Offset(
+  //               (layer.position.dx + d.focalPointDelta.dx).clamp(
+  //                 0.0,
+  //                 _canvasWidth - 20,
+  //               ),
+  //               (layer.position.dy + d.focalPointDelta.dy).clamp(
+  //                 0.0,
+  //                 _canvasHeight - 20,
+  //               ),
+  //             );
+  //           } else if (d.pointerCount >= 2) {
+  //             layer.fontSize = (_fontSizeAtScaleStart * d.scale).clamp(
+  //               8.0,
+  //               120.0,
+  //             );
+  //           }
+  //         });
+  //       },
+  //       child: Container(
+  //         padding: const EdgeInsets.all(6),
+  //         decoration: isSelected
+  //             ? BoxDecoration(
+  //                 border: Border.all(
+  //                   color: const Color(0xFF6C63FF),
+  //                   width: 1.5,
+  //                 ),
+  //                 borderRadius: BorderRadius.circular(8),
+  //               )
+  //             : null,
+  //         child: Text(
+  //           layer.content,
+  //           style: TextStyle(fontSize: layer.fontSize),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _layerWidget(EditableLayer layer) {
     final isSelected = layer.id == _selectedId && !_isCapturing;
+    final isDarkMode = _isDarkMode;
 
     if (layer.type == LayerType.text) {
       // Measure text to get dimensions
@@ -1041,18 +1220,15 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
 
       switch (layer.textAlign) {
         case TextAlign.center:
-          // Anchor point is the center - adjust left so text is centered on anchor
           left = layer.position.dx - (textWidth / 2);
           break;
         case TextAlign.right:
         case TextAlign.end:
-          // Anchor point is the right edge - adjust left so text ends at anchor
           left = layer.position.dx - textWidth;
           break;
         case TextAlign.left:
         case TextAlign.start:
         case TextAlign.justify:
-          // Anchor point is the left edge - no adjustment needed
           left = layer.position.dx;
           break;
       }
@@ -1069,15 +1245,21 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
             _select(layer.id);
             _openEditSheet(layer);
           },
+          onLongPress: () {
+            // Show delete confirmation for non-placeholder text
+            // if (!layer.isPlaceholder) {
+            //   _showDeleteConfirmation(layer);
+            _select(layer.id);
+            _openEditSheet(layer);
+            // }
+          },
           onScaleStart: (_) => _fontSizeAtScaleStart = layer.fontSize,
           onScaleUpdate: (d) {
             setState(() {
               if (d.pointerCount == 1) {
-                // Move the anchor point when dragging
                 double newX = layer.position.dx + d.focalPointDelta.dx;
                 double newY = layer.position.dy + d.focalPointDelta.dy;
 
-                // Clamp anchor point within canvas
                 layer.position = Offset(
                   newX.clamp(0.0, _canvasWidth),
                   newY.clamp(0.0, _canvasHeight),
@@ -1090,22 +1272,51 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
               }
             });
           },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: isSelected
-                ? BoxDecoration(
-                    border: Border.all(
-                      color: const Color(0xFF6C63FF),
-                      width: 1.5,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: isSelected
+                    ? BoxDecoration(
+                        border: Border.all(
+                          color: const Color(0xFF6C63FF),
+                          width: 1.5,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      )
+                    : null,
+                child: Text(
+                  layer.content,
+                  style: layer.textStyle.copyWith(
+                    shadows: layer.visibilityShadows,
+                  ),
+                  textAlign: layer.textAlign,
+                ),
+              ),
+              // Delete button when selected (only for non-placeholder)
+              if (isSelected && !layer.isPlaceholder)
+                Positioned(
+                  top: -12,
+                  right: -12,
+                  child: GestureDetector(
+                    onTap: () => _showDeleteConfirmation(layer),
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 14,
+                        color: Colors.white,
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(8),
-                  )
-                : null,
-            child: Text(
-              layer.content,
-              style: layer.textStyle.copyWith(shadows: layer.visibilityShadows),
-              textAlign: layer.textAlign,
-            ),
+                  ),
+                ),
+            ],
           ),
         ),
       );
@@ -1117,6 +1328,7 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
       top: layer.position.dy,
       child: GestureDetector(
         onTap: () => _select(layer.id),
+        onLongPress: () => _showDeleteConfirmation(layer),
         onScaleStart: (_) => _fontSizeAtScaleStart = layer.fontSize,
         onScaleUpdate: (d) {
           setState(() {
@@ -1139,36 +1351,356 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
             }
           });
         },
-        child: Container(
-          padding: const EdgeInsets.all(6),
-          decoration: isSelected
-              ? BoxDecoration(
-                  border: Border.all(
-                    color: const Color(0xFF6C63FF),
-                    width: 1.5,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: isSelected
+                  ? BoxDecoration(
+                      border: Border.all(
+                        color: const Color(0xFF6C63FF),
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    )
+                  : null,
+              child: Text(
+                layer.content,
+                style: TextStyle(fontSize: layer.fontSize),
+              ),
+            ),
+            // Delete button when selected
+            if (isSelected)
+              Positioned(
+                top: -12,
+                right: -12,
+                child: GestureDetector(
+                  onTap: () => _showDeleteConfirmation(layer),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      size: 14,
+                      color: Colors.white,
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(8),
-                )
-              : null,
-          child: Text(
-            layer.content,
-            style: TextStyle(fontSize: layer.fontSize),
-          ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
+  void _showDeleteConfirmation(EditableLayer layer) {
+    final isDarkMode = _isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 48,
+                    color: Colors.red,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Title
+                Text(
+                  layer.type == LayerType.text
+                      ? 'Delete Text'
+                      : 'Delete Sticker',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Message
+                Text(
+                  layer.type == LayerType.text
+                      ? 'Are you sure you want to delete this text?'
+                      : 'Are you sure you want to delete this sticker?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+
+                // Preview of content being deleted
+                if (layer.type == LayerType.text)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? const Color(0xFF0F172A)
+                            : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Colors.white24
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                      child: Text(
+                        layer.content,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: layer.color,
+                          fontWeight: layer.fontWeight,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDarkMode
+                              ? Colors.white70
+                              : Colors.black87,
+                          side: BorderSide(
+                            color: isDarkMode
+                                ? Colors.white38
+                                : Colors.grey.shade400,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _layers.removeWhere((l) => l.id == layer.id);
+                            if (_selectedId == layer.id) {
+                              _selectedId = null;
+                            }
+                          });
+                          Navigator.pop(context);
+
+                          // Show snackbar notification
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                layer.type == LayerType.text
+                                    ? 'Text deleted'
+                                    : 'Sticker deleted',
+                              ),
+                              backgroundColor: Colors.green,
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // ── Bottom panel ─────────────────────────────────────────────
 
+  // Widget _bottomPanel() {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(0.06),
+  //           blurRadius: 12,
+  //           offset: const Offset(0, -2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         const SizedBox(height: 10),
+  //         Container(
+  //           width: 40,
+  //           height: 4,
+  //           decoration: BoxDecoration(
+  //             color: Colors.grey[300],
+  //             borderRadius: BorderRadius.circular(2),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 12),
+
+  //         // Tab row + Add Text button
+  //         SizedBox(
+  //           height: 60, // Set a fixed height
+  //           child: Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 16),
+  //             child: ListView(
+  //               scrollDirection: Axis.horizontal,
+  //               children: [
+  //                 _tabBtn(0, Icons.text_fields_rounded, 'Text'),
+  //                 const SizedBox(width: 8),
+  //                 _tabBtn(1, Icons.emoji_emotions_outlined, 'Stickers'),
+  //                 const SizedBox(width: 8),
+  //                 // _tabBtn(2, Icons.font_download_outlined, 'Fonts'),
+  //                 const Spacer(),
+  //                 _addTextBtn(),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 12),
+
+  //         AnimatedSwitcher(
+  //           duration: const Duration(milliseconds: 180),
+  //           child: KeyedSubtree(
+  //             key: ValueKey(_activeTab),
+  //             child: _tabContent(),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 14),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  //   Widget _bottomPanel() {
+  //   final isDarkMode = _isDarkMode;
+
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.06),
+  //           blurRadius: 12,
+  //           offset: const Offset(0, -2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         const SizedBox(height: 10),
+  //         Container(
+  //           width: 40,
+  //           height: 4,
+  //           decoration: BoxDecoration(
+  //             color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
+  //             borderRadius: BorderRadius.circular(2),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 12),
+
+  //         // Tab row + Add Text button
+  //         SizedBox(
+  //           height: 60,
+  //           child: Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 16),
+  //             child: ListView(
+  //               scrollDirection: Axis.horizontal,
+  //               children: [
+  //                 _tabBtn(0, Icons.text_fields_rounded, 'Text'),
+  //                 const SizedBox(width: 8),
+  //                 _tabBtn(1, Icons.emoji_emotions_outlined, 'Stickers'),
+  //                 const SizedBox(width: 8),
+  //                 const Spacer(),
+  //                 _addTextBtn(),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 12),
+
+  //         AnimatedSwitcher(
+  //           duration: const Duration(milliseconds: 180),
+  //           child: KeyedSubtree(
+  //             key: ValueKey(_activeTab),
+  //             child: _tabContent(),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 14),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _bottomPanel() {
+    final isDarkMode = _isDarkMode;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.06),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -1182,7 +1714,7 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1190,7 +1722,7 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
 
           // Tab row + Add Text button
           SizedBox(
-            height: 60, // Set a fixed height
+            height: 60,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ListView(
@@ -1200,7 +1732,6 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
                   const SizedBox(width: 8),
                   _tabBtn(1, Icons.emoji_emotions_outlined, 'Stickers'),
                   const SizedBox(width: 8),
-                  _tabBtn(2, Icons.font_download_outlined, 'Fonts'),
                   const Spacer(),
                   _addTextBtn(),
                 ],
@@ -1222,8 +1753,49 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
     );
   }
 
+  // Widget _tabBtn(int idx, IconData icon, String label) {
+  //   final active = _activeTab == idx;
+  //   return GestureDetector(
+  //     onTap: () => setState(() => _activeTab = idx),
+  //     child: AnimatedContainer(
+  //       duration: const Duration(milliseconds: 150),
+  //       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+  //       decoration: BoxDecoration(
+  //         color: active
+  //             ? const Color(0xFF6C63FF).withOpacity(0.12)
+  //             : Colors.grey[100],
+  //         borderRadius: BorderRadius.circular(20),
+  //         border: active
+  //             ? Border.all(color: const Color(0xFF6C63FF), width: 1.5)
+  //             : null,
+  //       ),
+  //       child: Row(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [
+  //           Icon(
+  //             icon,
+  //             size: 15,
+  //             color: active ? const Color(0xFF6C63FF) : Colors.grey[600],
+  //           ),
+  //           const SizedBox(width: 5),
+  //           Text(
+  //             label,
+  //             style: TextStyle(
+  //               fontSize: 12,
+  //               fontWeight: FontWeight.w600,
+  //               color: active ? const Color(0xFF6C63FF) : Colors.grey[600],
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _tabBtn(int idx, IconData icon, String label) {
+    final isDarkMode = _isDarkMode;
     final active = _activeTab == idx;
+
     return GestureDetector(
       onTap: () => setState(() => _activeTab = idx),
       child: AnimatedContainer(
@@ -1232,7 +1804,7 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
         decoration: BoxDecoration(
           color: active
               ? const Color(0xFF6C63FF).withOpacity(0.12)
-              : Colors.grey[100],
+              : (isDarkMode ? const Color(0xFF0F172A) : Colors.grey[100]),
           borderRadius: BorderRadius.circular(20),
           border: active
               ? Border.all(color: const Color(0xFF6C63FF), width: 1.5)
@@ -1244,7 +1816,9 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
             Icon(
               icon,
               size: 15,
-              color: active ? const Color(0xFF6C63FF) : Colors.grey[600],
+              color: active
+                  ? const Color(0xFF6C63FF)
+                  : (isDarkMode ? Colors.grey[400] : Colors.grey[600]),
             ),
             const SizedBox(width: 5),
             Text(
@@ -1252,7 +1826,9 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: active ? const Color(0xFF6C63FF) : Colors.grey[600],
+                color: active
+                    ? const Color(0xFF6C63FF)
+                    : (isDarkMode ? Colors.grey[400] : Colors.grey[600]),
               ),
             ),
           ],
@@ -1310,14 +1886,103 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
   }
 
   // Text chips
+  // Widget _textTab() {
+  //   final texts = _layers.where((l) => l.type == LayerType.text).toList();
+  //   if (texts.isEmpty) {
+  //     return Padding(
+  //       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  //       child: Text(
+  //         'Tap "Add Text" to add a text layer.',
+  //         style: TextStyle(color: Colors.grey[400], fontSize: 13),
+  //       ),
+  //     );
+  //   }
+  //   return SizedBox(
+  //     height: 72,
+  //     child: ListView.separated(
+  //       scrollDirection: Axis.horizontal,
+  //       padding: const EdgeInsets.symmetric(horizontal: 16),
+  //       itemCount: texts.length,
+  //       separatorBuilder: (_, __) => const SizedBox(width: 10),
+  //       itemBuilder: (_, i) {
+  //         final l = texts[i];
+  //         final isActive = l.id == _selectedId;
+  //         return GestureDetector(
+  //           onTap: () {
+  //             _select(l.id);
+  //             _openEditSheet(l);
+  //           },
+  //           child: AnimatedContainer(
+  //             duration: const Duration(milliseconds: 150),
+  //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  //             decoration: BoxDecoration(
+  //               gradient: LinearGradient(
+  //                 colors: isActive
+  //                     ? [const Color(0xFF4B44B8), const Color(0xFF3830A0)]
+  //                     : [const Color(0xFF6C63FF), const Color(0xFF5A52D5)],
+  //               ),
+  //               borderRadius: BorderRadius.circular(30),
+  //               border: isActive
+  //                   ? Border.all(color: Colors.white, width: 1.5)
+  //                   : null,
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: const Color(0xFF6C63FF).withOpacity(0.35),
+  //                   blurRadius: 8,
+  //                   offset: const Offset(0, 2),
+  //                 ),
+  //               ],
+  //             ),
+  //             child: Row(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 const Icon(Icons.edit, color: Colors.white, size: 14),
+  //                 const SizedBox(width: 8),
+  //                 Column(
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   children: [
+  //                     Text(
+  //                       l.isPlaceholder ? 'Logo Text' : 'Custom',
+  //                       style: const TextStyle(
+  //                         fontSize: 9,
+  //                         color: Colors.white60,
+  //                       ),
+  //                     ),
+  //                     Text(
+  //                       l.content.length > 14
+  //                           ? '${l.content.substring(0, 14)}…'
+  //                           : l.content,
+  //                       style: const TextStyle(
+  //                         fontSize: 12,
+  //                         fontWeight: FontWeight.w600,
+  //                         color: Colors.white,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
+
   Widget _textTab() {
+    final isDarkMode = _isDarkMode;
     final texts = _layers.where((l) => l.type == LayerType.text).toList();
+
     if (texts.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Text(
           'Tap "Add Text" to add a text layer.',
-          style: TextStyle(color: Colors.grey[400], fontSize: 13),
+          style: TextStyle(
+            color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
+            fontSize: 13,
+          ),
         ),
       );
     }
@@ -1394,40 +2059,145 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
     );
   }
 
-  Widget _stickerTab() => SizedBox(
-    height: 80,
-    child: ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _stickers.length,
-      itemBuilder: (_, i) => GestureDetector(
-        onTap: () => _addSticker(_stickers[i]),
-        child: Container(
-          width: 60,
-          height: 60,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey[200]!, width: 1),
-          ),
-          child: Center(
-            child: Text(_stickers[i], style: const TextStyle(fontSize: 28)),
+  // Widget _stickerTab() => SizedBox(
+  //   height: 80,
+  //   child: ListView.builder(
+  //     scrollDirection: Axis.horizontal,
+  //     padding: const EdgeInsets.symmetric(horizontal: 16),
+  //     itemCount: _stickers.length,
+  //     itemBuilder: (_, i) => GestureDetector(
+  //       onTap: () => _addSticker(_stickers[i]),
+  //       child: Container(
+  //         width: 60,
+  //         height: 60,
+  //         margin: const EdgeInsets.only(right: 10),
+  //         decoration: BoxDecoration(
+  //           color: Colors.grey[100],
+  //           borderRadius: BorderRadius.circular(14),
+  //           border: Border.all(color: Colors.grey[200]!, width: 1),
+  //         ),
+  //         child: Center(
+  //           child: Text(_stickers[i], style: const TextStyle(fontSize: 28)),
+  //         ),
+  //       ),
+  //     ),
+  //   ),
+  // );
+
+  Widget _stickerTab() {
+    final isDarkMode = _isDarkMode;
+
+    return SizedBox(
+      height: 80,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _stickers.length,
+        itemBuilder: (_, i) => GestureDetector(
+          onTap: () => _addSticker(_stickers[i]),
+          child: Container(
+            width: 60,
+            height: 60,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF0F172A) : Colors.grey[100],
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Text(_stickers[i], style: const TextStyle(fontSize: 28)),
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
+
+  // Widget _fontTab() {
+  //   final sel = _selected;
+  //   if (sel == null || sel.type != LayerType.text) {
+  //     return Padding(
+  //       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+  //       child: Text(
+  //         'Select a text layer on the canvas first.',
+  //         style: TextStyle(
+  //           color: Colors.grey[400],
+  //           fontSize: 13,
+  //           fontStyle: FontStyle.italic,
+  //         ),
+  //       ),
+  //     );
+  //   }
+  //   return SizedBox(
+  //     height: 90,
+  //     child: ListView.separated(
+  //       scrollDirection: Axis.horizontal,
+  //       padding: const EdgeInsets.symmetric(horizontal: 16),
+  //       itemCount: kGoogleFonts.length,
+  //       separatorBuilder: (_, __) => const SizedBox(width: 8),
+  //       itemBuilder: (_, i) {
+  //         final f = kGoogleFonts[i];
+  //         final active = sel.fontFamily == f.name;
+  //         final preview = f.font(
+  //           textStyle: const TextStyle(
+  //             fontSize: 15,
+  //             fontWeight: FontWeight.w600,
+  //           ),
+  //         );
+  //         return GestureDetector(
+  //           onTap: () => setState(() => sel.fontFamily = f.name),
+  //           child: AnimatedContainer(
+  //             duration: const Duration(milliseconds: 150),
+  //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //             decoration: BoxDecoration(
+  //               color: active ? const Color(0xFF6C63FF) : Colors.grey[100],
+  //               borderRadius: BorderRadius.circular(14),
+  //               border: Border.all(
+  //                 color: active ? const Color(0xFF6C63FF) : Colors.grey[300]!,
+  //                 width: 1.5,
+  //               ),
+  //             ),
+  //             child: Column(
+  //               mainAxisAlignment: MainAxisAlignment.center,
+  //               children: [
+  //                 Text(
+  //                   'Aa',
+  //                   style: preview.copyWith(
+  //                     fontSize: 18,
+  //                     color: active ? Colors.white : const Color(0xFF2D3142),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 4),
+  //                 Text(
+  //                   f.name,
+  //                   style: TextStyle(
+  //                     fontSize: 9,
+  //                     color: active ? Colors.white70 : Colors.grey[500],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
 
   Widget _fontTab() {
+    final isDarkMode = _isDarkMode;
     final sel = _selected;
+
     if (sel == null || sel.type != LayerType.text) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Text(
           'Select a text layer on the canvas first.',
           style: TextStyle(
-            color: Colors.grey[400],
+            color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
             fontSize: 13,
             fontStyle: FontStyle.italic,
           ),
@@ -1456,10 +2226,14 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: active ? const Color(0xFF6C63FF) : Colors.grey[100],
+                color: active
+                    ? const Color(0xFF6C63FF)
+                    : (isDarkMode ? const Color(0xFF0F172A) : Colors.grey[100]),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: active ? const Color(0xFF6C63FF) : Colors.grey[300]!,
+                  color: active
+                      ? const Color(0xFF6C63FF)
+                      : (isDarkMode ? Colors.grey[700]! : Colors.grey[300]!),
                   width: 1.5,
                 ),
               ),
@@ -1470,7 +2244,11 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
                     'Aa',
                     style: preview.copyWith(
                       fontSize: 18,
-                      color: active ? Colors.white : const Color(0xFF2D3142),
+                      color: active
+                          ? Colors.white
+                          : (isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF2D3142)),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1478,7 +2256,9 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
                     f.name,
                     style: TextStyle(
                       fontSize: 9,
-                      color: active ? Colors.white70 : Colors.grey[500],
+                      color: active
+                          ? Colors.white70
+                          : (isDarkMode ? Colors.grey[400] : Colors.grey[500]),
                     ),
                   ),
                 ],
@@ -1490,10 +2270,6 @@ class _LogoEditorScreenState extends State<LogoEditorScreen> {
     );
   }
 }
-
-// ─────────────────────────────────────────────
-//  LAYER EDIT BOTTOM SHEET
-// ─────────────────────────────────────────────
 
 class _LayerEditSheet extends StatefulWidget {
   final EditableLayer layer;
@@ -1524,6 +2300,10 @@ class _LayerEditSheetState extends State<_LayerEditSheet>
   late Color _color;
   late String _fontFamily;
   late FontWeight _fontWeight;
+  late double _fontSize;
+  late TextAlign _textAlign;
+
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
   @override
   void initState() {
@@ -1533,6 +2313,8 @@ class _LayerEditSheetState extends State<_LayerEditSheet>
     _color = widget.layer.color;
     _fontFamily = widget.layer.fontFamily;
     _fontWeight = widget.layer.fontWeight;
+    _fontSize = widget.layer.fontSize;
+    _textAlign = widget.layer.textAlign;
   }
 
   @override
@@ -1548,276 +2330,975 @@ class _LayerEditSheetState extends State<_LayerEditSheet>
     widget.layer.color = _color;
     widget.layer.fontFamily = _fontFamily;
     widget.layer.fontWeight = _fontWeight;
+    widget.layer.fontSize = _fontSize;
+    widget.layer.textAlign = _textAlign;
     widget.onChanged();
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 8),
+    final isDarkMode = _isDarkMode;
 
-            // Header row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  const Text(
-                    'Edit Text',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2D3142),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.95,
+      minChildSize: 0.8,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Header row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Text(
+                      'Edit Text',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF2D3142),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  if (widget.canDelete)
+                    const Spacer(),
+                    // if (widget.canDelete)
                     TextButton.icon(
                       onPressed: widget.onDelete,
                       icon: const Icon(
                         Icons.delete_outline,
                         color: Colors.red,
-                        size: 18,
+                        size: 20,
                       ),
                       label: const Text(
                         'Delete',
-                        style: TextStyle(color: Colors.red, fontSize: 13),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        style: TextStyle(color: Colors.red, fontSize: 14),
                       ),
                     ),
+                  ],
+                ),
+              ),
+
+              // Live Preview Card
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF0F172A) : Colors.grey[50],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.preview,
+                          size: 18,
+                          color: isDarkMode
+                              ? Colors.grey[400]
+                              : Colors.grey[600],
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Live Preview',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDarkMode
+                                ? Colors.grey[400]
+                                : Colors.grey[600],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? const Color(0xFF0F172A)
+                            : Colors.grey[900],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _ctrl.text.isEmpty ? 'Your Text Here' : _ctrl.text,
+                          style: _getPreviewStyle(),
+                          textAlign: _textAlign,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Tabs
+              TabBar(
+                controller: _tabCtrl,
+                indicatorColor: const Color(0xFF6C63FF),
+                labelColor: const Color(0xFF6C63FF),
+                unselectedLabelColor: isDarkMode
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
+                labelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                tabs: const [
+                  Tab(text: 'Text', icon: Icon(Icons.text_fields)),
+                  Tab(text: 'Color', icon: Icon(Icons.color_lens)),
+                  Tab(text: 'Font', icon: Icon(Icons.font_download)),
                 ],
               ),
-            ),
 
-            // Tabs
-            TabBar(
-              controller: _tabCtrl,
-              indicatorColor: const Color(0xFF6C63FF),
-              labelColor: const Color(0xFF6C63FF),
-              unselectedLabelColor: Colors.grey,
-              labelStyle: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+              // Tab views
+              Expanded(
+                child: TabBarView(
+                  controller: _tabCtrl,
+                  children: [_textPane(), _colorPane(), _fontPane()],
+                ),
               ),
-              tabs: const [
-                Tab(text: 'Text'),
-                Tab(text: 'Color'),
-                Tab(text: 'Font'),
-              ],
-            ),
 
-            // Tab views
-            SizedBox(
-              height: 240,
-              child: TabBarView(
-                controller: _tabCtrl,
-                children: [_textPane(), _colorPane(), _fontPane()],
-              ),
-            ),
-
-            // Apply
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _apply,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C63FF),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+              // Apply Button
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _apply,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6C63FF),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 2,
                     ),
-                    elevation: 2,
-                  ),
-                  child: const Text(
-                    'Apply',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    child: const Text(
+                      'Apply Changes',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  TextStyle _getPreviewStyle() {
+    final baseStyle = TextStyle(
+      fontSize: _fontSize,
+      color: _color,
+      fontWeight: _fontWeight,
+      letterSpacing: 0.5,
+    );
+
+    try {
+      final entry = kGoogleFonts.firstWhere((e) => e.name == _fontFamily);
+      return entry.font(textStyle: baseStyle);
+    } catch (_) {
+      return baseStyle;
+    }
+  }
+
+  // ── Text pane with more controls ─────────────────────────────
+  Widget _textPane() {
+    final isDarkMode = _isDarkMode;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Text input
+          Text(
+            'Text Content',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white : const Color(0xFF2D3142),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _ctrl,
+            autofocus: true,
+            maxLength: widget.layer.maxLength,
+            maxLines: 3,
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+            decoration: InputDecoration(
+              hintText: 'Enter your text...',
+              hintStyle: TextStyle(
+                color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF6C63FF),
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.all(14),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 20),
+
+          // Font Size Slider
+          Text(
+            'Font Size',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white : const Color(0xFF2D3142),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                Icons.format_size,
+                size: 20,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+              Expanded(
+                child: Slider(
+                  value: _fontSize,
+                  min: 12,
+                  max: 120,
+                  activeColor: const Color(0xFF6C63FF),
+                  inactiveColor: isDarkMode
+                      ? Colors.grey[700]
+                      : Colors.grey[300],
+                  onChanged: (v) => setState(() => _fontSize = v),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C63FF).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${_fontSize.toInt()}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF6C63FF),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Bold toggle
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF0F172A) : Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.format_bold,
+                  size: 20,
+                  color: isDarkMode ? Colors.white : const Color(0xFF2D3142),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Bold Text',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : const Color(0xFF2D3142),
+                  ),
+                ),
+                const Spacer(),
+                Switch(
+                  value: _fontWeight == FontWeight.bold,
+                  activeColor: const Color(0xFF6C63FF),
+                  onChanged: (v) => setState(
+                    () => _fontWeight = v ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // ── Text pane ────────────────────────────────────────────────
-  Widget _textPane() => Padding(
-    padding: const EdgeInsets.all(20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: _ctrl,
-          autofocus: true,
-          maxLength: widget.layer.maxLength,
-          maxLines: 2,
-          decoration: InputDecoration(
-            hintText: 'Enter text…',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
-            ),
-            contentPadding: const EdgeInsets.all(14),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            const Text(
-              'Bold',
-              style: TextStyle(fontSize: 13, color: Color(0xFF2D3142)),
-            ),
-            const Spacer(),
-            Switch(
-              value: _fontWeight == FontWeight.bold,
-              activeColor: const Color(0xFF6C63FF),
-              onChanged: (v) => setState(
-                () => _fontWeight = v ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
+  Widget _colorPane() {
+    final isDarkMode = _isDarkMode;
+    double hue = 0.0;
+    double saturation = 1.0;
+    double brightness = 1.0;
 
-  // ── Color pane ───────────────────────────────────────────────
-  Widget _colorPane() => SingleChildScrollView(
-    padding: const EdgeInsets.all(20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Selected:',
-              style: TextStyle(fontSize: 13, color: Color(0xFF2D3142)),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: _color,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey[300]!, width: 1.5),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: widget.palette.map((c) {
-            final active = _color.value == c.value;
-            return GestureDetector(
-              onTap: () => setState(() => _color = c),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                width: 38,
-                height: 38,
+    // Initialize HSV values from current color
+    final hsv = HSVColor.fromColor(_color);
+    hue = hsv.hue;
+    saturation = hsv.saturation;
+    brightness = hsv.value;
+
+    return StatefulBuilder(
+      builder: (context, setStateColor) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Current color preview
+              Container(
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: c,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: active ? const Color(0xFF6C63FF) : Colors.grey[300]!,
-                    width: active ? 3 : 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: c.withOpacity(0.4),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                  color: isDarkMode ? const Color(0xFF0F172A) : Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Selected Color:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: _color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!,
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _color.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'RGB(${_color.red}, ${_color.green}, ${_color.blue})',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDarkMode
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '#${_color.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDarkMode
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                child: active
-                    ? Icon(
-                        Icons.check,
-                        size: 18,
-                        color: c.computeLuminance() > 0.4
-                            ? Colors.black
-                            : Colors.white,
-                      )
-                    : null,
               ),
-            );
-          }).toList(),
-        ),
-      ],
-    ),
-  );
+              const SizedBox(height: 20),
 
-  // ── Font pane ────────────────────────────────────────────────
-  Widget _fontPane() => ListView.builder(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    itemCount: widget.fonts.length,
-    itemBuilder: (_, i) {
-      final f = widget.fonts[i];
-      final active = _fontFamily == f.name;
-      final style = f.font(
-        textStyle: TextStyle(
-          fontSize: 17,
-          fontWeight: _fontWeight,
-          color: active ? Colors.white : const Color(0xFF2D3142),
-        ),
-      );
-      return GestureDetector(
-        onTap: () => setState(() => _fontFamily = f.name),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: active ? const Color(0xFF6C63FF) : Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: active ? const Color(0xFF6C63FF) : Colors.grey[200]!,
-              width: 1.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              Expanded(child: Text('Aa  ${f.name}', style: style)),
-              if (active)
-                const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              // Gradient Bar Color Picker (Spectrum)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.gradient,
+                        size: 18,
+                        color: const Color(0xFF6C63FF),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Slide to pick color',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF2D3142),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onPanUpdate: (details) {
+                      final box = context.findRenderObject() as RenderBox?;
+                      if (box == null) return;
+
+                      // Get the position relative to the gradient container
+                      final position = box.globalToLocal(
+                        details.globalPosition,
+                      );
+                      final width = MediaQuery.of(context).size.width - 40;
+
+                      // Calculate hue based on x position (0 to 360)
+                      final newHue =
+                          (position.dx / width).clamp(0.0, 1.0) * 360;
+                      hue = newHue;
+                      _color = HSVColor.fromAHSV(
+                        1.0,
+                        hue,
+                        saturation,
+                        brightness,
+                      ).toColor();
+                      setStateColor(() {});
+                      setState(() {});
+                    },
+                    child: Container(
+                      height: 50,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Color(0xFFFF0000), // Red
+                            Color(0xFFFFA500), // Orange
+                            Color(0xFFFFFF00), // Yellow
+                            Color(0xFF00FF00), // Green
+                            Color(0xFF00FFFF), // Cyan
+                            Color(0xFF0000FF), // Blue
+                            Color(0xFFFF00FF), // Magenta
+                            Color(0xFFFF0000), // Red
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Hue Slider (Numeric)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.colorize,
+                        size: 18,
+                        color: const Color(0xFF6C63FF),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Hue',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF2D3142),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Slider(
+                          value: hue,
+                          onChanged: (value) {
+                            hue = value;
+                            _color = HSVColor.fromAHSV(
+                              1.0,
+                              hue,
+                              saturation,
+                              brightness,
+                            ).toColor();
+                            setStateColor(() {});
+                            setState(() {});
+                          },
+                          activeColor: const Color(0xFF6C63FF),
+                          inactiveColor: isDarkMode
+                              ? Colors.grey[700]
+                              : Colors.grey[300],
+                          min: 0,
+                          max: 360,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6C63FF).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${hue.toInt()}°',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6C63FF),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Saturation Slider
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.opacity,
+                        size: 18,
+                        color: const Color(0xFF6C63FF),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Saturation',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF2D3142),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Slider(
+                          value: saturation,
+                          onChanged: (value) {
+                            saturation = value;
+                            _color = HSVColor.fromAHSV(
+                              1.0,
+                              hue,
+                              saturation,
+                              brightness,
+                            ).toColor();
+                            setStateColor(() {});
+                            setState(() {});
+                          },
+                          activeColor: const Color(0xFF6C63FF),
+                          inactiveColor: isDarkMode
+                              ? Colors.grey[700]
+                              : Colors.grey[300],
+                          min: 0,
+                          max: 1,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6C63FF).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${(saturation * 100).toInt()}%',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6C63FF),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Brightness Slider
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.brightness_6,
+                        size: 18,
+                        color: const Color(0xFF6C63FF),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Brightness',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF2D3142),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Slider(
+                          value: brightness,
+                          onChanged: (value) {
+                            brightness = value;
+                            _color = HSVColor.fromAHSV(
+                              1.0,
+                              hue,
+                              saturation,
+                              brightness,
+                            ).toColor();
+                            setStateColor(() {});
+                            setState(() {});
+                          },
+                          activeColor: const Color(0xFF6C63FF),
+                          inactiveColor: isDarkMode
+                              ? Colors.grey[700]
+                              : Colors.grey[300],
+                          min: 0,
+                          max: 1,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6C63FF).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${(brightness * 100).toInt()}%',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6C63FF),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Divider
+              Row(
+                children: [
+                  Expanded(
+                    child: Divider(
+                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                      thickness: 1,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'OR',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Divider(
+                      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                      thickness: 1,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Preset Colors
+              Row(
+                children: [
+                  Icon(Icons.palette, size: 18, color: const Color(0xFF6C63FF)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Preset Colors',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF2D3142),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: widget.palette.map((c) {
+                  final active = _color.value == c.value;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _color = c);
+                      setStateColor(() {});
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 120),
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: c,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: active
+                              ? const Color(0xFF6C63FF)
+                              : (isDarkMode
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!),
+                          width: active ? 3 : 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: c.withOpacity(0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: active
+                          ? Icon(
+                              Icons.check,
+                              size: 20,
+                              color: c.computeLuminance() > 0.4
+                                  ? Colors.black
+                                  : Colors.white,
+                            )
+                          : null,
+                    ),
+                  );
+                }).toList(),
+              ),
             ],
           ),
-        ),
-      );
-    },
-  );
+        );
+      },
+    );
+  }
+
+  // ── Font pane with categories and live preview ───────────────
+  Widget _fontPane() {
+    final isDarkMode = _isDarkMode;
+
+    return DefaultTabController(
+      length: _getFontCategories().length,
+      child: Column(
+        children: [
+          // Category tabs
+          Container(
+            height: 45,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TabBar(
+              isScrollable: true,
+              indicatorColor: const Color(0xFF6C63FF),
+              labelColor: const Color(0xFF6C63FF),
+              unselectedLabelColor: isDarkMode
+                  ? Colors.grey[400]
+                  : Colors.grey[600],
+              labelStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              tabs: _getFontCategories().keys.map((category) {
+                return Tab(text: category);
+              }).toList(),
+            ),
+          ),
+
+          // Font lists by category
+          Expanded(
+            child: TabBarView(
+              children: _getFontCategories().values.map((fonts) {
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  itemCount: fonts.length,
+                  itemBuilder: (_, i) {
+                    final f = fonts[i];
+                    final active = _fontFamily == f.name;
+                    final style = f.font(
+                      textStyle: TextStyle(
+                        fontSize: 18,
+                        fontWeight: _fontWeight,
+                        color: active
+                            ? Colors.white
+                            : (isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF2D3142)),
+                      ),
+                    );
+                    return GestureDetector(
+                      onTap: () => setState(() => _fontFamily = f.name),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: active
+                              ? const Color(0xFF6C63FF)
+                              : (isDarkMode
+                                    ? const Color(0xFF0F172A)
+                                    : Colors.grey[50]),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: active
+                                ? const Color(0xFF6C63FF)
+                                : (isDarkMode
+                                      ? Colors.grey[700]!
+                                      : Colors.grey[200]!),
+                            width: 1.5,
+                          ),
+                          boxShadow: active
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFF6C63FF,
+                                    ).withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _ctrl.text.isEmpty
+                                        ? 'Sample Text'
+                                        : _ctrl.text.substring(
+                                            0,
+                                            _ctrl.text.length > 15
+                                                ? 15
+                                                : _ctrl.text.length,
+                                          ),
+                                    style: style,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    f.name,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: active
+                                          ? Colors.white70
+                                          : (isDarkMode
+                                                ? Colors.grey[400]
+                                                : Colors.grey[500]),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (active)
+                              const Icon(
+                                Icons.check_circle,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────

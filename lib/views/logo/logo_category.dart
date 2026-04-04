@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/views/logo/logo_history.dart';
+import 'package:posternova/views/logo/make_logo.dart';
 import 'package:posternova/views/logo/new_logo.dart';
 import 'dart:convert';
 // import 'package:posternova/views/logo/logo_screen.dart';
@@ -36,6 +37,8 @@ class _LogoCategoryState extends State<LogoCategory> {
     _searchController.dispose();
     super.dispose();
   }
+
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
   void _filterCategories() {
     final query = _searchController.text.toLowerCase();
@@ -89,11 +92,13 @@ class _LogoCategoryState extends State<LogoCategory> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = _isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDarkMode ? const Color(0xFF0F172A) : Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         title: isSearching
             ? TextField(
                 controller: _searchController,
@@ -101,14 +106,19 @@ class _LogoCategoryState extends State<LogoCategory> {
                 decoration: InputDecoration(
                   hintText: AppText.translate(context, 'search_categories'),
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.grey),
+                  hintStyle: TextStyle(
+                    color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
+                  ),
                 ),
-                style: const TextStyle(color: Colors.black87, fontSize: 18),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                  fontSize: 18,
+                ),
               )
-            : const AppText(
+            : AppText(
                 'logo_categories',
                 style: TextStyle(
-                  color: Colors.black87,
+                  color: isDarkMode ? Colors.white : Colors.black87,
                   fontWeight: FontWeight.bold,
                   fontSize: 24,
                 ),
@@ -126,33 +136,36 @@ class _LogoCategoryState extends State<LogoCategory> {
                 }
               });
             },
-            icon: Icon(isSearching ? Icons.close : Icons.search),
+            icon: Icon(
+              isSearching ? Icons.close : Icons.search,
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
           ),
-          // IconButton(
-          //   onPressed: () {
-          //     Navigator.push(
-          //       context,
-          //       MaterialPageRoute(builder: (context) => LogoHistory()),
-          //     );
-          //   },
-          //   icon: const Icon(Icons.history_sharp),
-          // ),
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.blue))
+          ? Center(
+              child: CircularProgressIndicator(color: const Color(0xFFF5C518)),
+            )
           : errorMessage != null
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: isDarkMode ? Colors.red[400] : Colors.red[300],
+                  ),
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Text(
                       errorMessage!,
-                      style: TextStyle(color: Colors.grey[700], fontSize: 16),
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+                        fontSize: 16,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -168,8 +181,8 @@ class _LogoCategoryState extends State<LogoCategory> {
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFFF5C518),
+                      foregroundColor: Colors.black87,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,
@@ -184,12 +197,16 @@ class _LogoCategoryState extends State<LogoCategory> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                  Icon(
+                    Icons.search_off,
+                    size: 64,
+                    color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No categories found',
                     style: TextStyle(
-                      color: Colors.grey[700],
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
                     ),
@@ -207,10 +224,10 @@ class _LogoCategoryState extends State<LogoCategory> {
               child: GridView.builder(
                 padding: const EdgeInsets.all(16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.85,
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 18,
+                  mainAxisSpacing: 20,
+                  childAspectRatio: 0.7,
                 ),
                 itemCount: filteredCategories.length,
                 itemBuilder: (context, index) {
@@ -231,11 +248,15 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Material(
-      color: Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       borderRadius: BorderRadius.circular(16),
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: isDarkMode
+          ? Colors.black.withOpacity(0.3)
+          : Colors.black.withOpacity(0.1),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -250,11 +271,17 @@ class CategoryCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, Colors.grey[50]!],
-            ),
+            gradient: isDarkMode
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [const Color(0xFF1E293B), const Color(0xFF0F172A)],
+                  )
+                : LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Colors.white, Colors.grey[50]!],
+                  ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -267,21 +294,27 @@ class CategoryCard extends StatelessWidget {
                   ),
                   child: Image.network(
                     category.image,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fill,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: Colors.grey[200],
+                        color: isDarkMode
+                            ? const Color(0xFF0F172A)
+                            : Colors.grey[200],
                         child: Icon(
                           Icons.image_not_supported,
                           size: 48,
-                          color: Colors.grey[400],
+                          color: isDarkMode
+                              ? Colors.grey[600]
+                              : Colors.grey[400],
                         ),
                       );
                     },
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Container(
-                        color: Colors.grey[200],
+                        color: isDarkMode
+                            ? const Color(0xFF0F172A)
+                            : Colors.grey[200],
                         child: Center(
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
@@ -289,6 +322,7 @@ class CategoryCard extends StatelessWidget {
                                       loadingProgress.expectedTotalBytes!
                                 : null,
                             strokeWidth: 2,
+                            color: const Color(0xFFF5C518),
                           ),
                         ),
                       );
@@ -303,10 +337,10 @@ class CategoryCard extends StatelessWidget {
                   child: Center(
                     child: Text(
                       category.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: isDarkMode ? Colors.white : Colors.black87,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

@@ -35,6 +35,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   final String baseUrl = "http://31.97.206.144:4061/api/users";
 
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
+
   @override
   void initState() {
     super.initState();
@@ -78,7 +80,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         Uri.parse("$baseUrl/deletenotifications/${widget.userId}"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "notificationIds": [notificationId]
+          "notificationIds": [notificationId],
         }),
       );
 
@@ -109,8 +111,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = _isDarkMode;
+
     return Scaffold(
-      // backgroundColor: const Color(0xFF0C0C0F),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF5F5F5),
       body: SafeArea(
         child: Column(
           children: [
@@ -120,19 +126,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
             /// BODY
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(),
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: const Color(0xFFF5C518),
+                      ),
                     )
                   : _notifications.isEmpty
-                      ? _buildEmpty()
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                          itemCount: _notifications.length,
-                          itemBuilder: (ctx, i) {
-                            final item = _notifications[i];
-                            return _buildNotifTile(item, i);
-                          },
-                        ),
+                  ? _buildEmpty()
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                      itemCount: _notifications.length,
+                      itemBuilder: (ctx, i) {
+                        final item = _notifications[i];
+                        return _buildNotifTile(item, i);
+                      },
+                    ),
             ),
           ],
         ),
@@ -142,6 +150,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   /// HEADER
   Widget _buildHeader() {
+    final isDarkMode = _isDarkMode;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
       child: Row(
@@ -152,22 +162,24 @@ class _NotificationScreenState extends State<NotificationScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C22),
+                color: isDarkMode
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFE2E8F0),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
+                color: isDarkMode ? Colors.white : Colors.black87,
                 size: 16,
               ),
             ),
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Text(
               'Notifications',
               style: TextStyle(
-                color: Color.fromARGB(255, 0, 0, 0),
+                color: isDarkMode ? Colors.white : Colors.black87,
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
               ),
@@ -180,6 +192,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   /// NOTIFICATION TILE
   Widget _buildNotifTile(NotificationItem item, int index) {
+    final isDarkMode = _isDarkMode;
+
     return Dismissible(
       key: Key(item.id),
       direction: DismissDirection.endToStart,
@@ -191,10 +205,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           color: const Color(0xFFFF4466),
           borderRadius: BorderRadius.circular(18),
         ),
-        child: const Icon(
-          Icons.delete_outline_rounded,
-          color: Colors.white,
-        ),
+        child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
       ),
       onDismissed: (_) {
         deleteNotification(item.id);
@@ -203,12 +214,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1A24),
+          color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: const Color(0xFF2E2E42),
+            color: isDarkMode
+                ? const Color(0xFF334155)
+                : const Color(0xFFE2E8F0),
             width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,12 +237,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.12),
+                color: const Color(0xFFF5C518).withOpacity(0.12),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(
                 Icons.notifications_active_outlined,
-                color: Colors.deepPurple,
+                color: Color(0xFFF5C518),
               ),
             ),
             const SizedBox(width: 14),
@@ -235,8 +255,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       Expanded(
                         child: Text(
                           item.title,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black87,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -245,8 +265,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       const SizedBox(width: 8),
                       Text(
                         item.time,
-                        style: const TextStyle(
-                          color: Color.fromARGB(255, 255, 255, 255),
+                        style: TextStyle(
+                          color: isDarkMode
+                              ? Colors.grey[400]
+                              : Colors.grey[600],
                           fontSize: 11,
                         ),
                       ),
@@ -255,8 +277,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   const SizedBox(height: 5),
                   Text(
                     item.subtitle,
-                    style: const TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255),
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
                       fontSize: 12.5,
                     ),
                   ),
@@ -271,6 +293,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   /// EMPTY VIEW
   Widget _buildEmpty() {
+    final isDarkMode = _isDarkMode;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -279,29 +303,37 @@ class _NotificationScreenState extends State<NotificationScreen> {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C22),
+              color: isDarkMode
+                  ? const Color(0xFF1E293B)
+                  : const Color(0xFFE2E8F0),
               borderRadius: BorderRadius.circular(24),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.notifications_off_outlined,
-              color: Color(0xFF444455),
+              color: isDarkMode
+                  ? const Color(0xFF64748B)
+                  : const Color(0xFF94A3B8),
               size: 32,
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'No notifications here',
             style: TextStyle(
-              color: Color(0xFF888899),
+              color: isDarkMode
+                  ? const Color(0xFF94A3B8)
+                  : const Color(0xFF64748B),
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             "You're all caught up!",
             style: TextStyle(
-              color: Color(0xFF444455),
+              color: isDarkMode
+                  ? const Color(0xFF64748B)
+                  : const Color(0xFF94A3B8),
               fontSize: 13,
             ),
           ),

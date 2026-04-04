@@ -8,16 +8,19 @@ import 'package:posternova/models/user_model.dart';
 
 class SmsService {
   /// Login request with mobile number
-  Future<http.Response> login(LoginRequest request) async {
+  Future<bool> login(LoginRequest request) async {
     final url = Uri.parse(ApiConstants.login);
 
     try {
+      print("kkkkkkkkkkkkkkkkkkkkkkkkk$url");
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(request.toJson()),
       );
-      return response;
+      print("kkkkkkkkkkkkkkkkkkkkkkkkk${response.statusCode}");
+      return true;
     } on SocketException {
       throw 'Please turn on your internet connection';
     } catch (e) {
@@ -56,40 +59,39 @@ class SmsService {
     }
   }
 
-Future<http.Response> verifyFirebaseToken(
-    String firebaseToken, String fcmToken) async {
+  Future<http.Response> verifyFirebaseToken(
+    String firebaseToken,
+    String fcmToken,
+  ) async {
+    final url = Uri.parse(
+      "http://31.97.206.144:4061/api/users/verify-firebase-otp",
+    );
 
-  final url = Uri.parse("http://31.97.206.144:4061/api/users/verify-firebase-otp");
+    // ✅ Payload
+    final payload = {"idToken": firebaseToken, "fcmToken": fcmToken};
 
-  // ✅ Payload
-  final payload = {
-    "idToken": firebaseToken,
-    "fcmToken": fcmToken,
-  };
-
-  // ✅ Print payload
-  print("📤 VERIFY FIREBASE OTP PAYLOAD:");
+    // ✅ Print payload
+    print("📤 VERIFY FIREBASE OTP PAYLOAD:");
     print(url);
 
-  print(jsonEncode(payload));
+    print(jsonEncode(payload));
 
-  final response = await http.post(
-    url,
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode(payload),
-  );
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
+    );
 
-  // ✅ Print response
-  print("📥 VERIFY FIREBASE OTP RESPONSE:");
-  print("Status Code: ${response.statusCode}");
-  print("Body: ${response.body}");
+    // ✅ Print response
+    print("📥 VERIFY FIREBASE OTP RESPONSE:");
+    print("Status Code: ${response.statusCode}");
+    print("Body: ${response.body}");
 
-  return response;
-}
-
+    return response;
+  }
 
   /// Resend OTP request
-  Future<LoginResponse?> resendOtp(ResendOtpRequest request) async {
+  Future<bool> resendOtp(ResendOtpRequest request) async {
     final url = Uri.parse(ApiConstants.resendOtp);
 
     // try {
@@ -100,7 +102,12 @@ Future<http.Response> verifyFirebaseToken(
     );
     final data = jsonDecode(response.body);
 
-    return LoginResponse.fromJson(data);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    } else {
+      return false;
+    }
+
     // } on SocketException {
     //   throw 'Please turn on your internet connection';
     // } catch (e) {

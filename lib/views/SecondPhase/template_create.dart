@@ -252,6 +252,8 @@ class TemplateCreate extends StatefulWidget {
 class _TemplateCreateState extends State<TemplateCreate>
     with TickerProviderStateMixin {
   BottomTab _activeTab = BottomTab.text;
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
+
   Color _bgColor = const Color(0xFFF5F0E8);
 
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -1349,8 +1351,12 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = _isDarkMode;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F0F0),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF0F0F0),
       body: Stack(
         children: [
           Column(
@@ -1368,9 +1374,94 @@ class _TemplateCreateState extends State<TemplateCreate>
     );
   }
 
+  // Widget _buildTopBar() {
+  //   return Container(
+  //     color: const Color(0xFFF5C518),
+  //     padding: EdgeInsets.only(
+  //       top: MediaQuery.of(context).padding.top + 4,
+  //       left: 8,
+  //       right: 8,
+  //       bottom: 8,
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         IconButton(
+  //           icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 22),
+  //           onPressed: () => Navigator.maybePop(context),
+  //         ),
+  //         IconButton(
+  //           icon: const Icon(Icons.layers, color: Colors.black87, size: 22),
+  //           onPressed: _showLayersSheet,
+  //         ),
+  //         IconButton(
+  //           icon: const Icon(
+  //             Icons.add_photo_alternate,
+  //             color: Colors.black87,
+  //             size: 22,
+  //           ),
+  //           tooltip: 'Upload Background',
+  //           onPressed: () => _pickImage(forLogo: false),
+  //         ),
+  //         if (_isAnimated)
+  //           IconButton(
+  //             icon: Icon(
+  //               _animController.isAnimating
+  //                   ? Icons.pause_circle_outline
+  //                   : Icons.play_circle_outline,
+  //               color: Colors.black87,
+  //               size: 22,
+  //             ),
+  //             onPressed: () {
+  //               setState(() {
+  //                 if (_animController.isAnimating) {
+  //                   _animController.stop();
+  //                   _brandAnimController.stop();
+  //                 } else {
+  //                   _animController.repeat(reverse: true);
+  //                   _brandAnimController.repeat();
+  //                 }
+  //               });
+  //             },
+  //           ),
+  //         const Spacer(),
+  //         GestureDetector(
+  //           onTap: _startDownload,
+  //           child: Container(
+  //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //             decoration: BoxDecoration(
+  //               color: Colors.black87,
+  //               borderRadius: BorderRadius.circular(6),
+  //             ),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   _isAnimated ? Icons.videocam : Icons.download,
+  //                   color: Colors.white,
+  //                   size: 18,
+  //                 ),
+  //                 const SizedBox(width: 6),
+  //                 Text(
+  //                   _isAnimated ? 'Export MP4' : 'Download',
+  //                   style: const TextStyle(
+  //                     color: Colors.white,
+  //                     fontWeight: FontWeight.w600,
+  //                     fontSize: 14,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildTopBar() {
+    final isDarkMode = _isDarkMode;
+
     return Container(
-      color: const Color(0xFFF5C518),
+      color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF5C518),
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 4,
         left: 8,
@@ -1380,17 +1471,25 @@ class _TemplateCreateState extends State<TemplateCreate>
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 22),
+            icon: Icon(
+              Icons.arrow_back,
+              color: isDarkMode ? Colors.white : Colors.black87,
+              size: 22,
+            ),
             onPressed: () => Navigator.maybePop(context),
           ),
           IconButton(
-            icon: const Icon(Icons.layers, color: Colors.black87, size: 22),
+            icon: Icon(
+              Icons.layers,
+              color: isDarkMode ? Colors.white : Colors.black87,
+              size: 22,
+            ),
             onPressed: _showLayersSheet,
           ),
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.add_photo_alternate,
-              color: Colors.black87,
+              color: isDarkMode ? Colors.white : Colors.black87,
               size: 22,
             ),
             tooltip: 'Upload Background',
@@ -1402,7 +1501,7 @@ class _TemplateCreateState extends State<TemplateCreate>
                 _animController.isAnimating
                     ? Icons.pause_circle_outline
                     : Icons.play_circle_outline,
-                color: Colors.black87,
+                color: isDarkMode ? Colors.white : Colors.black87,
                 size: 22,
               ),
               onPressed: () {
@@ -1423,21 +1522,21 @@ class _TemplateCreateState extends State<TemplateCreate>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.black87,
+                color: isDarkMode ? Colors.white : Colors.black87,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
                 children: [
                   Icon(
                     _isAnimated ? Icons.videocam : Icons.download,
-                    color: Colors.white,
+                    color: isDarkMode ? Colors.black87 : Colors.white,
                     size: 18,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     _isAnimated ? 'Export MP4' : 'Download',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.black87 : Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -1489,6 +1588,7 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   Widget _buildPosterBackground() {
     Widget base;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     if (_uploadedImagePath != null) {
       // Image is already cropped to exact poster ratio — use BoxFit.fill
@@ -1503,7 +1603,7 @@ class _TemplateCreateState extends State<TemplateCreate>
       base = Container(
         width: double.infinity,
         height: double.infinity,
-        color: _bgColor,
+        color: isDarkMode ? Colors.black.withOpacity(0.25) : Colors.white,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1511,14 +1611,23 @@ class _TemplateCreateState extends State<TemplateCreate>
               Icon(
                 Icons.add_photo_alternate_outlined,
                 size: 48,
-                color: Colors.black.withOpacity(0.2),
+                color: isDarkMode
+                    ? const ui.Color.fromARGB(
+                        255,
+                        255,
+                        255,
+                        255,
+                      ).withOpacity(0.3)
+                    : Colors.black.withOpacity(0.2),
               ),
               const SizedBox(height: 10),
               Text(
                 '${widget.posterSize.width.toInt()} × ${widget.posterSize.height.toInt()} px',
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.black.withOpacity(0.25),
+                  color: isDarkMode
+                      ? Colors.white
+                      : Colors.black.withOpacity(0.25),
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.5,
                 ),
@@ -1528,7 +1637,9 @@ class _TemplateCreateState extends State<TemplateCreate>
                 'Upload an image to get started',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.black.withOpacity(0.15),
+                  color: isDarkMode
+                      ? Colors.white
+                      : Colors.black.withOpacity(0.15),
                 ),
               ),
             ],
@@ -2340,7 +2451,7 @@ class _TemplateCreateState extends State<TemplateCreate>
     showModalBottomSheet(
       context: context,
       builder: (_) => Container(
-        color: Colors.white,
+        color: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -6041,33 +6152,13 @@ class _TemplateCreateState extends State<TemplateCreate>
               );
           });
         },
+        onLongPress: () {
+          // Show confirmation dialog on long press
+          _showDeleteConfirmationDialog(item);
+        },
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            if (isSelected)
-              Positioned(
-                top: -14,
-                left: -4,
-                child: GestureDetector(
-                  onTap: () => setState(() {
-                    _texts.removeWhere((t) => t.id == item.id);
-                    _selectedTextId = null;
-                  }),
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      size: 13,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
             Container(
               decoration: isSelected
                   ? BoxDecoration(
@@ -6077,7 +6168,6 @@ class _TemplateCreateState extends State<TemplateCreate>
                   : null,
               padding: const EdgeInsets.all(4),
               child: Container(
-                // Fixed: Don't use both color and decoration simultaneously
                 decoration: item.hasBorder
                     ? BoxDecoration(
                         border: Border.all(color: item.color, width: 1),
@@ -6123,6 +6213,8 @@ class _TemplateCreateState extends State<TemplateCreate>
                 ),
               ),
             ),
+
+            // Resize handle (bottom-right)
             if (isSelected)
               Positioned(
                 right: -6,
@@ -6171,6 +6263,133 @@ class _TemplateCreateState extends State<TemplateCreate>
           ],
         ),
       ),
+    );
+  }
+
+  // This method shows the delete confirmation dialog
+  void _showDeleteConfirmationDialog(OverlayTextItem item) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 48,
+                    color: Colors.red,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Title
+                Text(
+                  'Delete Text',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Message
+                Text(
+                  'Are you sure you want to delete this text?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDarkMode
+                              ? Colors.white70
+                              : Colors.black87,
+                          side: BorderSide(
+                            color: isDarkMode
+                                ? Colors.white38
+                                : Colors.grey.shade400,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _texts.removeWhere((t) => t.id == item.id);
+                            if (_selectedTextId == item.id) {
+                              _selectedTextId = null;
+                            }
+                          });
+                          Navigator.pop(context);
+
+                          // Show snackbar notification
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Text deleted'),
+                              backgroundColor: Colors.green,
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -6238,26 +6457,178 @@ class _TemplateCreateState extends State<TemplateCreate>
   // ── BOTTOM PANEL ──────────────────────────
 
   Widget _buildBottomPanel() {
+    final isDarkMode = _isDarkMode;
+
     switch (_activeTab) {
       case BottomTab.text:
-        return _buildTextPanel();
+        return _buildTextPanel(isDarkMode);
       case BottomTab.frames:
-        return _buildFramesPanel();
+        return _buildFramesPanel(isDarkMode);
       case BottomTab.audio:
-        return _buildAudioPanel();
+        return _buildAudioPanel(isDarkMode);
       case BottomTab.animation:
-        return _buildAnimationPanel();
+        return _buildAnimationPanel(isDarkMode);
       case BottomTab.brandInfo:
-        return _buildBrandInfoPanel();
+        return _buildBrandInfoPanel(isDarkMode);
       case BottomTab.sticker:
-        return _buildEffectPanel();
+        return _buildEffectPanel(isDarkMode);
     }
   }
 
-  Widget _buildTextPanel() {
+  // Widget _buildTextPanel() {
+  //   final sel = _selectedText;
+  //   return Container(
+  //     color: Colors.white,
+  //     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         SingleChildScrollView(
+  //           scrollDirection: Axis.horizontal,
+  //           child: Row(
+  //             children: [
+  //               _ta(
+  //                 Icons.palette_outlined,
+  //                 'Text Theme',
+  //                 sel == null ? null : () => _showTextThemePicker(sel),
+  //               ),
+  //               _ta(
+  //                 Icons.edit,
+  //                 'Edit',
+  //                 sel == null ? null : () => _openTextEditor(sel),
+  //               ),
+  //               _ta(
+  //                 Icons.font_download_outlined,
+  //                 'Font',
+  //                 sel == null ? null : () => _showFontPicker(sel),
+  //               ),
+  //               _ta(
+  //                 Icons.format_color_text,
+  //                 'Color',
+  //                 sel == null ? null : () => _showColorPicker(sel),
+  //               ),
+  //               _ta(
+  //                 Icons.arrow_upward,
+  //                 null,
+  //                 sel == null ? null : () => _moveText(sel, dy: -10),
+  //               ),
+  //               _ta(
+  //                 Icons.arrow_downward,
+  //                 null,
+  //                 sel == null ? null : () => _moveText(sel, dy: 10),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         SingleChildScrollView(
+  //           scrollDirection: Axis.horizontal,
+  //           child: Row(
+  //             children: [
+  //               _ta(
+  //                 Icons.wb_sunny_outlined,
+  //                 'Shadow',
+  //                 sel == null
+  //                     ? null
+  //                     : () => setState(() {
+  //                         final i = _texts.indexWhere((t) => t.id == sel.id);
+  //                         _texts[i] = _texts[i].copyWith(
+  //                           hasShadow: !sel.hasShadow,
+  //                         );
+  //                       }),
+  //               ),
+  //               _ta(
+  //                 Icons.border_outer,
+  //                 'Border',
+  //                 sel == null
+  //                     ? null
+  //                     : () => setState(() {
+  //                         final i = _texts.indexWhere((t) => t.id == sel.id);
+  //                         _texts[i] = _texts[i].copyWith(
+  //                           hasBorder: !sel.hasBorder,
+  //                         );
+  //                       }),
+  //               ),
+  //               _ta(
+  //                 Icons.format_color_fill,
+  //                 'BG',
+  //                 sel == null ? null : () => _showBgColorPicker(sel),
+  //               ),
+  //               _ta(
+  //                 Icons.arrow_back,
+  //                 null,
+  //                 sel == null ? null : () => _moveText(sel, dx: -10),
+  //               ),
+  //               _ta(
+  //                 Icons.arrow_forward,
+  //                 null,
+  //                 sel == null ? null : () => _moveText(sel, dx: 10),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //           children: [
+  //             _fb(
+  //               'U',
+  //               sel?.isUnderline ?? false,
+  //               TextDecoration.underline,
+  //               sel == null
+  //                   ? null
+  //                   : () => setState(() {
+  //                       final i = _texts.indexWhere((t) => t.id == sel.id);
+  //                       _texts[i] = _texts[i].copyWith(
+  //                         isUnderline: !sel.isUnderline,
+  //                       );
+  //                     }),
+  //             ),
+  //             _fb(
+  //               'I',
+  //               sel?.isItalic ?? false,
+  //               TextDecoration.none,
+  //               sel == null
+  //                   ? null
+  //                   : () => setState(() {
+  //                       final i = _texts.indexWhere((t) => t.id == sel.id);
+  //                       _texts[i] = _texts[i].copyWith(isItalic: !sel.isItalic);
+  //                     }),
+  //               italic: true,
+  //             ),
+  //             _fb(
+  //               'B',
+  //               sel?.isBold ?? false,
+  //               TextDecoration.none,
+  //               sel == null
+  //                   ? null
+  //                   : () => setState(() {
+  //                       final i = _texts.indexWhere((t) => t.id == sel.id);
+  //                       _texts[i] = _texts[i].copyWith(isBold: !sel.isBold);
+  //                     }),
+  //               bold: true,
+  //             ),
+  //             _sb('T', 18, sel),
+  //             _sb('T', 24, sel),
+  //             IconButton(
+  //               icon: const Icon(Icons.format_align_left, size: 20),
+  //               onPressed: sel == null
+  //                   ? null
+  //                   : () => setState(() {
+  //                       final i = _texts.indexWhere((t) => t.id == sel.id);
+  //                       _texts[i] = _texts[i].copyWith(align: TextAlign.left);
+  //                     }),
+  //             ),
+  //             _ta(Icons.add_circle_outline, 'Add Text', _addText),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  Widget _buildTextPanel(bool isDarkMode) {
     final sel = _selectedText;
     return Container(
-      color: Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -6270,31 +6641,37 @@ class _TemplateCreateState extends State<TemplateCreate>
                   Icons.palette_outlined,
                   'Text Theme',
                   sel == null ? null : () => _showTextThemePicker(sel),
+                  isDarkMode,
                 ),
                 _ta(
                   Icons.edit,
                   'Edit',
                   sel == null ? null : () => _openTextEditor(sel),
+                  isDarkMode,
                 ),
                 _ta(
                   Icons.font_download_outlined,
                   'Font',
                   sel == null ? null : () => _showFontPicker(sel),
+                  isDarkMode,
                 ),
                 _ta(
                   Icons.format_color_text,
                   'Color',
                   sel == null ? null : () => _showColorPicker(sel),
+                  isDarkMode,
                 ),
                 _ta(
                   Icons.arrow_upward,
                   null,
                   sel == null ? null : () => _moveText(sel, dy: -10),
+                  isDarkMode,
                 ),
                 _ta(
                   Icons.arrow_downward,
                   null,
                   sel == null ? null : () => _moveText(sel, dy: 10),
+                  isDarkMode,
                 ),
               ],
             ),
@@ -6314,6 +6691,7 @@ class _TemplateCreateState extends State<TemplateCreate>
                             hasShadow: !sel.hasShadow,
                           );
                         }),
+                  isDarkMode,
                 ),
                 _ta(
                   Icons.border_outer,
@@ -6326,21 +6704,25 @@ class _TemplateCreateState extends State<TemplateCreate>
                             hasBorder: !sel.hasBorder,
                           );
                         }),
+                  isDarkMode,
                 ),
                 _ta(
                   Icons.format_color_fill,
                   'BG',
                   sel == null ? null : () => _showBgColorPicker(sel),
+                  isDarkMode,
                 ),
                 _ta(
                   Icons.arrow_back,
                   null,
                   sel == null ? null : () => _moveText(sel, dx: -10),
+                  isDarkMode,
                 ),
                 _ta(
                   Icons.arrow_forward,
                   null,
                   sel == null ? null : () => _moveText(sel, dx: 10),
+                  isDarkMode,
                 ),
               ],
             ),
@@ -6360,6 +6742,7 @@ class _TemplateCreateState extends State<TemplateCreate>
                           isUnderline: !sel.isUnderline,
                         );
                       }),
+                isDarkMode,
               ),
               _fb(
                 'I',
@@ -6371,6 +6754,7 @@ class _TemplateCreateState extends State<TemplateCreate>
                         final i = _texts.indexWhere((t) => t.id == sel.id);
                         _texts[i] = _texts[i].copyWith(isItalic: !sel.isItalic);
                       }),
+                isDarkMode,
                 italic: true,
               ),
               _fb(
@@ -6383,20 +6767,25 @@ class _TemplateCreateState extends State<TemplateCreate>
                         final i = _texts.indexWhere((t) => t.id == sel.id);
                         _texts[i] = _texts[i].copyWith(isBold: !sel.isBold);
                       }),
+                isDarkMode,
                 bold: true,
               ),
-              _sb('T', 18, sel),
-              _sb('T', 24, sel),
-              IconButton(
-                icon: const Icon(Icons.format_align_left, size: 20),
-                onPressed: sel == null
-                    ? null
-                    : () => setState(() {
-                        final i = _texts.indexWhere((t) => t.id == sel.id);
-                        _texts[i] = _texts[i].copyWith(align: TextAlign.left);
-                      }),
-              ),
-              _ta(Icons.add_circle_outline, 'Add Text', _addText),
+              _sb('T', 18, sel, isDarkMode),
+              _sb('T', 24, sel, isDarkMode),
+              // IconButton(
+              //   icon: Icon(
+              //     Icons.format_align_left,
+              //     size: 20,
+              //     color: isDarkMode ? Colors.white70 : Colors.black87,
+              //   ),
+              //   onPressed: sel == null
+              //       ? null
+              //       : () => setState(() {
+              //           final i = _texts.indexWhere((t) => t.id == sel.id);
+              //           _texts[i] = _texts[i].copyWith(align: TextAlign.left);
+              //         }),
+              // ),
+              _ta(Icons.add_circle_outline, 'Add Text', _addText, isDarkMode),
             ],
           ),
         ],
@@ -6412,7 +6801,98 @@ class _TemplateCreateState extends State<TemplateCreate>
     });
   }
 
-  Widget _ta(IconData icon, String? label, VoidCallback? onTap) {
+  // Widget _ta(IconData icon, String? label, VoidCallback? onTap) {
+  //   return GestureDetector(
+  //     onTap: onTap,
+  //     child: Opacity(
+  //       opacity: onTap == null ? 0.35 : 1,
+  //       child: Container(
+  //         margin: const EdgeInsets.symmetric(horizontal: 4),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Icon(icon, size: 20, color: Colors.black87),
+  //             if (label != null)
+  //               Text(
+  //                 label,
+  //                 style: const TextStyle(fontSize: 9, color: Colors.black54),
+  //               ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // Widget _fb(
+  //   String label,
+  //   bool active,
+  //   TextDecoration deco,
+  //   VoidCallback? onTap, {
+  //   bool italic = false,
+  //   bool bold = false,
+  // }) {
+  //   return GestureDetector(
+  //     onTap: onTap,
+  //     child: Container(
+  //       width: 36,
+  //       height: 36,
+  //       decoration: BoxDecoration(
+  //         color: active ? Colors.black87 : Colors.transparent,
+  //         borderRadius: BorderRadius.circular(4),
+  //       ),
+  //       child: Center(
+  //         child: Text(
+  //           label,
+  //           style: TextStyle(
+  //             fontSize: 16,
+  //             color: active ? Colors.white : Colors.black87,
+  //             fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+  //             fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+  //             decoration: deco,
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // Widget _sb(String label, double size, OverlayTextItem? sel) {
+  //   final isActive = sel?.fontSize == size;
+  //   return GestureDetector(
+  //     onTap: sel == null
+  //         ? null
+  //         : () => setState(() {
+  //             final i = _texts.indexWhere((t) => t.id == sel.id);
+  //             _texts[i] = _texts[i].copyWith(fontSize: size);
+  //           }),
+  //     child: Container(
+  //       width: 36,
+  //       height: 36,
+  //       decoration: BoxDecoration(
+  //         color: isActive ? Colors.black87 : Colors.transparent,
+  //         borderRadius: BorderRadius.circular(4),
+  //       ),
+  //       child: Center(
+  //         child: Text(
+  //           label,
+  //           style: TextStyle(
+  //             fontSize: size / 2,
+  //             color: isActive ? Colors.white : Colors.black87,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget _ta(
+    IconData icon,
+    String? label,
+    VoidCallback? onTap,
+    bool isDarkMode,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Opacity(
@@ -6422,11 +6902,18 @@ class _TemplateCreateState extends State<TemplateCreate>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 20, color: Colors.black87),
+              Icon(
+                icon,
+                size: 20,
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
               if (label != null)
                 Text(
                   label,
-                  style: const TextStyle(fontSize: 9, color: Colors.black54),
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: isDarkMode ? Colors.white54 : Colors.black54,
+                  ),
                 ),
             ],
           ),
@@ -6439,7 +6926,8 @@ class _TemplateCreateState extends State<TemplateCreate>
     String label,
     bool active,
     TextDecoration deco,
-    VoidCallback? onTap, {
+    VoidCallback? onTap,
+    bool isDarkMode, {
     bool italic = false,
     bool bold = false,
   }) {
@@ -6449,7 +6937,9 @@ class _TemplateCreateState extends State<TemplateCreate>
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: active ? Colors.black87 : Colors.transparent,
+          color: active
+              ? (isDarkMode ? Colors.white : Colors.black87)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Center(
@@ -6457,7 +6947,9 @@ class _TemplateCreateState extends State<TemplateCreate>
             label,
             style: TextStyle(
               fontSize: 16,
-              color: active ? Colors.white : Colors.black87,
+              color: active
+                  ? (isDarkMode ? Colors.black87 : Colors.white)
+                  : (isDarkMode ? Colors.white70 : Colors.black87),
               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
               fontStyle: italic ? FontStyle.italic : FontStyle.normal,
               decoration: deco,
@@ -6468,7 +6960,7 @@ class _TemplateCreateState extends State<TemplateCreate>
     );
   }
 
-  Widget _sb(String label, double size, OverlayTextItem? sel) {
+  Widget _sb(String label, double size, OverlayTextItem? sel, bool isDarkMode) {
     final isActive = sel?.fontSize == size;
     return GestureDetector(
       onTap: sel == null
@@ -6481,7 +6973,9 @@ class _TemplateCreateState extends State<TemplateCreate>
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: isActive ? Colors.black87 : Colors.transparent,
+          color: isActive
+              ? (isDarkMode ? Colors.white : Colors.black87)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Center(
@@ -6489,7 +6983,9 @@ class _TemplateCreateState extends State<TemplateCreate>
             label,
             style: TextStyle(
               fontSize: size / 2,
-              color: isActive ? Colors.white : Colors.black87,
+              color: isActive
+                  ? (isDarkMode ? Colors.black87 : Colors.white)
+                  : (isDarkMode ? Colors.white70 : Colors.black87),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -6546,7 +7042,7 @@ class _TemplateCreateState extends State<TemplateCreate>
     showModalBottomSheet(
       context: context,
       builder: (_) => Container(
-        color: Colors.white,
+        color: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -6612,7 +7108,7 @@ class _TemplateCreateState extends State<TemplateCreate>
     showModalBottomSheet(
       context: context,
       builder: (_) => Container(
-        color: Colors.white,
+        color: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -6665,7 +7161,7 @@ class _TemplateCreateState extends State<TemplateCreate>
     showModalBottomSheet(
       context: context,
       builder: (_) => Container(
-        color: Colors.white,
+        color: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -6725,7 +7221,7 @@ class _TemplateCreateState extends State<TemplateCreate>
     showModalBottomSheet(
       context: context,
       builder: (_) => Container(
-        color: Colors.white,
+        color: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -6778,9 +7274,9 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   // ── FRAMES PANEL ──────────────────────────
 
-  Widget _buildFramesPanel() {
+  Widget _buildFramesPanel(bool isDarkMode) {
     return Container(
-      color: Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -7170,10 +7666,10 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   // ── AUDIO PANEL ───────────────────────────
 
-  Widget _buildAudioPanel() {
+  Widget _buildAudioPanel(bool isDarkMode) {
     return Container(
       height: 180,
-      color: Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -7291,7 +7787,101 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   // ── ANIMATION PANEL ───────────────────────
 
-  Widget _buildAnimationPanel() {
+  // Widget _buildAnimationPanel() {
+  //   final animations = [
+  //     _AnimData(AnimationType.none, Icons.block, 'None'),
+  //     _AnimData(AnimationType.fade, Icons.opacity, 'Fade'),
+  //     _AnimData(AnimationType.zoom, Icons.zoom_in, 'Zoom'),
+  //     _AnimData(AnimationType.rotate, Icons.rotate_right, 'Rotate'),
+  //     _AnimData(AnimationType.flipIn, Icons.flip, 'FlipIn'),
+  //     _AnimData(AnimationType.wobble, Icons.vibration, 'Wobble'),
+  //     _AnimData(AnimationType.rollin, Icons.motion_photos_on, 'Roll In'),
+  //     _AnimData(AnimationType.slideLeft, Icons.arrow_back, 'Slide ←'),
+  //     _AnimData(AnimationType.slideRight, Icons.arrow_forward, 'Slide →'),
+  //     _AnimData(AnimationType.slideUp, Icons.arrow_upward, 'Slide ↑'),
+  //     _AnimData(AnimationType.slideDown, Icons.arrow_downward, 'Slide ↓'),
+  //   ];
+  //   return Container(
+  //     color: Colors.white,
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Padding(
+  //           padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+  //           child: Text(
+  //             'Animation',
+  //             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+  //           ),
+  //         ),
+  //         SizedBox(
+  //           height: 90,
+  //           child: ListView.separated(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             itemCount: animations.length,
+  //             separatorBuilder: (_, __) => const SizedBox(width: 10),
+  //             itemBuilder: (_, i) {
+  //               final a = animations[i];
+  //               final sel = _selectedAnimation == a.type;
+  //               return GestureDetector(
+  //                 onTap: () {
+  //                   setState(() => _selectedAnimation = a.type);
+  //                   if (a.type != AnimationType.none) {
+  //                     _animController.repeat(reverse: true);
+  //                     _brandAnimController.repeat();
+  //                   } else {
+  //                     _animController.stop();
+  //                     _animController.reset();
+  //                     _brandAnimController.stop();
+  //                     _brandAnimController.reset();
+  //                   }
+  //                 },
+  //                 child: Container(
+  //                   width: 72,
+  //                   decoration: BoxDecoration(
+  //                     border: Border.all(
+  //                       color: sel
+  //                           ? const Color(0xFFF5C518)
+  //                           : Colors.grey.shade200,
+  //                       width: 2,
+  //                     ),
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     color: sel
+  //                         ? const Color(0xFFFFFDE7)
+  //                         : Colors.grey.shade50,
+  //                   ),
+  //                   child: Column(
+  //                     mainAxisAlignment: MainAxisAlignment.center,
+  //                     children: [
+  //                       Icon(
+  //                         a.icon,
+  //                         size: 28,
+  //                         color: sel ? Colors.amber.shade800 : Colors.black54,
+  //                       ),
+  //                       const SizedBox(height: 4),
+  //                       Text(
+  //                         a.label,
+  //                         textAlign: TextAlign.center,
+  //                         style: TextStyle(
+  //                           fontSize: 9,
+  //                           color: sel ? Colors.amber.shade900 : Colors.black54,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         const SizedBox(height: 8),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  Widget _buildAnimationPanel(bool isDarkMode) {
     final animations = [
       _AnimData(AnimationType.none, Icons.block, 'None'),
       _AnimData(AnimationType.fade, Icons.opacity, 'Fade'),
@@ -7305,17 +7895,22 @@ class _TemplateCreateState extends State<TemplateCreate>
       _AnimData(AnimationType.slideUp, Icons.arrow_upward, 'Slide ↑'),
       _AnimData(AnimationType.slideDown, Icons.arrow_downward, 'Slide ↓'),
     ];
+
     return Container(
-      color: Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Text(
               'Animation',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
             ),
           ),
           SizedBox(
@@ -7347,13 +7942,19 @@ class _TemplateCreateState extends State<TemplateCreate>
                       border: Border.all(
                         color: sel
                             ? const Color(0xFFF5C518)
-                            : Colors.grey.shade200,
+                            : (isDarkMode
+                                  ? Colors.grey[800]!
+                                  : Colors.grey.shade200),
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(8),
                       color: sel
-                          ? const Color(0xFFFFFDE7)
-                          : Colors.grey.shade50,
+                          ? (isDarkMode
+                                ? const Color(0xFF332700)
+                                : const Color(0xFFFFFDE7))
+                          : (isDarkMode
+                                ? const Color(0xFF0F172A)
+                                : Colors.grey.shade50),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -7361,7 +7962,11 @@ class _TemplateCreateState extends State<TemplateCreate>
                         Icon(
                           a.icon,
                           size: 28,
-                          color: sel ? Colors.amber.shade800 : Colors.black54,
+                          color: sel
+                              ? (isDarkMode
+                                    ? const Color(0xFFF5C518)
+                                    : Colors.amber.shade800)
+                              : (isDarkMode ? Colors.white54 : Colors.black54),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -7369,7 +7974,13 @@ class _TemplateCreateState extends State<TemplateCreate>
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 9,
-                            color: sel ? Colors.amber.shade900 : Colors.black54,
+                            color: sel
+                                ? (isDarkMode
+                                      ? const Color(0xFFF5C518)
+                                      : Colors.amber.shade900)
+                                : (isDarkMode
+                                      ? Colors.white54
+                                      : Colors.black54),
                           ),
                         ),
                       ],
@@ -7387,9 +7998,217 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   // ── BRAND INFO PANEL ──────────────────────
 
-  Widget _buildBrandInfoPanel() {
+  // Widget _buildBrandInfoPanel() {
+  //   return Container(
+  //     color: Colors.white,
+  //     padding: const EdgeInsets.all(12),
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             const Text(
+  //               'Brand Info',
+  //               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+  //             ),
+  //             const Spacer(),
+  //             GestureDetector(
+  //               onTap: () => _pickImage(forLogo: true),
+  //               child: Container(
+  //                 padding: const EdgeInsets.symmetric(
+  //                   horizontal: 10,
+  //                   vertical: 4,
+  //                 ),
+  //                 decoration: BoxDecoration(
+  //                   color: const Color(0xFFF5C518),
+  //                   borderRadius: BorderRadius.circular(16),
+  //                 ),
+  //                 child: const Row(
+  //                   children: [
+  //                     Icon(Icons.add_a_photo, size: 14, color: Colors.black87),
+  //                     SizedBox(width: 4),
+  //                     Text(
+  //                       'Upload Logo',
+  //                       style: TextStyle(
+  //                         fontSize: 11,
+  //                         fontWeight: FontWeight.bold,
+  //                         color: Colors.black87,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         const SizedBox(height: 8),
+  //         _bInfoRow(
+  //           Icons.account_circle,
+  //           'Name',
+  //           _brandInfo.name,
+  //           () => _editBrandField(
+  //             'Name',
+  //             _brandInfo.name,
+  //             (v) => setState(() => _brandInfo.name = v),
+  //           ),
+  //         ),
+  //         const Divider(height: 12),
+  //         _bInfoRow(
+  //           Icons.phone,
+  //           'Phone',
+  //           _brandInfo.phone,
+  //           () => _editBrandField(
+  //             'Phone',
+  //             _brandInfo.phone,
+  //             (v) => setState(() => _brandInfo.phone = v),
+  //           ),
+  //         ),
+  //         const Divider(height: 12),
+  //         _bInfoRow(
+  //           Icons.location_on,
+  //           'Address',
+  //           _brandInfo.address,
+  //           () => _editBrandField(
+  //             'Address',
+  //             _brandInfo.address,
+  //             (v) => setState(() => _brandInfo.address = v),
+  //           ),
+  //         ),
+  //         const Divider(height: 12),
+  //         // Row(
+  //         //   children: [
+  //         //     const Icon(Icons.image, size: 18, color: Colors.grey),
+  //         //     const SizedBox(width: 8),
+  //         //     const Expanded(
+  //         //       child: Text('Show Logo', style: TextStyle(fontSize: 13)),
+  //         //     ),
+  //         //     Switch(
+  //         //       value: _brandElements
+  //         //           .firstWhere((e) => e.id == 'logo')
+  //         //           .isVisible,
+  //         //       onChanged: (v) {
+  //         //         setState(() {
+  //         //           final i = _brandElements.indexWhere((e) => e.id == 'logo');
+  //         //           if (i != -1)
+  //         //             _brandElements[i] = _brandElements[i].copyWith(
+  //         //               isVisible: v,
+  //         //             );
+  //         //         });
+  //         //       },
+  //         //       activeColor: const Color(0xFFF5C518),
+  //         //     ),
+  //         //   ],
+  //         // ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // Widget _bInfoRow(
+  //   IconData icon,
+  //   String label,
+  //   String value,
+  //   VoidCallback onTap,
+  // ) {
+  //   return GestureDetector(
+  //     onTap: onTap,
+  //     child: Row(
+  //       children: [
+  //         Icon(icon, size: 18, color: Colors.grey),
+  //         const SizedBox(width: 8),
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Text(
+  //                 label,
+  //                 style: const TextStyle(fontSize: 10, color: Colors.black45),
+  //               ),
+  //               Text(
+  //                 value,
+  //                 style: const TextStyle(fontSize: 13),
+  //                 maxLines: 1,
+  //                 overflow: TextOverflow.ellipsis,
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         const Icon(Icons.edit, size: 15, color: Colors.black38),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // void _editBrandField(
+  //   String label,
+  //   String current,
+  //   ValueChanged<String> onSave,
+  // ) {
+  //   final ctrl = TextEditingController(text: current);
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (_) => Padding(
+  //       padding: EdgeInsets.only(
+  //         bottom: MediaQuery.of(context).viewInsets.bottom,
+  //       ),
+  //       child: Container(
+  //         decoration: const BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+  //         ),
+  //         padding: const EdgeInsets.all(16),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Text(
+  //               'Edit $label',
+  //               style: const TextStyle(
+  //                 fontWeight: FontWeight.bold,
+  //                 fontSize: 15,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 12),
+  //             TextField(
+  //               controller: ctrl,
+  //               autofocus: true,
+  //               decoration: InputDecoration(
+  //                 hintText: label,
+  //                 border: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(8),
+  //                 ),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 12),
+  //             SizedBox(
+  //               width: double.infinity,
+  //               child: ElevatedButton(
+  //                 style: ElevatedButton.styleFrom(
+  //                   backgroundColor: const Color(0xFFF5C518),
+  //                   foregroundColor: Colors.black87,
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(8),
+  //                   ),
+  //                 ),
+  //                 onPressed: () {
+  //                   onSave(ctrl.text);
+  //                   Navigator.pop(context);
+  //                 },
+  //                 child: const Text('Save'),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget _buildBrandInfoPanel(bool isDarkMode) {
     return Container(
-      color: Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -7397,9 +8216,13 @@ class _TemplateCreateState extends State<TemplateCreate>
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 'Brand Info',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
               ),
               const Spacer(),
               GestureDetector(
@@ -7441,8 +8264,9 @@ class _TemplateCreateState extends State<TemplateCreate>
               _brandInfo.name,
               (v) => setState(() => _brandInfo.name = v),
             ),
+            isDarkMode,
           ),
-          const Divider(height: 12),
+          const Divider(height: 12, color: Colors.grey),
           _bInfoRow(
             Icons.phone,
             'Phone',
@@ -7452,8 +8276,9 @@ class _TemplateCreateState extends State<TemplateCreate>
               _brandInfo.phone,
               (v) => setState(() => _brandInfo.phone = v),
             ),
+            isDarkMode,
           ),
-          const Divider(height: 12),
+          const Divider(height: 12, color: Colors.grey),
           _bInfoRow(
             Icons.location_on,
             'Address',
@@ -7463,48 +8288,30 @@ class _TemplateCreateState extends State<TemplateCreate>
               _brandInfo.address,
               (v) => setState(() => _brandInfo.address = v),
             ),
+            isDarkMode,
           ),
-          const Divider(height: 12),
-          // Row(
-          //   children: [
-          //     const Icon(Icons.image, size: 18, color: Colors.grey),
-          //     const SizedBox(width: 8),
-          //     const Expanded(
-          //       child: Text('Show Logo', style: TextStyle(fontSize: 13)),
-          //     ),
-          //     Switch(
-          //       value: _brandElements
-          //           .firstWhere((e) => e.id == 'logo')
-          //           .isVisible,
-          //       onChanged: (v) {
-          //         setState(() {
-          //           final i = _brandElements.indexWhere((e) => e.id == 'logo');
-          //           if (i != -1)
-          //             _brandElements[i] = _brandElements[i].copyWith(
-          //               isVisible: v,
-          //             );
-          //         });
-          //       },
-          //       activeColor: const Color(0xFFF5C518),
-          //     ),
-          //   ],
-          // ),
         ],
       ),
     );
   }
 
+  // Updated helper method for brand info row
   Widget _bInfoRow(
     IconData icon,
     String label,
     String value,
     VoidCallback onTap,
+    bool isDarkMode,
   ) {
     return GestureDetector(
       onTap: onTap,
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Colors.grey),
+          Icon(
+            icon,
+            size: 18,
+            color: isDarkMode ? Colors.white54 : Colors.grey,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -7512,29 +8319,42 @@ class _TemplateCreateState extends State<TemplateCreate>
               children: [
                 Text(
                   label,
-                  style: const TextStyle(fontSize: 10, color: Colors.black45),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDarkMode ? Colors.white54 : Colors.black45,
+                  ),
                 ),
                 Text(
-                  value,
-                  style: const TextStyle(fontSize: 13),
+                  value.isEmpty ? 'Not set' : value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          const Icon(Icons.edit, size: 15, color: Colors.black38),
+          Icon(
+            Icons.edit,
+            size: 15,
+            color: isDarkMode ? Colors.white38 : Colors.black38,
+          ),
         ],
       ),
     );
   }
 
+  // Updated edit brand field modal
   void _editBrandField(
     String label,
     String current,
     ValueChanged<String> onSave,
   ) {
     final ctrl = TextEditingController(text: current);
+    final isDarkMode = _isDarkMode;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -7544,9 +8364,9 @@ class _TemplateCreateState extends State<TemplateCreate>
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -7554,19 +8374,32 @@ class _TemplateCreateState extends State<TemplateCreate>
             children: [
               Text(
                 'Edit $label',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
+                  color: isDarkMode ? Colors.white : Colors.black87,
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: ctrl,
                 autofocus: true,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
                 decoration: InputDecoration(
                   hintText: label,
+                  hintStyle: TextStyle(
+                    color: isDarkMode ? Colors.white54 : Colors.black45,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: isDarkMode ? Colors.white38 : Colors.grey.shade300,
+                    ),
                   ),
                 ),
               ),
@@ -7597,7 +8430,101 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   // ── EFFECT PANEL ──────────────────────────
 
-  Widget _buildEffectPanel() {
+  // Widget _buildEffectPanel() {
+  //   final effects = [
+  //     _EffectData(EffectType.none, Icons.block, 'Remove'),
+  //     _EffectData(EffectType.blur, Icons.blur_on, 'Blur'),
+  //     _EffectData(EffectType.grayscale, Icons.filter_b_and_w, 'Grayscale'),
+  //     _EffectData(EffectType.sepia, Icons.filter_vintage, 'Sepia'),
+  //     _EffectData(EffectType.brightness, Icons.brightness_5, 'Bright'),
+  //     _EffectData(EffectType.contrast, Icons.contrast, 'Contrast'),
+  //   ];
+  //   return Container(
+  //     color: Colors.white,
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Padding(
+  //           padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+  //           child: Text(
+  //             'Effect',
+  //             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+  //           ),
+  //         ),
+  //         SizedBox(
+  //           height: 90,
+  //           child: ListView.separated(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             itemCount: effects.length,
+  //             separatorBuilder: (_, __) => const SizedBox(width: 10),
+  //             itemBuilder: (_, i) {
+  //               final e = effects[i];
+  //               final sel = _selectedEffect == e.type;
+  //               return GestureDetector(
+  //                 onTap: () => setState(() => _selectedEffect = e.type),
+  //                 child: Container(
+  //                   width: 72,
+  //                   decoration: BoxDecoration(
+  //                     border: Border.all(
+  //                       color: sel ? Colors.amber : Colors.grey.shade200,
+  //                       width: 2,
+  //                     ),
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     color: sel
+  //                         ? const Color(0xFFFFF8E1)
+  //                         : Colors.grey.shade50,
+  //                   ),
+  //                   child: Column(
+  //                     mainAxisAlignment: MainAxisAlignment.center,
+  //                     children: [
+  //                       Icon(
+  //                         e.icon,
+  //                         size: 28,
+  //                         color: sel ? Colors.amber.shade700 : Colors.black45,
+  //                       ),
+  //                       const SizedBox(height: 4),
+  //                       Text(
+  //                         e.label,
+  //                         textAlign: TextAlign.center,
+  //                         style: TextStyle(
+  //                           fontSize: 9,
+  //                           color: sel ? Colors.amber.shade800 : Colors.black45,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         if (_selectedEffect == EffectType.blur)
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             child: Row(
+  //               children: [
+  //                 const Text('Strength', style: TextStyle(fontSize: 12)),
+  //                 Expanded(
+  //                   child: Slider(
+  //                     value: _effectStrength,
+  //                     min: 0,
+  //                     max: 1,
+  //                     activeColor: Colors.amber,
+  //                     onChanged: (v) => setState(() => _effectStrength = v),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         const SizedBox(height: 8),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  Widget _buildEffectPanel(bool isDarkMode) {
     final effects = [
       _EffectData(EffectType.none, Icons.block, 'Remove'),
       _EffectData(EffectType.blur, Icons.blur_on, 'Blur'),
@@ -7606,17 +8533,22 @@ class _TemplateCreateState extends State<TemplateCreate>
       _EffectData(EffectType.brightness, Icons.brightness_5, 'Bright'),
       _EffectData(EffectType.contrast, Icons.contrast, 'Contrast'),
     ];
+
     return Container(
-      color: Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Text(
               'Effect',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
             ),
           ),
           SizedBox(
@@ -7635,13 +8567,21 @@ class _TemplateCreateState extends State<TemplateCreate>
                     width: 72,
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: sel ? Colors.amber : Colors.grey.shade200,
+                        color: sel
+                            ? const Color(0xFFF5C518)
+                            : (isDarkMode
+                                  ? Colors.grey[800]!
+                                  : Colors.grey.shade200),
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(8),
                       color: sel
-                          ? const Color(0xFFFFF8E1)
-                          : Colors.grey.shade50,
+                          ? (isDarkMode
+                                ? const Color(0xFF332700)
+                                : const Color(0xFFFFF8E1))
+                          : (isDarkMode
+                                ? const Color(0xFF0F172A)
+                                : Colors.grey.shade50),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -7649,7 +8589,11 @@ class _TemplateCreateState extends State<TemplateCreate>
                         Icon(
                           e.icon,
                           size: 28,
-                          color: sel ? Colors.amber.shade700 : Colors.black45,
+                          color: sel
+                              ? (isDarkMode
+                                    ? const Color(0xFFF5C518)
+                                    : Colors.amber.shade700)
+                              : (isDarkMode ? Colors.white54 : Colors.black45),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -7657,7 +8601,13 @@ class _TemplateCreateState extends State<TemplateCreate>
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 9,
-                            color: sel ? Colors.amber.shade800 : Colors.black45,
+                            color: sel
+                                ? (isDarkMode
+                                      ? const Color(0xFFF5C518)
+                                      : Colors.amber.shade800)
+                                : (isDarkMode
+                                      ? Colors.white54
+                                      : Colors.black45),
                           ),
                         ),
                       ],
@@ -7672,13 +8622,22 @@ class _TemplateCreateState extends State<TemplateCreate>
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  const Text('Strength', style: TextStyle(fontSize: 12)),
+                  Text(
+                    'Strength',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
                   Expanded(
                     child: Slider(
                       value: _effectStrength,
                       min: 0,
                       max: 1,
-                      activeColor: Colors.amber,
+                      activeColor: const Color(0xFFF5C518),
+                      inactiveColor: isDarkMode
+                          ? Colors.grey[700]
+                          : Colors.grey[300],
                       onChanged: (v) => setState(() => _effectStrength = v),
                     ),
                   ),
@@ -7693,7 +8652,82 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   // ── BOTTOM TAB BAR ────────────────────────
 
+  // Widget _buildBottomTabBar() {
+  //   final tabs = [
+  //     _TabData(BottomTab.text, Icons.text_fields, 'Text'),
+  //     _TabData(BottomTab.frames, Icons.crop_square, 'Frames'),
+  //     _TabData(BottomTab.audio, Icons.volume_up_outlined, 'Audio'),
+  //     _TabData(BottomTab.animation, Icons.animation, 'Animation'),
+  //     _TabData(
+  //       BottomTab.brandInfo,
+  //       Icons.business_center_outlined,
+  //       'Brand Info',
+  //     ),
+  //     _TabData(BottomTab.sticker, Icons.auto_fix_high, 'Effect'),
+  //   ];
+  //   return Container(
+  //     color: Colors.white,
+  //     padding: const EdgeInsets.only(bottom: 4, top: 4),
+  //     child: SafeArea(
+  //       top: false,
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceAround,
+  //         children: tabs
+  //             .map(
+  //               (t) => GestureDetector(
+  //                 onTap: () => setState(() => _activeTab = t.tab),
+  //                 child: AnimatedContainer(
+  //                   duration: const Duration(milliseconds: 200),
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 8,
+  //                     vertical: 4,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     border: Border(
+  //                       bottom: BorderSide(
+  //                         color: _activeTab == t.tab
+  //                             ? const Color(0xFFF5C518)
+  //                             : Colors.transparent,
+  //                         width: 2,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   child: Column(
+  //                     mainAxisSize: MainAxisSize.min,
+  //                     children: [
+  //                       Icon(
+  //                         t.icon,
+  //                         size: 22,
+  //                         color: _activeTab == t.tab
+  //                             ? const Color(0xFFF5C518)
+  //                             : Colors.black54,
+  //                       ),
+  //                       const SizedBox(height: 2),
+  //                       Text(
+  //                         t.label,
+  //                         style: TextStyle(
+  //                           fontSize: 9,
+  //                           color: _activeTab == t.tab
+  //                               ? const Color(0xFFF5C518)
+  //                               : Colors.black54,
+  //                           fontWeight: _activeTab == t.tab
+  //                               ? FontWeight.bold
+  //                               : FontWeight.normal,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+  //             )
+  //             .toList(),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildBottomTabBar() {
+    final isDarkMode = _isDarkMode;
     final tabs = [
       _TabData(BottomTab.text, Icons.text_fields, 'Text'),
       _TabData(BottomTab.frames, Icons.crop_square, 'Frames'),
@@ -7707,7 +8741,7 @@ class _TemplateCreateState extends State<TemplateCreate>
       _TabData(BottomTab.sticker, Icons.auto_fix_high, 'Effect'),
     ];
     return Container(
-      color: Colors.white,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       padding: const EdgeInsets.only(bottom: 4, top: 4),
       child: SafeArea(
         top: false,
@@ -7741,7 +8775,7 @@ class _TemplateCreateState extends State<TemplateCreate>
                           size: 22,
                           color: _activeTab == t.tab
                               ? const Color(0xFFF5C518)
-                              : Colors.black54,
+                              : (isDarkMode ? Colors.white54 : Colors.black54),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -7750,7 +8784,9 @@ class _TemplateCreateState extends State<TemplateCreate>
                             fontSize: 9,
                             color: _activeTab == t.tab
                                 ? const Color(0xFFF5C518)
-                                : Colors.black54,
+                                : (isDarkMode
+                                      ? Colors.white54
+                                      : Colors.black54),
                             fontWeight: _activeTab == t.tab
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -7769,7 +8805,70 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   // ── DOWNLOAD DIALOG ───────────────────────
 
+  // Widget _buildDownloadDialog() {
+  //   return Positioned.fill(
+  //     child: Container(
+  //       color: Colors.black45,
+  //       child: Center(
+  //         child: Container(
+  //           margin: const EdgeInsets.symmetric(horizontal: 40),
+  //           padding: const EdgeInsets.all(24),
+  //           decoration: BoxDecoration(
+  //             color: Colors.white,
+  //             borderRadius: BorderRadius.circular(12),
+  //           ),
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Text(
+  //                 _isAnimated ? 'Exporting Video…' : 'Saving to Gallery…',
+  //                 style: const TextStyle(
+  //                   fontSize: 16,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 16),
+  //               ClipRRect(
+  //                 borderRadius: BorderRadius.circular(4),
+  //                 child: LinearProgressIndicator(
+  //                   value: _downloadProgress,
+  //                   backgroundColor: Colors.grey.shade200,
+  //                   color: const Color(0xFFF5C518),
+  //                   minHeight: 8,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 8),
+  //               Row(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                 children: [
+  //                   Text(
+  //                     '${(_downloadProgress * 100).toInt()}%',
+  //                     style: const TextStyle(
+  //                       fontSize: 13,
+  //                       color: Colors.black54,
+  //                     ),
+  //                   ),
+  //                   Text(
+  //                     '${(_downloadProgress * 100).toInt()}/100',
+  //                     style: const TextStyle(
+  //                       fontSize: 13,
+  //                       color: Colors.black54,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildDownloadDialog() {
+    final isDarkMode = _isDarkMode;
+
     return Positioned.fill(
       child: Container(
         color: Colors.black45,
@@ -7778,7 +8877,7 @@ class _TemplateCreateState extends State<TemplateCreate>
             margin: const EdgeInsets.symmetric(horizontal: 40),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -7787,9 +8886,10 @@ class _TemplateCreateState extends State<TemplateCreate>
               children: [
                 Text(
                   _isAnimated ? 'Exporting Video…' : 'Saving to Gallery…',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -7797,7 +8897,9 @@ class _TemplateCreateState extends State<TemplateCreate>
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: _downloadProgress,
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: isDarkMode
+                        ? Colors.grey[800]
+                        : Colors.grey.shade200,
                     color: const Color(0xFFF5C518),
                     minHeight: 8,
                   ),
@@ -7808,16 +8910,16 @@ class _TemplateCreateState extends State<TemplateCreate>
                   children: [
                     Text(
                       '${(_downloadProgress * 100).toInt()}%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Colors.black54,
+                        color: isDarkMode ? Colors.white54 : Colors.black54,
                       ),
                     ),
                     Text(
                       '${(_downloadProgress * 100).toInt()}/100',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Colors.black54,
+                        color: isDarkMode ? Colors.white54 : Colors.black54,
                       ),
                     ),
                   ],
@@ -7984,7 +9086,7 @@ class _TemplateCreateState extends State<TemplateCreate>
           true, // Optional: allows sheet to expand if content is tall
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheet) => Container(
-          color: Colors.white,
+          color: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
           child: SingleChildScrollView(
             // Add this widget
             child: Column(
@@ -8309,6 +9411,194 @@ class _ZigzagPainter extends CustomPainter {
 //  TEXT EDITOR BOTTOM SHEET
 // ─────────────────────────────────────────────
 
+// class _TextEditorSheet extends StatefulWidget {
+//   final OverlayTextItem item;
+//   final ValueChanged<OverlayTextItem> onChanged;
+
+//   const _TextEditorSheet({
+//     Key? key,
+//     required this.item,
+//     required this.onChanged,
+//   }) : super(key: key);
+
+//   @override
+//   State<_TextEditorSheet> createState() => _TextEditorSheetState();
+// }
+
+// class _TextEditorSheetState extends State<_TextEditorSheet> {
+//   late TextEditingController _ctrl;
+//   late OverlayTextItem _current;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _current = widget.item;
+//     _ctrl = TextEditingController(text: widget.item.text);
+//   }
+
+//   @override
+//   void dispose() {
+//     _ctrl.dispose();
+//     super.dispose();
+//   }
+
+//   void _update(OverlayTextItem updated) {
+//     setState(() => _current = updated);
+//     widget.onChanged(updated);
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: EdgeInsets.only(
+//         bottom: MediaQuery.of(context).viewInsets.bottom,
+//       ),
+//       child: Container(
+//         decoration: const BoxDecoration(
+//           color: Colors.white,
+//           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+//         ),
+//         padding: const EdgeInsets.all(16),
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             Container(
+//               width: 40,
+//               height: 4,
+//               decoration: BoxDecoration(
+//                 color: Colors.grey.shade300,
+//                 borderRadius: BorderRadius.circular(2),
+//               ),
+//             ),
+//             const SizedBox(height: 12),
+//             TextField(
+//               controller: _ctrl,
+//               autofocus: true,
+//               maxLines: 3,
+//               minLines: 1,
+//               decoration: InputDecoration(
+//                 hintText: 'Enter text…',
+//                 border: OutlineInputBorder(
+//                   borderRadius: BorderRadius.circular(8),
+//                 ),
+//               ),
+//               onChanged: (v) => _update(_current.copyWith(text: v)),
+//             ),
+//             const SizedBox(height: 12),
+//             Row(
+//               children: [
+//                 const Text('Size', style: TextStyle(fontSize: 12)),
+//                 Expanded(
+//                   child: Slider(
+//                     value: _current.fontSize,
+//                     min: 10,
+//                     max: 72,
+//                     divisions: 62,
+//                     activeColor: const Color(0xFFF5C518),
+//                     label: _current.fontSize.toStringAsFixed(0),
+//                     onChanged: (v) => _update(_current.copyWith(fontSize: v)),
+//                   ),
+//                 ),
+//                 Text(
+//                   _current.fontSize.toStringAsFixed(0),
+//                   style: const TextStyle(fontSize: 12),
+//                 ),
+//               ],
+//             ),
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//               children: [
+//                 _chip(
+//                   'B',
+//                   _current.isBold,
+//                   () => _update(_current.copyWith(isBold: !_current.isBold)),
+//                   bold: true,
+//                 ),
+//                 _chip(
+//                   'I',
+//                   _current.isItalic,
+//                   () =>
+//                       _update(_current.copyWith(isItalic: !_current.isItalic)),
+//                   italic: true,
+//                 ),
+//                 _chip(
+//                   'U',
+//                   _current.isUnderline,
+//                   () => _update(
+//                     _current.copyWith(isUnderline: !_current.isUnderline),
+//                   ),
+//                   underline: true,
+//                 ),
+//                 _chip(
+//                   'Shadow',
+//                   _current.hasShadow,
+//                   () => _update(
+//                     _current.copyWith(hasShadow: !_current.hasShadow),
+//                   ),
+//                 ),
+//                 _chip(
+//                   'Border',
+//                   _current.hasBorder,
+//                   () => _update(
+//                     _current.copyWith(hasBorder: !_current.hasBorder),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//             const SizedBox(height: 12),
+//             SizedBox(
+//               width: double.infinity,
+//               child: ElevatedButton(
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: const Color(0xFFF5C518),
+//                   foregroundColor: Colors.black87,
+//                   shape: RoundedRectangleBorder(
+//                     borderRadius: BorderRadius.circular(8),
+//                   ),
+//                 ),
+//                 onPressed: () => Navigator.pop(context),
+//                 child: const Text('Done'),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _chip(
+//     String label,
+//     bool active,
+//     VoidCallback onTap, {
+//     bool bold = false,
+//     bool italic = false,
+//     bool underline = false,
+//   }) {
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: Container(
+//         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+//         decoration: BoxDecoration(
+//           color: active ? Colors.black87 : Colors.grey.shade100,
+//           borderRadius: BorderRadius.circular(6),
+//         ),
+//         child: Text(
+//           label,
+//           style: TextStyle(
+//             fontSize: 13,
+//             color: active ? Colors.white : Colors.black87,
+//             fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+//             fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+//             decoration: underline
+//                 ? TextDecoration.underline
+//                 : TextDecoration.none,
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 class _TextEditorSheet extends StatefulWidget {
   final OverlayTextItem item;
   final ValueChanged<OverlayTextItem> onChanged;
@@ -8347,14 +9637,16 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -8364,7 +9656,7 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -8374,76 +9666,37 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
               autofocus: true,
               maxLines: 3,
               minLines: 1,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
               decoration: InputDecoration(
                 hintText: 'Enter text…',
+                hintStyle: TextStyle(
+                  color: isDarkMode ? Colors.white54 : Colors.black45,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: isDarkMode ? Colors.white38 : Colors.grey.shade400,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: isDarkMode ? Colors.white38 : Colors.grey.shade400,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFF5C518),
+                    width: 2,
+                  ),
                 ),
               ),
               onChanged: (v) => _update(_current.copyWith(text: v)),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Text('Size', style: TextStyle(fontSize: 12)),
-                Expanded(
-                  child: Slider(
-                    value: _current.fontSize,
-                    min: 10,
-                    max: 72,
-                    divisions: 62,
-                    activeColor: const Color(0xFFF5C518),
-                    label: _current.fontSize.toStringAsFixed(0),
-                    onChanged: (v) => _update(_current.copyWith(fontSize: v)),
-                  ),
-                ),
-                Text(
-                  _current.fontSize.toStringAsFixed(0),
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _chip(
-                  'B',
-                  _current.isBold,
-                  () => _update(_current.copyWith(isBold: !_current.isBold)),
-                  bold: true,
-                ),
-                _chip(
-                  'I',
-                  _current.isItalic,
-                  () =>
-                      _update(_current.copyWith(isItalic: !_current.isItalic)),
-                  italic: true,
-                ),
-                _chip(
-                  'U',
-                  _current.isUnderline,
-                  () => _update(
-                    _current.copyWith(isUnderline: !_current.isUnderline),
-                  ),
-                  underline: true,
-                ),
-                _chip(
-                  'Shadow',
-                  _current.hasShadow,
-                  () => _update(
-                    _current.copyWith(hasShadow: !_current.hasShadow),
-                  ),
-                ),
-                _chip(
-                  'Border',
-                  _current.hasBorder,
-                  () => _update(
-                    _current.copyWith(hasBorder: !_current.hasBorder),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
+            SizedBox(height: 15),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -8467,7 +9720,8 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
   Widget _chip(
     String label,
     bool active,
-    VoidCallback onTap, {
+    VoidCallback onTap,
+    bool isDarkMode, {
     bool bold = false,
     bool italic = false,
     bool underline = false,
@@ -8477,14 +9731,18 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? Colors.black87 : Colors.grey.shade100,
+          color: active
+              ? (isDarkMode ? Colors.white : Colors.black87)
+              : (isDarkMode ? const Color(0xFF0F172A) : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13,
-            color: active ? Colors.white : Colors.black87,
+            color: active
+                ? (isDarkMode ? Colors.black87 : Colors.white)
+                : (isDarkMode ? Colors.white70 : Colors.black87),
             fontWeight: bold ? FontWeight.bold : FontWeight.normal,
             fontStyle: italic ? FontStyle.italic : FontStyle.normal,
             decoration: underline

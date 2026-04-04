@@ -31,19 +31,21 @@ class SmsProvider extends ChangeNotifier {
   String? get mobileNumber => _mobileNumber;
 
   /// LOGIN
-  Future<void> login(String mobile) async {
+  Future<bool> login(String mobile) async {
     _setLoading(true);
     _clearError();
 
     try {
       _mobileNumber = mobile;
-      _loginResponse = await _smsService.login(LoginRequest(mobile: mobile));
+      final res = await _smsService.login(LoginRequest(mobile: mobile));
 
-      if (_loginResponse?.statusCode != 200) {
+      if (!res) {
         _errorMessage = _loginResponse?.body;
       }
+      return true;
     } catch (e) {
       _errorMessage = e.toString();
+      return false;
     } finally {
       _setLoading(false);
     }
@@ -97,7 +99,7 @@ class SmsProvider extends ChangeNotifier {
   }
 
   /// RESEND OTP
-  Future<dynamic> resendOtp(String mobile) async {
+  Future<bool> resendOtp(String mobile) async {
     _setResending(true);
     _clearError();
 
@@ -106,12 +108,10 @@ class SmsProvider extends ChangeNotifier {
         ResendOtpRequest(mobile: mobile),
       );
 
-      if (response != null) return response.otp;
-      _errorMessage = 'Failed to resend OTP';
-      return null;
+      return response;
     } catch (e) {
       _errorMessage = e.toString();
-      return null;
+      return false;
     } finally {
       _setResending(false);
     }
