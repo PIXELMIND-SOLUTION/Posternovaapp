@@ -19,6 +19,7 @@ import 'package:posternova/models/create_poster_model.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/views/SecondPhase/poster_cropper_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 // ─────────────────────────────────────────────
 //  DATA MODELS
@@ -145,6 +146,18 @@ class BrandInfo {
   });
 }
 
+class UserAudioTrack {
+  final String name;
+  final String filePath;
+  final int durationInSeconds;
+
+  UserAudioTrack({
+    required this.name,
+    required this.filePath,
+    required this.durationInSeconds,
+  });
+}
+
 // ── OVERLAY BRAND ELEMENT (movable/deletable on canvas) ──
 class OverlayBrandItem {
   final String id;
@@ -253,6 +266,9 @@ class _TemplateCreateState extends State<TemplateCreate>
     with TickerProviderStateMixin {
   BottomTab _activeTab = BottomTab.text;
   bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
+
+  List<UserAudioTrack> _userAudioTracks = [];
+  String? _selectedUserAudioPath;
 
   Color _bgColor = const Color(0xFFF5F0E8);
 
@@ -664,6 +680,13 @@ class _TemplateCreateState extends State<TemplateCreate>
     _audioPlayer.dispose();
     _animController.dispose();
     _brandAnimController.dispose();
+    for (var track in _userAudioTracks) {
+      try {
+        File(track.filePath).deleteSync();
+      } catch (e) {
+        print('Error deleting audio file: $e');
+      }
+    }
     super.dispose();
   }
 
@@ -696,21 +719,86 @@ class _TemplateCreateState extends State<TemplateCreate>
     _openTextEditor(item);
   }
 
+  // Future<void> _playAudio(String? trackName) async {
+  //   try {
+  //     await _audioPlayer.stop();
+  //     await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+  //     if (trackName == null || trackName == 'No Audio') {
+  //       setState(() {
+  //         _isAudioPlaying = false;
+  //         _selectedAudio = null;
+  //       });
+  //       return;
+  //     }
+  //     final selectedTrack = _audioTracks.firstWhere(
+  //       (track) => track.name == trackName,
+  //     );
+  //     try {
+  //       await _audioPlayer.play(
+  //         AssetSource(selectedTrack.assetPath),
+  //         volume: 1.0,
+  //       );
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //       });
+  //       _audioPlayer.onPlayerComplete.listen((event) {
+  //         if (mounted) setState(() => _isAudioPlaying = false);
+  //       });
+  //     } catch (e) {
+  //       setState(() => _isAudioPlaying = false);
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //             content: Text('Could not play audio file.'),
+  //             backgroundColor: Colors.orange,
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } catch (e) {
+  //     setState(() => _isAudioPlaying = false);
+  //   }
+  // }
+
   Future<void> _playAudio(String? trackName) async {
     try {
       await _audioPlayer.stop();
       await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+
       if (trackName == null || trackName == 'No Audio') {
         setState(() {
           _isAudioPlaying = false;
           _selectedAudio = null;
+          _selectedUserAudioPath = null;
         });
         return;
       }
-      final selectedTrack = _audioTracks.firstWhere(
+
+      // Check if it's a user uploaded audio
+      final userTrack = _userAudioTracks.firstWhere(
         (track) => track.name == trackName,
+        orElse: () =>
+            UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
       );
-      try {
+
+      if (userTrack.filePath.isNotEmpty &&
+          await File(userTrack.filePath).exists()) {
+        // Play user uploaded audio
+        await _audioPlayer.play(
+          DeviceFileSource(userTrack.filePath),
+          volume: 1.0,
+        );
+        setState(() {
+          _isAudioPlaying = true;
+          _selectedAudio = trackName;
+          _selectedUserAudioPath = userTrack.filePath;
+        });
+      } else {
+        // Play static asset audio
+        final selectedTrack = _audioTracks.firstWhere(
+          (track) => track.name == trackName,
+        );
         await _audioPlayer.play(
           AssetSource(selectedTrack.assetPath),
           volume: 1.0,
@@ -718,23 +806,16 @@ class _TemplateCreateState extends State<TemplateCreate>
         setState(() {
           _isAudioPlaying = true;
           _selectedAudio = trackName;
+          _selectedUserAudioPath = null;
         });
-        _audioPlayer.onPlayerComplete.listen((event) {
-          if (mounted) setState(() => _isAudioPlaying = false);
-        });
-      } catch (e) {
-        setState(() => _isAudioPlaying = false);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not play audio file.'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
       }
+
+      _audioPlayer.onPlayerComplete.listen((event) {
+        if (mounted) setState(() => _isAudioPlaying = false);
+      });
     } catch (e) {
       setState(() => _isAudioPlaying = false);
+      _showErrorSnackBar('Could not play audio: $e');
     }
   }
 
@@ -794,6 +875,114 @@ class _TemplateCreateState extends State<TemplateCreate>
   //     }
   //   }
   // }
+
+  Future<void> _pickUserAudio() async {
+    try {
+      // Pick audio file
+      FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.audio,
+        allowMultiple: false,
+      );
+
+      if (result == null) return;
+
+      String filePath = result.files.single.path!;
+      String fileName = result.files.single.name;
+
+      // Get audio duration
+      final tempPlayer = AudioPlayer();
+      await tempPlayer.setSourceDeviceFile(filePath);
+      final duration = await tempPlayer.getDuration();
+      await tempPlayer.dispose();
+
+      if (duration == null) {
+        _showErrorSnackBar('Could not read audio duration');
+        return;
+      }
+
+      // Check if duration exceeds 30 seconds
+      if (duration.inSeconds > 30) {
+        _showErrorSnackBar(
+          'Audio too long! Maximum 30 seconds allowed.\n'
+          'Selected: ${duration.inSeconds} seconds',
+        );
+        return;
+      }
+
+      // Copy to app directory for persistence
+      final tempDir = await getTemporaryDirectory();
+      final savedPath =
+          '${tempDir.path}/user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3';
+      final File sourceFile = File(filePath);
+      await sourceFile.copy(savedPath);
+
+      // Add to user audio tracks list
+      final userTrack = UserAudioTrack(
+        name: fileName,
+        filePath: savedPath,
+        durationInSeconds: duration.inSeconds,
+      );
+
+      setState(() {
+        _userAudioTracks.add(userTrack);
+        _selectedUserAudioPath = savedPath;
+        _selectedAudio = fileName;
+      });
+
+      // Play the selected audio
+      await _playUserAudio(savedPath, fileName);
+
+      _showSuccessSnackBar(
+        'Audio added! Duration: ${duration.inSeconds} seconds',
+      );
+    } catch (e) {
+      print('Error picking audio: $e');
+      _showErrorSnackBar('Failed to pick audio: $e');
+    }
+  }
+
+  Future<void> _playUserAudio(String filePath, String fileName) async {
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+
+      await _audioPlayer.play(DeviceFileSource(filePath), volume: 1.0);
+
+      setState(() {
+        _isAudioPlaying = true;
+        _selectedAudio = fileName;
+      });
+
+      _audioPlayer.onPlayerComplete.listen((event) {
+        if (mounted) setState(() => _isAudioPlaying = false);
+      });
+    } catch (e) {
+      setState(() => _isAudioPlaying = false);
+      _showErrorSnackBar('Could not play audio: $e');
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   Future<void> _pickImage({bool forLogo = false}) async {
     try {
@@ -1073,6 +1262,278 @@ class _TemplateCreateState extends State<TemplateCreate>
   //   }
   // }
 
+  // void _startDownload() async {
+  //   setState(() {
+  //     _isDownloading = true;
+  //     _downloadProgress = 0;
+  //   });
+
+  //   try {
+  //     if (_isAnimated) {
+  //       setState(() => _downloadProgress = 0.05);
+
+  //       // ── tempDir at top ──
+  //       final tempDir = await getTemporaryDirectory();
+
+  //       final framesDir = Directory(
+  //         '${tempDir.path}/poster_frames_${DateTime.now().millisecondsSinceEpoch}',
+  //       );
+  //       await framesDir.create(recursive: true);
+
+  //       // ── Get audio duration first ──
+  //       int videoDurationSec = 3;
+
+  //       if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //         try {
+  //           const Map<String, String> audioAssets = {
+  //             'Upbeat Pop':
+  //                 'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+  //             'Calm Acoustic':
+  //                 'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+  //             'Corporate':
+  //                 'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+  //             'Cinematic':
+  //                 'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+  //             'Electronic':
+  //                 'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //             'Jazz Lounge':
+  //                 'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //           };
+  //           final String? assetPath = audioAssets[_selectedAudio];
+  //           if (assetPath != null) {
+  //             final ByteData audioData = await rootBundle.load(assetPath);
+  //             final File tempAudioProbe = File(
+  //               '${tempDir.path}/temp_audio_probe.mp3',
+  //             );
+  //             await tempAudioProbe.writeAsBytes(audioData.buffer.asUint8List());
+
+  //             final probe = AudioPlayer();
+  //             await probe.setSourceDeviceFile(tempAudioProbe.path);
+  //             final duration = await probe.getDuration();
+  //             await probe.dispose();
+
+  //             if (duration != null && duration.inSeconds > 0) {
+  //               videoDurationSec = duration.inSeconds;
+  //             }
+  //           }
+  //         } catch (e) {
+  //           print('Could not get audio duration: $e');
+  //         }
+  //       }
+
+  //       const int fps = 30;
+  //       final int totalFrames = videoDurationSec * fps;
+  //       final int animationDurationMs = videoDurationSec * 1000;
+
+  //       final bool wasAnimating = _animController.isAnimating;
+  //       if (wasAnimating) {
+  //         _animController.stop();
+  //         _brandAnimController.stop();
+  //       }
+
+  //       final int frameDelayMs = animationDurationMs ~/ totalFrames;
+
+  //       for (int i = 0; i < totalFrames; i++) {
+  //         final DateTime frameStartTime = DateTime.now();
+  //         final double progress =
+  //             (i % fps) / fps; // loops animation every second
+
+  //         double animValue;
+  //         switch (_selectedAnimation) {
+  //           case AnimationType.none:
+  //             animValue = 1.0;
+  //             break;
+  //           case AnimationType.rotate:
+  //           case AnimationType.flipIn:
+  //           case AnimationType.wobble:
+  //           case AnimationType.rollin:
+  //             animValue = progress;
+  //             break;
+  //           default:
+  //             animValue = (sin(progress * pi) * 0.5) + 0.5;
+  //         }
+  //         _animController.value = animValue;
+  //         _brandAnimController.value = progress;
+  //         setState(() {});
+  //         await WidgetsBinding.instance.endOfFrame;
+  //         await Future.delayed(const Duration(milliseconds: 5));
+
+  //         final RenderRepaintBoundary? boundary =
+  //             _posterKey.currentContext?.findRenderObject()
+  //                 as RenderRepaintBoundary?;
+  //         if (boundary == null) throw Exception('Poster context not found');
+  //         final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+  //         final ByteData? byteData = await image.toByteData(
+  //           format: ui.ImageByteFormat.png,
+  //         );
+  //         if (byteData == null) throw Exception('Frame $i encoding failed');
+  //         final File frameFile = File(
+  //           '${framesDir.path}/frame_${i.toString().padLeft(4, '0')}.png',
+  //         );
+  //         await frameFile.writeAsBytes(byteData.buffer.asUint8List());
+
+  //         final int elapsedMs = DateTime.now()
+  //             .difference(frameStartTime)
+  //             .inMilliseconds;
+  //         final int remainingDelay = frameDelayMs - elapsedMs;
+  //         if (remainingDelay > 0) {
+  //           await Future.delayed(Duration(milliseconds: remainingDelay));
+  //         }
+  //         setState(() => _downloadProgress = 0.05 + (i / totalFrames) * 0.55);
+  //       }
+
+  //       setState(() => _downloadProgress = 0.62);
+  //       String? audioFilePath;
+  //       if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //         try {
+  //           const Map<String, String> audioAssets = {
+  //             'Upbeat Pop':
+  //                 'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+  //             'Calm Acoustic':
+  //                 'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+  //             'Corporate':
+  //                 'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+  //             'Cinematic':
+  //                 'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+  //             'Electronic':
+  //                 'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //             'Jazz Lounge':
+  //                 'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //           };
+  //           final String? assetPath = audioAssets[_selectedAudio];
+  //           if (assetPath != null) {
+  //             final ByteData audioData = await rootBundle.load(assetPath);
+  //             final File tempAudioFile = File('${tempDir.path}/temp_audio.mp3');
+  //             await tempAudioFile.writeAsBytes(audioData.buffer.asUint8List());
+  //             audioFilePath = tempAudioFile.path;
+  //           }
+  //         } catch (e) {
+  //           print('Error loading audio: $e');
+  //         }
+  //       }
+
+  //       final String outputPath =
+  //           '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.mp4';
+  //       String ffmpegCommand;
+  //       if (audioFilePath != null && File(audioFilePath).existsSync()) {
+  //         ffmpegCommand =
+  //             '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+  //             '-i "$audioFilePath" '
+  //             '-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest '
+  //             '-crf 23 -preset fast '
+  //             '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //             '"$outputPath"';
+  //       } else {
+  //         ffmpegCommand =
+  //             '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+  //             '-c:v libx264 -pix_fmt yuv420p '
+  //             '-crf 23 -preset fast '
+  //             '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //             '"$outputPath"';
+  //       }
+
+  //       setState(() => _downloadProgress = 0.65);
+  //       final ffmpegSession = await FFmpegKit.execute(ffmpegCommand);
+  //       final ReturnCode? returnCode = await ffmpegSession.getReturnCode();
+  //       setState(() => _downloadProgress = 0.88);
+  //       if (!ReturnCode.isSuccess(returnCode)) {
+  //         throw Exception('FFmpeg failed to create video');
+  //       }
+
+  //       final bool hasAccess = await Gal.hasAccess();
+  //       if (!hasAccess) await Gal.requestAccess();
+  //       await Gal.putVideo(outputPath, album: 'Poster Editor');
+  //       setState(() => _downloadProgress = 1.0);
+
+  //       try {
+  //         await framesDir.delete(recursive: true);
+  //         if (audioFilePath != null) File(audioFilePath).deleteSync();
+  //       } catch (e) {}
+
+  //       if (wasAnimating && mounted) {
+  //         _animController.repeat(reverse: true);
+  //         _brandAnimController.repeat();
+  //       }
+
+  //       await Future.delayed(const Duration(milliseconds: 400));
+  //       if (mounted) {
+  //         setState(() => _isDownloading = false);
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text(
+  //               audioFilePath != null
+  //                   ? '✅ Video with audio saved to gallery!'
+  //                   : '✅ Video saved to gallery!',
+  //             ),
+  //             backgroundColor: const Color(0xFF2E7D32),
+  //             duration: const Duration(seconds: 3),
+  //           ),
+  //         );
+  //       }
+  //     } else {
+  //       // ── Static image download ──
+  //       setState(() => _downloadProgress = 0.2);
+  //       await Future.delayed(const Duration(milliseconds: 300));
+  //       final RenderRepaintBoundary? boundary =
+  //           _posterKey.currentContext?.findRenderObject()
+  //               as RenderRepaintBoundary?;
+  //       if (boundary == null)
+  //         throw Exception('Poster not found. Please try again.');
+
+  //       setState(() => _downloadProgress = 0.4);
+  //       await Future.delayed(const Duration(milliseconds: 100));
+  //       final double targetPixelRatio =
+  //           widget.posterSize.width / boundary.size.width;
+  //       final ui.Image image = await boundary.toImage(
+  //         pixelRatio: targetPixelRatio,
+  //       );
+  //       setState(() => _downloadProgress = 0.65);
+  //       final ByteData? byteData = await image.toByteData(
+  //         format: ui.ImageByteFormat.png,
+  //       );
+  //       if (byteData == null) throw Exception('Failed to encode image');
+  //       setState(() => _downloadProgress = 0.8);
+
+  //       final Uint8List pngBytes = byteData.buffer.asUint8List();
+  //       final Directory tempDir = await getTemporaryDirectory();
+  //       final String fileName =
+  //           'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+  //       final File file = File('${tempDir.path}/$fileName');
+  //       await file.writeAsBytes(pngBytes);
+  //       setState(() => _downloadProgress = 0.92);
+
+  //       final bool hasAccess = await Gal.hasAccess();
+  //       if (!hasAccess) await Gal.requestAccess();
+  //       await Gal.putImage(file.path, album: 'Poster Editor');
+  //       setState(() => _downloadProgress = 1.0);
+
+  //       await Future.delayed(const Duration(milliseconds: 400));
+  //       if (mounted) {
+  //         setState(() => _isDownloading = false);
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //             content: Text('✅ Image saved to gallery!'),
+  //             backgroundColor: Color(0xFF2E7D32),
+  //             duration: Duration(seconds: 3),
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } catch (e, stackTrace) {
+  //     print('Download error: $e\n$stackTrace');
+  //     if (mounted) {
+  //       setState(() => _isDownloading = false);
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Download failed: ${e.toString()}'),
+  //           backgroundColor: Colors.red,
+  //           duration: const Duration(seconds: 4),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
+
   void _startDownload() async {
     setState(() {
       _isDownloading = true;
@@ -1096,36 +1557,65 @@ class _TemplateCreateState extends State<TemplateCreate>
 
         if (_selectedAudio != null && _selectedAudio != 'No Audio') {
           try {
-            const Map<String, String> audioAssets = {
-              'Upbeat Pop':
-                  'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
-              'Calm Acoustic':
-                  'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
-              'Corporate':
-                  'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
-              'Cinematic':
-                  'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
-              'Electronic':
-                  'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-              'Jazz Lounge':
-                  'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-            };
-            final String? assetPath = audioAssets[_selectedAudio];
-            if (assetPath != null) {
-              final ByteData audioData = await rootBundle.load(assetPath);
-              final File tempAudioProbe = File(
-                '${tempDir.path}/temp_audio_probe.mp3',
-              );
-              await tempAudioProbe.writeAsBytes(audioData.buffer.asUint8List());
+            // Check for user audio first
+            final userTrack = _userAudioTracks.firstWhere(
+              (track) => track.name == _selectedAudio,
+              orElse: () =>
+                  UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+            );
 
+            Duration? duration;
+
+            if (userTrack.filePath.isNotEmpty &&
+                await File(userTrack.filePath).exists()) {
+              // User audio file
               final probe = AudioPlayer();
-              await probe.setSourceDeviceFile(tempAudioProbe.path);
-              final duration = await probe.getDuration();
+              await probe.setSourceDeviceFile(userTrack.filePath);
+              duration = await probe.getDuration();
               await probe.dispose();
+              print('User audio duration: ${duration?.inSeconds} seconds');
+            } else {
+              // Static audio asset
+              const Map<String, String> audioAssets = {
+                'Upbeat Pop':
+                    'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+                'Calm Acoustic':
+                    'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+                'Corporate':
+                    'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+                'Cinematic':
+                    'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+                'Electronic':
+                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                'Jazz Lounge':
+                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+              };
 
-              if (duration != null && duration.inSeconds > 0) {
-                videoDurationSec = duration.inSeconds;
+              final String? assetPath = audioAssets[_selectedAudio];
+              if (assetPath != null) {
+                final ByteData audioData = await rootBundle.load(assetPath);
+                final File tempAudioProbe = File(
+                  '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                );
+                await tempAudioProbe.writeAsBytes(
+                  audioData.buffer.asUint8List(),
+                );
+
+                final probe = AudioPlayer();
+                await probe.setSourceDeviceFile(tempAudioProbe.path);
+                duration = await probe.getDuration();
+                await probe.dispose();
+
+                // Clean up temp file
+                try {
+                  await tempAudioProbe.delete();
+                } catch (e) {}
               }
+            }
+
+            if (duration != null && duration.inSeconds > 0) {
+              videoDurationSec = duration.inSeconds;
+              print('Using audio duration: $videoDurationSec seconds');
             }
           } catch (e) {
             print('Could not get audio duration: $e');
@@ -1195,38 +1685,66 @@ class _TemplateCreateState extends State<TemplateCreate>
 
         setState(() => _downloadProgress = 0.62);
         String? audioFilePath;
+
         if (_selectedAudio != null && _selectedAudio != 'No Audio') {
           try {
-            const Map<String, String> audioAssets = {
-              'Upbeat Pop':
-                  'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
-              'Calm Acoustic':
-                  'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
-              'Corporate':
-                  'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
-              'Cinematic':
-                  'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
-              'Electronic':
-                  'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-              'Jazz Lounge':
-                  'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-            };
-            final String? assetPath = audioAssets[_selectedAudio];
-            if (assetPath != null) {
-              final ByteData audioData = await rootBundle.load(assetPath);
-              final File tempAudioFile = File('${tempDir.path}/temp_audio.mp3');
-              await tempAudioFile.writeAsBytes(audioData.buffer.asUint8List());
+            // First, check if it's a user-uploaded audio
+            final userTrack = _userAudioTracks.firstWhere(
+              (track) => track.name == _selectedAudio,
+              orElse: () =>
+                  UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+            );
+
+            if (userTrack.filePath.isNotEmpty &&
+                await File(userTrack.filePath).exists()) {
+              // This is a user-uploaded audio file - copy it to temp directory
+              final File sourceFile = File(userTrack.filePath);
+              final File tempAudioFile = File(
+                '${tempDir.path}/temp_user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+              );
+              await sourceFile.copy(tempAudioFile.path);
               audioFilePath = tempAudioFile.path;
+              print('Using user audio file: ${userTrack.name}');
+            } else {
+              // Check static audio assets
+              const Map<String, String> audioAssets = {
+                'Upbeat Pop':
+                    'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+                'Calm Acoustic':
+                    'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+                'Corporate':
+                    'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+                'Cinematic':
+                    'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+                'Electronic':
+                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                'Jazz Lounge':
+                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+              };
+
+              final String? assetPath = audioAssets[_selectedAudio];
+              if (assetPath != null) {
+                final ByteData audioData = await rootBundle.load(assetPath);
+                final File tempAudioFile = File(
+                  '${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                );
+                await tempAudioFile.writeAsBytes(
+                  audioData.buffer.asUint8List(),
+                );
+                audioFilePath = tempAudioFile.path;
+                print('Using static audio file: $_selectedAudio');
+              }
             }
           } catch (e) {
-            print('Error loading audio: $e');
+            print('Error loading audio for video: $e');
           }
         }
 
         final String outputPath =
             '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.mp4';
         String ffmpegCommand;
-        if (audioFilePath != null && File(audioFilePath).existsSync()) {
+
+        if (audioFilePath != null && await File(audioFilePath).exists()) {
           ffmpegCommand =
               '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
               '-i "$audioFilePath" '
@@ -1247,6 +1765,7 @@ class _TemplateCreateState extends State<TemplateCreate>
         final ffmpegSession = await FFmpegKit.execute(ffmpegCommand);
         final ReturnCode? returnCode = await ffmpegSession.getReturnCode();
         setState(() => _downloadProgress = 0.88);
+
         if (!ReturnCode.isSuccess(returnCode)) {
           throw Exception('FFmpeg failed to create video');
         }
@@ -1258,7 +1777,12 @@ class _TemplateCreateState extends State<TemplateCreate>
 
         try {
           await framesDir.delete(recursive: true);
-          if (audioFilePath != null) File(audioFilePath).deleteSync();
+          if (audioFilePath != null) {
+            final audioFile = File(audioFilePath);
+            if (await audioFile.exists()) {
+              await audioFile.delete();
+            }
+          }
         } catch (e) {}
 
         if (wasAnimating && mounted) {
@@ -1285,6 +1809,7 @@ class _TemplateCreateState extends State<TemplateCreate>
         // ── Static image download ──
         setState(() => _downloadProgress = 0.2);
         await Future.delayed(const Duration(milliseconds: 300));
+
         final RenderRepaintBoundary? boundary =
             _posterKey.currentContext?.findRenderObject()
                 as RenderRepaintBoundary?;
@@ -1293,32 +1818,35 @@ class _TemplateCreateState extends State<TemplateCreate>
 
         setState(() => _downloadProgress = 0.4);
         await Future.delayed(const Duration(milliseconds: 100));
+
         final double targetPixelRatio =
             widget.posterSize.width / boundary.size.width;
         final ui.Image image = await boundary.toImage(
           pixelRatio: targetPixelRatio,
         );
+
         setState(() => _downloadProgress = 0.65);
         final ByteData? byteData = await image.toByteData(
           format: ui.ImageByteFormat.png,
         );
         if (byteData == null) throw Exception('Failed to encode image');
-        setState(() => _downloadProgress = 0.8);
 
+        setState(() => _downloadProgress = 0.8);
         final Uint8List pngBytes = byteData.buffer.asUint8List();
         final Directory tempDir = await getTemporaryDirectory();
         final String fileName =
             'poster_${DateTime.now().millisecondsSinceEpoch}.png';
         final File file = File('${tempDir.path}/$fileName');
         await file.writeAsBytes(pngBytes);
-        setState(() => _downloadProgress = 0.92);
 
+        setState(() => _downloadProgress = 0.92);
         final bool hasAccess = await Gal.hasAccess();
         if (!hasAccess) await Gal.requestAccess();
         await Gal.putImage(file.path, album: 'Poster Editor');
-        setState(() => _downloadProgress = 1.0);
 
+        setState(() => _downloadProgress = 1.0);
         await Future.delayed(const Duration(milliseconds: 400));
+
         if (mounted) {
           setState(() => _isDownloading = false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1621,27 +2149,27 @@ class _TemplateCreateState extends State<TemplateCreate>
                     : Colors.black.withOpacity(0.2),
               ),
               const SizedBox(height: 10),
-              Text(
-                '${widget.posterSize.width.toInt()} × ${widget.posterSize.height.toInt()} px',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDarkMode
-                      ? Colors.white
-                      : Colors.black.withOpacity(0.25),
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Upload an image to get started',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isDarkMode
-                      ? Colors.white
-                      : Colors.black.withOpacity(0.15),
-                ),
-              ),
+              // Text(
+              //   '${widget.posterSize.width.toInt()} × ${widget.posterSize.height.toInt()} px',
+              //   style: TextStyle(
+              //     fontSize: 13,
+              //     color: isDarkMode
+              //         ? Colors.white
+              //         : Colors.black.withOpacity(0.25),
+              //     fontWeight: FontWeight.w500,
+              //     letterSpacing: 0.5,
+              //   ),
+              // ),
+              // const SizedBox(height: 4),
+              // Text(
+              //   'Upload an image to get started',
+              //   style: TextStyle(
+              //     fontSize: 11,
+              //     color: isDarkMode
+              //         ? Colors.white
+              //         : Colors.black.withOpacity(0.15),
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -7666,9 +8194,250 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   // ── AUDIO PANEL ───────────────────────────
 
+  // Widget _buildAudioPanel(bool isDarkMode) {
+  //   return Container(
+  //     height: 180,
+  //     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Padding(
+  //           padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+  //           child: Text(
+  //             'Audio',
+  //             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+  //           ),
+  //         ),
+  //         Expanded(
+  //           child: ListView.builder(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             itemCount: _audioTracks.length + 1,
+  //             itemBuilder: (_, i) {
+  //               if (i == 0)
+  //                 return GestureDetector(
+  //                   onTap: () {
+  //                     setState(() => _selectedAudio = null);
+  //                     _playAudio(null);
+  //                   },
+  //                   child: _audioChip('No Audio', _selectedAudio == null),
+  //                 );
+  //               final track = _audioTracks[i - 1];
+  //               return GestureDetector(
+  //                 onTap: () {
+  //                   setState(() => _selectedAudio = track.name);
+  //                   _playAudio(track.name);
+  //                 },
+  //                 child: _audioChip(track.name, _selectedAudio == track.name),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         if (_selectedAudio != null)
+  //           Padding(
+  //             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
+  //                   size: 16,
+  //                   color: _isAudioPlaying ? Colors.green : Colors.amber,
+  //                 ),
+  //                 const SizedBox(width: 8),
+  //                 Expanded(
+  //                   child: Text(
+  //                     _isAudioPlaying
+  //                         ? 'Playing: $_selectedAudio'
+  //                         : 'Selected: $_selectedAudio',
+  //                     style: TextStyle(
+  //                       fontSize: 11,
+  //                       color: _isAudioPlaying ? Colors.green : Colors.black54,
+  //                     ),
+  //                     overflow: TextOverflow.ellipsis,
+  //                   ),
+  //                 ),
+  //                 if (_isAudioPlaying)
+  //                   IconButton(
+  //                     icon: const Icon(Icons.stop, size: 18),
+  //                     onPressed: () async {
+  //                       await _audioPlayer.stop();
+  //                       setState(() => _isAudioPlaying = false);
+  //                     },
+  //                   ),
+  //                 const Icon(Icons.audiotrack, size: 18, color: Colors.green),
+  //               ],
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // Widget _buildAudioPanel(bool isDarkMode) {
+  //   return Container(
+  //     height: 220, // Increased height to accommodate user uploads
+  //     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Padding(
+  //           padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+  //           child: Text(
+  //             'Audio',
+  //             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+  //           ),
+  //         ),
+  //         Expanded(
+  //           child: ListView(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             children: [
+  //               // No Audio option
+  //               GestureDetector(
+  //                 onTap: () {
+  //                   setState(() => _selectedAudio = null);
+  //                   _playAudio(null);
+  //                 },
+  //                 child: _audioChip('No Audio', _selectedAudio == null),
+  //               ),
+
+  //               // Static audio tracks
+  //               ..._audioTracks.map(
+  //                 (track) => GestureDetector(
+  //                   onTap: () {
+  //                     setState(() => _selectedAudio = track.name);
+  //                     _playAudio(track.name);
+  //                   },
+  //                   child: _audioChip(track.name, _selectedAudio == track.name),
+  //                 ),
+  //               ),
+
+  //               // User uploaded audio tracks
+  //               ..._userAudioTracks.map(
+  //                 (userTrack) => Stack(
+  //                   children: [
+  //                     GestureDetector(
+  //                       onTap: () {
+  //                         setState(() => _selectedAudio = userTrack.name);
+  //                         _playAudio(userTrack.name);
+  //                       },
+  //                       child: _audioChip(
+  //                         '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+  //                         _selectedAudio == userTrack.name,
+  //                       ),
+  //                     ),
+  //                     // Delete button for user audio
+  //                     Positioned(
+  //                       top: -4,
+  //                       right: -4,
+  //                       child: GestureDetector(
+  //                         onTap: () {
+  //                           _showDeleteAudioConfirmation(userTrack);
+  //                         },
+  //                         child: Container(
+  //                           width: 18,
+  //                           height: 18,
+  //                           decoration: const BoxDecoration(
+  //                             color: Colors.red,
+  //                             shape: BoxShape.circle,
+  //                           ),
+  //                           child: const Icon(
+  //                             Icons.close,
+  //                             size: 12,
+  //                             color: Colors.white,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+
+  //               // Upload button
+  //               GestureDetector(
+  //                 onTap: _pickUserAudio,
+  //                 child: Container(
+  //                   margin: const EdgeInsets.only(right: 10),
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 14,
+  //                     vertical: 8,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     color: const Color(0xFFF5C518),
+  //                     borderRadius: BorderRadius.circular(20),
+  //                     border: Border.all(
+  //                       color: const Color(0xFFF5C518),
+  //                       width: 1,
+  //                     ),
+  //                   ),
+  //                   child: Row(
+  //                     children: [
+  //                       const Icon(
+  //                         Icons.upload_file,
+  //                         size: 14,
+  //                         color: Colors.black87,
+  //                       ),
+  //                       const SizedBox(width: 4),
+  //                       Text(
+  //                         'Upload',
+  //                         style: TextStyle(
+  //                           fontSize: 11,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: Colors.black87,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         if (_selectedAudio != null)
+  //           Padding(
+  //             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
+  //                   size: 16,
+  //                   color: _isAudioPlaying ? Colors.green : Colors.amber,
+  //                 ),
+  //                 const SizedBox(width: 8),
+  //                 Expanded(
+  //                   child: Text(
+  //                     _isAudioPlaying
+  //                         ? 'Playing: $_selectedAudio'
+  //                         : 'Selected: $_selectedAudio',
+  //                     style: TextStyle(
+  //                       fontSize: 11,
+  //                       color: _isAudioPlaying
+  //                           ? Colors.green
+  //                           : (isDarkMode ? Colors.white54 : Colors.black54),
+  //                     ),
+  //                     overflow: TextOverflow.ellipsis,
+  //                   ),
+  //                 ),
+  //                 if (_isAudioPlaying)
+  //                   IconButton(
+  //                     icon: const Icon(Icons.stop, size: 18),
+  //                     onPressed: () async {
+  //                       await _audioPlayer.stop();
+  //                       setState(() => _isAudioPlaying = false);
+  //                     },
+  //                   ),
+  //                 const Icon(Icons.audiotrack, size: 18, color: Colors.green),
+  //               ],
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildAudioPanel(bool isDarkMode) {
     return Container(
-      height: 180,
+      height: 220,
       color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -7681,28 +8450,109 @@ class _TemplateCreateState extends State<TemplateCreate>
             ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _audioTracks.length + 1,
-              itemBuilder: (_, i) {
-                if (i == 0)
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedAudio = null);
-                      _playAudio(null);
-                    },
-                    child: _audioChip('No Audio', _selectedAudio == null),
-                  );
-                final track = _audioTracks[i - 1];
-                return GestureDetector(
+              children: [
+                // 1. No Audio option (always first)
+                GestureDetector(
                   onTap: () {
-                    setState(() => _selectedAudio = track.name);
-                    _playAudio(track.name);
+                    setState(() => _selectedAudio = null);
+                    _playAudio(null);
                   },
-                  child: _audioChip(track.name, _selectedAudio == track.name),
-                );
-              },
+                  child: _audioChip('No Audio', _selectedAudio == null),
+                ),
+
+                // 2. Upload button (right after No Audio)
+                GestureDetector(
+                  onTap: _pickUserAudio,
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5C518),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFF5C518),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.upload_file,
+                          size: 14,
+                          color: Colors.black87,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Upload',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // 3. User uploaded audio tracks
+                ..._userAudioTracks.map(
+                  (userTrack) => Stack(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          setState(() => _selectedAudio = userTrack.name);
+                          _playAudio(userTrack.name);
+                        },
+                        child: _audioChip(
+                          '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+                          _selectedAudio == userTrack.name,
+                        ),
+                      ),
+                      // Delete button for user audio
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: GestureDetector(
+                          onTap: () {
+                            _showDeleteAudioConfirmation(userTrack);
+                          },
+                          child: Container(
+                            width: 18,
+                            height: 18,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 4. Static audio tracks (after user uploads)
+                ..._audioTracks.map(
+                  (track) => GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedAudio = track.name);
+                      _playAudio(track.name);
+                    },
+                    child: _audioChip(track.name, _selectedAudio == track.name),
+                  ),
+                ),
+              ],
             ),
           ),
           if (_selectedAudio != null)
@@ -7723,7 +8573,9 @@ class _TemplateCreateState extends State<TemplateCreate>
                           : 'Selected: $_selectedAudio',
                       style: TextStyle(
                         fontSize: 11,
-                        color: _isAudioPlaying ? Colors.green : Colors.black54,
+                        color: _isAudioPlaying
+                            ? Colors.green
+                            : (isDarkMode ? Colors.white54 : Colors.black54),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -7742,6 +8594,123 @@ class _TemplateCreateState extends State<TemplateCreate>
             ),
         ],
       ),
+    );
+  }
+
+  void _showDeleteAudioConfirmation(UserAudioTrack userTrack) {
+    final isDarkMode = _isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.delete_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Delete Audio?',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Are you sure you want to delete "${userTrack.name}"?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDarkMode
+                              ? Colors.white70
+                              : Colors.black87,
+                          side: BorderSide(
+                            color: isDarkMode
+                                ? Colors.white38
+                                : Colors.grey.shade400,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          // Delete the file
+                          try {
+                            final file = File(userTrack.filePath);
+                            if (await file.exists()) {
+                              await file.delete();
+                            }
+                          } catch (e) {
+                            print('Error deleting file: $e');
+                          }
+
+                          setState(() {
+                            _userAudioTracks.removeWhere(
+                              (t) => t.filePath == userTrack.filePath,
+                            );
+                            if (_selectedAudio == userTrack.name) {
+                              _selectedAudio = null;
+                              _audioPlayer.stop();
+                              _isAudioPlaying = false;
+                            }
+                          });
+
+                          Navigator.pop(context);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Audio deleted'),
+                              backgroundColor: Colors.green,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
