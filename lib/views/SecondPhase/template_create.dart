@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
 import 'dart:io';
 import 'package:flutter/rendering.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
@@ -25,7 +26,7 @@ import 'package:file_picker/file_picker.dart';
 //  DATA MODELS
 // ─────────────────────────────────────────────
 
-enum BottomTab { text, frames, audio, animation, brandInfo, sticker }
+enum BottomTab { text, frames, audio, animation, brandInfo, sticker, fonts }
 
 enum AnimationType {
   none,
@@ -41,7 +42,27 @@ enum AnimationType {
   rollin,
 }
 
-enum EffectType { none, blur, grayscale, sepia, brightness, contrast }
+enum EffectType {
+  none,
+  blur,
+  grayscale,
+  sepia,
+  brightness,
+  contrast,
+  // New trending effects
+  ambient,
+  hyperChromatic,
+  vintage,
+  chromaticAberration,
+  grainyFilm,
+  dreamyGlow,
+  vaporwave,
+  cyberpunk,
+  cinematic,
+  polaroid,
+  duotone,
+  glitch,
+}
 
 enum BrandElementType { logo, name, phone, address }
 
@@ -79,6 +100,66 @@ class BrandElement {
   }
 }
 
+// Scanline painter for Glitch effect
+class _ScanlinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black.withOpacity(0.15)
+      ..strokeWidth = 2;
+
+    for (double y = 0; y < size.height; y += 4) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ScanlinePainter old) => false;
+}
+
+// Grid painter for Vaporwave effect
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..strokeWidth = 1;
+
+    // Draw vertical lines
+    for (double x = 0; x < size.width; x += 50) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    // Draw horizontal lines
+    for (double y = 0; y < size.height; y += 50) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    // Draw perspective lines (optional)
+    final perspectivePaint = Paint()
+      ..color = const ui.Color.fromARGB(255, 255, 133, 33).withOpacity(0.2)
+      ..strokeWidth = 2;
+
+    for (int i = 0; i < 5; i++) {
+      double x = size.width / 2;
+      double y = size.height * (0.7 + i * 0.05);
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x + 100, size.height),
+        perspectivePaint,
+      );
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x - 100, size.height),
+        perspectivePaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridPainter old) => false;
+}
+
 class OverlayTextItem {
   String id, text;
   Offset position;
@@ -87,6 +168,7 @@ class OverlayTextItem {
   bool hasBorder, hasShadow, isBold, isItalic, isUnderline;
   TextAlign align;
   double rotation;
+  String fontFamily; // Add this line
 
   OverlayTextItem({
     required this.id,
@@ -102,6 +184,7 @@ class OverlayTextItem {
     this.isUnderline = false,
     this.align = TextAlign.left,
     this.rotation = 0,
+    this.fontFamily = 'Montserrat', // Add this with default
   });
 
   OverlayTextItem copyWith({
@@ -117,6 +200,7 @@ class OverlayTextItem {
     bool? isUnderline,
     TextAlign? align,
     double? rotation,
+    String? fontFamily,
   }) {
     return OverlayTextItem(
       id: id,
@@ -132,6 +216,7 @@ class OverlayTextItem {
       isUnderline: isUnderline ?? this.isUnderline,
       align: align ?? this.align,
       rotation: rotation ?? this.rotation,
+      fontFamily: fontFamily ?? this.fontFamily,
     );
   }
 }
@@ -250,6 +335,127 @@ class FrameStyle {
   });
 }
 
+class GFontEntry {
+  final String name;
+  final TextStyle Function({TextStyle? textStyle}) font;
+
+  GFontEntry(this.name, this.font);
+}
+
+final List<GFontEntry> kGoogleFonts = [
+  // Sans Serif
+  GFontEntry('Montserrat', GoogleFonts.montserrat),
+  GFontEntry('Poppins', GoogleFonts.poppins),
+  GFontEntry('Inter', GoogleFonts.inter),
+  GFontEntry('Roboto', GoogleFonts.roboto),
+  GFontEntry('Open Sans', GoogleFonts.openSans),
+  GFontEntry('Lato', GoogleFonts.lato),
+  GFontEntry('Nunito', GoogleFonts.nunito),
+  GFontEntry('Raleway', GoogleFonts.raleway),
+  GFontEntry('Work Sans', GoogleFonts.workSans),
+  GFontEntry('Quicksand', GoogleFonts.quicksand),
+  GFontEntry('Josefin Sans', GoogleFonts.josefinSans),
+  GFontEntry('DM Sans', GoogleFonts.dmSans),
+  GFontEntry('Plus Jakarta Sans', GoogleFonts.plusJakartaSans),
+  GFontEntry('Urbanist', GoogleFonts.urbanist),
+  GFontEntry('Manrope', GoogleFonts.manrope),
+
+  // Serif
+  GFontEntry('Playfair Display', GoogleFonts.playfairDisplay),
+  GFontEntry('Merriweather', GoogleFonts.merriweather),
+  GFontEntry('Cormorant Garamond', GoogleFonts.cormorantGaramond),
+  GFontEntry('Lora', GoogleFonts.lora),
+  GFontEntry('Crimson Text', GoogleFonts.crimsonText),
+  GFontEntry('PT Serif', GoogleFonts.ptSerif),
+  GFontEntry('Libre Baskerville', GoogleFonts.libreBaskerville),
+  GFontEntry('Cinzel', GoogleFonts.cinzel),
+  GFontEntry('Abril Fatface', GoogleFonts.abrilFatface),
+
+  // Display & Decorative
+  GFontEntry('Bebas Neue', GoogleFonts.bebasNeue),
+  GFontEntry('Righteous', GoogleFonts.righteous),
+  GFontEntry('Oswald', GoogleFonts.oswald),
+  GFontEntry('Anton', GoogleFonts.anton),
+  GFontEntry('Archivo Black', GoogleFonts.archivoBlack),
+  GFontEntry('Titan One', GoogleFonts.titanOne),
+  GFontEntry('Permanent Marker', GoogleFonts.permanentMarker),
+  GFontEntry('Lobster', GoogleFonts.lobster),
+  GFontEntry('Pacifico', GoogleFonts.pacifico),
+
+  // Handwriting & Script
+  GFontEntry('Dancing Script', GoogleFonts.dancingScript),
+  GFontEntry('Satisfy', GoogleFonts.satisfy),
+  GFontEntry('Shadows Into Light', GoogleFonts.shadowsIntoLight),
+  GFontEntry('Caveat', GoogleFonts.caveat),
+  GFontEntry('Amatic SC', GoogleFonts.amaticSc),
+  GFontEntry('Indie Flower', GoogleFonts.indieFlower),
+
+  // Monospace
+  GFontEntry('Source Code Pro', GoogleFonts.sourceCodePro),
+  GFontEntry('JetBrains Mono', GoogleFonts.jetBrainsMono),
+  GFontEntry('Fira Code', GoogleFonts.firaCode),
+  GFontEntry('Roboto Mono', GoogleFonts.robotoMono),
+
+  // 2026 Trending
+  GFontEntry('Exo 2', GoogleFonts.exo2),
+  GFontEntry('Orbitron', GoogleFonts.orbitron),
+  GFontEntry('Audiowide', GoogleFonts.audiowide),
+];
+
+Map<String, List<GFontEntry>> _getFontCategories() {
+  return {
+    'Sans Serif': [
+      GFontEntry('Montserrat', GoogleFonts.montserrat),
+      GFontEntry('Poppins', GoogleFonts.poppins),
+      GFontEntry('Inter', GoogleFonts.inter),
+      GFontEntry('Roboto', GoogleFonts.roboto),
+      GFontEntry('Open Sans', GoogleFonts.openSans),
+      GFontEntry('Lato', GoogleFonts.lato),
+      GFontEntry('Nunito', GoogleFonts.nunito),
+      GFontEntry('Raleway', GoogleFonts.raleway),
+    ],
+    'Serif': [
+      GFontEntry('Playfair Display', GoogleFonts.playfairDisplay),
+      GFontEntry('Merriweather', GoogleFonts.merriweather),
+      GFontEntry('Cinzel', GoogleFonts.cinzel),
+      GFontEntry('Abril Fatface', GoogleFonts.abrilFatface),
+    ],
+    'Display & Decorative': [
+      GFontEntry('Bebas Neue', GoogleFonts.bebasNeue),
+      GFontEntry('Righteous', GoogleFonts.righteous),
+      GFontEntry('Oswald', GoogleFonts.oswald),
+      GFontEntry('Anton', GoogleFonts.anton),
+      GFontEntry('Archivo Black', GoogleFonts.archivoBlack),
+      GFontEntry('Titan One', GoogleFonts.titanOne),
+      GFontEntry('Permanent Marker', GoogleFonts.permanentMarker),
+      GFontEntry('Lobster', GoogleFonts.lobster),
+      GFontEntry('Pacifico', GoogleFonts.pacifico),
+      GFontEntry('Paytone One', GoogleFonts.paytoneOne),
+    ],
+    'Handwriting & Script': [
+      GFontEntry('Dancing Script', GoogleFonts.dancingScript),
+      GFontEntry('Satisfy', GoogleFonts.satisfy),
+      GFontEntry('Shadows Into Light', GoogleFonts.shadowsIntoLight),
+      GFontEntry('Caveat', GoogleFonts.caveat),
+    ],
+    'Monospace': [
+      GFontEntry('Source Code Pro', GoogleFonts.sourceCodePro),
+      GFontEntry('JetBrains Mono', GoogleFonts.jetBrainsMono),
+    ],
+    '2026 Trending': [
+      GFontEntry('Inter', GoogleFonts.inter),
+      GFontEntry('Sora', GoogleFonts.sora),
+      GFontEntry('Outfit', GoogleFonts.outfit),
+      GFontEntry('Urbanist', GoogleFonts.urbanist),
+      GFontEntry('Space Grotesk', GoogleFonts.spaceGrotesk),
+      GFontEntry('Plus Jakarta Sans', GoogleFonts.plusJakartaSans),
+      GFontEntry('Manrope', GoogleFonts.manrope),
+      GFontEntry('Syne', GoogleFonts.syne),
+      GFontEntry('Red Hat Display', GoogleFonts.redHatDisplay),
+    ],
+  };
+}
+
 // ─────────────────────────────────────────────
 //  MAIN SCREEN
 // ─────────────────────────────────────────────
@@ -266,6 +472,8 @@ class _TemplateCreateState extends State<TemplateCreate>
     with TickerProviderStateMixin {
   BottomTab _activeTab = BottomTab.text;
   bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
+
+  // Add these with your other state variables
 
   List<UserAudioTrack> _userAudioTracks = [];
   String? _selectedUserAudioPath;
@@ -290,6 +498,43 @@ class _TemplateCreateState extends State<TemplateCreate>
   int _selectedFrame = -1;
   String? _uploadedImagePath;
   String? _uploadedLogoPath;
+
+  Map<String, List<GFontEntry>> _getFontCategories() {
+    return {
+      'Sans Serif': [
+        GFontEntry('Montserrat', GoogleFonts.montserrat),
+        GFontEntry('Poppins', GoogleFonts.poppins),
+        GFontEntry('Inter', GoogleFonts.inter),
+        GFontEntry('Roboto', GoogleFonts.roboto),
+        GFontEntry('Open Sans', GoogleFonts.openSans),
+        GFontEntry('Lato', GoogleFonts.lato),
+        GFontEntry('Nunito', GoogleFonts.nunito),
+        GFontEntry('Raleway', GoogleFonts.raleway),
+      ],
+      'Serif': [
+        GFontEntry('Playfair Display', GoogleFonts.playfairDisplay),
+        GFontEntry('Merriweather', GoogleFonts.merriweather),
+        GFontEntry('Cinzel', GoogleFonts.cinzel),
+        GFontEntry('Abril Fatface', GoogleFonts.abrilFatface),
+      ],
+      'Display': [
+        GFontEntry('Bebas Neue', GoogleFonts.bebasNeue),
+        GFontEntry('Righteous', GoogleFonts.righteous),
+        GFontEntry('Oswald', GoogleFonts.oswald),
+        GFontEntry('Anton', GoogleFonts.anton),
+        GFontEntry('Archivo Black', GoogleFonts.archivoBlack),
+      ],
+      'Script': [
+        GFontEntry('Dancing Script', GoogleFonts.dancingScript),
+        GFontEntry('Satisfy', GoogleFonts.satisfy),
+        GFontEntry('Caveat', GoogleFonts.caveat),
+      ],
+      'Monospace': [
+        GFontEntry('Source Code Pro', GoogleFonts.sourceCodePro),
+        GFontEntry('JetBrains Mono', GoogleFonts.jetBrainsMono),
+      ],
+    };
+  }
 
   final List<FrameStyle> _frames = const [
     FrameStyle(
@@ -819,6 +1064,23 @@ class _TemplateCreateState extends State<TemplateCreate>
     }
   }
 
+  // void _openTextEditor(OverlayTextItem item) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (_) => _TextEditorSheet(
+  //       item: item,
+  //       onChanged: (updated) {
+  //         setState(() {
+  //           final idx = _texts.indexWhere((t) => t.id == updated.id);
+  //           if (idx != -1) _texts[idx] = updated;
+  //         });
+  //       },
+  //     ),
+  //   );
+  // }
+
   void _openTextEditor(OverlayTextItem item) {
     showModalBottomSheet(
       context: context,
@@ -831,6 +1093,22 @@ class _TemplateCreateState extends State<TemplateCreate>
             final idx = _texts.indexWhere((t) => t.id == updated.id);
             if (idx != -1) _texts[idx] = updated;
           });
+        },
+        onDelete: () {
+          setState(() {
+            _texts.removeWhere((t) => t.id == item.id);
+            if (_selectedTextId == item.id) {
+              _selectedTextId = null;
+            }
+          });
+          // Show success snackbar
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Text deleted'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
         },
       ),
     );
@@ -2114,18 +2392,151 @@ class _TemplateCreateState extends State<TemplateCreate>
     );
   }
 
+  // Widget _buildPosterBackground() {
+  //   Widget base;
+  //   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+  //   if (_uploadedImagePath != null) {
+  //     // Image is already cropped to exact poster ratio — use BoxFit.fill
+  //     base = Image.file(
+  //       File(_uploadedImagePath!),
+  //       fit: BoxFit.fill, // fill exactly, no letterboxing
+  //       width: double.infinity,
+  //       height: double.infinity,
+  //       gaplessPlayback: true, // prevents flicker on image change
+  //     );
+  //   } else {
+  //     base = Container(
+  //       width: double.infinity,
+  //       height: double.infinity,
+  //       color: isDarkMode ? Colors.black.withOpacity(0.25) : Colors.white,
+  //       child: Center(
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Icon(
+  //               Icons.add_photo_alternate_outlined,
+  //               size: 48,
+  //               color: isDarkMode
+  //                   ? const ui.Color.fromARGB(
+  //                       255,
+  //                       255,
+  //                       255,
+  //                       255,
+  //                     ).withOpacity(0.3)
+  //                   : Colors.black.withOpacity(0.2),
+  //             ),
+  //             const SizedBox(height: 10),
+  //             // Text(
+  //             //   '${widget.posterSize.width.toInt()} × ${widget.posterSize.height.toInt()} px',
+  //             //   style: TextStyle(
+  //             //     fontSize: 13,
+  //             //     color: isDarkMode
+  //             //         ? Colors.white
+  //             //         : Colors.black.withOpacity(0.25),
+  //             //     fontWeight: FontWeight.w500,
+  //             //     letterSpacing: 0.5,
+  //             //   ),
+  //             // ),
+  //             // const SizedBox(height: 4),
+  //             // Text(
+  //             //   'Upload an image to get started',
+  //             //   style: TextStyle(
+  //             //     fontSize: 11,
+  //             //     color: isDarkMode
+  //             //         ? Colors.white
+  //             //         : Colors.black.withOpacity(0.15),
+  //             //   ),
+  //             // ),
+  //           ],
+  //         ),
+  //       ),
+  //     );
+  //   }
+
+  //   // Apply effects
+  //   if (_selectedEffect == EffectType.blur) {
+  //     base = ImageFiltered(
+  //       imageFilter: ui.ImageFilter.blur(
+  //         sigmaX: 3 * _effectStrength,
+  //         sigmaY: 3 * _effectStrength,
+  //       ),
+  //       child: base,
+  //     );
+  //   } else if (_selectedEffect == EffectType.grayscale) {
+  //     base = ColorFiltered(
+  //       colorFilter: const ColorFilter.matrix([
+  //         0.2126,
+  //         0.7152,
+  //         0.0722,
+  //         0,
+  //         0,
+  //         0.2126,
+  //         0.7152,
+  //         0.0722,
+  //         0,
+  //         0,
+  //         0.2126,
+  //         0.7152,
+  //         0.0722,
+  //         0,
+  //         0,
+  //         0,
+  //         0,
+  //         0,
+  //         1,
+  //         0,
+  //       ]),
+  //       child: base,
+  //     );
+  //   } else if (_selectedEffect == EffectType.sepia) {
+  //     base = ColorFiltered(
+  //       colorFilter: const ColorFilter.matrix([
+  //         0.393,
+  //         0.769,
+  //         0.189,
+  //         0,
+  //         0,
+  //         0.349,
+  //         0.686,
+  //         0.168,
+  //         0,
+  //         0,
+  //         0.272,
+  //         0.534,
+  //         0.131,
+  //         0,
+  //         0,
+  //         0,
+  //         0,
+  //         0,
+  //         1,
+  //         0,
+  //       ]),
+  //       child: base,
+  //     );
+  //   }
+
+  //   if (_selectedAnimation != AnimationType.none) {
+  //     return AnimatedBuilder(
+  //       animation: _animValue,
+  //       builder: (_, __) => _applyAnimation(base),
+  //     );
+  //   }
+  //   return base;
+  // }
+
   Widget _buildPosterBackground() {
     Widget base;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     if (_uploadedImagePath != null) {
-      // Image is already cropped to exact poster ratio — use BoxFit.fill
       base = Image.file(
         File(_uploadedImagePath!),
-        fit: BoxFit.fill, // fill exactly, no letterboxing
+        fit: BoxFit.fill,
         width: double.infinity,
         height: double.infinity,
-        gaplessPlayback: true, // prevents flicker on image change
+        gaplessPlayback: true,
       );
     } else {
       base = Container(
@@ -2140,104 +2551,18 @@ class _TemplateCreateState extends State<TemplateCreate>
                 Icons.add_photo_alternate_outlined,
                 size: 48,
                 color: isDarkMode
-                    ? const ui.Color.fromARGB(
-                        255,
-                        255,
-                        255,
-                        255,
-                      ).withOpacity(0.3)
+                    ? Colors.white.withOpacity(0.3)
                     : Colors.black.withOpacity(0.2),
               ),
               const SizedBox(height: 10),
-              // Text(
-              //   '${widget.posterSize.width.toInt()} × ${widget.posterSize.height.toInt()} px',
-              //   style: TextStyle(
-              //     fontSize: 13,
-              //     color: isDarkMode
-              //         ? Colors.white
-              //         : Colors.black.withOpacity(0.25),
-              //     fontWeight: FontWeight.w500,
-              //     letterSpacing: 0.5,
-              //   ),
-              // ),
-              // const SizedBox(height: 4),
-              // Text(
-              //   'Upload an image to get started',
-              //   style: TextStyle(
-              //     fontSize: 11,
-              //     color: isDarkMode
-              //         ? Colors.white
-              //         : Colors.black.withOpacity(0.15),
-              //   ),
-              // ),
             ],
           ),
         ),
       );
     }
 
-    // Apply effects
-    if (_selectedEffect == EffectType.blur) {
-      base = ImageFiltered(
-        imageFilter: ui.ImageFilter.blur(
-          sigmaX: 3 * _effectStrength,
-          sigmaY: 3 * _effectStrength,
-        ),
-        child: base,
-      );
-    } else if (_selectedEffect == EffectType.grayscale) {
-      base = ColorFiltered(
-        colorFilter: const ColorFilter.matrix([
-          0.2126,
-          0.7152,
-          0.0722,
-          0,
-          0,
-          0.2126,
-          0.7152,
-          0.0722,
-          0,
-          0,
-          0.2126,
-          0.7152,
-          0.0722,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-        ]),
-        child: base,
-      );
-    } else if (_selectedEffect == EffectType.sepia) {
-      base = ColorFiltered(
-        colorFilter: const ColorFilter.matrix([
-          0.393,
-          0.769,
-          0.189,
-          0,
-          0,
-          0.349,
-          0.686,
-          0.168,
-          0,
-          0,
-          0.272,
-          0.534,
-          0.131,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-        ]),
-        child: base,
-      );
-    }
+    // Apply all effects using the new method
+    base = _applyEffect(base, _selectedEffect, _effectStrength);
 
     if (_selectedAnimation != AnimationType.none) {
       return AnimatedBuilder(
@@ -2246,6 +2571,654 @@ class _TemplateCreateState extends State<TemplateCreate>
       );
     }
     return base;
+  }
+
+  Widget _applyEffect(Widget child, EffectType effect, double strength) {
+    switch (effect) {
+      case EffectType.blur:
+        return ImageFiltered(
+          imageFilter: ui.ImageFilter.blur(
+            sigmaX: 10 * strength,
+            sigmaY: 10 * strength,
+          ),
+          child: child,
+        );
+      case EffectType.grayscale:
+        double intensity = strength;
+        return ColorFiltered(
+          colorFilter: ColorFilter.matrix([
+            0.2126 + (1 - intensity) * 0.7874,
+            0.7152 - (1 - intensity) * 0.7152,
+            0.0722 - (1 - intensity) * 0.0722,
+            0,
+            0,
+            0.2126 - (1 - intensity) * 0.2126,
+            0.7152 + (1 - intensity) * 0.2848,
+            0.0722 - (1 - intensity) * 0.0722,
+            0,
+            0,
+            0.2126 - (1 - intensity) * 0.2126,
+            0.7152 - (1 - intensity) * 0.7152,
+            0.0722 + (1 - intensity) * 0.9278,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+          ]),
+          child: child,
+        );
+      case EffectType.sepia:
+        double intensity = strength;
+        return ColorFiltered(
+          colorFilter: ColorFilter.matrix([
+            0.393 * intensity + (1 - intensity),
+            0.769 * intensity,
+            0.189 * intensity,
+            0,
+            0,
+            0.349 * intensity,
+            0.686 * intensity + (1 - intensity),
+            0.168 * intensity,
+            0,
+            0,
+            0.272 * intensity,
+            0.534 * intensity,
+            0.131 * intensity + (1 - intensity),
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+          ]),
+          child: child,
+        );
+      case EffectType.brightness:
+        double brightness = (strength * 2) - 1;
+        return ColorFiltered(
+          colorFilter: ColorFilter.matrix([
+            1,
+            0,
+            0,
+            0,
+            brightness * 100,
+            0,
+            1,
+            0,
+            0,
+            brightness * 100,
+            0,
+            0,
+            1,
+            0,
+            brightness * 100,
+            0,
+            0,
+            0,
+            1,
+            0,
+          ]),
+          child: child,
+        );
+      case EffectType.contrast:
+        double contrast = strength * 2;
+        double translate = (1 - contrast) * 128;
+        return ColorFiltered(
+          colorFilter: ColorFilter.matrix([
+            contrast,
+            0,
+            0,
+            0,
+            translate,
+            0,
+            contrast,
+            0,
+            0,
+            translate,
+            0,
+            0,
+            contrast,
+            0,
+            translate,
+            0,
+            0,
+            0,
+            1,
+            0,
+          ]),
+          child: child,
+        );
+      case EffectType.ambient:
+        return _applyAmbientEffect(child, strength);
+      case EffectType.hyperChromatic:
+        return _applyHyperChromaticEffect(child, strength);
+      case EffectType.vintage:
+        return _applyVintageEffect(child, strength);
+      case EffectType.chromaticAberration:
+        return _applyChromaticAberration(child, strength);
+      case EffectType.grainyFilm:
+        return _applyGrainyFilmEffect(child, strength);
+      case EffectType.dreamyGlow:
+        return _applyDreamyGlowEffect(child, strength);
+      case EffectType.vaporwave:
+        return _applyVaporwaveEffect(child, strength);
+      case EffectType.cyberpunk:
+        return _applyCyberpunkEffect(child, strength);
+      case EffectType.cinematic:
+        return _applyCinematicEffect(child, strength);
+      case EffectType.polaroid:
+        return _applyPolaroidEffect(child, strength);
+      case EffectType.duotone:
+        return _applyDuotoneEffect(child, strength);
+      case EffectType.glitch:
+        return _applyGlitchEffect(child, strength);
+      default:
+        return child;
+    }
+  }
+
+  // 1. Ambient Realism - Soft, calm, natural
+  Widget _applyAmbientEffect(Widget child, double strength) {
+    double intensity = strength; // 0-1
+    return ColorFiltered(
+      colorFilter: ColorFilter.matrix([
+        // Reduce contrast and saturation for calm look
+        0.8 + (0.2 * (1 - intensity)), 0.1, 0.1, 0, 20 * intensity,
+        0.1, 0.8 + (0.2 * (1 - intensity)), 0.1, 0, 20 * intensity,
+        0.1, 0.1, 0.8 + (0.2 * (1 - intensity)), 0, 20 * intensity,
+        0, 0, 0, 1, 0,
+      ]),
+      child: ImageFiltered(
+        imageFilter: ui.ImageFilter.blur(
+          sigmaX: 2 * intensity,
+          sigmaY: 2 * intensity,
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  // 2. Hyper Chromatic - Vibrant, electric colors
+  Widget _applyHyperChromaticEffect(Widget child, double strength) {
+    double sat = 1.5 + (strength * 1.5); // 1.5 to 3.0 saturation
+    return ColorFiltered(
+      colorFilter: ColorFilter.matrix([
+        0.5 + sat * 0.5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.5 + sat * 0.5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.5 + sat * 0.5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ]),
+      child: child,
+    );
+  }
+
+  // 3. Vintage/Retro - Warm, faded, nostalgic
+  Widget _applyVintageEffect(Widget child, double strength) {
+    return ColorFiltered(
+      colorFilter: ColorFilter.matrix([
+        0.8, 0.2, 0.1, 0, 30 * strength, // Warm red boost
+        0.1, 0.7, 0.2, 0, 15 * strength, // Green reduced
+        0.1, 0.1, 0.6, 0, 10 * strength, // Blue reduced more
+        0, 0, 0, 0.8 + (0.2 * strength), 0, // Slight fade
+      ]),
+      child: ImageFiltered(
+        imageFilter: ui.ImageFilter.blur(
+          sigmaX: 0.5 * strength,
+          sigmaY: 0.5 * strength,
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  // 4. Chromatic Aberration - RGB split/glitch
+  Widget _applyChromaticAberration(Widget child, double strength) {
+    double offset = 5 * strength;
+    return Stack(
+      children: [
+        Transform.translate(
+          offset: Offset(-offset, 0),
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+            ]),
+            child: child,
+          ),
+        ),
+        Transform.translate(
+          offset: Offset(offset, 0),
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+            ]),
+            child: child,
+          ),
+        ),
+        ColorFiltered(
+          colorFilter: const ColorFilter.matrix([
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+          ]),
+          child: child,
+        ),
+      ],
+    );
+  }
+
+  // 5. Grainy Film / Lo-Fi - Imperfect, textured
+  Widget _applyGrainyFilmEffect(Widget child, double strength) {
+    return ShaderMask(
+      shaderCallback: (rect) {
+        return const LinearGradient(
+          colors: [Colors.white, Colors.white],
+        ).createShader(rect);
+      },
+      blendMode: BlendMode.modulate,
+      child: ImageFiltered(
+        imageFilter: ui.ImageFilter.blur(
+          sigmaX: 1.5 * strength,
+          sigmaY: 1.5 * strength,
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  // 6. Dreamy Glow - Soft, ethereal, romantic
+  Widget _applyDreamyGlowEffect(Widget child, double strength) {
+    double intensity = strength; // 0-1
+    return Stack(
+      children: [
+        // Base image with slight blur
+        ImageFiltered(
+          imageFilter: ui.ImageFilter.blur(
+            sigmaX: 8 * intensity,
+            sigmaY: 8 * intensity,
+          ),
+          child: ColorFiltered(
+            colorFilter: ColorFilter.matrix([
+              1.2, 0, 0, 0, 20 * intensity, // Increased brightness
+              0, 1.2, 0, 0, 20 * intensity,
+              0, 0, 1.2, 0, 20 * intensity,
+              0, 0, 0, 0.7 + (0.3 * intensity), 0,
+            ]),
+            child: child,
+          ),
+        ),
+        // Overlay with soft white glow
+        Opacity(
+          opacity: 0.3 * intensity,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 0.8,
+                colors: [Colors.white.withOpacity(0.4), Colors.transparent],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 7. Vaporwave / Synthwave - 80s retro-futuristic
+  Widget _applyVaporwaveEffect(Widget child, double strength) {
+    double intensity = strength;
+    return Stack(
+      children: [
+        // Base with pink/purple tint
+        ColorFiltered(
+          colorFilter: ColorFilter.matrix([
+            1.2, 0.2, 0.3, 0, 30 * intensity, // Boost reds
+            0.1, 0.8, 0.4, 0, 10 * intensity, // Slight green
+            0.3, 0.1, 1.3, 0, 40 * intensity, // Boost blues
+            0, 0, 0, 1, 0,
+          ]),
+          child: child,
+        ),
+        // Grid overlay (optional)
+        if (intensity > 0.5)
+          Opacity(
+            opacity: 0.2 * (intensity - 0.5) * 2,
+            child: CustomPaint(painter: _GridPainter(), size: Size.infinite),
+          ),
+      ],
+    );
+  }
+
+  // 8. Cyberpunk Neon - High-tech urban
+  Widget _applyCyberpunkEffect(Widget child, double strength) {
+    double intensity = strength;
+    return Stack(
+      children: [
+        // Darken and boost neon colors
+        ColorFiltered(
+          colorFilter: ColorFilter.matrix([
+            1.3, 0.1, 0.2, 0, -20 * intensity, // Boost reds, darken
+            0.1, 1.1, 0.3, 0, -25 * intensity, // Boost greens
+            0.2, 0.1, 1.4, 0, -15 * intensity, // Boost blues
+            0, 0, 0, 1.2, 0,
+          ]),
+          child: child,
+        ),
+        // Neon edge glow
+        if (intensity > 0.3)
+          Opacity(
+            opacity: 0.4 * intensity,
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.cyan.withOpacity(0.6),
+                  width: 3 * intensity,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.yellow.withOpacity(0.5),
+                    blurRadius: 10 * intensity,
+                    spreadRadius: 2 * intensity,
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // 9. Cinematic / Film Stock - Movie look
+  Widget _applyCinematicEffect(Widget child, double strength) {
+    double intensity = strength;
+    return Stack(
+      children: [
+        // Teal and orange color grading
+        ColorFiltered(
+          colorFilter: ColorFilter.matrix([
+            1.1, -0.1, 0.1, 0, 5 * intensity, // Slight red boost
+            -0.1, 1.0, 0.2, 0, 0, // Normal green
+            0.1, 0.1, 0.9, 0, -5 * intensity, // Reduce blue
+            0, 0, 0, 1, 0,
+          ]),
+          child: child,
+        ),
+        // Letterbox bars
+        if (intensity > 0.5)
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                height: 40 * ((intensity - 0.5) * 2),
+                color: Colors.black.withOpacity(0.8),
+              ),
+              Container(
+                height: 40 * ((intensity - 0.5) * 2),
+                color: Colors.black.withOpacity(0.8),
+              ),
+            ],
+          ),
+        // Film grain
+        if (intensity > 0.3)
+          Opacity(
+            opacity: 0.15 * intensity,
+            child: ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
+              child: Container(color: Colors.white),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // 10. Polaroid / Instant Film - Vintage photo
+  Widget _applyPolaroidEffect(Widget child, double strength) {
+    double intensity = strength;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2 * intensity),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // The photo with vintage effect
+          Expanded(
+            child: ColorFiltered(
+              colorFilter: ColorFilter.matrix([
+                1.1,
+                0.1,
+                0,
+                0,
+                10 * intensity,
+                0,
+                1.0,
+                0.1,
+                0,
+                5 * intensity,
+                0,
+                0,
+                0.9,
+                0,
+                -5 * intensity,
+                0,
+                0,
+                0,
+                0.9,
+                0,
+              ]),
+              child: child,
+            ),
+          ),
+          // White border at bottom
+          Container(
+            height: 30 * (0.5 + intensity * 0.5),
+            color: Colors.white,
+            child: Center(
+              child: Text(
+                '✦ INSTANT ✦',
+                style: TextStyle(
+                  fontSize: 8 * intensity,
+                  color: Colors.grey.shade400,
+                  letterSpacing: 2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 11. Duotone - Two-color gradient effect
+  Widget _applyDuotoneEffect(Widget child, double strength) {
+    double intensity = strength;
+    return ColorFiltered(
+      colorFilter: ColorFilter.matrix([
+        // Map to cyan and magenta duotone
+        0.8, 0.2, 0, 0, 20 * intensity,
+        0.1, 0.6, 0.3, 0, 10 * intensity,
+        0.3, 0.1, 0.6, 0, 30 * intensity,
+        0, 0, 0, 1, 0,
+      ]),
+      child: child,
+    );
+  }
+
+  // 12. Glitch Art - Digital distortion
+  Widget _applyGlitchEffect(Widget child, double strength) {
+    double intensity = strength;
+    return Stack(
+      children: [
+        // Main image
+        child,
+
+        // RGB split layers that shift randomly
+        if (intensity > 0.2)
+          TweenAnimationBuilder(
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 100),
+            builder: (context, value, _) {
+              double offset = 8 * intensity * (value > 0.5 ? 1 : -1);
+              return Transform.translate(
+                offset: Offset(offset, 0),
+                child: ColorFiltered(
+                  colorFilter: const ColorFilter.matrix([
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0.5,
+                    0,
+                  ]),
+                  child: child,
+                ),
+              );
+            },
+          ),
+
+        if (intensity > 0.4)
+          TweenAnimationBuilder(
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 150),
+            builder: (context, value, _) {
+              double offset = -8 * intensity * (value > 0.3 ? 1 : -1);
+              return Transform.translate(
+                offset: Offset(offset, 0),
+                child: ColorFiltered(
+                  colorFilter: const ColorFilter.matrix([
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0.5,
+                    0,
+                  ]),
+                  child: child,
+                ),
+              );
+            },
+          ),
+
+        // Scanlines
+        if (intensity > 0.6)
+          Opacity(
+            opacity: 0.3 * ((intensity - 0.6) / 0.4),
+            child: CustomPaint(
+              painter: _ScanlinePainter(),
+              size: Size.infinite,
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _applyAnimation(Widget child) {
@@ -4697,6 +5670,7 @@ class _TemplateCreateState extends State<TemplateCreate>
   // 2. Golden Banner
   Widget _frameBanner(FrameStyle f, {bool showLogo = false}) => Stack(
     children: [
+      // Top header section with yellow/golden background
       if (showLogo)
         Positioned(
           top: 0,
@@ -4705,7 +5679,8 @@ class _TemplateCreateState extends State<TemplateCreate>
           child: GestureDetector(
             onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
             child: Container(
-              color: f.headerBg ?? f.borderColor,
+              color:
+                  f.headerBg ?? f.borderColor, // This gives yellow/golden color
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
@@ -4713,19 +5688,13 @@ class _TemplateCreateState extends State<TemplateCreate>
                     onTap: () => _pickImage(forLogo: true),
                     child: _logoWidget(Colors.white.withOpacity(0.2), size: 40),
                   ),
-                  const SizedBox(width: 10),
-                  _bt(
-                    _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
-                    15,
-                    Colors.white,
-                    FontWeight.bold,
-                    0,
-                  ),
                 ],
               ),
             ),
           ),
         ),
+
+      // Bottom footer section - Name + Contact Info
       Positioned(
         bottom: 0,
         left: 0,
@@ -4734,20 +5703,19 @@ class _TemplateCreateState extends State<TemplateCreate>
           onTap: () => setState(() => _activeTab = BottomTab.brandInfo),
           child: Container(
             color: (f.footerBg ?? f.borderColor).withOpacity(0.9),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: _bt(
-                    _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
-                    13,
-                    Colors.white,
-                    FontWeight.w600,
-                    0,
-                  ),
+                // Brand Name at bottom
+                _bt(
+                  _brandInfo.name.isNotEmpty ? _brandInfo.name : 'Brand Name',
+                  14,
+                  Colors.white,
+                  FontWeight.bold,
+                  0,
                 ),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Expanded(
@@ -4757,7 +5725,7 @@ class _TemplateCreateState extends State<TemplateCreate>
                             ? _brandInfo.phone
                             : 'Phone Number',
                         11,
-                        Colors.white,
+                        Colors.white70,
                         1,
                       ),
                     ),
@@ -4768,7 +5736,7 @@ class _TemplateCreateState extends State<TemplateCreate>
                           Icons.location_on,
                           _brandInfo.address,
                           10,
-                          Colors.white70,
+                          Colors.white60,
                           2,
                         ),
                       ),
@@ -4780,10 +5748,23 @@ class _TemplateCreateState extends State<TemplateCreate>
           ),
         ),
       ),
+
+      // Left, Right, and Top borders with yellow/golden color
       Container(
         decoration: BoxDecoration(
-          border: Border.symmetric(
-            vertical: BorderSide(color: f.borderColor, width: 4),
+          border: Border(
+            top: BorderSide(
+              color: f.borderColor,
+              width: 4,
+            ), // Top border - yellow
+            left: BorderSide(
+              color: f.borderColor,
+              width: 4,
+            ), // Left border - yellow
+            right: BorderSide(
+              color: f.borderColor,
+              width: 4,
+            ), // Right border - yellow
           ),
         ),
       ),
@@ -6658,8 +7639,175 @@ class _TemplateCreateState extends State<TemplateCreate>
   //   );
   // }
 
+  // Widget _buildTextWidget(OverlayTextItem item) {
+  //   final isSelected = _selectedTextId == item.id;
+  //   return Positioned(
+  //     left: item.position.dx,
+  //     top: item.position.dy,
+  //     child: GestureDetector(
+  //       onTap: () {
+  //         setState(() {
+  //           _selectedTextId = item.id;
+  //           _selectedBrandItemId = null;
+  //         });
+  //         _openTextEditor(item);
+  //       },
+  //       onPanUpdate: (d) {
+  //         setState(() {
+  //           final idx = _texts.indexWhere((t) => t.id == item.id);
+  //           if (idx != -1)
+  //             _texts[idx] = _texts[idx].copyWith(
+  //               position: item.position + Offset(d.delta.dx, d.delta.dy),
+  //             );
+  //         });
+  //       },
+  //       onLongPress: () {
+  //         // Show confirmation dialog on long press
+  //         _showDeleteConfirmationDialog(item);
+  //       },
+  //       child: Stack(
+  //         clipBehavior: Clip.none,
+  //         children: [
+  //           Container(
+  //             decoration: isSelected
+  //                 ? BoxDecoration(
+  //                     border: Border.all(color: Colors.blueAccent, width: 1.5),
+  //                     color: Colors.blue.withOpacity(0.05),
+  //                   )
+  //                 : null,
+  //             padding: const EdgeInsets.all(4),
+  //             child: Container(
+  //               decoration: item.hasBorder
+  //                   ? BoxDecoration(
+  //                       border: Border.all(color: item.color, width: 1),
+  //                       color: item.backgroundColor == Colors.transparent
+  //                           ? null
+  //                           : item.backgroundColor,
+  //                     )
+  //                   : null,
+  //               color:
+  //                   !item.hasBorder &&
+  //                       item.backgroundColor != Colors.transparent
+  //                   ? item.backgroundColor
+  //                   : null,
+  //               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+  //               child: Transform.rotate(
+  //                 angle: item.rotation,
+  //                 child: Text(
+  //                   item.text,
+  //                   textAlign: item.align,
+  //                   style: TextStyle(
+  //                     fontSize: item.fontSize,
+  //                     color: item.color,
+  //                     fontWeight: item.isBold
+  //                         ? FontWeight.bold
+  //                         : FontWeight.normal,
+  //                     fontStyle: item.isItalic
+  //                         ? FontStyle.italic
+  //                         : FontStyle.normal,
+  //                     decoration: item.isUnderline
+  //                         ? TextDecoration.underline
+  //                         : TextDecoration.none,
+  //                     shadows: item.hasShadow
+  //                         ? [
+  //                             const Shadow(
+  //                               color: Colors.black38,
+  //                               offset: Offset(2, 2),
+  //                               blurRadius: 4,
+  //                             ),
+  //                           ]
+  //                         : null,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+
+  //           // Resize handle (bottom-right)
+  //           if (isSelected)
+  //             Positioned(
+  //               right: -6,
+  //               bottom: -6,
+  //               child: GestureDetector(
+  //                 onPanStart: (d) {
+  //                   _resizingTextId = item.id;
+  //                   _resizeStartOffset = d.globalPosition;
+  //                   _resizeStartFontSize = item.fontSize;
+  //                 },
+  //                 onPanUpdate: (d) {
+  //                   if (_resizingTextId != item.id) return;
+  //                   final delta =
+  //                       (d.globalPosition.dx -
+  //                           _resizeStartOffset.dx +
+  //                           d.globalPosition.dy -
+  //                           _resizeStartOffset.dy) /
+  //                       2;
+  //                   final newSize = (_resizeStartFontSize + delta).clamp(
+  //                     8.0,
+  //                     96.0,
+  //                   );
+  //                   setState(() {
+  //                     final idx = _texts.indexWhere((t) => t.id == item.id);
+  //                     if (idx != -1)
+  //                       _texts[idx] = _texts[idx].copyWith(fontSize: newSize);
+  //                   });
+  //                 },
+  //                 onPanEnd: (_) => _resizingTextId = null,
+  //                 child: Container(
+  //                   width: 20,
+  //                   height: 20,
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.blueAccent,
+  //                     shape: BoxShape.circle,
+  //                     border: Border.all(color: Colors.white, width: 1.5),
+  //                   ),
+  //                   child: const Icon(
+  //                     Icons.open_in_full,
+  //                     size: 11,
+  //                     color: Colors.white,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildTextWidget(OverlayTextItem item) {
     final isSelected = _selectedTextId == item.id;
+
+    // Get the Google Font
+    TextStyle getGoogleFont() {
+      try {
+        final fontEntry = kGoogleFonts.firstWhere(
+          (e) => e.name == item.fontFamily,
+        );
+        return fontEntry.font(
+          textStyle: TextStyle(
+            fontSize: item.fontSize,
+            color: item.color,
+            fontWeight: item.isBold ? FontWeight.bold : FontWeight.normal,
+            fontStyle: item.isItalic ? FontStyle.italic : FontStyle.normal,
+            decoration: item.isUnderline
+                ? TextDecoration.underline
+                : TextDecoration.none,
+          ),
+        );
+      } catch (_) {
+        return TextStyle(
+          fontSize: item.fontSize,
+          color: item.color,
+          fontWeight: item.isBold ? FontWeight.bold : FontWeight.normal,
+          fontStyle: item.isItalic ? FontStyle.italic : FontStyle.normal,
+          decoration: item.isUnderline
+              ? TextDecoration.underline
+              : TextDecoration.none,
+        );
+      }
+    }
+
     return Positioned(
       left: item.position.dx,
       top: item.position.dy,
@@ -6681,7 +7829,6 @@ class _TemplateCreateState extends State<TemplateCreate>
           });
         },
         onLongPress: () {
-          // Show confirmation dialog on long press
           _showDeleteConfirmationDialog(item);
         },
         child: Stack(
@@ -6715,18 +7862,7 @@ class _TemplateCreateState extends State<TemplateCreate>
                   child: Text(
                     item.text,
                     textAlign: item.align,
-                    style: TextStyle(
-                      fontSize: item.fontSize,
-                      color: item.color,
-                      fontWeight: item.isBold
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontStyle: item.isItalic
-                          ? FontStyle.italic
-                          : FontStyle.normal,
-                      decoration: item.isUnderline
-                          ? TextDecoration.underline
-                          : TextDecoration.none,
+                    style: getGoogleFont().copyWith(
                       shadows: item.hasShadow
                           ? [
                               const Shadow(
@@ -6741,7 +7877,6 @@ class _TemplateCreateState extends State<TemplateCreate>
                 ),
               ),
             ),
-
             // Resize handle (bottom-right)
             if (isSelected)
               Positioned(
@@ -7000,6 +8135,8 @@ class _TemplateCreateState extends State<TemplateCreate>
         return _buildBrandInfoPanel(isDarkMode);
       case BottomTab.sticker:
         return _buildEffectPanel(isDarkMode);
+      case BottomTab.fonts: // Add this case
+        return _buildFontsPanel(isDarkMode);
     }
   }
 
@@ -7298,8 +8435,8 @@ class _TemplateCreateState extends State<TemplateCreate>
                 isDarkMode,
                 bold: true,
               ),
-              _sb('T', 18, sel, isDarkMode),
-              _sb('T', 24, sel, isDarkMode),
+              // _sb('T', 18, sel, isDarkMode),
+              // _sb('T', 24, sel, isDarkMode),
               // IconButton(
               //   icon: Icon(
               //     Icons.format_align_left,
@@ -7635,35 +8772,233 @@ class _TemplateCreateState extends State<TemplateCreate>
   void _showFontPicker(OverlayTextItem sel) {
     showModalBottomSheet(
       context: context,
-      builder: (_) => Container(
-        color: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Font Size',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-            const SizedBox(height: 12),
-            Slider(
-              value: sel.fontSize,
-              min: 10,
-              max: 72,
-              divisions: 62,
-              activeColor: const Color(0xFFF5C518),
-              label: sel.fontSize.toStringAsFixed(0),
-              onChanged: (v) {
-                setState(() {
-                  final i = _texts.indexWhere((t) => t.id == sel.id);
-                  if (i != -1) _texts[i] = _texts[i].copyWith(fontSize: v);
-                });
-              },
-            ),
-          ],
-        ),
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        // Get the current live reference
+        OverlayTextItem currentItem = sel;
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            // Find the latest version of this text item
+            final liveItem = _texts.firstWhere(
+              (t) => t.id == sel.id,
+              orElse: () => sel,
+            );
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.grey[700]
+                              : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Title
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.font_download_outlined,
+                          size: 24,
+                          color: const Color(0xFFF5C518),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Font Size',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Slider
+                    Slider(
+                      value: liveItem.fontSize,
+                      min: 10,
+                      max: 72,
+                      divisions: 62,
+                      activeColor: const Color(0xFFF5C518),
+                      inactiveColor: isDarkMode
+                          ? Colors.grey[700]
+                          : Colors.grey[300],
+                      label: liveItem.fontSize.toStringAsFixed(0),
+                      onChanged: (v) {
+                        // Update the modal's local state for smooth slider movement
+                        setModalState(() {
+                          currentItem = currentItem.copyWith(fontSize: v);
+                        });
+
+                        // Update the actual text item
+                        setState(() {
+                          final i = _texts.indexWhere((t) => t.id == sel.id);
+                          if (i != -1) {
+                            _texts[i] = _texts[i].copyWith(fontSize: v);
+                          }
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Current size display
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF0F172A)
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${liveItem.fontSize.toStringAsFixed(0)}px',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFF5C518),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Quick size buttons
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      alignment: WrapAlignment.center,
+                      children: [12, 16, 20, 24, 28, 32, 36, 42, 48, 56, 64, 72]
+                          .map((size) {
+                            final isSelected =
+                                liveItem.fontSize.round() == size;
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  final i = _texts.indexWhere(
+                                    (t) => t.id == sel.id,
+                                  );
+                                  if (i != -1) {
+                                    _texts[i] = _texts[i].copyWith(
+                                      fontSize: size.toDouble(),
+                                    );
+                                  }
+                                });
+                                setModalState(() {
+                                  currentItem = currentItem.copyWith(
+                                    fontSize: size.toDouble(),
+                                  );
+                                });
+                              },
+                              child: Container(
+                                width: 45,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0xFFF5C518)
+                                      : (isDarkMode
+                                            ? const Color(0xFF0F172A)
+                                            : Colors.grey.shade100),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0xFFF5C518)
+                                        : (isDarkMode
+                                              ? Colors.grey[700]!
+                                              : Colors.grey.shade300),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    size.toString(),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isSelected
+                                          ? Colors.black87
+                                          : (isDarkMode
+                                                ? Colors.white70
+                                                : Colors.black87),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          })
+                          .toList(),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Done button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF5C518),
+                          foregroundColor: Colors.black87,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Done',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -9493,14 +10828,153 @@ class _TemplateCreateState extends State<TemplateCreate>
   //   );
   // }
 
+  // Widget _buildEffectPanel(bool isDarkMode) {
+  //   final effects = [
+  //     _EffectData(EffectType.none, Icons.block, 'Remove'),
+  //     _EffectData(EffectType.blur, Icons.blur_on, 'Blur'),
+  //     _EffectData(EffectType.grayscale, Icons.filter_b_and_w, 'Grayscale'),
+  //     _EffectData(EffectType.sepia, Icons.filter_vintage, 'Sepia'),
+  //     _EffectData(EffectType.brightness, Icons.brightness_5, 'Bright'),
+  //     _EffectData(EffectType.contrast, Icons.contrast, 'Contrast'),
+  //   ];
+
+  //   return Container(
+  //     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Padding(
+  //           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+  //           child: Text(
+  //             'Effect',
+  //             style: TextStyle(
+  //               fontWeight: FontWeight.bold,
+  //               fontSize: 13,
+  //               color: isDarkMode ? Colors.white : Colors.black87,
+  //             ),
+  //           ),
+  //         ),
+  //         SizedBox(
+  //           height: 90,
+  //           child: ListView.separated(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             itemCount: effects.length,
+  //             separatorBuilder: (_, __) => const SizedBox(width: 10),
+  //             itemBuilder: (_, i) {
+  //               final e = effects[i];
+  //               final sel = _selectedEffect == e.type;
+  //               return GestureDetector(
+  //                 onTap: () => setState(() => _selectedEffect = e.type),
+  //                 child: Container(
+  //                   width: 72,
+  //                   decoration: BoxDecoration(
+  //                     border: Border.all(
+  //                       color: sel
+  //                           ? const Color(0xFFF5C518)
+  //                           : (isDarkMode
+  //                                 ? Colors.grey[800]!
+  //                                 : Colors.grey.shade200),
+  //                       width: 2,
+  //                     ),
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     color: sel
+  //                         ? (isDarkMode
+  //                               ? const Color(0xFF332700)
+  //                               : const Color(0xFFFFF8E1))
+  //                         : (isDarkMode
+  //                               ? const Color(0xFF0F172A)
+  //                               : Colors.grey.shade50),
+  //                   ),
+  //                   child: Column(
+  //                     mainAxisAlignment: MainAxisAlignment.center,
+  //                     children: [
+  //                       Icon(
+  //                         e.icon,
+  //                         size: 28,
+  //                         color: sel
+  //                             ? (isDarkMode
+  //                                   ? const Color(0xFFF5C518)
+  //                                   : Colors.amber.shade700)
+  //                             : (isDarkMode ? Colors.white54 : Colors.black45),
+  //                       ),
+  //                       const SizedBox(height: 4),
+  //                       Text(
+  //                         e.label,
+  //                         textAlign: TextAlign.center,
+  //                         style: TextStyle(
+  //                           fontSize: 9,
+  //                           color: sel
+  //                               ? (isDarkMode
+  //                                     ? const Color(0xFFF5C518)
+  //                                     : Colors.amber.shade800)
+  //                               : (isDarkMode
+  //                                     ? Colors.white54
+  //                                     : Colors.black45),
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         if (_selectedEffect == EffectType.blur)
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             child: Row(
+  //               children: [
+  //                 Text(
+  //                   'Strength',
+  //                   style: TextStyle(
+  //                     fontSize: 12,
+  //                     color: isDarkMode ? Colors.white70 : Colors.black87,
+  //                   ),
+  //                 ),
+  //                 Expanded(
+  //                   child: Slider(
+  //                     value: _effectStrength,
+  //                     min: 0,
+  //                     max: 1,
+  //                     activeColor: const Color(0xFFF5C518),
+  //                     inactiveColor: isDarkMode
+  //                         ? Colors.grey[700]
+  //                         : Colors.grey[300],
+  //                     onChanged: (v) => setState(() => _effectStrength = v),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         const SizedBox(height: 8),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildEffectPanel(bool isDarkMode) {
     final effects = [
-      _EffectData(EffectType.none, Icons.block, 'Remove'),
+      _EffectData(EffectType.none, Icons.block, 'None'),
       _EffectData(EffectType.blur, Icons.blur_on, 'Blur'),
       _EffectData(EffectType.grayscale, Icons.filter_b_and_w, 'Grayscale'),
       _EffectData(EffectType.sepia, Icons.filter_vintage, 'Sepia'),
       _EffectData(EffectType.brightness, Icons.brightness_5, 'Bright'),
       _EffectData(EffectType.contrast, Icons.contrast, 'Contrast'),
+      // New trending effects
+      _EffectData(EffectType.ambient, Icons.nature_people, 'Ambient'),
+      _EffectData(EffectType.hyperChromatic, Icons.auto_awesome, 'Hyper'),
+      _EffectData(EffectType.vintage, Icons.history, 'Vintage'),
+      _EffectData(EffectType.chromaticAberration, Icons.grain, 'Chromatic'),
+      _EffectData(EffectType.grainyFilm, Icons.fiber_manual_record, 'Lo-Fi'),
+      _EffectData(EffectType.dreamyGlow, Icons.wb_sunny, 'Dreamy'),
+      _EffectData(EffectType.vaporwave, Icons.sunny, 'Vaporwave'),
+      _EffectData(EffectType.cyberpunk, Icons.bolt, 'Cyberpunk'),
+      _EffectData(EffectType.cinematic, Icons.movie, 'Cinematic'),
+      _EffectData(EffectType.polaroid, Icons.photo_camera, 'Polaroid'),
+      _EffectData(EffectType.duotone, Icons.gradient, 'Duotone'),
+      _EffectData(EffectType.glitch, Icons.error, 'Glitch'),
     ];
 
     return Container(
@@ -9512,7 +10986,7 @@ class _TemplateCreateState extends State<TemplateCreate>
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Text(
-              'Effect',
+              'Effects',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
@@ -9521,7 +10995,7 @@ class _TemplateCreateState extends State<TemplateCreate>
             ),
           ),
           SizedBox(
-            height: 90,
+            height: 100,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -9568,8 +11042,9 @@ class _TemplateCreateState extends State<TemplateCreate>
                         Text(
                           e.label,
                           textAlign: TextAlign.center,
+                          maxLines: 2,
                           style: TextStyle(
-                            fontSize: 9,
+                            fontSize: 8,
                             color: sel
                                 ? (isDarkMode
                                       ? const Color(0xFFF5C518)
@@ -9586,28 +11061,66 @@ class _TemplateCreateState extends State<TemplateCreate>
               },
             ),
           ),
-          if (_selectedEffect == EffectType.blur)
+
+          // Strength slider for selected effect (for all effects)
+          if (_selectedEffect != EffectType.none)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Strength',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDarkMode ? Colors.white70 : Colors.black87,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _getEffectName(_selectedEffect),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        '${(_effectStrength * 100).toInt()}%',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFF5C518),
+                        ),
+                      ),
+                    ],
                   ),
-                  Expanded(
-                    child: Slider(
-                      value: _effectStrength,
-                      min: 0,
-                      max: 1,
-                      activeColor: const Color(0xFFF5C518),
-                      inactiveColor: isDarkMode
-                          ? Colors.grey[700]
-                          : Colors.grey[300],
-                      onChanged: (v) => setState(() => _effectStrength = v),
+                  const SizedBox(height: 8),
+                  Slider(
+                    value: _effectStrength,
+                    min: 0,
+                    max: 1,
+                    divisions: 100,
+                    activeColor: const Color(0xFFF5C518),
+                    inactiveColor: isDarkMode
+                        ? Colors.grey[700]
+                        : Colors.grey[300],
+                    onChanged: (v) => setState(() => _effectStrength = v),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? const Color(0xFF0F172A)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _getEffectDescription(_selectedEffect, _effectStrength),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDarkMode ? Colors.white54 : Colors.black54,
+                      ),
                     ),
                   ),
                 ],
@@ -9617,6 +11130,101 @@ class _TemplateCreateState extends State<TemplateCreate>
         ],
       ),
     );
+  }
+
+  // Add these helper methods
+  String _getEffectName(EffectType effect) {
+    switch (effect) {
+      case EffectType.blur:
+        return 'Blur Strength';
+      case EffectType.grayscale:
+        return 'Grayscale';
+      case EffectType.sepia:
+        return 'Sepia Tone';
+      case EffectType.brightness:
+        return 'Brightness';
+      case EffectType.contrast:
+        return 'Contrast';
+      case EffectType.ambient:
+        return 'Ambient';
+      case EffectType.hyperChromatic:
+        return 'Hyper Chromatic';
+      case EffectType.vintage:
+        return 'Vintage';
+      case EffectType.chromaticAberration:
+        return 'Chromatic';
+      case EffectType.grainyFilm:
+        return 'Film Grain';
+      case EffectType.dreamyGlow:
+        return 'Dreamy Glow';
+      case EffectType.vaporwave:
+        return 'Vaporwave';
+      case EffectType.cyberpunk:
+        return 'Cyberpunk';
+      case EffectType.cinematic:
+        return 'Cinematic';
+      case EffectType.polaroid:
+        return 'Polaroid';
+      case EffectType.duotone:
+        return 'Duotone';
+      case EffectType.glitch:
+        return 'Glitch';
+      default:
+        return 'Effect Strength';
+    }
+  }
+
+  String _getEffectDescription(EffectType effect, double strength) {
+    int percent = (strength * 100).toInt();
+    switch (effect) {
+      case EffectType.blur:
+        if (percent == 0) return 'No blur';
+        if (percent < 30) return 'Light blur effect';
+        if (percent < 70) return 'Medium blur';
+        return 'Heavy blur';
+      case EffectType.grayscale:
+        if (percent == 0) return 'Full color';
+        if (percent < 50) return 'Partially desaturated';
+        return 'Fully grayscale';
+      case EffectType.sepia:
+        if (percent == 0) return 'No sepia';
+        if (percent < 50) return 'Light vintage tone';
+        return 'Strong sepia effect';
+      case EffectType.brightness:
+        if (percent == 50) return 'Normal brightness';
+        if (percent < 50) return 'Darker image';
+        return 'Brighter image';
+      case EffectType.contrast:
+        if (percent == 50) return 'Normal contrast';
+        if (percent < 50) return 'Softer contrast';
+        return 'Stronger contrast';
+      case EffectType.ambient:
+        return 'Soft, natural atmosphere';
+      case EffectType.hyperChromatic:
+        return 'Vibrant, saturated colors';
+      case EffectType.vintage:
+        return 'Warm, nostalgic film look';
+      case EffectType.chromaticAberration:
+        return 'RGB color separation effect';
+      case EffectType.grainyFilm:
+        return 'Film grain texture';
+      case EffectType.dreamyGlow:
+        return 'Soft, ethereal glow';
+      case EffectType.vaporwave:
+        return '80s retro-futuristic';
+      case EffectType.cyberpunk:
+        return 'Neon cyberpunk style';
+      case EffectType.cinematic:
+        return 'Movie-like color grading';
+      case EffectType.polaroid:
+        return 'Instant photo style';
+      case EffectType.duotone:
+        return 'Two-color gradient';
+      case EffectType.glitch:
+        return 'Digital distortion';
+      default:
+        return 'No effect applied';
+    }
   }
 
   // ── BOTTOM TAB BAR ────────────────────────
@@ -9708,6 +11316,7 @@ class _TemplateCreateState extends State<TemplateCreate>
         'Brand Info',
       ),
       _TabData(BottomTab.sticker, Icons.auto_fix_high, 'Effect'),
+      _TabData(BottomTab.fonts, Icons.font_download, 'Fonts'), // Add this
     ];
     return Container(
       color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
@@ -9767,6 +11376,156 @@ class _TemplateCreateState extends State<TemplateCreate>
                 ),
               )
               .toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFontsPanel(bool isDarkMode) {
+    final sel = _selectedText;
+
+    if (sel == null) {
+      return Container(
+        height: 120,
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        child: Center(
+          child: Text(
+            'Select a text layer first to change font',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDarkMode ? Colors.white54 : Colors.black54,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Use the same Google Fonts list from your logo editor
+    final fontCategories = _getFontCategories();
+
+    return Container(
+      height: 180,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+      child: DefaultTabController(
+        length: fontCategories.length,
+        child: Column(
+          children: [
+            // Category tabs
+            Container(
+              height: 40,
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: TabBar(
+                isScrollable: true,
+                indicatorColor: const Color(0xFFF5C518),
+                labelColor: const Color(0xFFF5C518),
+                unselectedLabelColor: isDarkMode
+                    ? Colors.white54
+                    : Colors.black54,
+                labelStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+                tabs: fontCategories.keys.map((category) {
+                  return Tab(text: category);
+                }).toList(),
+              ),
+            ),
+
+            // Font lists by category
+            Expanded(
+              child: TabBarView(
+                children: fontCategories.values.map((fonts) {
+                  return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    itemCount: fonts.length,
+                    itemBuilder: (_, i) {
+                      final f = fonts[i];
+                      final active = sel.fontFamily == f.name;
+                      final style = f.font(
+                        textStyle: TextStyle(
+                          fontSize: 14,
+                          fontWeight: sel.isBold
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: active
+                              ? Colors.white
+                              : (isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF2D3142)),
+                        ),
+                      );
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            final idx = _texts.indexWhere(
+                              (t) => t.id == sel.id,
+                            );
+                            if (idx != -1) {
+                              _texts[idx] = _texts[idx].copyWith(
+                                fontFamily: f.name,
+                              );
+                            }
+                          });
+                        },
+                        child: Container(
+                          width: 100,
+                          margin: const EdgeInsets.only(right: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? const Color(0xFFF5C518)
+                                : (isDarkMode
+                                      ? const Color(0xFF0F172A)
+                                      : Colors.grey.shade100),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: active
+                                  ? const Color(0xFFF5C518)
+                                  : (isDarkMode
+                                        ? Colors.grey[700]!
+                                        : Colors.grey.shade300),
+                              width: active ? 2 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('Aa', style: style.copyWith(fontSize: 24)),
+                              const SizedBox(height: 6),
+                              Text(
+                                f.name,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: active
+                                      ? Colors.black87
+                                      : (isDarkMode
+                                            ? Colors.white70
+                                            : Colors.black54),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -10568,14 +12327,172 @@ class _ZigzagPainter extends CustomPainter {
 //   }
 // }
 
+// class _TextEditorSheet extends StatefulWidget {
+//   final OverlayTextItem item;
+//   final ValueChanged<OverlayTextItem> onChanged;
+
+//   const _TextEditorSheet({
+//     Key? key,
+//     required this.item,
+//     required this.onChanged,
+//   }) : super(key: key);
+
+//   @override
+//   State<_TextEditorSheet> createState() => _TextEditorSheetState();
+// }
+
+// class _TextEditorSheetState extends State<_TextEditorSheet> {
+//   late TextEditingController _ctrl;
+//   late OverlayTextItem _current;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _current = widget.item;
+//     _ctrl = TextEditingController(text: widget.item.text);
+//   }
+
+//   @override
+//   void dispose() {
+//     _ctrl.dispose();
+//     super.dispose();
+//   }
+
+//   void _update(OverlayTextItem updated) {
+//     setState(() => _current = updated);
+//     widget.onChanged(updated);
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+//     return Padding(
+//       padding: EdgeInsets.only(
+//         bottom: MediaQuery.of(context).viewInsets.bottom,
+//       ),
+//       child: Container(
+//         decoration: BoxDecoration(
+//           color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+//           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+//         ),
+//         padding: const EdgeInsets.all(16),
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             Container(
+//               width: 40,
+//               height: 4,
+//               decoration: BoxDecoration(
+//                 color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+//                 borderRadius: BorderRadius.circular(2),
+//               ),
+//             ),
+//             const SizedBox(height: 12),
+//             TextField(
+//               controller: _ctrl,
+//               autofocus: true,
+//               maxLines: 3,
+//               minLines: 1,
+//               style: TextStyle(
+//                 color: isDarkMode ? Colors.white : Colors.black87,
+//               ),
+//               decoration: InputDecoration(
+//                 hintText: 'Enter text…',
+//                 hintStyle: TextStyle(
+//                   color: isDarkMode ? Colors.white54 : Colors.black45,
+//                 ),
+//                 border: OutlineInputBorder(
+//                   borderRadius: BorderRadius.circular(8),
+//                   borderSide: BorderSide(
+//                     color: isDarkMode ? Colors.white38 : Colors.grey.shade400,
+//                   ),
+//                 ),
+//                 enabledBorder: OutlineInputBorder(
+//                   borderRadius: BorderRadius.circular(8),
+//                   borderSide: BorderSide(
+//                     color: isDarkMode ? Colors.white38 : Colors.grey.shade400,
+//                   ),
+//                 ),
+//                 focusedBorder: OutlineInputBorder(
+//                   borderRadius: BorderRadius.circular(8),
+//                   borderSide: const BorderSide(
+//                     color: Color(0xFFF5C518),
+//                     width: 2,
+//                   ),
+//                 ),
+//               ),
+//               onChanged: (v) => _update(_current.copyWith(text: v)),
+//             ),
+//             SizedBox(height: 15),
+//             SizedBox(
+//               width: double.infinity,
+//               child: ElevatedButton(
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: const Color(0xFFF5C518),
+//                   foregroundColor: Colors.black87,
+//                   shape: RoundedRectangleBorder(
+//                     borderRadius: BorderRadius.circular(8),
+//                   ),
+//                 ),
+//                 onPressed: () => Navigator.pop(context),
+//                 child: const Text('Done'),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _chip(
+//     String label,
+//     bool active,
+//     VoidCallback onTap,
+//     bool isDarkMode, {
+//     bool bold = false,
+//     bool italic = false,
+//     bool underline = false,
+//   }) {
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: Container(
+//         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+//         decoration: BoxDecoration(
+//           color: active
+//               ? (isDarkMode ? Colors.white : Colors.black87)
+//               : (isDarkMode ? const Color(0xFF0F172A) : Colors.grey.shade100),
+//           borderRadius: BorderRadius.circular(6),
+//         ),
+//         child: Text(
+//           label,
+//           style: TextStyle(
+//             fontSize: 13,
+//             color: active
+//                 ? (isDarkMode ? Colors.black87 : Colors.white)
+//                 : (isDarkMode ? Colors.white70 : Colors.black87),
+//             fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+//             fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+//             decoration: underline
+//                 ? TextDecoration.underline
+//                 : TextDecoration.none,
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 class _TextEditorSheet extends StatefulWidget {
   final OverlayTextItem item;
   final ValueChanged<OverlayTextItem> onChanged;
+  final VoidCallback? onDelete; // Add this callback
 
   const _TextEditorSheet({
     Key? key,
     required this.item,
     required this.onChanged,
+    this.onDelete, // Add this
   }) : super(key: key);
 
   @override
@@ -10604,6 +12521,107 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
     widget.onChanged(updated);
   }
 
+  void _showDeleteConfirmation() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 48,
+                    color: Colors.red,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Delete Text',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Are you sure you want to delete this text?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDarkMode
+                              ? Colors.white70
+                              : Colors.black87,
+                          side: BorderSide(
+                            color: isDarkMode
+                                ? Colors.white38
+                                : Colors.grey.shade400,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close dialog
+                          Navigator.pop(context); // Close editor sheet
+                          widget.onDelete?.call();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -10621,6 +12639,7 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Drag handle
             Container(
               width: 40,
               height: 4,
@@ -10630,6 +12649,41 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
               ),
             ),
             const SizedBox(height: 12),
+
+            // Header with title and delete button
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Edit Text',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ),
+                // Delete button
+                GestureDetector(
+                  onTap: _showDeleteConfirmation,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Text input field
             TextField(
               controller: _ctrl,
               autofocus: true,
@@ -10665,7 +12719,9 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
               ),
               onChanged: (v) => _update(_current.copyWith(text: v)),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
+
+            // Done button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -10681,43 +12737,6 @@ class _TextEditorSheetState extends State<_TextEditorSheet> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(
-    String label,
-    bool active,
-    VoidCallback onTap,
-    bool isDarkMode, {
-    bool bold = false,
-    bool italic = false,
-    bool underline = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: active
-              ? (isDarkMode ? Colors.white : Colors.black87)
-              : (isDarkMode ? const Color(0xFF0F172A) : Colors.grey.shade100),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: active
-                ? (isDarkMode ? Colors.black87 : Colors.white)
-                : (isDarkMode ? Colors.white70 : Colors.black87),
-            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-            fontStyle: italic ? FontStyle.italic : FontStyle.normal,
-            decoration: underline
-                ? TextDecoration.underline
-                : TextDecoration.none,
-          ),
         ),
       ),
     );

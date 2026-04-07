@@ -2245,6 +2245,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/showplans/show_pan_screen.dart';
+import 'package:posternova/views/AI/chat_ai.dart';
 import 'package:posternova/views/PosterModule/home.dart';
 import 'package:posternova/views/category/special_category.dart';
 import 'package:posternova/views/chat/customer_list.dart';
@@ -2373,7 +2374,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   final List<Widget> _screens = [
     const HomeScreen(),
     const SpecialCategory(),
-    const CustomerList(),
+    // const CustomerList(),
+    const AiScreen(),
     const ReelsScreen(),
     const CustomerScreen(),
   ];
@@ -2495,9 +2497,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         index: 1,
       ),
       _NavItem(
-        icon: Icons.edit_outlined,
+        icon: Icons.auto_awesome,
         activeIcon: Icons.edit,
-        label: 'Create',
+        label: 'Chicha',
         index: 2,
         isCenter: true,
       ),
@@ -2608,7 +2610,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                   ],
                 ),
                 child: Icon(
-                  _currentIndex == 2 ? Icons.edit : Icons.edit_outlined,
+                  _currentIndex == 2 ? Icons.auto_awesome : Icons.auto_awesome,
                   color: _currentIndex == 2
                       ? const Color(0xFFFFA000)
                       : Colors.white,
@@ -2622,7 +2624,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
           Positioned(
             bottom: MediaQuery.of(context).padding.bottom + 8,
             child: AppText(
-              'Create',
+              'Chicha',
               style: TextStyle(
                 fontSize: 11,
                 color: _currentIndex == 2

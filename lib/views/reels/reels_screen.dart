@@ -67,12 +67,6 @@ class _ReelsScreenState extends State<ReelsScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Consumer<ReelProvider>(
         builder: (context, reelProvider, child) {
@@ -795,210 +789,404 @@ class _ReelItemState extends State<ReelItem>
   }
 
   @override
+  // Widget build(BuildContext context) {
+  //   super.build(context);
+  //   return GestureDetector(
+  //     behavior: HitTestBehavior.translucent,
+  //     onTap: _togglePlayPause,
+  //     child: Stack(
+  //       fit: StackFit.expand,
+  //       children: [
+  //         // Critical fix: Use a unique key that changes when isCurrentPage changes
+  //         // This forces the video player to rebuild and properly update playback state
+  //         ExoVideoPlayer(
+  //           key: ValueKey('${widget.reel.id}_${widget.isCurrentPage}'),
+  //           url: widget.reel.videoUrl,
+  //           autoPlay: _isPlaying,
+  //         ),
+  //         // Gradient overlay
+  //         Positioned(
+  //           left: 0,
+  //           right: 0,
+  //           bottom: 0,
+  //           child: Container(
+  //             height: 260,
+  //             decoration: BoxDecoration(
+  //               gradient: LinearGradient(
+  //                 begin: Alignment.bottomCenter,
+  //                 end: Alignment.topCenter,
+  //                 colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         // Play/Pause icon
+  //         if (_showPlayPause)
+  //           Center(
+  //             child: AnimatedOpacity(
+  //               opacity: _showPlayPause ? 1.0 : 0.0,
+  //               duration: const Duration(milliseconds: 300),
+  //               child: Container(
+  //                 padding: const EdgeInsets.all(20),
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.black.withOpacity(0.5),
+  //                   shape: BoxShape.circle,
+  //                 ),
+  //                 child: Icon(
+  //                   _isPlaying ? Icons.pause : Icons.play_arrow,
+  //                   color: Colors.white,
+  //                   size: 50,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         // Right side actions
+  //         Positioned(
+  //           right: 12,
+  //           bottom: 145,
+  //           child: Column(
+  //             children: [
+  //               Consumer<ReelProvider>(
+  //                 builder: (context, reelProvider, child) {
+  //                   final currentReel = reelProvider.getReelById(
+  //                     widget.reel.id,
+  //                   );
+  //                   final isLiked = currentReel?.isLiked ?? widget.reel.isLiked;
+  //                   final likeCount =
+  //                       currentReel?.likeCount ?? widget.reel.likeCount;
+  //                   return _ActionButton(
+  //                     icon: isLiked ? Icons.favorite : Icons.favorite_border,
+  //                     iconColor: isLiked ? Colors.red : Colors.white,
+  //                     label: _formatCount(likeCount),
+  //                     onTap: _toggleLike,
+  //                   );
+  //                 },
+  //               ),
+  //               const SizedBox(height: 20),
+  //               _ActionButton(
+  //                 icon: Icons.send_outlined,
+  //                 label: '',
+  //                 onTap: _shareReel,
+  //               ),
+  //               const SizedBox(height: 20),
+  //               _isDownloading
+  //                   ? SizedBox(
+  //                       width: 48,
+  //                       height: 48,
+  //                       child: Stack(
+  //                         alignment: Alignment.center,
+  //                         children: [
+  //                           CircularProgressIndicator(
+  //                             value: _downloadProgress > 0
+  //                                 ? _downloadProgress
+  //                                 : null,
+  //                             color: Colors.white,
+  //                             strokeWidth: 2.5,
+  //                           ),
+  //                           Text(
+  //                             _downloadProgress > 0
+  //                                 ? '${(_downloadProgress * 100).toInt()}%'
+  //                                 : '',
+  //                             style: const TextStyle(
+  //                               color: Colors.white,
+  //                               fontSize: 9,
+  //                               fontWeight: FontWeight.bold,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     )
+  //                   : _ActionButton(
+  //                       icon: Icons.download_outlined,
+  //                       label: '',
+  //                       onTap: _downloadReel,
+  //                     ),
+  //             ],
+  //           ),
+  //         ),
+  //         // Bottom left: user info
+  //         Positioned(
+  //           left: 16,
+  //           right: 80,
+  //           bottom: 80,
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Row(
+  //                 children: [
+  //                   Container(
+  //                     width: 32,
+  //                     height: 32,
+  //                     decoration: BoxDecoration(
+  //                       shape: BoxShape.circle,
+  //                       border: Border.all(color: Colors.white, width: 1),
+  //                       color: Colors.grey[800],
+  //                     ),
+  //                     child: _profileImage != null && _profileImage!.isNotEmpty
+  //                         ? ClipOval(
+  //                             child: Image.network(
+  //                               _profileImage!,
+  //                               width: 32,
+  //                               height: 32,
+  //                               fit: BoxFit.cover,
+  //                               errorBuilder: (_, __, ___) => const Icon(
+  //                                 Icons.person,
+  //                                 color: Colors.white,
+  //                                 size: 18,
+  //                               ),
+  //                             ),
+  //                           )
+  //                         : const Icon(
+  //                             Icons.person,
+  //                             color: Colors.white,
+  //                             size: 18,
+  //                           ),
+  //                   ),
+  //                   const SizedBox(width: 8),
+  //                   AppText(
+  //                     _username,
+  //                     style: const TextStyle(
+  //                       color: Colors.white,
+  //                       fontWeight: FontWeight.w600,
+  //                       fontSize: 14,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //               const SizedBox(height: 8),
+  //               const AppText(
+  //                 'amazing_video_editezy',
+  //                 style: TextStyle(color: Colors.white, fontSize: 14),
+  //                 maxLines: 2,
+  //                 overflow: TextOverflow.ellipsis,
+  //               ),
+  //               const SizedBox(height: 6),
+  //               Row(
+  //                 children: [
+  //                   const Icon(Icons.music_note, color: Colors.white, size: 14),
+  //                   const SizedBox(width: 4),
+  //                   Expanded(
+  //                     child: Text(
+  //                       'Original Audio',
+  //                       style: TextStyle(
+  //                         color: Colors.white.withOpacity(0.8),
+  //                         fontSize: 12,
+  //                       ),
+  //                       overflow: TextOverflow.ellipsis,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         _buildBusinessInfoBar(),
+  //       ],
+  //     ),
+  //   );
+  // }
+  @override
   Widget build(BuildContext context) {
     super.build(context);
-    return GestureDetector(
-      onTap: _togglePlayPause,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Critical fix: Use a unique key that changes when isCurrentPage changes
-          // This forces the video player to rebuild and properly update playback state
-          ExoVideoPlayer(
-            key: ValueKey('${widget.reel.id}_${widget.isCurrentPage}'),
-            url: widget.reel.videoUrl,
-            autoPlay: _isPlaying,
-          ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Video player
+        ExoVideoPlayer(
+          key: ValueKey('${widget.reel.id}_${widget.isCurrentPage}'),
+          url: widget.reel.videoUrl,
+          autoPlay: _isPlaying,
+        ),
 
-          // Gradient overlay
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              height: 260,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+        // Gradient overlay
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            height: 260,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+              ),
+            ),
+          ),
+        ),
+
+        // ✅ FULL SCREEN TAP DETECTOR (but doesn't block buttons)
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: _togglePlayPause,
+          ),
+        ),
+
+        // Play/Pause icon
+        if (_showPlayPause)
+          Center(
+            child: AnimatedOpacity(
+              opacity: _showPlayPause ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _isPlaying ? Icons.pause : Icons.play_arrow,
+                  color: Colors.white,
+                  size: 50,
                 ),
               ),
             ),
           ),
 
-          // Play/Pause icon
-          if (_showPlayPause)
-            Center(
-              child: AnimatedOpacity(
-                opacity: _showPlayPause ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
-                    size: 50,
-                  ),
-                ),
+        // Right side actions (these will be above the tap detector)
+        Positioned(
+          right: 12,
+          bottom: 145,
+          child: Column(
+            children: [
+              Consumer<ReelProvider>(
+                builder: (context, reelProvider, child) {
+                  final currentReel = reelProvider.getReelById(widget.reel.id);
+                  final isLiked = currentReel?.isLiked ?? widget.reel.isLiked;
+                  final likeCount =
+                      currentReel?.likeCount ?? widget.reel.likeCount;
+                  return _ActionButton(
+                    icon: isLiked ? Icons.favorite : Icons.favorite_border,
+                    iconColor: isLiked ? Colors.red : Colors.white,
+                    label: _formatCount(likeCount),
+                    onTap: _toggleLike,
+                  );
+                },
               ),
-            ),
-
-          // Right side actions
-          Positioned(
-            right: 12,
-            bottom: 145,
-            child: Column(
-              children: [
-                Consumer<ReelProvider>(
-                  builder: (context, reelProvider, child) {
-                    final currentReel = reelProvider.getReelById(
-                      widget.reel.id,
-                    );
-                    final isLiked = currentReel?.isLiked ?? widget.reel.isLiked;
-                    final likeCount =
-                        currentReel?.likeCount ?? widget.reel.likeCount;
-                    return _ActionButton(
-                      icon: isLiked ? Icons.favorite : Icons.favorite_border,
-                      iconColor: isLiked ? Colors.red : Colors.white,
-                      label: _formatCount(likeCount),
-                      onTap: _toggleLike,
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-                _ActionButton(
-                  icon: Icons.send_outlined,
-                  label: '',
-                  onTap: _shareReel,
-                ),
-                const SizedBox(height: 20),
-                _isDownloading
-                    ? SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            CircularProgressIndicator(
-                              value: _downloadProgress > 0
-                                  ? _downloadProgress
-                                  : null,
+              const SizedBox(height: 20),
+              _ActionButton(
+                icon: Icons.send_outlined,
+                label: '',
+                onTap: _shareReel,
+              ),
+              const SizedBox(height: 20),
+              _isDownloading
+                  ? SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: _downloadProgress > 0
+                                ? _downloadProgress
+                                : null,
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                          Text(
+                            _downloadProgress > 0
+                                ? '${(_downloadProgress * 100).toInt()}%'
+                                : '',
+                            style: const TextStyle(
                               color: Colors.white,
-                              strokeWidth: 2.5,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
                             ),
-                            Text(
-                              _downloadProgress > 0
-                                  ? '${(_downloadProgress * 100).toInt()}%'
-                                  : '',
-                              style: const TextStyle(
+                          ),
+                        ],
+                      ),
+                    )
+                  : _ActionButton(
+                      icon: Icons.download_outlined,
+                      label: '',
+                      onTap: _downloadReel,
+                    ),
+            ],
+          ),
+        ),
+
+        // Bottom left: user info
+        Positioned(
+          left: 16,
+          right: 80,
+          bottom: 80,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1),
+                      color: Colors.grey[800],
+                    ),
+                    child: _profileImage != null && _profileImage!.isNotEmpty
+                        ? ClipOval(
+                            child: Image.network(
+                              _profileImage!,
+                              width: 32,
+                              height: 32,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.person,
                                 color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
+                                size: 18,
                               ),
                             ),
-                          ],
-                        ),
-                      )
-                    : _ActionButton(
-                        icon: Icons.download_outlined,
-                        label: '',
-                        onTap: _downloadReel,
+                          )
+                        : const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                  ),
+                  const SizedBox(width: 8),
+                  AppText(
+                    _username,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const AppText(
+                'amazing_video_editezy',
+                style: TextStyle(color: Colors.white, fontSize: 14),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(Icons.music_note, color: Colors.white, size: 14),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Original Audio',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 12,
                       ),
-                const SizedBox(height: 20),
-                _ActionButton(
-                  icon: Icons.more_vert,
-                  label: '',
-                  onTap: () => _showOptionsBottomSheet(context),
-                ),
-              ],
-            ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
+        ),
 
-          // Bottom left: user info
-          Positioned(
-            left: 16,
-            right: 80,
-            bottom: 80,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1),
-                        color: Colors.grey[800],
-                      ),
-                      child: _profileImage != null && _profileImage!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                _profileImage!,
-                                width: 32,
-                                height: 32,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                    ),
-                    const SizedBox(width: 8),
-                    AppText(
-                      _username,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const AppText(
-                  'amazing_video_editezy',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.music_note, color: Colors.white, size: 14),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        'Original Audio',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 12,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          _buildBusinessInfoBar(),
-        ],
-      ),
+        // Business info bar (bottom)
+        _buildBusinessInfoBar(),
+      ],
     );
   }
 

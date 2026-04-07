@@ -30,7 +30,7 @@ class AutoPlayReelVideo extends StatelessWidget {
       color: Colors.black,
       child: Image.network(
         thumbnailUrl,
-        fit: BoxFit.cover,
+        fit: BoxFit.fill,
         errorBuilder: (context, error, stackTrace) {
           return Container(
             decoration: const BoxDecoration(

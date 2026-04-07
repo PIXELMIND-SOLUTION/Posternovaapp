@@ -66,84 +66,86 @@ class _HotScreenState extends State<HotScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'Hot Topics',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text(
+            'Hot Topics',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
-      body: Consumer<HotTopicsProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
-            );
-          }
-
-          if (provider.reels.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.local_fire_department_outlined,
-                    size: 80,
-                    color: Colors.white.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No hot topics yet',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Check back later',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return PageView.builder(
-            controller: _pageController,
-            scrollDirection: Axis.vertical,
-            itemCount: provider.reels.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              final reel = provider.reels[index];
-              return HotReelItem(
-                key: ValueKey(reel.id),
-                reel: reel,
-                userId: userId ?? '',
-                isCurrentPage: index == _currentPage,
+        body: Consumer<HotTopicsProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
               );
-            },
-          );
-        },
+            }
+
+            if (provider.reels.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.local_fire_department_outlined,
+                      size: 80,
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No hot topics yet',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Check back later',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return PageView.builder(
+              controller: _pageController,
+              scrollDirection: Axis.vertical,
+              itemCount: provider.reels.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final reel = provider.reels[index];
+                return HotReelItem(
+                  key: ValueKey(reel.id),
+                  reel: reel,
+                  userId: userId ?? '',
+                  isCurrentPage: index == _currentPage,
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -1416,212 +1418,384 @@ class _HotReelItemState extends State<HotReelItem> {
   }
 
   @override
+  // Widget build(BuildContext context) {
+  //   return GestureDetector(
+  //     onTap: _togglePlayPause,
+  //     child: Stack(
+  //       fit: StackFit.expand,
+  //       children: [
+  //         // ── Video using ExoVideoPlayer ──
+  //         ExoVideoPlayer(
+  //           key: ValueKey('${widget.reel.id}_${widget.isCurrentPage}'),
+  //           url: widget.reel.videoUrl,
+  //           autoPlay: _isPlaying,
+  //         ),
+  //         // ── Gradient ──
+  //         Positioned(
+  //           left: 0,
+  //           right: 0,
+  //           bottom: 0,
+  //           child: Container(
+  //             height: 260,
+  //             decoration: BoxDecoration(
+  //               gradient: LinearGradient(
+  //                 begin: Alignment.bottomCenter,
+  //                 end: Alignment.topCenter,
+  //                 colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         // ── Play/Pause indicator ──
+  //         if (_showPlayPause)
+  //           Center(
+  //             child: AnimatedOpacity(
+  //               opacity: 1.0,
+  //               duration: const Duration(milliseconds: 300),
+  //               child: Container(
+  //                 padding: const EdgeInsets.all(20),
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.black.withOpacity(0.5),
+  //                   shape: BoxShape.circle,
+  //                 ),
+  //                 child: Icon(
+  //                   _isPlaying ? Icons.pause : Icons.play_arrow,
+  //                   color: Colors.white,
+  //                   size: 50,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         // ── Right side actions ──
+  //         // In the build method of _HotReelItemState, replace the Consumer section:
+  //         // ── Right side actions ──
+  //         // ── Right side actions ──
+  //         Positioned(
+  //           right: 12,
+  //           bottom: 145,
+  //           child: Column(
+  //             children: [
+  //               // Like button - FIXED VERSION
+  //               // Consumer<HotTopicsProvider>(
+  //               //   builder: (context, provider, _) {
+  //               //     // Find the current reel
+  //               //     final currentReel = provider.reels.firstWhere(
+  //               //       (r) => r.id == widget.reel.id,
+  //               //       orElse: () => widget.reel, // Fallback to local reel
+  //               //     );
+  //               //     final bool isLiked = currentReel.isLiked;
+  //               //     final int likeCount = currentReel.likes;
+  //               //     return _ActionButton(
+  //               //       icon: isLiked ? Icons.favorite : Icons.favorite_border,
+  //               //       iconColor: isLiked ? Colors.red : Colors.white,
+  //               //       label: _formatCount(likeCount),
+  //               //       onTap: () => _toggleLike(),
+  //               //     );
+  //               //   },
+  //               // ),
+  //               // const SizedBox(height: 20),
+  //               _ActionButton(icon: Icons.reply, label: '', onTap: _shareReel),
+  //               const SizedBox(height: 20),
+  //               // Download button
+  //               _isDownloading
+  //                   ? SizedBox(
+  //                       width: 48,
+  //                       height: 64,
+  //                       child: Column(
+  //                         mainAxisSize: MainAxisSize.min,
+  //                         children: [
+  //                           Stack(
+  //                             alignment: Alignment.center,
+  //                             children: [
+  //                               SizedBox(
+  //                                 width: 48,
+  //                                 height: 48,
+  //                                 child: CircularProgressIndicator(
+  //                                   value: _downloadStatus == 'processing'
+  //                                       ? null
+  //                                       : (_downloadProgress > 0
+  //                                             ? _downloadProgress
+  //                                             : null),
+  //                                   color: _downloadStatus == 'processing'
+  //                                       ? Colors.orangeAccent
+  //                                       : Colors.white,
+  //                                   strokeWidth: 2.5,
+  //                                 ),
+  //                               ),
+  //                               Icon(
+  //                                 _downloadStatus == 'processing'
+  //                                     ? Icons.auto_fix_high
+  //                                     : Icons.download,
+  //                                 color: Colors.white,
+  //                                 size: 14,
+  //                               ),
+  //                             ],
+  //                           ),
+  //                           Text(
+  //                             _downloadStatus == 'processing'
+  //                                 ? 'Branding'
+  //                                 : _downloadProgress > 0
+  //                                 ? '${(_downloadProgress * 100).toInt()}%'
+  //                                 : '...',
+  //                             style: const TextStyle(
+  //                               color: Colors.white,
+  //                               fontSize: 6,
+  //                               fontWeight: FontWeight.bold,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     )
+  //                   : _ActionButton(
+  //                       icon: Icons.download_outlined,
+  //                       label: '',
+  //                       onTap: _downloadReel,
+  //                     ),
+  //               // const SizedBox(height: 20),
+  //               // _ActionButton(
+  //               //   icon: Icons.more_vert,
+  //               //   label: '',
+  //               //   onTap: () => _showOptionsBottomSheet(context),
+  //               // ),
+  //             ],
+  //           ),
+  //         ),
+  //         // ── Bottom left: user info ──
+  //         Positioned(
+  //           left: 16,
+  //           right: 80,
+  //           bottom: 85,
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Row(
+  //                 children: [
+  //                   Container(
+  //                     width: 32,
+  //                     height: 32,
+  //                     decoration: BoxDecoration(
+  //                       shape: BoxShape.circle,
+  //                       border: Border.all(color: Colors.white, width: 1),
+  //                       color: Colors.grey[800],
+  //                     ),
+  //                     child: _profileImage != null && _profileImage!.isNotEmpty
+  //                         ? ClipOval(
+  //                             child: Image.network(
+  //                               _profileImage!,
+  //                               fit: BoxFit.cover,
+  //                               errorBuilder: (_, __, ___) => const Icon(
+  //                                 Icons.person,
+  //                                 color: Colors.white,
+  //                                 size: 18,
+  //                               ),
+  //                             ),
+  //                           )
+  //                         : const Icon(
+  //                             Icons.person,
+  //                             color: Colors.white,
+  //                             size: 18,
+  //                           ),
+  //                   ),
+  //                   const SizedBox(width: 8),
+  //                   Text(
+  //                     _username,
+  //                     style: const TextStyle(
+  //                       color: Colors.white,
+  //                       fontWeight: FontWeight.w600,
+  //                       fontSize: 14,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         // ── Business Info Bar (always on top) ──
+  //         _buildBusinessInfoBar(),
+  //       ],
+  //     ),
+  //   );
+  // }
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _togglePlayPause,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // ── Video using ExoVideoPlayer ──
-          ExoVideoPlayer(
-            key: ValueKey('${widget.reel.id}_${widget.isCurrentPage}'),
-            url: widget.reel.videoUrl,
-            autoPlay: _isPlaying,
-          ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Video player
+        ExoVideoPlayer(
+          key: ValueKey('${widget.reel.id}_${widget.isCurrentPage}'),
+          url: widget.reel.videoUrl,
+          autoPlay: _isPlaying,
+        ),
 
-          // ── Gradient ──
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              height: 260,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+        // ✅ ADD THIS - Full screen tap detector (placed BEFORE buttons)
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: _togglePlayPause,
+          ),
+        ),
+
+        // Gradient overlay
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            height: 260,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+              ),
+            ),
+          ),
+        ),
+
+        // Play/Pause indicator
+        if (_showPlayPause)
+          Center(
+            child: AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _isPlaying ? Icons.pause : Icons.play_arrow,
+                  color: Colors.white,
+                  size: 50,
                 ),
               ),
             ),
           ),
 
-          // ── Play/Pause indicator ──
-          if (_showPlayPause)
-            Center(
-              child: AnimatedOpacity(
-                opacity: 1.0,
-                duration: const Duration(milliseconds: 300),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
-                    size: 50,
-                  ),
-                ),
-              ),
-            ),
+        // Right side actions
+        Positioned(
+          right: 12,
+          bottom: 145,
+          child: Column(
+            children: [
+              _ActionButton(icon: Icons.reply, label: '', onTap: _shareReel),
+              const SizedBox(height: 20),
 
-          // ── Right side actions ──
-          // In the build method of _HotReelItemState, replace the Consumer section:
-
-          // ── Right side actions ──
-          // ── Right side actions ──
-          Positioned(
-            right: 12,
-            bottom: 145,
-            child: Column(
-              children: [
-                // Like button - FIXED VERSION
-                // Consumer<HotTopicsProvider>(
-                //   builder: (context, provider, _) {
-                //     // Find the current reel
-                //     final currentReel = provider.reels.firstWhere(
-                //       (r) => r.id == widget.reel.id,
-                //       orElse: () => widget.reel, // Fallback to local reel
-                //     );
-
-                //     final bool isLiked = currentReel.isLiked;
-                //     final int likeCount = currentReel.likes;
-
-                //     return _ActionButton(
-                //       icon: isLiked ? Icons.favorite : Icons.favorite_border,
-                //       iconColor: isLiked ? Colors.red : Colors.white,
-                //       label: _formatCount(likeCount),
-                //       onTap: () => _toggleLike(),
-                //     );
-                //   },
-                // ),
-                // const SizedBox(height: 20),
-                _ActionButton(icon: Icons.reply, label: '', onTap: _shareReel),
-                const SizedBox(height: 20),
-
-                // Download button
-                _isDownloading
-                    ? SizedBox(
-                        width: 48,
-                        height: 64,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 48,
-                                  height: 48,
-                                  child: CircularProgressIndicator(
-                                    value: _downloadStatus == 'processing'
-                                        ? null
-                                        : (_downloadProgress > 0
-                                              ? _downloadProgress
-                                              : null),
-                                    color: _downloadStatus == 'processing'
-                                        ? Colors.orangeAccent
-                                        : Colors.white,
-                                    strokeWidth: 2.5,
-                                  ),
+              // Download button
+              _isDownloading
+                  ? SizedBox(
+                      width: 48,
+                      height: 64,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: CircularProgressIndicator(
+                                  value: _downloadStatus == 'processing'
+                                      ? null
+                                      : (_downloadProgress > 0
+                                            ? _downloadProgress
+                                            : null),
+                                  color: _downloadStatus == 'processing'
+                                      ? Colors.orangeAccent
+                                      : Colors.white,
+                                  strokeWidth: 2.5,
                                 ),
-                                Icon(
-                                  _downloadStatus == 'processing'
-                                      ? Icons.auto_fix_high
-                                      : Icons.download,
-                                  color: Colors.white,
-                                  size: 14,
-                                ),
-                              ],
-                            ),
-                            Text(
-                              _downloadStatus == 'processing'
-                                  ? 'Branding'
-                                  : _downloadProgress > 0
-                                  ? '${(_downloadProgress * 100).toInt()}%'
-                                  : '...',
-                              style: const TextStyle(
+                              ),
+                              Icon(
+                                _downloadStatus == 'processing'
+                                    ? Icons.auto_fix_high
+                                    : Icons.download,
                                 color: Colors.white,
-                                fontSize: 6,
-                                fontWeight: FontWeight.bold,
+                                size: 14,
                               ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : _ActionButton(
-                        icon: Icons.download_outlined,
-                        label: '',
-                        onTap: _downloadReel,
-                      ),
-                // const SizedBox(height: 20),
-
-                // _ActionButton(
-                //   icon: Icons.more_vert,
-                //   label: '',
-                //   onTap: () => _showOptionsBottomSheet(context),
-                // ),
-              ],
-            ),
-          ),
-
-          // ── Bottom left: user info ──
-          Positioned(
-            left: 16,
-            right: 80,
-            bottom: 85,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1),
-                        color: Colors.grey[800],
-                      ),
-                      child: _profileImage != null && _profileImage!.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                _profileImage!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.person,
+                            ],
+                          ),
+                          Text(
+                            _downloadStatus == 'processing'
+                                ? 'Branding'
+                                : _downloadProgress > 0
+                                ? '${(_downloadProgress * 100).toInt()}%'
+                                : '...',
+                            style: const TextStyle(
                               color: Colors.white,
-                              size: 18,
+                              fontSize: 6,
+                              fontWeight: FontWeight.bold,
                             ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _username,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                          ),
+                        ],
                       ),
+                    )
+                  : _ActionButton(
+                      icon: Icons.download_outlined,
+                      label: '',
+                      onTap: _downloadReel,
                     ),
-                  ],
-                ),
-              ],
-            ),
+            ],
           ),
+        ),
 
-          // ── Business Info Bar (always on top) ──
-          _buildBusinessInfoBar(),
-        ],
-      ),
+        // Bottom left: user info
+        Positioned(
+          left: 16,
+          right: 80,
+          bottom: 85,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1),
+                      color: Colors.grey[800],
+                    ),
+                    child: _profileImage != null && _profileImage!.isNotEmpty
+                        ? ClipOval(
+                            child: Image.network(
+                              _profileImage!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          )
+                        : const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _username,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // Business Info Bar
+        _buildBusinessInfoBar(),
+      ],
     );
   }
 

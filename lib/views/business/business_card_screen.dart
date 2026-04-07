@@ -16,6 +16,8 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
   bool _loading = true;
   String? _error;
 
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
+
   @override
   void initState() {
     super.initState();
@@ -72,15 +74,21 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = _isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDarkMode ? const Color(0xFF0F172A) : Colors.white,
       body: SafeArea(
         child: Column(
           children: [
             _buildAppBar(),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: const Color(0xFFF5C518),
+                      ),
+                    )
                   : _error != null
                   ? _buildError()
                   : _buildContent(),
@@ -92,13 +100,22 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
   }
 
   Widget _buildError() {
+    final isDarkMode = _isDarkMode;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          Icon(
+            Icons.error_outline,
+            size: 48,
+            color: isDarkMode ? Colors.red[400] : Colors.red,
+          ),
           const SizedBox(height: 12),
-          Text(_error!, style: const TextStyle(color: Colors.red)),
+          Text(
+            _error!,
+            style: TextStyle(color: isDarkMode ? Colors.red[400] : Colors.red),
+          ),
           const SizedBox(height: 12),
           TextButton(
             onPressed: () {
@@ -108,6 +125,9 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
               });
               _fetchCards();
             },
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFF5C518),
+            ),
             child: const Text('Retry'),
           ),
         ],
@@ -116,6 +136,8 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
   }
 
   Widget _buildContent() {
+    final isDarkMode = _isDarkMode;
+
     return RefreshIndicator(
       onRefresh: () async {
         setState(() {
@@ -124,6 +146,7 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
         });
         await _fetchCards();
       },
+      color: const Color(0xFFF5C518),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
@@ -147,12 +170,14 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
 
             // show all cards in grid if we have more
             if (_trendingCards.isEmpty && _professionalCards.isEmpty)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(32),
                   child: Text(
                     'No cards available',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey,
+                    ),
                   ),
                 ),
               ),
@@ -163,11 +188,20 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
   }
 
   Widget _buildAppBar() {
+    final isDarkMode = _isDarkMode;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDarkMode
+                ? const Color(0xFF334155)
+                : const Color(0xFFEEEEEE),
+            width: 1,
+          ),
+        ),
       ),
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -186,6 +220,8 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
+    final isDarkMode = _isDarkMode;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -193,24 +229,28 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
-          const Row(
+          Row(
             children: [
               Text(
                 'View All',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.black54,
+                  color: isDarkMode ? Colors.grey[400] : Colors.black54,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              SizedBox(width: 4),
-              Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black54),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: isDarkMode ? Colors.grey[400] : Colors.black54,
+              ),
             ],
           ),
         ],
@@ -243,8 +283,7 @@ class _BusinessCardScreenState extends State<BusinessCardScreen> {
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio:
-              0.72, // portrait-ish default; image overrides via Fit
+          childAspectRatio: 0.72,
         ),
         itemCount: cards.length,
         itemBuilder: (_, i) => _DynamicCard(card: cards[i]),
@@ -295,6 +334,8 @@ class _DynamicCardState extends State<_DynamicCard> {
   double? _aspectRatio; // width / height
   bool _imageLoaded = false;
 
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
+
   @override
   void initState() {
     super.initState();
@@ -328,6 +369,8 @@ class _DynamicCardState extends State<_DynamicCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = _isDarkMode;
+
     // While loading, show placeholder of sensible size
     if (!_imageLoaded) {
       return _cardShell(
@@ -372,11 +415,13 @@ class _DynamicCardState extends State<_DynamicCard> {
                     return _shimmer();
                   },
                   errorBuilder: (_, __, ___) => Container(
-                    color: const Color(0xFFEEEEEE),
-                    child: const Center(
+                    color: isDarkMode
+                        ? const Color(0xFF0F172A)
+                        : const Color(0xFFEEEEEE),
+                    child: Center(
                       child: Icon(
                         Icons.broken_image,
-                        color: Colors.grey,
+                        color: isDarkMode ? Colors.grey[600] : Colors.grey,
                         size: 40,
                       ),
                     ),
@@ -391,20 +436,20 @@ class _DynamicCardState extends State<_DynamicCard> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
               children: [
-                const Text(
+                Text(
                   '₹ 299',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: isDarkMode ? Colors.white : Colors.black,
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Text(
+                Text(
                   '₹ 499',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey,
+                    color: isDarkMode ? Colors.grey[400] : Colors.grey,
                     decoration: TextDecoration.lineThrough,
                   ),
                 ),
@@ -436,14 +481,18 @@ class _DynamicCardState extends State<_DynamicCard> {
   }
 
   Widget _cardShell({double? width, required Widget child}) {
+    final isDarkMode = _isDarkMode;
+
     return Container(
       width: width,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.18),
+            color: (isDarkMode ? Colors.black : Colors.grey).withOpacity(
+              isDarkMode ? 0.3 : 0.18,
+            ),
             spreadRadius: 1,
             blurRadius: 6,
             offset: const Offset(0, 2),
@@ -455,13 +504,18 @@ class _DynamicCardState extends State<_DynamicCard> {
   }
 
   Widget _shimmer() {
+    final isDarkMode = _isDarkMode;
+
     return Container(
-      color: const Color(0xFFEEEEEE),
-      child: const Center(
+      color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFEEEEEE),
+      child: Center(
         child: SizedBox(
           width: 24,
           height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: const Color(0xFFF5C518),
+          ),
         ),
       ),
     );

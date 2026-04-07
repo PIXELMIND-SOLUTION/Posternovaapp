@@ -59,6 +59,9 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   bool get wantKeepAlive => true;
 
+  static const String _KEY_REFER_MODAL_SHOWN = 'refer_modal_last_shown';
+  static const int MODAL_COOLDOWN_HOURS = 24;
+
   // ── User ───────────────────────────────────────────────────────────────────
   String? currentUserId;
   String? username;
@@ -147,6 +150,38 @@ class _HomeScreenState extends State<HomeScreen>
   // ══════════════════════════════════════════════════════════════════════════
   // LIFECYCLE
   // ══════════════════════════════════════════════════════════════════════════
+
+  // Add these methods
+  Future<bool> _shouldShowReferModal() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastShownTimestamp = prefs.getInt(_KEY_REFER_MODAL_SHOWN);
+
+    if (lastShownTimestamp == null) {
+      return true; // Never shown before
+    }
+
+    final lastShownDate = DateTime.fromMillisecondsSinceEpoch(
+      lastShownTimestamp,
+    );
+    final currentDate = DateTime.now();
+    final difference = currentDate.difference(lastShownDate);
+
+    // Return true if 24 hours have passed
+    return difference.inHours >= MODAL_COOLDOWN_HOURS;
+  }
+
+  Future<void> _saveReferModalShownTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+      _KEY_REFER_MODAL_SHOWN,
+      DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
+  Future<void> _resetReferModalCooldown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_KEY_REFER_MODAL_SHOWN);
+  }
 
   @override
   void initState() {
@@ -463,8 +498,31 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _showInitialModals() {
+  // void _showInitialModals() {
+  //   if (!mounted) return;
+  //   final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
+  //   if (!myPlanProvider.isPurchase) {
+  //     WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       if (mounted)
+  //         Navigator.push(
+  //           context,
+  //           MaterialPageRoute(builder: (_) => SubscriptionPlansPage()),
+  //         );
+  //     });
+  //   }
+  //   if (!_hasShownReferAndEarnModal) {
+  //     WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       if (mounted) {
+  //         showReferAndEarnModal(context);
+  //         _hasShownReferAndEarnModal = true;
+  //       }
+  //     });
+  //   }
+  // }
+
+  void _showInitialModals() async {
     if (!mounted) return;
+
     final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
     if (!myPlanProvider.isPurchase) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -475,7 +533,11 @@ class _HomeScreenState extends State<HomeScreen>
           );
       });
     }
-    if (!_hasShownReferAndEarnModal) {
+
+    // Check if we should show the Refer & Earn modal
+    final shouldShow = await _shouldShowReferModal();
+
+    if (shouldShow && !_hasShownReferAndEarnModal) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           showReferAndEarnModal(context);
@@ -1129,24 +1191,24 @@ class _HomeScreenState extends State<HomeScreen>
                         // ),
                       ],
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        if (!_requireNetwork()) return;
-                        _showLanguageSelector(context);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.language_rounded,
-                          color: Colors.black87,
-                          size: 22,
-                        ),
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     if (!_requireNetwork()) return;
+                    //     _showLanguageSelector(context);
+                    //   },
+                    //   child: Container(
+                    //     padding: const EdgeInsets.all(7),
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.black.withOpacity(0.1),
+                    //       borderRadius: BorderRadius.circular(8),
+                    //     ),
+                    //     child: const Icon(
+                    //       Icons.language_rounded,
+                    //       color: Colors.black87,
+                    //       size: 22,
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
 
@@ -2807,6 +2869,123 @@ class _HomeScreenState extends State<HomeScreen>
   // REFER & EARN MODAL
   // ══════════════════════════════════════════════════════════════════════════
 
+  // void showReferAndEarnModal(BuildContext context) {
+  //   String? uid;
+  //   String? userReferralCode;
+  //   bool isLoading = true;
+  //   String? errorMessage;
+
+  //   showGeneralDialog(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     barrierLabel: 'Refer and Earn',
+  //     barrierColor: Colors.black.withOpacity(0.5),
+  //     transitionDuration: const Duration(milliseconds: 300),
+  //     pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+  //     transitionBuilder: (context, animation, __, ___) {
+  //       return FadeTransition(
+  //         opacity: animation,
+  //         child: ScaleTransition(
+  //           scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+  //             CurvedAnimation(parent: animation, curve: Curves.easeOut),
+  //           ),
+  //           child: Center(
+  //             child: Material(
+  //               color: Colors.transparent,
+  //               child: StatefulBuilder(
+  //                 builder: (context, setModalState) {
+  //                   Future<void> loadReferralCode() async {
+  //                     try {
+  //                       setModalState(() {
+  //                         isLoading = true;
+  //                         errorMessage = null;
+  //                       });
+  //                       final userData = await AuthPreferences.getUserData();
+  //                       if (userData != null) {
+  //                         uid = userData.user.id;
+  //                         final response = await http.get(
+  //                           Uri.parse(
+  //                             'http://31.97.206.144:4061/api/users/refferalcode/$uid',
+  //                           ),
+  //                         );
+  //                         if (response.statusCode == 200) {
+  //                           final data = json.decode(response.body);
+  //                           final code =
+  //                               data['referralCode'] ??
+  //                               data['refferalCode'] ??
+  //                               data['code'];
+  //                           setModalState(() {
+  //                             isLoading = false;
+  //                             userReferralCode = code;
+  //                             errorMessage = code == null
+  //                                 ? 'No referral code found'
+  //                                 : null;
+  //                           });
+  //                         } else {
+  //                           setModalState(() {
+  //                             isLoading = false;
+  //                             errorMessage = 'Failed to load referral code';
+  //                           });
+  //                         }
+  //                       }
+  //                     } catch (e) {
+  //                       setModalState(() {
+  //                         isLoading = false;
+  //                         errorMessage = 'Error: $e';
+  //                       });
+  //                     }
+  //                   }
+
+  //                   void shareCode() {
+  //                     if (userReferralCode != null) {
+  //                       Share.share(
+  //                         '🎉 Join me on EditEzy!\n\nUse my referral code: $userReferralCode\n\nGet exclusive benefits when you upgrade!\n\nhttps://play.google.com/store/apps/details?id=com.posternova.posternova',
+  //                         subject: 'Join EditEzy',
+  //                       );
+  //                     }
+  //                   }
+
+  //                   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //                     if (isLoading &&
+  //                         userReferralCode == null &&
+  //                         errorMessage == null)
+  //                       loadReferralCode();
+  //                   });
+
+  //                   return FlippableReferModal(
+  //                     isLoading: isLoading,
+  //                     errorMessage: errorMessage,
+  //                     userReferralCode: userReferralCode,
+  //                     onLoadReferralCode: loadReferralCode,
+  //                     onShare: shareCode,
+  //                     onClose: () => Navigator.pop(context),
+  //                     onCopy: () {
+  //                       if (userReferralCode != null) {
+  //                         Clipboard.setData(
+  //                           ClipboardData(text: userReferralCode!),
+  //                         );
+  //                         ScaffoldMessenger.of(context).showSnackBar(
+  //                           const SnackBar(
+  //                             content: Text('Referral code copied!'),
+  //                             behavior: SnackBarBehavior.floating,
+  //                             backgroundColor: Color(0xFF10B981),
+  //                           ),
+  //                         );
+  //                       } else {
+  //                         loadReferralCode();
+  //                       }
+  //                     },
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
   void showReferAndEarnModal(BuildContext context) {
     String? uid;
     String? userReferralCode;
@@ -2896,7 +3075,13 @@ class _HomeScreenState extends State<HomeScreen>
                       userReferralCode: userReferralCode,
                       onLoadReferralCode: loadReferralCode,
                       onShare: shareCode,
-                      onClose: () => Navigator.pop(context),
+                      onClose: () async {
+                        // Save the current time when modal is closed
+                        await _saveReferModalShownTime();
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        }
+                      },
                       onCopy: () {
                         if (userReferralCode != null) {
                           Clipboard.setData(

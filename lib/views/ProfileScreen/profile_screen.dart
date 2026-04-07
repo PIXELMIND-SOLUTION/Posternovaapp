@@ -18,6 +18,7 @@ import 'package:posternova/views/invoices/create_invoice_screen.dart';
 import 'package:posternova/views/referearn/referearn_screen.dart';
 import 'package:posternova/views/subscription/payment_success_screen.dart';
 import 'package:posternova/views/subscription/plan_detail_screen.dart';
+import 'package:posternova/views/textremover/textremover.dart';
 import 'package:posternova/views/whatsppstickers/stickers_screen.dart';
 import 'package:posternova/widgets/common_modal.dart';
 import 'package:posternova/widgets/language_widget.dart';
@@ -154,6 +155,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _profileData?['profileImage'] ?? user?.user.profileImage;
 
         return Scaffold(
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF0A0E21),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            title: const Text("Profile", style: TextStyle(color: Colors.white)),
+            centerTitle: true,
+          ),
           body: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -272,35 +285,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                             ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: () =>
-                                    _pickAndUploadImage(context, authProvider),
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.purple.shade400,
-                                        Colors.blue.shade400,
-                                      ],
-                                    ),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: const Color(0xFF0A0E21),
-                                      width: 3,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
-                            ),
+                            // Positioned(
+                            //   bottom: 0,
+                            //   right: 0,
+                            //   child: GestureDetector(
+                            //     onTap: () =>
+                            //         _pickAndUploadImage(context, authProvider),
+                            //     child: Container(
+                            //       padding: const EdgeInsets.all(8),
+                            //       decoration: BoxDecoration(
+                            //         gradient: LinearGradient(
+                            //           colors: [
+                            //             Colors.purple.shade400,
+                            //             Colors.blue.shade400,
+                            //           ],
+                            //         ),
+                            //         shape: BoxShape.circle,
+                            //         border: Border.all(
+                            //           color: const Color(0xFF0A0E21),
+                            //           width: 3,
+                            //         ),
+                            //       ),
+                            //       child: const Icon(
+                            //         Icons.edit,
+                            //         color: Colors.white,
+                            //         size: 20,
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
                           ],
                         ),
 
@@ -428,7 +441,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                 _buildMenuItem(
                                   icon: Icons.info_outline,
-                                  title: 'about',
+                                  title: 'About Us',
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -466,7 +479,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                 _buildMenuItem(
                                   icon: Icons.wallet,
-                                  title: 'History',
+                                  title: 'Payment History',
                                   onTap: () async {
                                     final result = await Navigator.push(
                                       context,
@@ -488,68 +501,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       myPlanProvider.isPurchase ?? false,
                                 ),
 
-                                _buildMenuItem(
-                                  icon: Icons.request_page,
-                                  title: 'invoice',
-                                  onTap: () {
-                                    if (myPlanProvider.isPurchase == true) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              CreateInvoiceScreen(),
-                                        ),
-                                      );
-                                    } else {
-                                      _showPremiumRequiredDialog(context);
-                                    }
-                                  },
-                                  isPremiumRequired: true,
-                                  isPurchased:
-                                      myPlanProvider.isPurchase ?? false,
-                                ),
+                                // _buildMenuItem(
+                                //   icon: Icons.request_page,
+                                //   title: 'invoice',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) =>
+                                //               CreateInvoiceScreen(),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
+                                // _buildMenuItem(
+                                //   icon: Icons.credit_card,
+                                //   title: 'Business Card',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) =>
+                                //               BusinessCardScreen(),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
 
-                                _buildMenuItem(
-                                  icon: Icons.credit_card,
-                                  title: 'Business Card',
-                                  onTap: () {
-                                    if (myPlanProvider.isPurchase == true) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              BusinessCardScreen(),
-                                        ),
-                                      );
-                                    } else {
-                                      _showPremiumRequiredDialog(context);
-                                    }
-                                  },
-                                  isPremiumRequired: true,
-                                  isPurchased:
-                                      myPlanProvider.isPurchase ?? false,
-                                ),
+                                // _buildMenuItem(
+                                //   icon: Icons.credit_card,
+                                //   title: 'Text Remover',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) => WebViewScreen(),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
 
-                                _buildMenuItem(
-                                  icon: Icons.emoji_emotions,
-                                  title: 'stickers',
-                                  onTap: () {
-                                    if (myPlanProvider.isPurchase == true) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              WhatsAppStickerScreen(),
-                                        ),
-                                      );
-                                    } else {
-                                      _showPremiumRequiredDialog(context);
-                                    }
-                                  },
-                                  isPremiumRequired: true,
-                                  isPurchased:
-                                      myPlanProvider.isPurchase ?? false,
-                                ),
+                                // _buildMenuItem(
+                                //   icon: Icons.emoji_emotions,
+                                //   title: 'stickers',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) =>
+                                //               WhatsAppStickerScreen(),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
 
                                 //  _buildMenuItem(
                                 //   icon: Icons.settings,
@@ -569,25 +601,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 //   isPremiumRequired: true,
                                 //   isPurchased: myPlanProvider.isPurchase ?? false,
                                 // ),
-                                _buildMenuItem(
-                                  icon: Icons.chat_bubble_outline,
-                                  title: 'chicha_ai',
-                                  onTap: () {
-                                    if (myPlanProvider.isPurchase == true) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => AiScreen(),
-                                        ),
-                                      );
-                                    } else {
-                                      _showPremiumRequiredDialog(context);
-                                    }
-                                  },
-                                  isPremiumRequired: true,
-                                  isPurchased:
-                                      myPlanProvider.isPurchase ?? false,
-                                ),
+                                // _buildMenuItem(
+                                //   icon: Icons.chat_bubble_outline,
+                                //   title: 'chicha_ai',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) => AiScreen(),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
 
                                 // _buildMenuItem(
                                 //   icon: Icons.design_services_outlined,
@@ -659,27 +691,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   isPurchased:
                                       myPlanProvider.isPurchase ?? false,
                                 ),
-                                _buildMenuItem(
-                                  icon: Icons.crop,
-                                  title: 'remove_background',
-                                  onTap: () {
-                                    if (myPlanProvider.isPurchase == true) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              BackgroundRemoverScreen(),
-                                        ),
-                                      );
-                                    } else {
-                                      _showPremiumRequiredDialog(context);
-                                    }
-                                  },
-                                  isPremiumRequired: true,
-                                  isPurchased:
-                                      myPlanProvider.isPurchase ?? false,
-                                ),
 
+                                // _buildMenuItem(
+                                //   icon: Icons.crop,
+                                //   title: 'remove_background',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) =>
+                                //               BackgroundRemoverScreen(),
+                                //         ),
+                                //       );
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
                                 _buildMenuItem(
                                   icon: Icons.logout,
                                   title: 'logout',

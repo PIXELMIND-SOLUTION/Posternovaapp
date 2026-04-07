@@ -66,6 +66,9 @@ dependencies:
   chewie: 1.7.4
   visibility_detector: ^0.4.0+2
   file_picker: ^11.0.1
+  webview_flutter: ^4.13.1
+  webview_flutter_android: ^4.10.1
+  flutter_inappwebview: ^6.1.5
 
   
 

@@ -6,6 +6,7 @@ import 'package:posternova/views/AuthModule/auth_screen.dart';
 import 'package:posternova/views/NavBar/navbar_screen.dart';
 import 'package:posternova/helper/storage_helper.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart' show launchUrl;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -472,25 +473,25 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   children: [
                     // Progress dots
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(4, (i) {
-                        final active = i == _currentDot;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 350),
-                          curve: Curves.easeInOut,
-                          margin: const EdgeInsets.symmetric(horizontal: 5),
-                          width: active ? 24 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            color: active ? _tealDark : Colors.grey.shade300,
-                          ),
-                        );
-                      }),
-                    ),
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
+                    //   children: List.generate(4, (i) {
+                    //     final active = i == _currentDot;
+                    //     return AnimatedContainer(
+                    //       duration: const Duration(milliseconds: 350),
+                    //       curve: Curves.easeInOut,
+                    //       margin: const EdgeInsets.symmetric(horizontal: 5),
+                    //       width: active ? 24 : 8,
+                    //       height: 8,
+                    //       decoration: BoxDecoration(
+                    //         borderRadius: BorderRadius.circular(4),
+                    //         color: active ? _tealDark : Colors.grey.shade300,
+                    //       ),
+                    //     );
+                    //   }),
+                    // ),
 
-                    const SizedBox(height: 28),
+                    // const SizedBox(height: 28),
 
                     // "Agree to terms & Continue" button
                     ScaleTransition(
@@ -546,7 +547,10 @@ class _SplashScreenState extends State<SplashScreen>
                       opacity: _buttonFade,
                       child: GestureDetector(
                         onTap: () {
-                          // TODO: open full terms & privacy page
+                          final Uri url = Uri.parse(
+                            'https://editezy.onrender.com/privacy-and-policy',
+                          );
+                          launchUrl(url);
                         },
                         child: const Text(
                           'Terms & Privacy policies',

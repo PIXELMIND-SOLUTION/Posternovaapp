@@ -1,188 +1,3 @@
-// import 'package:flutter/material.dart';
-
-// class AboutScreen extends StatelessWidget {
-//   const AboutScreen({Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.grey[100],
-//       appBar: AppBar(
-//         title: const Text(
-//           "About Us",
-//           style: TextStyle(fontWeight: FontWeight.bold),
-//         ),
-//         centerTitle: true,
-//         elevation: 0,
-//         backgroundColor: Colors.white,
-//         leading: IconButton(
-//           onPressed: () {
-//             Navigator.of(context).pop();
-//           },
-//           icon: Icon(Icons.arrow_back_ios),
-//         ),
-//       ),
-//       body: SingleChildScrollView(
-//         child: Column(
-//           children: [
-//             // Header Section
-//             Container(
-//               width: double.infinity,
-//               padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-//               decoration: BoxDecoration(
-//                 gradient: LinearGradient(
-//                   colors: [Colors.purple.shade400, Colors.blue.shade400],
-//                   begin: Alignment.topLeft,
-//                   end: Alignment.bottomRight,
-//                 ),
-//                 borderRadius: const BorderRadius.only(
-//                   bottomLeft: Radius.circular(30),
-//                   bottomRight: Radius.circular(30),
-//                 ),
-//               ),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.center,
-//                 children: const [
-//                   Icon(Icons.design_services, size: 70, color: Colors.white),
-//                   SizedBox(height: 12),
-//                   Text(
-//                     "PosterNova",
-//                     style: TextStyle(
-//                       fontSize: 26,
-//                       fontWeight: FontWeight.bold,
-//                       color: Colors.white,
-//                     ),
-//                   ),
-//                   SizedBox(height: 6),
-//                   Text(
-//                     "Create stunning posters & logos effortlessly",
-//                     style: TextStyle(fontSize: 16, color: Colors.white70),
-//                     textAlign: TextAlign.center,
-//                   ),
-//                 ],
-//               ),
-//             ),
-
-//             const SizedBox(height: 20),
-
-//             // About Description
-//             Padding(
-//               padding: const EdgeInsets.symmetric(horizontal: 20),
-//               child: Card(
-//                 elevation: 4,
-//                 shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(16),
-//                 ),
-//                 child: Padding(
-//                   padding: const EdgeInsets.all(20),
-//                   child: Column(
-//                     children: const [
-//                       Text(
-//                         "About PosterNova",
-//                         style: TextStyle(
-//                           fontSize: 20,
-//                           fontWeight: FontWeight.bold,
-//                         ),
-//                       ),
-//                       SizedBox(height: 12),
-//                       Text(
-//                         "PosterNova is your all-in-one creative studio for designing stunning posters, logos, and promotional content. Whether you are a business owner, influencer, or designer, PosterMaker helps you bring your ideas to life with ready-made templates and powerful editing tools.",
-//                         textAlign: TextAlign.center,
-//                         style: TextStyle(
-//                           fontSize: 15,
-//                           color: Colors.black87,
-//                           height: 1.6,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//             ),
-
-//             const SizedBox(height: 20),
-
-//             // Features Section
-//             Padding(
-//               padding: const EdgeInsets.symmetric(horizontal: 20),
-//               child: Column(
-//                 children: [
-//                   _featureCard(
-//                     icon: Icons.palette,
-//                     title: "Custom Templates",
-//                     description:
-//                         "Choose from thousands of templates designed for every purpose.",
-//                   ),
-//                   // _featureCard(
-//                   //   icon: Icons.auto_fix_high,
-//                   //   title: "AI Logo Generator",
-//                   //   description: "Generate unique logos matching your brand’s style.",
-//                   // ),
-//                   _featureCard(
-//                     icon: Icons.share,
-//                     title: "Easy Sharing",
-//                     description:
-//                         "Share your designs instantly on social media.",
-//                   ),
-//                 ],
-//               ),
-//             ),
-
-//             const SizedBox(height: 30),
-
-//             // Footer Section
-//             const Padding(
-//               padding: EdgeInsets.only(bottom: 30),
-//               child: Text(
-//                 "Version 1.0.0\nMade with ❤️ by PosterNova Team",
-//                 textAlign: TextAlign.center,
-//                 style: TextStyle(fontSize: 14, color: Colors.black54),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _featureCard({
-//     required IconData icon,
-//     required String title,
-//     required String description,
-//   }) {
-//     return Card(
-//       elevation: 2,
-//       margin: const EdgeInsets.symmetric(vertical: 8),
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-//       child: ListTile(
-//         leading: CircleAvatar(
-//           radius: 25,
-//           backgroundColor: Colors.purple.shade400,
-//           child: Icon(icon, color: Colors.blue.shade400, size: 26),
-//         ),
-//         title: Text(
-//           title,
-//           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-//         ),
-//         subtitle: Text(
-//           description,
-//           style: const TextStyle(fontSize: 14, color: Colors.black87),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:posternova/widgets/language_widget.dart';
 
@@ -193,20 +8,22 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get the current theme
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDarkMode ? Colors.grey[900] : Colors.grey[100];
-    final cardColor = isDarkMode ? Colors.grey[850] : Colors.white;
-    final textColor = isDarkMode ? Colors.white : Colors.black87;
-    final subtextColor = isDarkMode ? Colors.grey[400] : Colors.black54;
+    final backgroundColor = isDarkMode
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
+    final cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF1F2937);
+    final subtextColor = isDarkMode
+        ? Colors.grey[400]
+        : const Color(0xFF64748B);
+    final accentColor = const Color(0xFFF5C518);
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         title: AppText(
           "about_us",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
         ),
         centerTitle: true,
         elevation: 0,
@@ -215,10 +32,7 @@ class AboutScreen extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: textColor,
-          ),
+          icon: Icon(Icons.arrow_back_ios, color: textColor),
         ),
       ),
       body: SingleChildScrollView(
@@ -227,10 +41,10 @@ class AboutScreen extends StatelessWidget {
             // Header Section
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.purple.shade400, Colors.blue.shade400],
+                  colors: [accentColor, accentColor.withOpacity(0.7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -241,28 +55,52 @@ class AboutScreen extends StatelessWidget {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
-                children: const [
-                  Icon(Icons.design_services, size: 70, color: Colors.white),
-                  SizedBox(height: 12),
-                  Text(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.design_services,
+                      size: 60,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
                     "Editezy",
                     style: TextStyle(
-                      fontSize: 26,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 6),
-                  AppText(
-                    "create_stunning",
-                    style: TextStyle(fontSize: 16, color: Colors.white70),
-                    textAlign: TextAlign.center,
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      "Create. Manage. Grow.",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // About Description
             Padding(
@@ -271,29 +109,60 @@ class AboutScreen extends StatelessWidget {
                 elevation: 4,
                 color: cardColor,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      AppText(
-                        "about_editezy",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: accentColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.info_outline,
+                              color: accentColor,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "About Editezy",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      AppText(
-                        "about_description",
-                        textAlign: TextAlign.center,
+                      const SizedBox(height: 16),
+                      Text(
+                        '''Editezy is an all-in-one creative and business management platform built to simplify how you design, organize, and grow your brand. Designed for creators, entrepreneurs, and businesses, Editezy brings powerful tools together in one seamless experience.
+In today’s fast-paced digital world, you need more than just good design—you need speed, consistency, and smart management. That’s where Editezy comes in.
+With Editezy, you can create stunning visuals using ready-made posters, customizable templates, logos, and professional business cards—helping you build a strong and professional brand identity effortlessly. Our background remover makes editing quick and easy, even if you have no prior design experience.
+Beyond creativity, Editezy helps you stay organized with a business and customer database management system, allowing you to manage client information, track your work, and keep everything in one place.
+What We Offer
+Ready-made posters for quick and impactful content
+Customizable templates for social media and branding
+Logo creation tools to build your identity
+Professional business card designs
+Background remover for clean, high-quality visuals
+Business & customer database management system
+At Editezy, our mission is to empower you with simple, smart, and effective tools that help you focus on what matters—growing your brand.
+Editezy – Create. Manage. Grow.''',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           color: textColor,
                           height: 1.6,
                         ),
+                        textAlign: TextAlign.start,
                       ),
                     ],
                   ),
@@ -301,89 +170,146 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Features Section
+            // What We Offer Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _featureCard(
-                    context: context,
-                    icon: Icons.palette,
-                    title: "custom_templates",
-                    description:
-                        "choose_thousands",
-                    cardColor: cardColor,
-                    textColor: textColor,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: accentColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.stars, color: accentColor, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        "What We Offer",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
                   ),
-                  _featureCard(
-                    context: context,
-                    icon: Icons.share,
-                    title: "easy_sharing",
-                    description:
-                        "share_instantly",
-                    cardColor: cardColor,
-                    textColor: textColor,
+                  const SizedBox(height: 16),
+
+                  // Feature Grid
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.2,
+                    children: [
+                      _featureItem(
+                        icon: Icons.image,
+                        title: "Ready-made posters",
+                        color: accentColor,
+                        textColor: textColor,
+                        cardColor: cardColor,
+                      ),
+                      _featureItem(
+                        icon: Icons.image,
+                        title: "Customizable templates",
+                        color: accentColor,
+                        textColor: textColor,
+                        cardColor: cardColor,
+                      ),
+                      _featureItem(
+                        icon: Icons.emoji_objects,
+                        title: "Logo design tools",
+                        color: accentColor,
+                        textColor: textColor,
+                        cardColor: cardColor,
+                      ),
+                      _featureItem(
+                        icon: Icons.credit_card,
+                        title: "Business card creation",
+                        color: accentColor,
+                        textColor: textColor,
+                        cardColor: cardColor,
+                      ),
+                      // _featureItem(
+                      //   icon: Icons.remove,
+                      //   title: "AI-powered background remover",
+                      //   color: accentColor,
+                      //   textColor: textColor,
+                      //   cardColor: cardColor,
+                      // ),
+                      // _featureItem(
+                      //   icon: Icons.receipt,
+                      //   title: "Invoice generation",
+                      //   color: accentColor,
+                      //   textColor: textColor,
+                      //   cardColor: cardColor,
+                      // ),
+                      _featureItem(
+                        icon: Icons.storage,
+                        title: "Customer database management",
+                        color: accentColor,
+                        textColor: textColor,
+                        cardColor: cardColor,
+                      ),
+                      _featureItem(
+                        icon: Icons.business_center,
+                        title: "Business management tools",
+                        color: accentColor,
+                        textColor: textColor,
+                        cardColor: cardColor,
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
 
             const SizedBox(height: 30),
-
-            // Footer Section
-            Padding(
-              padding: const EdgeInsets.only(bottom: 30),
-              child: AppText(
-                "version_made",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: subtextColor,
-                ),
-              ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _featureCard({
-    required BuildContext context,
+  Widget _featureItem({
     required IconData icon,
     required String title,
-    required String description,
-    required Color? cardColor,
+    required Color color,
     required Color textColor,
+    required Color cardColor,
   }) {
-    return Card(
-      elevation: 2,
-      color: cardColor,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ListTile(
-        leading: CircleAvatar(
-          radius: 25,
-          backgroundColor: Colors.purple.shade400,
-          child: Icon(icon, color: Colors.blue.shade400, size: 26),
-        ),
-        title: AppText(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: textColor,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 28, color: color),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        subtitle: AppText(
-          description,
-          style: TextStyle(
-            fontSize: 14,
-            color: textColor,
-          ),
-        ),
+        ],
       ),
     );
   }
