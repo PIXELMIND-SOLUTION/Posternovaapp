@@ -11797,17 +11797,17 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
               (v) => setState(() => _brandInfo.phone = v),
             ),
           ),
-          const Divider(height: 12, color: Colors.grey),
-          _bInfoRow(
-            Icons.location_on,
-            'Address',
-            _brandInfo.address,
-            () => _editBrandField(
-              'Address',
-              _brandInfo.address,
-              (v) => setState(() => _brandInfo.address = v),
-            ),
-          ),
+          // const Divider(height: 12, color: Colors.grey),
+          // _bInfoRow(
+          //   Icons.location_on,
+          //   'Address',
+          //   _brandInfo.address,
+          //   () => _editBrandField(
+          //     'Address',
+          //     _brandInfo.address,
+          //     (v) => setState(() => _brandInfo.address = v),
+          //   ),
+          // ),
         ],
       ),
     );

@@ -10582,18 +10582,18 @@ class _TemplateCreateState extends State<TemplateCreate>
             ),
             isDarkMode,
           ),
-          const Divider(height: 12, color: Colors.grey),
-          _bInfoRow(
-            Icons.location_on,
-            'Address',
-            _brandInfo.address,
-            () => _editBrandField(
-              'Address',
-              _brandInfo.address,
-              (v) => setState(() => _brandInfo.address = v),
-            ),
-            isDarkMode,
-          ),
+          // const Divider(height: 12, color: Colors.grey),
+          // _bInfoRow(
+          //   Icons.location_on,
+          //   'Address',
+          //   _brandInfo.address,
+          //   () => _editBrandField(
+          //     'Address',
+          //     _brandInfo.address,
+          //     (v) => setState(() => _brandInfo.address = v),
+          //   ),
+          //   isDarkMode,
+          // ),
         ],
       ),
     );
