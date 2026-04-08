@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:posternova/models/register_model.dart';
@@ -662,6 +663,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               ],
             ),
             const SizedBox(height: 24),
+            if (Platform.isAndroid)
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
