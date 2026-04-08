@@ -2,8 +2,8 @@ name: posternova
 description: "A new Flutter project."
 publish_to: 'none'
 
-# version: 1.0.6+58
-version: 1.0.21+28
+version: 1.0.7+59
+# version: 1.0.21+28
 
 
 environment:
