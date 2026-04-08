@@ -4,6 +4,7 @@
 // import 'package:posternova/models/category_model.dart';
 // import 'package:posternova/providers/PosterProvider/getall_poster_provider.dart';
 // import 'package:posternova/views/PosterModule/poster_making_screen.dart';
+// import 'package:posternova/views/SecondPhase/poster_editor.dart';
 // import 'package:posternova/widgets/recent_search_helper.dart';
 // import 'package:provider/provider.dart';
 // import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -70,7 +71,7 @@
 //     final searches = await RecentSearchHelper.getRecentSearches();
 //     setState(() {
 //       _recentSearches = searches;
-//       _searchHistory = searches; // Initialize search history
+//       _searchHistory = searches;
 //       _isLoadingRecent = false;
 //     });
 //   }
@@ -153,7 +154,6 @@
 //             _searchController.text = result.recognizedWords;
 //           });
 
-//           // Start timer to stop listening after 2 seconds of silence
 //           _speechTimer?.cancel();
 //           _speechTimer = Timer(const Duration(seconds: 2), () {
 //             if (_isListening) {
@@ -176,7 +176,6 @@
 //       _speech.stop();
 //     }
 
-//     // Save search query if not empty
 //     final query = _searchController.text.trim();
 //     if (query.isNotEmpty && _isListening) {
 //       _saveRecentSearch(query);
@@ -219,7 +218,6 @@
 //           .cast<CategoryModel>()
 //           .toList();
 
-//       // Sort results
 //       _applySorting(searchResults);
 
 //       setState(() {
@@ -233,10 +231,8 @@
 //   void _applySorting(List<CategoryModel> results) {
 //     switch (_selectedSort) {
 //       case 'recent':
-//         // Keep as is (already sorted by provider)
 //         break;
 //       case 'popular':
-//         // Sort by image count (assuming more images = more popular)
 //         results.sort(
 //           (a, b) => (b.images?.length ?? 0).compareTo(a.images?.length ?? 0),
 //         );
@@ -293,11 +289,12 @@
 //   Widget _buildSearchBar() {
 //     final theme = Theme.of(context);
 //     final isDarkMode = theme.brightness == Brightness.dark;
+
 //     final textColor = isDarkMode ? Colors.white : Colors.black87;
-//     final hintColor = isDarkMode ? Colors.grey[400] : Colors.grey.shade400;
-//     final backgroundColor = isDarkMode ? Colors.grey[850] : Colors.white;
-//     final borderColor = isDarkMode ? Colors.grey[700] : Colors.grey.shade200;
-//     final iconColor = isDarkMode ? Colors.grey[400] : Colors.grey.shade600;
+//     final hintColor = isDarkMode ? Colors.grey[500] : Colors.grey[400];
+//     final backgroundColor = isDarkMode ? Colors.grey[900] : Colors.white;
+//     final borderColor = isDarkMode ? Colors.grey[800] : Colors.grey[200];
+//     final iconColor = isDarkMode ? Colors.grey[500] : Colors.grey[600];
 
 //     return Container(
 //       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -312,7 +309,9 @@
 //                 border: Border.all(color: borderColor!),
 //                 boxShadow: [
 //                   BoxShadow(
-//                     color: Colors.black.withOpacity(0.04),
+//                     color: isDarkMode
+//                         ? Colors.black.withOpacity(0.2)
+//                         : Colors.black.withOpacity(0.04),
 //                     blurRadius: 8,
 //                     offset: const Offset(0, 2),
 //                   ),
@@ -394,6 +393,9 @@
 //   }
 
 //   Widget _buildFilterChips() {
+//     final theme = Theme.of(context);
+//     final isDarkMode = theme.brightness == Brightness.dark;
+
 //     return AnimatedContainer(
 //       duration: const Duration(milliseconds: 300),
 //       height: searchValue ? 44 : 0,
@@ -404,9 +406,9 @@
 //               child: ListView(
 //                 scrollDirection: Axis.horizontal,
 //                 children: [
-//                   // _buildChip('Recent', 'recent'),
-//                   // _buildChip('Popular', 'popular'),
-//                   // _buildChip('A-Z', 'az'),
+//                   _buildChip('Recent', 'recent'),
+//                   _buildChip('Popular', 'popular'),
+//                   _buildChip('A-Z', 'az'),
 //                 ],
 //               ),
 //             )
@@ -415,14 +417,19 @@
 //   }
 
 //   Widget _buildChip(String label, String value) {
+//     final theme = Theme.of(context);
+//     final isDarkMode = theme.brightness == Brightness.dark;
 //     final isSelected = _selectedSort == value;
+
 //     return Padding(
 //       padding: const EdgeInsets.only(right: 8),
 //       child: FilterChip(
 //         label: Text(
 //           label,
 //           style: TextStyle(
-//             color: isSelected ? Colors.white : Colors.grey.shade700,
+//             color: isSelected
+//                 ? Colors.white
+//                 : (isDarkMode ? Colors.grey[400] : Colors.grey[700]),
 //             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
 //             fontSize: 13,
 //           ),
@@ -434,10 +441,12 @@
 //             _applySorting(filteredPosters);
 //           });
 //         },
-//         backgroundColor: Colors.white,
+//         backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
 //         selectedColor: const Color(0xFF6366F1),
 //         side: BorderSide(
-//           color: isSelected ? const Color(0xFF6366F1) : Colors.grey.shade300,
+//           color: isSelected
+//               ? const Color(0xFF6366F1)
+//               : (isDarkMode ? Colors.grey[700]! : Colors.grey[300]!),
 //           width: 1,
 //         ),
 //         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -448,6 +457,9 @@
 //   }
 
 //   Widget _buildListeningBanner() {
+//     final theme = Theme.of(context);
+//     final isDarkMode = theme.brightness == Brightness.dark;
+
 //     return AnimatedContainer(
 //       duration: const Duration(milliseconds: 300),
 //       height: _isListening ? 56 : 0,
@@ -458,13 +470,15 @@
 //               decoration: BoxDecoration(
 //                 gradient: LinearGradient(
 //                   colors: [
-//                     const Color(0xFF6366F1).withOpacity(0.1),
-//                     const Color(0xFF8B5CF6).withOpacity(0.1),
+//                     const Color(0xFF6366F1).withOpacity(isDarkMode ? 0.2 : 0.1),
+//                     const Color(0xFF8B5CF6).withOpacity(isDarkMode ? 0.2 : 0.1),
 //                   ],
 //                 ),
 //                 borderRadius: BorderRadius.circular(14),
 //                 border: Border.all(
-//                   color: const Color(0xFF6366F1).withOpacity(0.3),
+//                   color: const Color(
+//                     0xFF6366F1,
+//                   ).withOpacity(isDarkMode ? 0.5 : 0.3),
 //                 ),
 //               ),
 //               child: Row(
@@ -511,6 +525,9 @@
 //   }
 
 //   Widget _buildRecentSearches() {
+//     final theme = Theme.of(context);
+//     final isDarkMode = theme.brightness == Brightness.dark;
+
 //     if (_isLoadingRecent) {
 //       return const Center(
 //         child: CircularProgressIndicator(
@@ -536,12 +553,12 @@
 //           child: Row(
 //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
 //             children: [
-//               const Text(
+//               Text(
 //                 'Recent Searches',
 //                 style: TextStyle(
 //                   fontSize: 16,
 //                   fontWeight: FontWeight.w600,
-//                   color: Color(0xFF1F2937),
+//                   color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
 //                 ),
 //               ),
 //               TextButton(
@@ -568,21 +585,30 @@
 //                 width: 36,
 //                 height: 36,
 //                 decoration: BoxDecoration(
-//                   color: const Color(0xFFF3F4F6),
+//                   color: isDarkMode
+//                       ? Colors.grey[800]
+//                       : const Color(0xFFF3F4F6),
 //                   borderRadius: BorderRadius.circular(10),
 //                 ),
 //                 child: Icon(
 //                   Icons.history_rounded,
 //                   size: 18,
-//                   color: Colors.grey.shade600,
+//                   color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
 //                 ),
 //               ),
 //               title: Text(
 //                 search,
-//                 style: const TextStyle(fontSize: 15, color: Color(0xFF1F2937)),
+//                 style: TextStyle(
+//                   fontSize: 15,
+//                   color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+//                 ),
 //               ),
 //               trailing: IconButton(
-//                 icon: Icon(Icons.close, size: 16, color: Colors.grey.shade500),
+//                 icon: Icon(
+//                   Icons.close,
+//                   size: 16,
+//                   color: isDarkMode ? Colors.grey[600] : Colors.grey[500],
+//                 ),
 //                 onPressed: () => _removeRecentSearch(search),
 //                 padding: EdgeInsets.zero,
 //                 constraints: const BoxConstraints(),
@@ -598,59 +624,11 @@
 //     );
 //   }
 
-//   // Widget _buildPopularSearches() {
-//   //   final List<String> popularSearches = [
-//   //     'Business',
-//   //     'Education',
-//   //     'Marketing',
-//   //     'Social Media',
-//   //     'Events',
-//   //     'Promotion',
-//   //   ];
-
-//   //   return Column(
-//   //     crossAxisAlignment: CrossAxisAlignment.start,
-//   //     children: [
-//   //       const Padding(
-//   //         padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-//   //         child: Text(
-//   //           'Popular Searches',
-//   //           style: TextStyle(
-//   //             fontSize: 16,
-//   //             fontWeight: FontWeight.w600,
-//   //             color: Color(0xFF1F2937),
-//   //           ),
-//   //         ),
-//   //       ),
-//   //       Padding(
-//   //         padding: const EdgeInsets.symmetric(horizontal: 20),
-//   //         child: Wrap(
-//   //           spacing: 8,
-//   //           runSpacing: 8,
-//   //           children: popularSearches.map((search) {
-//   //             return FilterChip(
-//   //               label: Text(search),
-//   //               onSelected: (_) => _selectRecentSearch(search),
-//   //               backgroundColor: Colors.white,
-//   //               selectedColor: const Color(0xFF6366F1),
-//   //               side: BorderSide(color: Colors.grey.shade300),
-//   //               shape: RoundedRectangleBorder(
-//   //                 borderRadius: BorderRadius.circular(20),
-//   //               ),
-//   //               labelStyle: const TextStyle(
-//   //                 fontSize: 13,
-//   //                 fontWeight: FontWeight.w500,
-//   //               ),
-//   //             );
-//   //           }).toList(),
-//   //         ),
-//   //       ),
-//   //       const SizedBox(height: 20),
-//   //     ],
-//   //   );
-//   // }
-
 //   Widget _buildResultCard(CategoryModel poster, int index) {
+//     final theme = Theme.of(context);
+//     final isDarkMode = theme.brightness == Brightness.dark;
+//     final bgImageUrl = poster.images[0] ?? '';
+
 //     return ScaleTransition(
 //       scale: _scaleAnimation,
 //       child: Material(
@@ -660,19 +638,26 @@
 //             Navigator.push(
 //               context,
 //               MaterialPageRoute(
-//                 builder: (context) => SamplePosterScreen(posterId: poster.id),
+//                 builder: (context) => PosterEditorScreen(
+//                   posterAsset: bgImageUrl,
+//                   itemid: poster.id,
+//                 ),
 //               ),
 //             );
 //           },
 //           borderRadius: BorderRadius.circular(16),
 //           child: Container(
 //             decoration: BoxDecoration(
-//               color: Colors.white,
+//               color: isDarkMode ? Colors.grey[850] : Colors.white,
 //               borderRadius: BorderRadius.circular(16),
-//               border: Border.all(color: Colors.grey.shade200),
+//               border: Border.all(
+//                 color: isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
+//               ),
 //               boxShadow: [
 //                 BoxShadow(
-//                   color: Colors.black.withOpacity(0.04),
+//                   color: isDarkMode
+//                       ? Colors.black.withOpacity(0.2)
+//                       : Colors.black.withOpacity(0.04),
 //                   blurRadius: 8,
 //                   offset: const Offset(0, 2),
 //                 ),
@@ -702,7 +687,9 @@
 //                                     (context, child, loadingProgress) {
 //                                       if (loadingProgress == null) return child;
 //                                       return Container(
-//                                         color: Colors.grey.shade50,
+//                                         color: isDarkMode
+//                                             ? Colors.grey[900]
+//                                             : Colors.grey[50],
 //                                         child: Center(
 //                                           child: CircularProgressIndicator(
 //                                             value:
@@ -731,7 +718,8 @@
 //                               vertical: 4,
 //                             ),
 //                             decoration: BoxDecoration(
-//                               color: Colors.white.withOpacity(0.95),
+//                               color: (isDarkMode ? Colors.black : Colors.white)
+//                                   .withOpacity(0.95),
 //                               borderRadius: BorderRadius.circular(8),
 //                               boxShadow: [
 //                                 BoxShadow(
@@ -772,10 +760,10 @@
 //                     children: [
 //                       Text(
 //                         poster.categoryName,
-//                         style: const TextStyle(
+//                         style: TextStyle(
 //                           fontWeight: FontWeight.w600,
 //                           fontSize: 14,
-//                           color: Colors.black87,
+//                           color: isDarkMode ? Colors.white : Colors.black87,
 //                         ),
 //                         maxLines: 2,
 //                         overflow: TextOverflow.ellipsis,
@@ -786,7 +774,9 @@
 //                           poster.tags!.take(3).join(', '),
 //                           style: TextStyle(
 //                             fontSize: 12,
-//                             color: Colors.grey.shade600,
+//                             color: isDarkMode
+//                                 ? Colors.grey[500]
+//                                 : Colors.grey[600],
 //                           ),
 //                           maxLines: 1,
 //                           overflow: TextOverflow.ellipsis,
@@ -796,7 +786,9 @@
 //                         'Tap to explore',
 //                         style: TextStyle(
 //                           fontSize: 12,
-//                           color: Colors.grey.shade600,
+//                           color: isDarkMode
+//                               ? Colors.grey[500]
+//                               : Colors.grey[600],
 //                         ),
 //                       ),
 //                     ],
@@ -811,9 +803,18 @@
 //   }
 
 //   Widget _buildPlaceholder(IconData icon) {
+//     final theme = Theme.of(context);
+//     final isDarkMode = theme.brightness == Brightness.dark;
+
 //     return Container(
-//       color: Colors.grey.shade50,
-//       child: Center(child: Icon(icon, size: 48, color: Colors.grey.shade300)),
+//       color: isDarkMode ? Colors.grey[900] : Colors.grey[50],
+//       child: Center(
+//         child: Icon(
+//           icon,
+//           size: 48,
+//           color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
+//         ),
+//       ),
 //     );
 //   }
 
@@ -822,6 +823,9 @@
 //     required String title,
 //     required String subtitle,
 //   }) {
+//     final theme = Theme.of(context);
+//     final isDarkMode = theme.brightness == Brightness.dark;
+
 //     return Center(
 //       child: FadeTransition(
 //         opacity: _scaleAnimation,
@@ -833,7 +837,9 @@
 //               Container(
 //                 padding: const EdgeInsets.all(24),
 //                 decoration: BoxDecoration(
-//                   color: const Color(0xFF6366F1).withOpacity(0.1),
+//                   color: const Color(
+//                     0xFF6366F1,
+//                   ).withOpacity(isDarkMode ? 0.2 : 0.1),
 //                   shape: BoxShape.circle,
 //                 ),
 //                 child: Icon(icon, size: 64, color: const Color(0xFF6366F1)),
@@ -841,10 +847,10 @@
 //               const SizedBox(height: 24),
 //               Text(
 //                 title,
-//                 style: const TextStyle(
+//                 style: TextStyle(
 //                   fontSize: 20,
 //                   fontWeight: FontWeight.w700,
-//                   color: Colors.black87,
+//                   color: isDarkMode ? Colors.white : Colors.black87,
 //                 ),
 //                 textAlign: TextAlign.center,
 //               ),
@@ -853,7 +859,7 @@
 //                 subtitle,
 //                 style: TextStyle(
 //                   fontSize: 15,
-//                   color: Colors.grey.shade600,
+//                   color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
 //                   height: 1.5,
 //                 ),
 //                 textAlign: TextAlign.center,
@@ -867,8 +873,11 @@
 
 //   @override
 //   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
+//     final isDarkMode = theme.brightness == Brightness.dark;
+
 //     return Scaffold(
-//       backgroundColor: const Color(0xFFFAFAFA),
+//       backgroundColor: isDarkMode ? Colors.grey[950] : const Color(0xFFFAFAFA),
 //       appBar: AppBar(
 //         leading: IconButton(
 //           onPressed: () => Navigator.of(context).pop(),
@@ -880,12 +889,14 @@
 //         ),
 //         centerTitle: true,
 //         elevation: 0,
-//         backgroundColor: Colors.white,
-//         foregroundColor: Colors.black87,
+//         backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+//         foregroundColor: isDarkMode ? Colors.white : Colors.black87,
 //         surfaceTintColor: Colors.transparent,
-//         systemOverlayStyle: const SystemUiOverlayStyle(
+//         systemOverlayStyle: SystemUiOverlayStyle(
 //           statusBarColor: Colors.transparent,
-//           statusBarIconBrightness: Brightness.dark,
+//           statusBarIconBrightness: isDarkMode
+//               ? Brightness.light
+//               : Brightness.dark,
 //         ),
 //       ),
 //       body: Consumer<PosterProvider>(
@@ -902,7 +913,10 @@
 //                   const SizedBox(height: 16),
 //                   Text(
 //                     'Loading templates...',
-//                     style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+//                     style: TextStyle(
+//                       fontSize: 15,
+//                       color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+//                     ),
 //                   ),
 //                 ],
 //               ),
@@ -919,29 +933,33 @@
 //                     Container(
 //                       padding: const EdgeInsets.all(20),
 //                       decoration: BoxDecoration(
-//                         color: Colors.red.shade50,
+//                         color: isDarkMode
+//                             ? Colors.red.withOpacity(0.2)
+//                             : Colors.red.shade50,
 //                         shape: BoxShape.circle,
 //                       ),
 //                       child: Icon(
 //                         Icons.cloud_off,
 //                         size: 64,
-//                         color: Colors.red.shade400,
+//                         color: isDarkMode
+//                             ? Colors.red[400]
+//                             : Colors.red.shade400,
 //                       ),
 //                     ),
 //                     const SizedBox(height: 20),
-//                     const Text(
+//                     Text(
 //                       'Connection Error',
 //                       style: TextStyle(
 //                         fontSize: 20,
 //                         fontWeight: FontWeight.w700,
-//                         color: Colors.black87,
+//                         color: isDarkMode ? Colors.white : Colors.black87,
 //                       ),
 //                     ),
 //                     const SizedBox(height: 8),
 //                     Text(
 //                       posterProvider.error!,
 //                       style: TextStyle(
-//                         color: Colors.grey.shade600,
+//                         color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
 //                         fontSize: 14,
 //                       ),
 //                       textAlign: TextAlign.center,
@@ -1003,10 +1021,7 @@
 //                     ? SingleChildScrollView(
 //                         child: Column(
 //                           crossAxisAlignment: CrossAxisAlignment.start,
-//                           children: [
-//                             _buildRecentSearches(),
-//                             // _buildPopularSearches(),
-//                           ],
+//                           children: [_buildRecentSearches()],
 //                         ),
 //                       )
 //                     : _buildEmptyState(
@@ -1029,6 +1044,7 @@ import 'package:flutter/services.dart';
 import 'package:posternova/models/category_model.dart';
 import 'package:posternova/providers/PosterProvider/getall_poster_provider.dart';
 import 'package:posternova/views/PosterModule/poster_making_screen.dart';
+import 'package:posternova/views/SecondPhase/poster_editor.dart';
 import 'package:posternova/widgets/recent_search_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -1082,7 +1098,6 @@ class _SearchScreenState extends State<SearchScreen>
     _initSpeech();
     _animationController.forward();
 
-    // If initial query is provided, perform search
     if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _search(widget.initialQuery!);
@@ -1316,9 +1331,9 @@ class _SearchScreenState extends State<SearchScreen>
 
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final hintColor = isDarkMode ? Colors.grey[500] : Colors.grey[400];
-    final backgroundColor = isDarkMode ? Colors.grey[900] : Colors.white;
-    final borderColor = isDarkMode ? Colors.grey[800] : Colors.grey[200];
-    final iconColor = isDarkMode ? Colors.grey[500] : Colors.grey[600];
+    final backgroundColor = isDarkMode ? Colors.grey[850] : Colors.white;
+    final borderColor = isDarkMode ? Colors.grey[700] : Colors.grey[200];
+    final iconColor = isDarkMode ? Colors.grey[400] : Colors.grey[600];
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -1334,7 +1349,7 @@ class _SearchScreenState extends State<SearchScreen>
                 boxShadow: [
                   BoxShadow(
                     color: isDarkMode
-                        ? Colors.black.withOpacity(0.2)
+                        ? Colors.black.withOpacity(0.3)
                         : Colors.black.withOpacity(0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
@@ -1453,7 +1468,7 @@ class _SearchScreenState extends State<SearchScreen>
           style: TextStyle(
             color: isSelected
                 ? Colors.white
-                : (isDarkMode ? Colors.grey[400] : Colors.grey[700]),
+                : (isDarkMode ? Colors.grey[300] : Colors.grey[700]),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             fontSize: 13,
           ),
@@ -1470,7 +1485,7 @@ class _SearchScreenState extends State<SearchScreen>
         side: BorderSide(
           color: isSelected
               ? const Color(0xFF6366F1)
-              : (isDarkMode ? Colors.grey[700]! : Colors.grey[300]!),
+              : (isDarkMode ? Colors.grey[600]! : Colors.grey[300]!),
           width: 1,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1494,15 +1509,19 @@ class _SearchScreenState extends State<SearchScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF6366F1).withOpacity(isDarkMode ? 0.2 : 0.1),
-                    const Color(0xFF8B5CF6).withOpacity(isDarkMode ? 0.2 : 0.1),
+                    const Color(
+                      0xFF6366F1,
+                    ).withOpacity(isDarkMode ? 0.25 : 0.1),
+                    const Color(
+                      0xFF8B5CF6,
+                    ).withOpacity(isDarkMode ? 0.25 : 0.1),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: const Color(
                     0xFF6366F1,
-                  ).withOpacity(isDarkMode ? 0.5 : 0.3),
+                  ).withOpacity(isDarkMode ? 0.6 : 0.3),
                 ),
               ),
               child: Row(
@@ -1510,7 +1529,9 @@ class _SearchScreenState extends State<SearchScreen>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.mic, color: Colors.white, size: 16),
@@ -1588,7 +1609,7 @@ class _SearchScreenState extends State<SearchScreen>
               TextButton(
                 onPressed: _clearAllRecentSearches,
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.red,
+                  foregroundColor: Colors.red.shade400,
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -1617,13 +1638,14 @@ class _SearchScreenState extends State<SearchScreen>
                 child: Icon(
                   Icons.history_rounded,
                   size: 18,
-                  color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                 ),
               ),
               title: Text(
                 search,
                 style: TextStyle(
                   fontSize: 15,
+                  fontWeight: FontWeight.w500,
                   color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
                 ),
               ),
@@ -1631,7 +1653,7 @@ class _SearchScreenState extends State<SearchScreen>
                 icon: Icon(
                   Icons.close,
                   size: 16,
-                  color: isDarkMode ? Colors.grey[600] : Colors.grey[500],
+                  color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
                 ),
                 onPressed: () => _removeRecentSearch(search),
                 padding: EdgeInsets.zero,
@@ -1651,6 +1673,7 @@ class _SearchScreenState extends State<SearchScreen>
   Widget _buildResultCard(CategoryModel poster, int index) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+    final bgImageUrl = poster.images.isNotEmpty ? poster.images[0] : '';
 
     return ScaleTransition(
       scale: _scaleAnimation,
@@ -1661,7 +1684,10 @@ class _SearchScreenState extends State<SearchScreen>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SamplePosterScreen(posterId: poster.id),
+                builder: (context) => PosterEditorScreen(
+                  posterAsset: bgImageUrl,
+                  itemid: poster.id,
+                ),
               ),
             );
           },
@@ -1676,7 +1702,7 @@ class _SearchScreenState extends State<SearchScreen>
               boxShadow: [
                 BoxShadow(
                   color: isDarkMode
-                      ? Colors.black.withOpacity(0.2)
+                      ? Colors.black.withOpacity(0.3)
                       : Colors.black.withOpacity(0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
@@ -1694,7 +1720,7 @@ class _SearchScreenState extends State<SearchScreen>
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        poster.images != null && poster.images.isNotEmpty
+                        poster.images.isNotEmpty
                             ? Image.network(
                                 poster.images[0],
                                 fit: BoxFit.cover,
@@ -1758,7 +1784,7 @@ class _SearchScreenState extends State<SearchScreen>
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '${poster.images?.length ?? 0}',
+                                  '${poster.images.length}',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -1857,9 +1883,16 @@ class _SearchScreenState extends State<SearchScreen>
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(
-                    0xFF6366F1,
-                  ).withOpacity(isDarkMode ? 0.2 : 0.1),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(
+                        0xFF6366F1,
+                      ).withOpacity(isDarkMode ? 0.2 : 0.1),
+                      const Color(
+                        0xFF8B5CF6,
+                      ).withOpacity(isDarkMode ? 0.2 : 0.1),
+                    ],
+                  ),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 64, color: const Color(0xFF6366F1)),
@@ -1897,7 +1930,7 @@ class _SearchScreenState extends State<SearchScreen>
     final isDarkMode = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDarkMode ? Colors.grey[950] : const Color(0xFFFAFAFA),
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFFFAFAFA),
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -1926,9 +1959,9 @@ class _SearchScreenState extends State<SearchScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
+                  const CircularProgressIndicator(
                     strokeWidth: 3,
-                    color: const Color(0xFF6366F1),
+                    color: Color(0xFF6366F1),
                   ),
                   const SizedBox(height: 16),
                   Text(
