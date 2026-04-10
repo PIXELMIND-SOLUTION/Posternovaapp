@@ -2997,6 +2997,11 @@ class _CategoryScreenState extends State<CategoryScreen>
         padding: EdgeInsets.fromLTRB(padding, padding, padding, padding / 2),
         child: Row(
           children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Icon(Icons.arrow_back_ios)),
             Expanded(
               child: Text(
                 'Categories',

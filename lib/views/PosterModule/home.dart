@@ -340,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen>
       final hasNet =
           result.isNotEmpty && !result.contains(ConnectivityResult.none);
       if (mounted) setState(() => _hasNetwork = hasNet);
-      if (!hasNet) _showNoNetworkSheet();
+      // if (!hasNet) _showNoNetworkSheet();
     } catch (_) {}
   }
 
@@ -357,7 +357,7 @@ class _HomeScreenState extends State<HomeScreen>
         if (hasNet) _noNetworkSheetShown = false;
       });
       if (!hasNet) {
-        _showNoNetworkSheet();
+        // _showNoNetworkSheet();
       } else if (wasOffline && hasNet) {
         _initializeAllData();
       }
@@ -389,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _requireNetwork() {
     if (!_hasNetwork) {
       _noNetworkSheetShown = false;
-      _showNoNetworkSheet();
+      // _showNoNetworkSheet();
       return false;
     }
     return true;

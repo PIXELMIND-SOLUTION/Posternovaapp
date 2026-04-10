@@ -2,8 +2,8 @@ name: posternova
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.8+60
-# version: 1.0.21+28
+# version: 1.0.8+60
+version: 1.0.23+30
 
 
 environment:
@@ -69,6 +69,7 @@ dependencies:
   webview_flutter: ^4.13.1
   webview_flutter_android: ^4.10.1
   flutter_inappwebview: ^6.1.5
+  flutter_keyboard_visibility: ^6.0.0
 
   
 

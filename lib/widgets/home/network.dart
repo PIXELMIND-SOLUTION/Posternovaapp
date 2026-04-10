@@ -2,6 +2,7 @@
 // NO NETWORK BOTTOM SHEET
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class NoNetworkSheet extends StatelessWidget {
@@ -12,9 +13,17 @@ class NoNetworkSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        // Add shadow for iOS
+        boxShadow: Platform.isIOS ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ] : null,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
