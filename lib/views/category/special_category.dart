@@ -730,8 +730,10 @@
 //   }
 // }
 
+
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:posternova/views/NavBar/navbar_screen.dart';
 import 'package:posternova/views/backgroundremover/background_remover.dart';
 import 'package:posternova/views/business/business_card_screen.dart';
 import 'package:posternova/views/category/category_screen.dart';
@@ -778,14 +780,14 @@ class _SpecialCategoryState extends State<SpecialCategory>
   late Animation<double> _floatingAnim;
 
   static final List<CategoryItem> categories = [
-    CategoryItem(
-      title: 'Online Panchang',
-      subtitle: 'Daily almanac & astro',
-      icon: Icons.auto_awesome,
-      emoji: '🌙',
-      gradient: [const Color(0xFFFF6B6B), const Color(0xFFFF4E50)],
-      destination: const OnlinePunchangScreen(),
-    ),
+    // CategoryItem(
+    //   title: 'Online Panchang',
+    //   subtitle: 'Daily almanac & astro',
+    //   icon: Icons.auto_awesome,
+    //   emoji: '🌙',
+    //   gradient: [const Color(0xFFFF6B6B), const Color(0xFFFF4E50)],
+    //   destination: const OnlinePunchangScreen(),
+    // ),
     CategoryItem(
       title: 'Poster Template',
       subtitle: 'Browse all topics',
@@ -802,38 +804,38 @@ class _SpecialCategoryState extends State<SpecialCategory>
       gradient: [const Color(0xFF8B5CF6), const Color(0xFFEC4899)],
       destination: const CreatePost(),
     ),
-    CategoryItem(
-      title: 'Logo Maker',
-      subtitle: 'Create your brand logo',
-      icon: Icons.workspace_premium_rounded,
-      emoji: '🏷️',
-      gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
-      destination: const LogoCategory(),
-    ),
-    CategoryItem(
-      title: 'BG Remover',
-      subtitle: 'AI-powered editing',
-      icon: Icons.auto_fix_high,
-      emoji: '✨',
-      gradient: [const Color(0xFF7C3AED), const Color(0xFF4F46E5)],
-      destination: const BackgroundRemoverScreen(),
-    ),
-    CategoryItem(
-      title: 'Text Remover',
-      subtitle: 'Remove text from images',
-      icon: Icons.text_format,
-      emoji: '🔤',
-      gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
-      destination: const WebViewScreen(),
-    ),
-    CategoryItem(
-      title: 'Stickers',
-      subtitle: 'Fun stickers & graphics',
-      icon: Icons.emoji_emotions,
-      emoji: '🎯',
-      gradient: [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
-      destination: const WhatsAppStickerScreen(),
-    ),
+    // CategoryItem(
+    //   title: 'Logo Maker',
+    //   subtitle: 'Create your brand logo',
+    //   icon: Icons.workspace_premium_rounded,
+    //   emoji: '🏷️',
+    //   gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
+    //   destination: const LogoCategory(),
+    // ),
+    // CategoryItem(
+    //   title: 'BG Remover',
+    //   subtitle: 'AI-powered editing',
+    //   icon: Icons.auto_fix_high,
+    //   emoji: '✨',
+    //   gradient: [const Color(0xFF7C3AED), const Color(0xFF4F46E5)],
+    //   destination: const BackgroundRemoverScreen(),
+    // ),
+    // CategoryItem(
+    //   title: 'Text Remover',
+    //   subtitle: 'Remove text from images',
+    //   icon: Icons.text_format,
+    //   emoji: '🔤',
+    //   gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
+    //   destination: const WebViewScreen(),
+    // ),
+    // CategoryItem(
+    //   title: 'Stickers',
+    //   subtitle: 'Fun stickers & graphics',
+    //   icon: Icons.emoji_emotions,
+    //   emoji: '🎯',
+    //   gradient: [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
+    //   destination: const WhatsAppStickerScreen(),
+    // ),
     CategoryItem(
       title: 'Business Card',
       subtitle: 'Professional cards',
@@ -890,17 +892,57 @@ class _SpecialCategoryState extends State<SpecialCategory>
         physics: const BouncingScrollPhysics(),
         slivers: [
           // ── Animated App Bar ──────────────────────────────────────────
+          // SliverAppBar(
+          //   expandedHeight: 240,
+          //   pinned: true,
+          //   stretch: true,
+          //   backgroundColor: const Color(0xFF0A0A0F),
+          //   elevation: 0,
+          //   flexibleSpace: FlexibleSpaceBar(
+          //     stretchModes: const [StretchMode.zoomBackground],
+          //     background: _buildHeader(),
+          //   ),
+          // ),
+
+
           SliverAppBar(
-            expandedHeight: 240,
-            pinned: true,
-            stretch: true,
-            backgroundColor: const Color(0xFF0A0A0F),
-            elevation: 0,
-            flexibleSpace: FlexibleSpaceBar(
-              stretchModes: const [StretchMode.zoomBackground],
-              background: _buildHeader(),
-            ),
-          ),
+  expandedHeight: 240,
+  pinned: true,
+  stretch: true,
+  backgroundColor: const Color(0xFF0A0A0F),
+  elevation: 0,
+  leading: Padding(
+  padding: const EdgeInsets.all(8.0),
+  child: GestureDetector(
+    onTap: () {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigationScreen()), // Replace with your Navbar widget
+        (route) => false,
+      );
+    },
+    child: Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withOpacity(0.08),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.15),
+          width: 1.2,
+        ),
+      ),
+      child: const Icon(
+        Icons.arrow_back_ios_new_rounded,
+        color: Colors.white,
+        size: 18,
+      ),
+    ),
+  ),
+),
+  flexibleSpace: FlexibleSpaceBar(
+    stretchModes: const [StretchMode.zoomBackground],
+    background: _buildHeader(),
+  ),
+),
 
           // ── Section Label ─────────────────────────────────────────────
           SliverToBoxAdapter(

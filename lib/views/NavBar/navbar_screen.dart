@@ -2425,6 +2425,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   // ── PRO Badge ──────────────────────────────────────────────────────────────
   Widget _buildProBadge() {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque, 
       onTap: () {
         Navigator.push(
           context,
@@ -2512,7 +2513,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       _NavItem(
         icon: Icons.people_outline,
         activeIcon: Icons.people,
-        label: 'Customers',
+        label: 'Contacts',
         index: 4,
       ),
     ];
@@ -2642,37 +2643,76 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
+  // @override
+  // Widget build(BuildContext context) {
+  //   return UpgradeAlert(
+  //     upgrader: Upgrader(durationUntilAlertAgain: const Duration(days: 1)),
+  //     dialogStyle: UpgradeDialogStyle.material,
+  //     showLater: true,
+  //     showIgnore: false,
+  //     child: Scaffold(
+  //       extendBody: true,
+  //       body: _screens[_currentIndex],
+  //       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+  //       floatingActionButton: _currentIndex == 4
+  //           ? null // Hide the PRO badge and show Add Customer FAB from CustomerScreen
+  //           : null, // You can add other FABs here if needed
+  //       bottomNavigationBar: Consumer<LanguageProvider>(
+  //         builder: (context, languageProvider, child) {
+  //           final langCode = languageProvider.locale.languageCode;
+
+  //           return Stack(
+  //             clipBehavior: Clip.none,
+  //             children: [
+  //               _buildCurvedNotchNavBar(langCode),
+
+  //               // ✅ Show PRO badge only when NOT on Customer screen (index 4)
+  //               if (_currentIndex != 4)
+  //                 Positioned(right: 4, top: -30, child: _buildProBadge()),
+  //             ],
+  //           );
+  //         },
+  //       ),
+  //     ),
+  //   );
+  // }
+
+
+
   @override
-  Widget build(BuildContext context) {
-    return UpgradeAlert(
-      upgrader: Upgrader(durationUntilAlertAgain: const Duration(days: 1)),
-      dialogStyle: UpgradeDialogStyle.material,
-      showLater: true,
-      showIgnore: false,
-      child: Scaffold(
-        extendBody: true,
-        body: _screens[_currentIndex],
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        floatingActionButton: _currentIndex == 4
-            ? null // Hide the PRO badge and show Add Customer FAB from CustomerScreen
-            : null, // You can add other FABs here if needed
-        bottomNavigationBar: Consumer<LanguageProvider>(
-          builder: (context, languageProvider, child) {
-            final langCode = languageProvider.locale.languageCode;
+Widget build(BuildContext context) {
+  return UpgradeAlert(
+    upgrader: Upgrader(durationUntilAlertAgain: const Duration(days: 1)),
+    dialogStyle: UpgradeDialogStyle.material,
+    showLater: true,
+    showIgnore: false,
+    child: Scaffold(
+      extendBody: true,
+      body: Stack(
+        children: [
+          // ── Main screen content ──
+          _screens[_currentIndex],
 
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                _buildCurvedNotchNavBar(langCode),
-
-                // ✅ Show PRO badge only when NOT on Customer screen (index 4)
-                if (_currentIndex != 4)
-                  Positioned(right: 4, top: -30, child: _buildProBadge()),
-              ],
-            );
-          },
-        ),
+          // ── PRO badge overlay (outside bottomNav, so hit-test works) ──
+          Consumer<LanguageProvider>(
+            builder: (context, languageProvider, child) {
+              if (_currentIndex == 4) return const SizedBox.shrink();
+              return Positioned(
+                right: 4,
+                bottom: 62 + MediaQuery.of(context).padding.bottom + 24,
+                child: _buildProBadge(),
+              );
+            },
+          ),
+        ],
       ),
-    );
-  }
+      bottomNavigationBar: Consumer<LanguageProvider>(
+        builder: (context, languageProvider, child) {
+          final langCode = languageProvider.locale.languageCode;
+          return _buildCurvedNotchNavBar(langCode); // no Stack with badge here
+        },
+      ),
+    ),
+  );
+}
 }

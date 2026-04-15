@@ -1585,7 +1585,7 @@ class _AddnewCustomersState extends State<AddCustomer> {
                 : AddCustomerColors.lightPrimary,
           ),
           hint: Text(
-            'Select religion',
+            'Change Type',
             style: TextStyle(
               color: isDarkMode
                   ? AddCustomerColors.darkTextHint
@@ -1681,8 +1681,19 @@ class _AddnewCustomersState extends State<AddCustomer> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: AppText(
-          'add_customers',
+        // title: AppText(
+        //   'add_customers',
+        //   style: TextStyle(
+        //     fontWeight: FontWeight.bold,
+        //     fontSize: 20,
+        //     color: isDarkMode
+        //         ? AddCustomerColors.darkTextPrimary
+        //         : AddCustomerColors.lightTextPrimary,
+        //   ),
+        // ),
+
+         title: AppText(
+          'Add Contact',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
@@ -1817,7 +1828,74 @@ class _AddnewCustomersState extends State<AddCustomer> {
 
                   const SizedBox(height: 20),
 
-                  _buildInputField(
+
+                               _buildInputField(
+                    controller: _dobController,
+                    label: AppText.translate(context, 'date_of_birth'),
+                    icon: Icons.cake_rounded,
+                    hint: 'DD/MM/YYYY',
+                    readOnly: true,
+                    onTap: () => _selectDate(context, _dobController, true),
+                    validator: (value) => _validateDate(value, true),
+                  ),
+
+                 
+
+                  const SizedBox(height: 20),
+
+                    _buildInputField(
+                    controller: _anniversaryController,
+                    label:
+                        '${AppText.translate(context, 'date_of_anniversary')} (Optional)',
+                    icon: Icons.favorite_rounded,
+                    hint: 'DD/MM/YYYY',
+                    readOnly: true,
+                    onTap: () =>
+                        _selectDate(context, _anniversaryController, false),
+                    validator: (value) => _validateDate(value, false),
+                  ),
+
+                  _buildGenderDropdown(),
+
+                  const SizedBox(height: 20),
+
+                  _buildReligionDropdown(),
+
+                  const SizedBox(height: 32),
+
+                  // Additional Information
+                  // AppText(
+                  //   'additional_information',
+                  //   style: TextStyle(
+                  //     fontSize: 18,
+                  //     fontWeight: FontWeight.bold,
+                  //     color: isDarkMode
+                  //         ? AddCustomerColors.darkTextPrimary
+                  //         : AddCustomerColors.lightTextPrimary,
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 20),
+
+    
+
+                  // const SizedBox(height: 20),
+
+                
+
+                  const SizedBox(height: 20),
+
+                  // _buildInputField(
+                  //   controller: _addressController,
+                  //   label:
+                  //       '${AppText.translate(context, 'address')} (Optional)',
+                  //   icon: Icons.location_on_rounded,
+                  //   hint:
+                  //       '${AppText.translate(context, 'enter_address_optional')} (Optional)',
+                  // ),
+
+
+
+                   _buildInputField(
                     controller: _emailController,
                     label: '${AppText.translate(context, 'email_optional')}',
                     icon: Icons.email_rounded,
@@ -1834,64 +1912,6 @@ class _AddnewCustomersState extends State<AddCustomer> {
                       }
                       return null;
                     },
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  _buildGenderDropdown(),
-
-                  const SizedBox(height: 20),
-
-                  _buildReligionDropdown(),
-
-                  const SizedBox(height: 32),
-
-                  // Additional Information
-                  AppText(
-                    'additional_information',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode
-                          ? AddCustomerColors.darkTextPrimary
-                          : AddCustomerColors.lightTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  _buildInputField(
-                    controller: _dobController,
-                    label: AppText.translate(context, 'date_of_birth'),
-                    icon: Icons.cake_rounded,
-                    hint: 'DD/MM/YYYY',
-                    readOnly: true,
-                    onTap: () => _selectDate(context, _dobController, true),
-                    validator: (value) => _validateDate(value, true),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  _buildInputField(
-                    controller: _anniversaryController,
-                    label:
-                        '${AppText.translate(context, 'date_of_anniversary')} (Optional)',
-                    icon: Icons.favorite_rounded,
-                    hint: 'DD/MM/YYYY',
-                    readOnly: true,
-                    onTap: () =>
-                        _selectDate(context, _anniversaryController, false),
-                    validator: (value) => _validateDate(value, false),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  _buildInputField(
-                    controller: _addressController,
-                    label:
-                        '${AppText.translate(context, 'address')} (Optional)',
-                    icon: Icons.location_on_rounded,
-                    hint:
-                        '${AppText.translate(context, 'enter_address_optional')} (Optional)',
                   ),
 
                   const SizedBox(height: 32),

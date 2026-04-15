@@ -643,8 +643,17 @@ class _AddCustomersState extends State<CustomerScreen>
                   });
                 },
               )
-            : AppText(
-                'customers',
+            // : AppText(
+            //     'customers',
+            //     style: TextStyle(
+            //       color: textColor,
+            //       fontSize: 20,
+            //       fontWeight: FontWeight.w600,
+            //     ),
+            //   ),
+
+           : AppText(
+                'Contacts',
                 style: TextStyle(
                   color: textColor,
                   fontSize: 20,

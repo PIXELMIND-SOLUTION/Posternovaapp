@@ -377,7 +377,7 @@ class _SplashScreenState extends State<SplashScreen>
                                             32,
                                           ),
                                           child: Image.asset(
-                                            'assets/appstore.png',
+                                            'assets/largelogo.png',
                                             fit: BoxFit.cover,
                                             errorBuilder: (_, __, ___) =>
                                                 Container(
@@ -450,11 +450,11 @@ class _SplashScreenState extends State<SplashScreen>
                                 const SizedBox(width: 8),
                                 _dot(_tealLight),
                                 const SizedBox(width: 8),
-                                Text('Design', style: _tagStyle(_tealLight)),
+                                Text('Manage', style: _tagStyle(_tealLight)),
                                 const SizedBox(width: 8),
                                 _dot(_accent),
                                 const SizedBox(width: 8),
-                                Text('Inspire', style: _tagStyle(_accent)),
+                                Text('Grow', style: _tagStyle(_accent)),
                                 const SizedBox(width: 8),
                                 _dot(_tealDark),
                               ],

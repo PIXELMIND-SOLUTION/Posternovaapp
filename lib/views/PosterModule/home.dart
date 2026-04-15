@@ -62,6 +62,23 @@ class _HomeScreenState extends State<HomeScreen>
   static const String _KEY_REFER_MODAL_SHOWN = 'refer_modal_last_shown';
   static const int MODAL_COOLDOWN_HOURS = 24;
 
+  static const String _KEY_SUBSCRIPTION_MODAL_SHOWN = 'subscription_modal_last_shown';
+
+
+
+  Future<bool> _shouldShowSubscriptionModal() async {
+  final prefs = await SharedPreferences.getInstance();
+  final lastShownTimestamp = prefs.getInt(_KEY_SUBSCRIPTION_MODAL_SHOWN);
+  if (lastShownTimestamp == null) return true;
+  final lastShownDate = DateTime.fromMillisecondsSinceEpoch(lastShownTimestamp);
+  return DateTime.now().difference(lastShownDate).inHours >= MODAL_COOLDOWN_HOURS;
+}
+
+Future<void> _saveSubscriptionModalShownTime() async {   
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt(_KEY_SUBSCRIPTION_MODAL_SHOWN, DateTime.now().millisecondsSinceEpoch);
+}
+
   // ── User ───────────────────────────────────────────────────────────────────
   String? currentUserId;
   String? username;
@@ -434,7 +451,7 @@ class _HomeScreenState extends State<HomeScreen>
       _fetchnewposters().catchError((e) => debugPrint('fetchPosters: $e')),
       _initializeProviders().catchError((e) => debugPrint('providers: $e')),
       _fetchWeeklyPosters().catchError((e) => debugPrint('weeklyPosters: $e')),
-      _fetchBanners().catchError((e) => debugPrint('banners: $e')),
+      // _fetchBanners().catchError((e) => debugPrint('banners: $e')),
       _initializeUser().catchError((e) => debugPrint('initializeUser: $e')),
 
       _fetchReels().catchError((e) => debugPrint('reels: $e')),
@@ -520,11 +537,43 @@ class _HomeScreenState extends State<HomeScreen>
   //   }
   // }
 
-  void _showInitialModals() async {
-    if (!mounted) return;
+  // void _showInitialModals() async {
+  //   if (!mounted) return;
 
-    final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
-    if (!myPlanProvider.isPurchase) {
+  //   final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
+  //   if (!myPlanProvider.isPurchase) {
+  //     WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       if (mounted)
+  //         Navigator.push(
+  //           context,
+  //           MaterialPageRoute(builder: (_) => SubscriptionPlansPage()),
+  //         );
+  //     });
+  //   }
+
+  //   // Check if we should show the Refer & Earn modal
+  //   final shouldShow = await _shouldShowReferModal();
+
+  //   if (shouldShow && !_hasShownReferAndEarnModal) {
+  //     WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       if (mounted) {
+  //         showReferAndEarnModal(context);
+  //         _hasShownReferAndEarnModal = true;
+  //       }
+  //     });
+  //   }
+  // }
+
+
+
+  void _showInitialModals() async {
+  if (!mounted) return;
+
+  final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
+  if (!myPlanProvider.isPurchase) {
+    final shouldShowSub = await _shouldShowSubscriptionModal();
+    if (shouldShowSub) {
+      await _saveSubscriptionModalShownTime(); // save BEFORE showing
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted)
           Navigator.push(
@@ -533,19 +582,18 @@ class _HomeScreenState extends State<HomeScreen>
           );
       });
     }
-
-    // Check if we should show the Refer & Earn modal
-    final shouldShow = await _shouldShowReferModal();
-
-    if (shouldShow && !_hasShownReferAndEarnModal) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          showReferAndEarnModal(context);
-          _hasShownReferAndEarnModal = true;
-        }
-      });
-    }
   }
+
+  final shouldShow = await _shouldShowReferModal();
+  if (shouldShow && !_hasShownReferAndEarnModal) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        showReferAndEarnModal(context);
+        _hasShownReferAndEarnModal = true;
+      }
+    });
+  }
+}
 
   Future<void> _fetchBanners({bool forceRefresh = false}) async {
     final bannerProvider = Provider.of<BannerProvider>(context, listen: false);
@@ -1499,20 +1547,20 @@ class _HomeScreenState extends State<HomeScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 12, bottom: 1),
-            child: Text(
-              'Explore',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: celebrationProvider.primaryTextColor,
-              ),
-            ),
-          ),
-          _isStoriesLoading
-              ? const StorySkeleton()
-              : StoriesWidget(profile: userImage),
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 12, bottom: 1),
+          //   child: Text(
+          //     'Explore',
+          //     style: TextStyle(
+          //       fontSize: 20,
+          //       fontWeight: FontWeight.bold,
+          //       color: celebrationProvider.primaryTextColor,
+          //     ),
+          //   ),
+          // ),
+          // _isStoriesLoading
+          //     ? const StorySkeleton()
+          //     : StoriesWidget(profile: userImage),
         ],
       ),
     );
@@ -1532,7 +1580,7 @@ class _HomeScreenState extends State<HomeScreen>
           Padding(
             padding: const EdgeInsets.only(left: 16, bottom: 10),
             child: Text(
-              'Upcoming Festivals',
+              'Daily Content',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
@@ -2112,8 +2160,16 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Hot Topics',
+                    // const Text(
+                    //   'Hot Topics',
+                    //   style: TextStyle(
+                    //     fontSize: 17,
+                    //     fontWeight: FontWeight.bold,
+                    //     color: Colors.black87,
+                    //   ),
+                    // ),
+                     const Text(
+                      'Trending Posters',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,

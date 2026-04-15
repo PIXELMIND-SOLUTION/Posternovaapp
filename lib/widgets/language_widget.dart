@@ -1849,9 +1849,15 @@ class AppText extends StatelessWidget {
       languageProvider.locale.languageCode,
     );
 
+
+      final effectiveStyle = Theme.of(context).textTheme.bodyMedium?.merge(style) ?? style;
+
+
     return Text(
       translatedText,
-      style: style,
+      // style: style,
+
+       style: effectiveStyle,
       textAlign: textAlign,
       maxLines: maxLines,
       overflow: overflow,

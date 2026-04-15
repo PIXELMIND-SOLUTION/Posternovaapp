@@ -2,8 +2,8 @@ name: posternova
 description: "A new Flutter project."
 publish_to: 'none'
 
-# version: 1.0.8+60
-version: 1.0.23+30
+version: 1.0.8+61
+# version: 1.0.23+30
 
 
 environment:
@@ -84,6 +84,8 @@ flutter:
 
   assets:
     - assets\appstore.png
+    - assets\largelogo.png
+    - assets\latestlogo.png
     - assets\ugadi.png
     - assets/videos/bg.webm
     - assets/videos/celebration.mp4

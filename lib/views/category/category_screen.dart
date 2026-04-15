@@ -3973,10 +3973,16 @@ class _CategoryScreenState extends State<CategoryScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/appstore.png',
-            width: isTablet ? 200 : 150,
-            height: isTablet ? 200 : 150,
+          // Image.asset(
+          //   'assets/appstore.png',
+          //   width: isTablet ? 200 : 150,
+          //   height: isTablet ? 200 : 150,
+          // ),
+
+           Image.asset(
+            'assets/latestlogo.png',
+            width: isTablet ? 500 : 300,
+            height: isTablet ? 500 : 300,
           ),
           const SizedBox(height: 32),
           AmodersLoading(),

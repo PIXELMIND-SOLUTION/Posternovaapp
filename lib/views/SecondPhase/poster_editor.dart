@@ -1883,91 +1883,246 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     }
   }
 
-  Future<void> _pickUserAudio() async {
+  // Future<void> _pickUserAudio() async {
+  //   try {
+  //     // Pick audio file
+  //     FilePickerResult? result = await FilePicker.pickFiles(
+  //       type: FileType.audio,
+  //       allowMultiple: false,
+  //     );
+
+  //     if (result == null) return;
+
+  //     String filePath = result.files.single.path!;
+  //     String fileName = result.files.single.name;
+
+  //     // Get audio duration
+  //     final tempPlayer = AudioPlayer();
+  //     await tempPlayer.setSourceDeviceFile(filePath);
+  //     final duration = await tempPlayer.getDuration();
+  //     await tempPlayer.dispose();
+
+  //     if (duration == null) {
+  //       _showErrorSnackBar('Could not read audio duration');
+  //       return;
+  //     }
+
+  //     // Check if duration exceeds 30 seconds
+  //     if (duration.inSeconds > 30) {
+  //       _showErrorSnackBar(
+  //         'Audio too long! Maximum 30 seconds allowed.\n'
+  //         'Selected: ${duration.inSeconds} seconds',
+  //       );
+  //       return;
+  //     }
+
+  //     // Copy to app directory for persistence
+  //     final tempDir = await getTemporaryDirectory();
+  //     final savedPath =
+  //         '${tempDir.path}/user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3';
+  //     final File sourceFile = File(filePath);
+  //     await sourceFile.copy(savedPath);
+
+  //     // Add to user audio tracks list
+  //     final userTrack = UserAudioTrack(
+  //       name: fileName,
+  //       filePath: savedPath,
+  //       durationInSeconds: duration.inSeconds,
+  //     );
+
+  //     setState(() {
+  //       _userAudioTracks.add(userTrack);
+  //       _selectedUserAudioPath = savedPath;
+  //       _selectedAudio = fileName;
+  //     });
+
+  //     // Play the selected audio
+  //     await _playUserAudio(savedPath, fileName);
+
+  //     _showSuccessSnackBar(
+  //       'Audio added! Duration: ${duration.inSeconds} seconds',
+  //     );
+  //   } catch (e) {
+  //     print('Error picking audio: $e');
+  //     _showErrorSnackBar('Failed to pick audio: $e');
+  //   }
+  // }
+
+
+
+
+Future<void> _pickUserAudio() async {
+  try {
+    // Pick audio file
+    FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.audio,
+      allowMultiple: false,
+    );
+
+    if (result == null) return;
+
+    String filePath = result.files.single.path!;
+    String fileName = result.files.single.name;
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
     try {
-      // Pick audio file
-      FilePickerResult? result = await FilePicker.pickFiles(
-        type: FileType.audio,
-        allowMultiple: false,
-      );
-
-      if (result == null) return;
-
-      String filePath = result.files.single.path!;
-      String fileName = result.files.single.name;
-
-      // Get audio duration
+      // Get audio duration using a more reliable method
       final tempPlayer = AudioPlayer();
       await tempPlayer.setSourceDeviceFile(filePath);
-      final duration = await tempPlayer.getDuration();
+      
+      // Wait for duration to be available
+      Duration? duration;
+      int attempts = 0;
+      while (duration == null && attempts < 10) {
+        duration = await tempPlayer.getDuration();
+        if (duration == null) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          attempts++;
+        }
+      }
+      
       await tempPlayer.dispose();
 
+      // Check if duration was successfully retrieved
       if (duration == null) {
-        _showErrorSnackBar('Could not read audio duration');
+        Navigator.pop(context); // Close loading dialog
+        _showErrorSnackBar('Could not read audio duration. Please try another file.');
         return;
       }
 
+      print('Audio duration: ${duration.inSeconds} seconds');
+
       // Check if duration exceeds 30 seconds
       if (duration.inSeconds > 30) {
+        Navigator.pop(context); // Close loading dialog
         _showErrorSnackBar(
-          'Audio too long! Maximum 30 seconds allowed.\n'
-          'Selected: ${duration.inSeconds} seconds',
+          '❌ Audio too long!\n'
+          'Maximum 30 seconds allowed.\n'
+          'Selected: ${duration.inSeconds} seconds\n'
+          'Please select a shorter audio file.',
+        );
+        return;
+      }
+
+      // Check if duration is too short (optional, minimum 1 second)
+      if (duration.inSeconds < 1) {
+        Navigator.pop(context);
+        _showErrorSnackBar(
+          'Audio is too short! Please select a longer audio file (minimum 1 second).',
         );
         return;
       }
 
       // Copy to app directory for persistence
       final tempDir = await getTemporaryDirectory();
-      final savedPath =
-          '${tempDir.path}/user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3';
+      final savedPath = '${tempDir.path}/user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3';
       final File sourceFile = File(filePath);
       await sourceFile.copy(savedPath);
 
       // Add to user audio tracks list
       final userTrack = UserAudioTrack(
-        name: fileName,
+        name: fileName.replaceAll('.mp3', '').replaceAll('.m4a', '').replaceAll('.wav', ''),
         filePath: savedPath,
         durationInSeconds: duration.inSeconds,
       );
 
+      // Close loading dialog
+      Navigator.pop(context);
+
       setState(() {
         _userAudioTracks.add(userTrack);
         _selectedUserAudioPath = savedPath;
-        _selectedAudio = fileName;
+        _selectedAudio = userTrack.name;
       });
 
       // Play the selected audio
-      await _playUserAudio(savedPath, fileName);
+      await _playUserAudio(savedPath, userTrack.name);
 
       _showSuccessSnackBar(
-        'Audio added! Duration: ${duration.inSeconds} seconds',
+        '✅ Audio added!\n'
+        'Duration: ${duration.inSeconds} seconds',
       );
+      
     } catch (e) {
-      print('Error picking audio: $e');
-      _showErrorSnackBar('Failed to pick audio: $e');
+      Navigator.pop(context); // Close loading dialog on error
+      print('Error processing audio: $e');
+      _showErrorSnackBar('Failed to process audio: ${e.toString()}');
     }
+    
+  } catch (e) {
+    print('Error picking audio: $e');
+    _showErrorSnackBar('Failed to pick audio: ${e.toString()}');
   }
+}
+  // Future<void> _playUserAudio(String filePath, String fileName) async {
+  //   try {
+  //     await _audioPlayer.stop();
+  //     await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+
+  //     await _audioPlayer.play(DeviceFileSource(filePath), volume: 1.0);
+
+  //     setState(() {
+  //       _isAudioPlaying = true;
+  //       _selectedAudio = fileName;
+  //     });
+
+  //     _audioPlayer.onPlayerComplete.listen((event) {
+  //       if (mounted) setState(() => _isAudioPlaying = false);
+  //     });
+  //   } catch (e) {
+  //     setState(() => _isAudioPlaying = false);
+  //     _showErrorSnackBar('Could not play audio: $e');
+  //   }
+  // }
+
+
+
+
 
   Future<void> _playUserAudio(String filePath, String fileName) async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+  try {
+    // Stop any currently playing audio
+    await _audioPlayer.stop();
+    await _audioPlayer.setReleaseMode(ReleaseMode.stop);
 
-      await _audioPlayer.play(DeviceFileSource(filePath), volume: 1.0);
-
-      setState(() {
-        _isAudioPlaying = true;
-        _selectedAudio = fileName;
-      });
-
-      _audioPlayer.onPlayerComplete.listen((event) {
-        if (mounted) setState(() => _isAudioPlaying = false);
-      });
-    } catch (e) {
-      setState(() => _isAudioPlaying = false);
-      _showErrorSnackBar('Could not play audio: $e');
+    // Check if file exists
+    if (!await File(filePath).exists()) {
+      _showErrorSnackBar('Audio file not found');
+      return;
     }
+
+    // Play the audio
+    await _audioPlayer.play(DeviceFileSource(filePath), volume: 1.0);
+
+    setState(() {
+      _isAudioPlaying = true;
+      _selectedAudio = fileName;
+    });
+
+    // Listen for completion
+    _audioPlayer.onPlayerComplete.listen((event) {
+      if (mounted) {
+        setState(() => _isAudioPlaying = false);
+        print('Audio playback completed');
+      }
+    });
+
+    // Note: For audioplayers package, error handling is typically done via
+    // the onPlayerComplete stream with error states, or using try-catch
+    // around the play method. The package doesn't have a separate onPlayerError stream.
+    
+  } catch (e) {
+    setState(() => _isAudioPlaying = false);
+    print('Error playing audio: $e');
+    _showErrorSnackBar('Could not play audio: ${e.toString()}');
   }
+}
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
@@ -9292,7 +9447,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                 ),
                 _ta(
                   Icons.font_download_outlined,
-                  'Font',
+                  'Size',
                   sel == null ? null : () => _showFontPicker(sel),
                 ),
                 _ta(
@@ -9998,436 +10153,897 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     );
   }
 
+  // void _showBgColorPicker(OverlayTextItem sel) {
+  //   final isDarkMode = _isDarkMode;
+  //   Color tempColor = sel.backgroundColor == Colors.transparent
+  //       ? Colors.white
+  //       : sel.backgroundColor;
+
+  //   double hue = 0.0;
+  //   double saturation = 1.0;
+  //   double brightness = 1.0;
+
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (_) => StatefulBuilder(
+  //       builder: (ctx, setSheetState) {
+  //         return Container(
+  //           height: MediaQuery.of(ctx).size.height * 0.65,
+  //           decoration: BoxDecoration(
+  //             color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //             borderRadius: const BorderRadius.vertical(
+  //               top: Radius.circular(20),
+  //             ),
+  //           ),
+  //           child: Column(
+  //             children: [
+  //               // Drag handle
+  //               Padding(
+  //                 padding: const EdgeInsets.only(top: 12),
+  //                 child: Center(
+  //                   child: Container(
+  //                     width: 40,
+  //                     height: 4,
+  //                     decoration: BoxDecoration(
+  //                       color: isDarkMode
+  //                           ? Colors.grey[700]
+  //                           : Colors.grey.shade300,
+  //                       borderRadius: BorderRadius.circular(2),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
+
+  //               // Title
+  //               Padding(
+  //                 padding: const EdgeInsets.symmetric(
+  //                   horizontal: 20,
+  //                   vertical: 16,
+  //                 ),
+  //                 child: Row(
+  //                   children: [
+  //                     Icon(
+  //                       Icons.format_color_fill,
+  //                       size: 24,
+  //                       color: const Color(0xFFF5C518),
+  //                     ),
+  //                     const SizedBox(width: 10),
+  //                     Expanded(
+  //                       child: Text(
+  //                         'Choose Background Color',
+  //                         style: TextStyle(
+  //                           fontSize: 18,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: isDarkMode ? Colors.white : Colors.black87,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+
+  //               Expanded(
+  //                 child: SingleChildScrollView(
+  //                   padding: const EdgeInsets.symmetric(horizontal: 20),
+  //                   child: Column(
+  //                     children: [
+  //                       // None/Transparent button
+  //                       GestureDetector(
+  //                         onTap: () {
+  //                           setState(() {
+  //                             final i = _texts.indexWhere(
+  //                               (t) => t.id == sel.id,
+  //                             );
+  //                             if (i != -1) {
+  //                               _texts[i] = _texts[i].copyWith(
+  //                                 backgroundColor: Colors.transparent,
+  //                               );
+  //                             }
+  //                           });
+  //                           Navigator.pop(ctx);
+  //                         },
+  //                         child: Container(
+  //                           width: double.infinity,
+  //                           padding: const EdgeInsets.symmetric(vertical: 14),
+  //                           decoration: BoxDecoration(
+  //                             color: isDarkMode
+  //                                 ? const Color(0xFF0F172A)
+  //                                 : Colors.grey.shade100,
+  //                             borderRadius: BorderRadius.circular(12),
+  //                             border: Border.all(
+  //                               color: isDarkMode
+  //                                   ? Colors.white24
+  //                                   : Colors.grey.shade300,
+  //                               width: 1,
+  //                             ),
+  //                           ),
+  //                           child: Row(
+  //                             mainAxisAlignment: MainAxisAlignment.center,
+  //                             children: [
+  //                               Icon(
+  //                                 Icons.clear,
+  //                                 size: 20,
+  //                                 color: isDarkMode
+  //                                     ? Colors.white70
+  //                                     : Colors.black54,
+  //                               ),
+  //                               const SizedBox(width: 8),
+  //                               Text(
+  //                                 'None (Transparent)',
+  //                                 style: TextStyle(
+  //                                   fontSize: 14,
+  //                                   fontWeight: FontWeight.w500,
+  //                                   color: isDarkMode
+  //                                       ? Colors.white70
+  //                                       : Colors.black54,
+  //                                 ),
+  //                               ),
+  //                             ],
+  //                           ),
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 20),
+
+  //                       // Divider with OR
+  //                       Row(
+  //                         children: [
+  //                           Expanded(
+  //                             child: Divider(
+  //                               color: isDarkMode
+  //                                   ? Colors.white24
+  //                                   : Colors.grey.shade300,
+  //                               thickness: 1,
+  //                             ),
+  //                           ),
+  //                           Padding(
+  //                             padding: const EdgeInsets.symmetric(
+  //                               horizontal: 12,
+  //                             ),
+  //                             child: Text(
+  //                               'OR',
+  //                               style: TextStyle(
+  //                                 fontSize: 12,
+  //                                 fontWeight: FontWeight.w500,
+  //                                 color: isDarkMode
+  //                                     ? Colors.white54
+  //                                     : Colors.black45,
+  //                               ),
+  //                             ),
+  //                           ),
+  //                           Expanded(
+  //                             child: Divider(
+  //                               color: isDarkMode
+  //                                   ? Colors.white24
+  //                                   : Colors.grey.shade300,
+  //                               thickness: 1,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       const SizedBox(height: 20),
+
+  //                       // Color Preview
+  //                       Container(
+  //                         width: double.infinity,
+  //                         padding: const EdgeInsets.all(16),
+  //                         decoration: BoxDecoration(
+  //                           color: tempColor,
+  //                           borderRadius: BorderRadius.circular(12),
+  //                           border: Border.all(
+  //                             color: isDarkMode
+  //                                 ? Colors.white24
+  //                                 : Colors.grey.shade300,
+  //                             width: 2,
+  //                           ),
+  //                         ),
+  //                         child: Column(
+  //                           children: [
+  //                             Text(
+  //                               'Selected Color',
+  //                               style: TextStyle(
+  //                                 fontSize: 14,
+  //                                 fontWeight: FontWeight.w500,
+  //                                 color: tempColor.computeLuminance() > 0.5
+  //                                     ? Colors.black87
+  //                                     : Colors.white,
+  //                               ),
+  //                             ),
+  //                             const SizedBox(height: 6),
+  //                             Text(
+  //                               'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
+  //                               style: TextStyle(
+  //                                 fontSize: 12,
+  //                                 fontWeight: FontWeight.w400,
+  //                                 color: tempColor.computeLuminance() > 0.5
+  //                                     ? Colors.black54
+  //                                     : Colors.white70,
+  //                               ),
+  //                             ),
+  //                             Text(
+  //                               '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+  //                               style: TextStyle(
+  //                                 fontSize: 11,
+  //                                 fontWeight: FontWeight.w400,
+  //                                 color: tempColor.computeLuminance() > 0.5
+  //                                     ? Colors.black54
+  //                                     : Colors.white70,
+  //                               ),
+  //                             ),
+  //                           ],
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 24),
+
+  //                       // Hue Picker (Gradient bar)
+  //                       Column(
+  //                         crossAxisAlignment: CrossAxisAlignment.start,
+  //                         children: [
+  //                           Text(
+  //                             'Hue',
+  //                             style: TextStyle(
+  //                               fontSize: 13,
+  //                               fontWeight: FontWeight.w500,
+  //                               color: isDarkMode
+  //                                   ? Colors.white70
+  //                                   : Colors.black87,
+  //                             ),
+  //                           ),
+  //                           const SizedBox(height: 8),
+  //                           GestureDetector(
+  //                             onPanUpdate: (details) {
+  //                               final box =
+  //                                   ctx.findRenderObject() as RenderBox?;
+  //                               if (box == null) return;
+  //                               final position = details.localPosition;
+  //                               final width =
+  //                                   MediaQuery.of(ctx).size.width - 40;
+  //                               final newHue =
+  //                                   (position.dx / width).clamp(0.0, 1.0) * 360;
+  //                               hue = newHue;
+  //                               tempColor = HSVColor.fromAHSV(
+  //                                 1.0,
+  //                                 hue,
+  //                                 saturation,
+  //                                 brightness,
+  //                               ).toColor();
+  //                               setSheetState(() {});
+  //                             },
+  //                             child: Container(
+  //                               height: 44,
+  //                               width: double.infinity,
+  //                               decoration: BoxDecoration(
+  //                                 gradient: const LinearGradient(
+  //                                   begin: Alignment.centerLeft,
+  //                                   end: Alignment.centerRight,
+  //                                   colors: [
+  //                                     Color(0xFFFF0000), // Red
+  //                                     Color(0xFFFFA500), // Orange
+  //                                     Color(0xFFFFFF00), // Yellow
+  //                                     Color(0xFF00FF00), // Green
+  //                                     Color(0xFF00FFFF), // Cyan
+  //                                     Color(0xFF0000FF), // Blue
+  //                                     Color(0xFFFF00FF), // Magenta
+  //                                     Color(0xFFFF0000), // Red
+  //                                   ],
+  //                                 ),
+  //                                 borderRadius: BorderRadius.circular(10),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       const SizedBox(height: 16),
+
+  //                       // Saturation Slider
+  //                       Column(
+  //                         crossAxisAlignment: CrossAxisAlignment.start,
+  //                         children: [
+  //                           Text(
+  //                             'Saturation',
+  //                             style: TextStyle(
+  //                               fontSize: 13,
+  //                               fontWeight: FontWeight.w500,
+  //                               color: isDarkMode
+  //                                   ? Colors.white70
+  //                                   : Colors.black87,
+  //                             ),
+  //                           ),
+  //                           const SizedBox(height: 8),
+  //                           Slider(
+  //                             value: saturation,
+  //                             onChanged: (value) {
+  //                               saturation = value;
+  //                               tempColor = HSVColor.fromAHSV(
+  //                                 1.0,
+  //                                 hue,
+  //                                 saturation,
+  //                                 brightness,
+  //                               ).toColor();
+  //                               setSheetState(() {});
+  //                             },
+  //                             activeColor: const Color(0xFFF5C518),
+  //                             inactiveColor: isDarkMode
+  //                                 ? Colors.grey[700]
+  //                                 : Colors.grey[300],
+  //                             min: 0,
+  //                             max: 1,
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       const SizedBox(height: 8),
+
+  //                       // Brightness Slider
+  //                       Column(
+  //                         crossAxisAlignment: CrossAxisAlignment.start,
+  //                         children: [
+  //                           Text(
+  //                             'Brightness',
+  //                             style: TextStyle(
+  //                               fontSize: 13,
+  //                               fontWeight: FontWeight.w500,
+  //                               color: isDarkMode
+  //                                   ? Colors.white70
+  //                                   : Colors.black87,
+  //                             ),
+  //                           ),
+  //                           const SizedBox(height: 8),
+  //                           Slider(
+  //                             value: brightness,
+  //                             onChanged: (value) {
+  //                               brightness = value;
+  //                               tempColor = HSVColor.fromAHSV(
+  //                                 1.0,
+  //                                 hue,
+  //                                 saturation,
+  //                                 brightness,
+  //                               ).toColor();
+  //                               setSheetState(() {});
+  //                             },
+  //                             activeColor: const Color(0xFFF5C518),
+  //                             inactiveColor: isDarkMode
+  //                                 ? Colors.grey[700]
+  //                                 : Colors.grey[300],
+  //                             min: 0,
+  //                             max: 1,
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       const SizedBox(height: 24),
+
+  //                       // Action Buttons
+  //                       Row(
+  //                         children: [
+  //                           Expanded(
+  //                             child: OutlinedButton(
+  //                               onPressed: () => Navigator.pop(ctx),
+  //                               style: OutlinedButton.styleFrom(
+  //                                 foregroundColor: isDarkMode
+  //                                     ? Colors.white70
+  //                                     : Colors.black87,
+  //                                 side: BorderSide(
+  //                                   color: isDarkMode
+  //                                       ? Colors.white38
+  //                                       : Colors.grey.shade400,
+  //                                 ),
+  //                                 padding: const EdgeInsets.symmetric(
+  //                                   vertical: 14,
+  //                                 ),
+  //                                 shape: RoundedRectangleBorder(
+  //                                   borderRadius: BorderRadius.circular(10),
+  //                                 ),
+  //                               ),
+  //                               child: const Text('Cancel'),
+  //                             ),
+  //                           ),
+  //                           const SizedBox(width: 12),
+  //                           Expanded(
+  //                             child: ElevatedButton(
+  //                               onPressed: () {
+  //                                 setState(() {
+  //                                   final i = _texts.indexWhere(
+  //                                     (t) => t.id == sel.id,
+  //                                   );
+  //                                   if (i != -1) {
+  //                                     _texts[i] = _texts[i].copyWith(
+  //                                       backgroundColor: tempColor,
+  //                                     );
+  //                                   }
+  //                                 });
+  //                                 Navigator.pop(ctx);
+  //                               },
+  //                               style: ElevatedButton.styleFrom(
+  //                                 backgroundColor: const Color(0xFFF5C518),
+  //                                 foregroundColor: Colors.black87,
+  //                                 padding: const EdgeInsets.symmetric(
+  //                                   vertical: 14,
+  //                                 ),
+  //                                 shape: RoundedRectangleBorder(
+  //                                   borderRadius: BorderRadius.circular(10),
+  //                                 ),
+  //                               ),
+  //                               child: const Text(
+  //                                 'Apply',
+  //                                 style: TextStyle(fontWeight: FontWeight.bold),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       const SizedBox(height: 20),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
+
+
+
+
+
+
   void _showBgColorPicker(OverlayTextItem sel) {
-    final isDarkMode = _isDarkMode;
-    Color tempColor = sel.backgroundColor == Colors.transparent
-        ? Colors.white
-        : sel.backgroundColor;
+  final isDarkMode = _isDarkMode;
+  Color tempColor = sel.backgroundColor == Colors.transparent
+      ? Colors.white
+      : sel.backgroundColor;
 
-    double hue = 0.0;
-    double saturation = 1.0;
-    double brightness = 1.0;
+  double hue = 0.0;
+  double saturation = 1.0;
+  double brightness = 1.0;
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return Container(
-            height: MediaQuery.of(ctx).size.height * 0.65,
-            decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
+  // Quick color swatches — same as in _showColorPicker
+  final List<Color> quickColors = [
+    Colors.transparent,
+    Colors.white,
+    Colors.black,
+    Colors.red,
+    Colors.orange,
+    Colors.yellow,
+    Colors.green,
+    Colors.teal,
+    Colors.blue,
+    Colors.purple,
+    Colors.pink,
+    const Color(0xFFD4AF37),
+    Colors.brown,
+    Colors.grey,
+  ];
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => StatefulBuilder(
+      builder: (ctx, setSheetState) {
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.75,
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(20),
             ),
-            child: Column(
-              children: [
-                // Drag handle
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDarkMode
-                            ? Colors.grey[700]
-                            : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+          ),
+          child: Column(
+            children: [
+              // Drag handle
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? Colors.grey[700]
+                          : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
+              ),
 
-                // Title
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.format_color_fill,
-                        size: 24,
-                        color: const Color(0xFFF5C518),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Choose Background Color',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
                 ),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      children: [
-                        // None/Transparent button
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              final i = _texts.indexWhere(
-                                (t) => t.id == sel.id,
-                              );
-                              if (i != -1) {
-                                _texts[i] = _texts[i].copyWith(
-                                  backgroundColor: Colors.transparent,
-                                );
-                              }
-                            });
-                            Navigator.pop(ctx);
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
-                              color: isDarkMode
-                                  ? const Color(0xFF0F172A)
-                                  : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isDarkMode
-                                    ? Colors.white24
-                                    : Colors.grey.shade300,
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.clear,
-                                  size: 20,
-                                  color: isDarkMode
-                                      ? Colors.white70
-                                      : Colors.black54,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'None (Transparent)',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDarkMode
-                                        ? Colors.white70
-                                        : Colors.black54,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.format_color_fill,
+                      size: 24,
+                      color: const Color(0xFFF5C518),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Choose Background Color',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.black87,
                         ),
-                        const SizedBox(height: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                        // Divider with OR
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Divider(
-                                color: isDarkMode
-                                    ? Colors.white24
-                                    : Colors.grey.shade300,
-                                thickness: 1,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                'OR',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDarkMode
-                                      ? Colors.white54
-                                      : Colors.black45,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                color: isDarkMode
-                                    ? Colors.white24
-                                    : Colors.grey.shade300,
-                                thickness: 1,
-                              ),
-                            ),
-                          ],
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      // ── QUICK COLOR SWATCHES ROW ──
+                      Text(
+                        'Quick colors',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
                         ),
-                        const SizedBox(height: 20),
-
-                        // Color Preview
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: tempColor,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDarkMode
-                                  ? Colors.white24
-                                  : Colors.grey.shade300,
-                              width: 2,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Selected Color',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: tempColor.computeLuminance() > 0.5
-                                      ? Colors.black87
-                                      : Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: tempColor.computeLuminance() > 0.5
-                                      ? Colors.black54
-                                      : Colors.white70,
-                                ),
-                              ),
-                              Text(
-                                '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w400,
-                                  color: tempColor.computeLuminance() > 0.5
-                                      ? Colors.black54
-                                      : Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Hue Picker (Gradient bar)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Hue',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: isDarkMode
-                                    ? Colors.white70
-                                    : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            GestureDetector(
-                              onPanUpdate: (details) {
-                                final box =
-                                    ctx.findRenderObject() as RenderBox?;
-                                if (box == null) return;
-                                final position = details.localPosition;
-                                final width =
-                                    MediaQuery.of(ctx).size.width - 40;
-                                final newHue =
-                                    (position.dx / width).clamp(0.0, 1.0) * 360;
-                                hue = newHue;
-                                tempColor = HSVColor.fromAHSV(
-                                  1.0,
-                                  hue,
-                                  saturation,
-                                  brightness,
-                                ).toColor();
-                                setSheetState(() {});
-                              },
-                              child: Container(
-                                height: 44,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                    colors: [
-                                      Color(0xFFFF0000), // Red
-                                      Color(0xFFFFA500), // Orange
-                                      Color(0xFFFFFF00), // Yellow
-                                      Color(0xFF00FF00), // Green
-                                      Color(0xFF00FFFF), // Cyan
-                                      Color(0xFF0000FF), // Blue
-                                      Color(0xFFFF00FF), // Magenta
-                                      Color(0xFFFF0000), // Red
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Saturation Slider
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Saturation',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: isDarkMode
-                                    ? Colors.white70
-                                    : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Slider(
-                              value: saturation,
-                              onChanged: (value) {
-                                saturation = value;
-                                tempColor = HSVColor.fromAHSV(
-                                  1.0,
-                                  hue,
-                                  saturation,
-                                  brightness,
-                                ).toColor();
-                                setSheetState(() {});
-                              },
-                              activeColor: const Color(0xFFF5C518),
-                              inactiveColor: isDarkMode
-                                  ? Colors.grey[700]
-                                  : Colors.grey[300],
-                              min: 0,
-                              max: 1,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Brightness Slider
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Brightness',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: isDarkMode
-                                    ? Colors.white70
-                                    : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Slider(
-                              value: brightness,
-                              onChanged: (value) {
-                                brightness = value;
-                                tempColor = HSVColor.fromAHSV(
-                                  1.0,
-                                  hue,
-                                  saturation,
-                                  brightness,
-                                ).toColor();
-                                setSheetState(() {});
-                              },
-                              activeColor: const Color(0xFFF5C518),
-                              inactiveColor: isDarkMode
-                                  ? Colors.grey[700]
-                                  : Colors.grey[300],
-                              min: 0,
-                              max: 1,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Action Buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: isDarkMode
-                                      ? Colors.white70
-                                      : Colors.black87,
-                                  side: BorderSide(
-                                    color: isDarkMode
-                                        ? Colors.white38
-                                        : Colors.grey.shade400,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: const Text('Cancel'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 44,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: quickColors.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 10),
+                          itemBuilder: (_, i) {
+                            final c = quickColors[i];
+                            final isTransparent = c == Colors.transparent;
+                            final isSelected = isTransparent
+                                ? tempColor == Colors.white &&
+                                    sel.backgroundColor == Colors.transparent
+                                : tempColor == c;
+                            return GestureDetector(
+                              onTap: () {
+                                if (isTransparent) {
+                                  // Apply transparent immediately
                                   setState(() {
-                                    final i = _texts.indexWhere(
+                                    final idx = _texts.indexWhere(
                                       (t) => t.id == sel.id,
                                     );
-                                    if (i != -1) {
-                                      _texts[i] = _texts[i].copyWith(
-                                        backgroundColor: tempColor,
+                                    if (idx != -1) {
+                                      _texts[idx] = _texts[idx].copyWith(
+                                        backgroundColor: Colors.transparent,
                                       );
                                     }
                                   });
                                   Navigator.pop(ctx);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF5C518),
-                                  foregroundColor: Colors.black87,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                } else {
+                                  setSheetState(() {
+                                    tempColor = c;
+                                    // Sync sliders to match chosen color
+                                    final hsv = HSVColor.fromColor(c);
+                                    hue = hsv.hue;
+                                    saturation = hsv.saturation;
+                                    brightness = hsv.value;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: isTransparent
+                                      ? Colors.white
+                                      : c,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0xFFF5C518)
+                                        : (isDarkMode
+                                              ? Colors.grey[600]!
+                                              : Colors.grey.shade400),
+                                    width: isSelected ? 3 : 1.5,
                                   ),
                                 ),
-                                child: const Text(
-                                  'Apply',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
+                                child: isTransparent
+                                    ? Center(
+                                        child: Text(
+                                          '∅',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: isDarkMode
+                                                ? Colors.white54
+                                                : Colors.black45,
+                                          ),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Divider with OR
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              color: isDarkMode
+                                  ? Colors.white24
+                                  : Colors.grey.shade300,
+                              thickness: 1,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                            ),
+                            child: Text(
+                              'OR CUSTOM',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                                color: isDarkMode
+                                    ? Colors.white54
+                                    : Colors.black45,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              color: isDarkMode
+                                  ? Colors.white24
+                                  : Colors.grey.shade300,
+                              thickness: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Color Preview
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: tempColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white24
+                                : Colors.grey.shade300,
+                            width: 2,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Selected Color',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: tempColor.computeLuminance() > 0.5
+                                    ? Colors.black87
+                                    : Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: tempColor.computeLuminance() > 0.5
+                                    ? Colors.black54
+                                    : Colors.white70,
+                              ),
+                            ),
+                            Text(
+                              '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: tempColor.computeLuminance() > 0.5
+                                    ? Colors.black54
+                                    : Colors.white70,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Hue Picker
+                      Text(
+                        'Hue',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onPanUpdate: (details) {
+                          final width =
+                              MediaQuery.of(ctx).size.width - 40;
+                          final newHue =
+                              (details.localPosition.dx / width)
+                                  .clamp(0.0, 1.0) *
+                              360;
+                          hue = newHue;
+                          tempColor = HSVColor.fromAHSV(
+                            1.0,
+                            hue,
+                            saturation,
+                            brightness,
+                          ).toColor();
+                          setSheetState(() {});
+                        },
+                        child: Container(
+                          height: 44,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFFF0000),
+                                Color(0xFFFFA500),
+                                Color(0xFFFFFF00),
+                                Color(0xFF00FF00),
+                                Color(0xFF00FFFF),
+                                Color(0xFF0000FF),
+                                Color(0xFFFF00FF),
+                                Color(0xFFFF0000),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Saturation Slider
+                      Text(
+                        'Saturation',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Slider(
+                        value: saturation,
+                        onChanged: (value) {
+                          saturation = value;
+                          tempColor = HSVColor.fromAHSV(
+                            1.0,
+                            hue,
+                            saturation,
+                            brightness,
+                          ).toColor();
+                          setSheetState(() {});
+                        },
+                        activeColor: const Color(0xFFF5C518),
+                        inactiveColor: isDarkMode
+                            ? Colors.grey[700]
+                            : Colors.grey[300],
+                        min: 0,
+                        max: 1,
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Brightness Slider
+                      Text(
+                        'Brightness',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Slider(
+                        value: brightness,
+                        onChanged: (value) {
+                          brightness = value;
+                          tempColor = HSVColor.fromAHSV(
+                            1.0,
+                            hue,
+                            saturation,
+                            brightness,
+                          ).toColor();
+                          setSheetState(() {});
+                        },
+                        activeColor: const Color(0xFFF5C518),
+                        inactiveColor: isDarkMode
+                            ? Colors.grey[700]
+                            : Colors.grey[300],
+                        min: 0,
+                        max: 1,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: isDarkMode
+                                    ? Colors.white70
+                                    : Colors.black87,
+                                side: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.white38
+                                      : Colors.grey.shade400,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  final idx = _texts.indexWhere(
+                                    (t) => t.id == sel.id,
+                                  );
+                                  if (idx != -1) {
+                                    _texts[idx] = _texts[idx].copyWith(
+                                      backgroundColor: tempColor,
+                                    );
+                                  }
+                                });
+                                Navigator.pop(ctx);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF5C518),
+                                foregroundColor: Colors.black87,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                'Apply',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
   // ── FRAMES PANEL ──────────────────────────
 
   Widget _buildFramesPanel() {
@@ -11033,173 +11649,330 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   );
   // }
 
-  Widget _buildAudioPanel() {
-    final isDarkMode = _isDarkMode;
-    return Container(
-      height: 220, // Increased height
-      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-            child: Text(
-              'Audio',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: isDarkMode ? Colors.white : Colors.black87,
-              ),
+  // Widget _buildAudioPanel() {
+  //   final isDarkMode = _isDarkMode;
+  //   return Container(
+  //     height: 220, // Increased height
+  //     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Padding(
+  //           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+  //           child: Text(
+  //             'Audio',
+  //             style: TextStyle(
+  //               fontWeight: FontWeight.bold,
+  //               fontSize: 13,
+  //               color: isDarkMode ? Colors.white : Colors.black87,
+  //             ),
+  //           ),
+  //         ),
+  //         Expanded(
+  //           child: ListView(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             children: [
+  //               // 1. No Audio option
+  //               GestureDetector(
+  //                 onTap: () {
+  //                   setState(() => _selectedAudio = null);
+  //                   _playAudio(null);
+  //                 },
+  //                 child: _audioChip('No Audio', _selectedAudio == null),
+  //               ),
+
+  //               // 2. Upload button
+  //               GestureDetector(
+  //                 onTap: _pickUserAudio,
+  //                 child: Container(
+  //                   margin: const EdgeInsets.only(right: 10),
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 14,
+  //                     vertical: 8,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     color: const Color(0xFFF5C518),
+  //                     borderRadius: BorderRadius.circular(20),
+  //                     border: Border.all(
+  //                       color: const Color(0xFFF5C518),
+  //                       width: 1,
+  //                     ),
+  //                   ),
+  //                   child: Row(
+  //                     children: [
+  //                       const Icon(
+  //                         Icons.upload_file,
+  //                         size: 14,
+  //                         color: Colors.black87,
+  //                       ),
+  //                       const SizedBox(width: 4),
+  //                       Text(
+  //                         'Upload',
+  //                         style: TextStyle(
+  //                           fontSize: 11,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: Colors.black87,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+
+  //               // 3. User uploaded audio tracks
+  //               ..._userAudioTracks.map(
+  //                 (userTrack) => Stack(
+  //                   children: [
+  //                     GestureDetector(
+  //                       onTap: () {
+  //                         setState(() => _selectedAudio = userTrack.name);
+  //                         _playAudio(userTrack.name);
+  //                       },
+  //                       child: _audioChip(
+  //                         '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+  //                         _selectedAudio == userTrack.name,
+  //                       ),
+  //                     ),
+  //                     // Delete button
+  //                     Positioned(
+  //                       top: -4,
+  //                       right: -4,
+  //                       child: GestureDetector(
+  //                         onTap: () {
+  //                           _showDeleteAudioConfirmation(userTrack);
+  //                         },
+  //                         child: Container(
+  //                           width: 18,
+  //                           height: 18,
+  //                           decoration: const BoxDecoration(
+  //                             color: Colors.red,
+  //                             shape: BoxShape.circle,
+  //                           ),
+  //                           child: const Icon(
+  //                             Icons.close,
+  //                             size: 12,
+  //                             color: Colors.white,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+
+  //               // 4. Static audio tracks
+  //               ..._audioTracks.map(
+  //                 (track) => GestureDetector(
+  //                   onTap: () {
+  //                     setState(() => _selectedAudio = track.name);
+  //                     _playAudio(track.name);
+  //                   },
+  //                   child: _audioChip(track.name, _selectedAudio == track.name),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         if (_selectedAudio != null)
+  //           Padding(
+  //             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
+  //                   size: 16,
+  //                   color: _isAudioPlaying ? Colors.green : Colors.amber,
+  //                 ),
+  //                 const SizedBox(width: 8),
+  //                 Expanded(
+  //                   child: Text(
+  //                     _isAudioPlaying
+  //                         ? 'Playing: $_selectedAudio'
+  //                         : 'Selected: $_selectedAudio',
+  //                     style: TextStyle(
+  //                       fontSize: 11,
+  //                       color: _isAudioPlaying
+  //                           ? Colors.green
+  //                           : (isDarkMode ? Colors.white54 : Colors.black54),
+  //                     ),
+  //                     overflow: TextOverflow.ellipsis,
+  //                   ),
+  //                 ),
+  //                 if (_isAudioPlaying)
+  //                   IconButton(
+  //                     icon: const Icon(Icons.stop, size: 18),
+  //                     onPressed: () async {
+  //                       await _audioPlayer.stop();
+  //                       setState(() => _isAudioPlaying = false);
+  //                     },
+  //                   ),
+  //                 const Icon(Icons.audiotrack, size: 18, color: Colors.green),
+  //               ],
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+// previous one is the correct one this is code to remove the static music////
+
+Widget _buildAudioPanel() {
+  final isDarkMode = _isDarkMode;
+  return Container(
+    height: 220, // Increased height
+    color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+          child: Text(
+            'Audio',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: isDarkMode ? Colors.white : Colors.black87,
             ),
           ),
-          Expanded(
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: [
-                // 1. No Audio option
-                GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedAudio = null);
-                    _playAudio(null);
-                  },
-                  child: _audioChip('No Audio', _selectedAudio == null),
-                ),
+        ),
+        Expanded(
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: [
+              // 1. No Audio option
+              GestureDetector(
+                onTap: () {
+                  setState(() => _selectedAudio = null);
+                  _playAudio(null);
+                },
+                child: _audioChip('No Audio', _selectedAudio == null),
+              ),
 
-                // 2. Upload button
-                GestureDetector(
-                  onTap: _pickUserAudio,
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 10),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
+              // 2. Upload button
+              GestureDetector(
+                onTap: _pickUserAudio,
+                child: Container(
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5C518),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
                       color: const Color(0xFFF5C518),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0xFFF5C518),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.upload_file,
-                          size: 14,
-                          color: Colors.black87,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Upload',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
+                      width: 1,
                     ),
                   ),
-                ),
-
-                // 3. User uploaded audio tracks
-                ..._userAudioTracks.map(
-                  (userTrack) => Stack(
+                  child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          setState(() => _selectedAudio = userTrack.name);
-                          _playAudio(userTrack.name);
-                        },
-                        child: _audioChip(
-                          '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
-                          _selectedAudio == userTrack.name,
-                        ),
+                      const Icon(
+                        Icons.upload_file,
+                        size: 14,
+                        color: Colors.black87,
                       ),
-                      // Delete button
-                      Positioned(
-                        top: -4,
-                        right: -4,
-                        child: GestureDetector(
-                          onTap: () {
-                            _showDeleteAudioConfirmation(userTrack);
-                          },
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 12,
-                              color: Colors.white,
-                            ),
-                          ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Upload',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
                     ],
                   ),
                 ),
+              ),
 
-                // 4. Static audio tracks
-                ..._audioTracks.map(
-                  (track) => GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedAudio = track.name);
-                      _playAudio(track.name);
-                    },
-                    child: _audioChip(track.name, _selectedAudio == track.name),
+              // 3. User uploaded audio tracks only (no static tracks)
+              ..._userAudioTracks.map(
+                (userTrack) => Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        setState(() => _selectedAudio = userTrack.name);
+                        _playAudio(userTrack.name);
+                      },
+                      child: _audioChip(
+                        '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+                        _selectedAudio == userTrack.name,
+                      ),
+                    ),
+                    // Delete button
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: GestureDetector(
+                        onTap: () {
+                          _showDeleteAudioConfirmation(userTrack);
+                        },
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_selectedAudio != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+            child: Row(
+              children: [
+                Icon(
+                  _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
+                  size: 16,
+                  color: _isAudioPlaying ? Colors.green : Colors.amber,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _isAudioPlaying
+                        ? 'Playing: $_selectedAudio'
+                        : 'Selected: $_selectedAudio',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: _isAudioPlaying
+                          ? Colors.green
+                          : (isDarkMode ? Colors.white54 : Colors.black54),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (_isAudioPlaying)
+                  IconButton(
+                    icon: const Icon(Icons.stop, size: 18),
+                    onPressed: () async {
+                      await _audioPlayer.stop();
+                      setState(() => _isAudioPlaying = false);
+                    },
+                  ),
+                const Icon(Icons.audiotrack, size: 18, color: Colors.green),
               ],
             ),
           ),
-          if (_selectedAudio != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              child: Row(
-                children: [
-                  Icon(
-                    _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
-                    size: 16,
-                    color: _isAudioPlaying ? Colors.green : Colors.amber,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _isAudioPlaying
-                          ? 'Playing: $_selectedAudio'
-                          : 'Selected: $_selectedAudio',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: _isAudioPlaying
-                            ? Colors.green
-                            : (isDarkMode ? Colors.white54 : Colors.black54),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (_isAudioPlaying)
-                    IconButton(
-                      icon: const Icon(Icons.stop, size: 18),
-                      onPressed: () async {
-                        await _audioPlayer.stop();
-                        setState(() => _isAudioPlaying = false);
-                      },
-                    ),
-                  const Icon(Icons.audiotrack, size: 18, color: Colors.green),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
+      ],
+    ),
+  );
+}
   void _showDeleteAudioConfirmation(UserAudioTrack userTrack) {
     final isDarkMode = _isDarkMode;
 
