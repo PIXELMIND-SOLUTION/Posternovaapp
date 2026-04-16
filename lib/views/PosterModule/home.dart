@@ -2667,7 +2667,7 @@ Future<void> _saveSubscriptionModalShownTime() async {
                       subtitleKey,
                       lp.locale.languageCode,
                     ),
-                    style: TextStyle(fontSize: 12, color: _secondaryText),
+                    style: TextStyle(fontSize: 12, color: Colors.black),
                   ),
                 ],
               ),

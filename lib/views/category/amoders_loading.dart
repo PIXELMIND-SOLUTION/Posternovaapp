@@ -58,7 +58,7 @@ class _AmodersLoadingState extends State<AmodersLoading>
                     width: 9,
                     height: 9,
                     decoration: const BoxDecoration(
-                      color: Colors.amber,
+                      color: Colors.blue,
                       shape: BoxShape.circle,
                     ),
                   ),

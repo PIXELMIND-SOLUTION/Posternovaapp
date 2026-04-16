@@ -1903,10 +1903,18 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
-                    child: ClipRRect(
+                    // child: ClipRRect(
+                    //   borderRadius: BorderRadius.circular(22),
+                    //   child: Image.asset(
+                    //     'assets/appstore.png',
+                    //     fit: BoxFit.cover,
+                    //   ),
+                    // ),
+
+                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(22),
                       child: Image.asset(
-                        'assets/appstore.png',
+                        'assets/correctlog.png',
                         fit: BoxFit.cover,
                       ),
                     ),
