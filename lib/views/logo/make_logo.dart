@@ -39,7 +39,7 @@ class _LogosGridScreenState extends State<LogosGridScreen> {
 
     try {
       final url = Uri.parse(
-        'http://31.97.206.144:4061/api/admin/getlogos/${widget.userId}?logoCategoryId=${widget.categoryId}',
+        'http://82.29.162.67:4061/api/admin/getlogos/${widget.userId}?logoCategoryId=${widget.categoryId}',
       );
 
       final response = await http.get(url);

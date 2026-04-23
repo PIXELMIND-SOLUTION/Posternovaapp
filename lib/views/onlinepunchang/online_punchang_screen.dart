@@ -246,7 +246,7 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
       if (userData == null) return;
       final userId = userData.user.id;
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/users/get-profile/$userId'),
+        Uri.parse('http://82.29.162.67:4061/api/users/get-profile/$userId'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
@@ -276,7 +276,7 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
       }
 
       final userId = userData.user.id;
-      final url = 'http://31.97.206.144:4061/api/users/panchang/$userId';
+      final url = 'http://82.29.162.67:4061/api/users/panchang/$userId';
       final payload = {
         "year": selectedDate.year,
         "month": selectedDate.month,

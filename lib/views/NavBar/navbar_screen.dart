@@ -3126,7 +3126,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             // ── PRO badge overlay ──
             Consumer<LanguageProvider>(
               builder: (context, languageProvider, child) {
-                if (_currentIndex == 3) return const SizedBox.shrink();
+                // if (_currentIndex == 3) return const SizedBox.shrink();
+
+                if (_currentIndex != 0) return const SizedBox.shrink();
                 return Positioned(
                   right: 4,
                   bottom: 80 + MediaQuery.of(context).padding.bottom,

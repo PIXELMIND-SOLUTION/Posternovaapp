@@ -8666,115 +8666,450 @@ class _TemplateCreateState extends State<TemplateCreate>
     );
   }
 
-  void _showTextThemePicker(OverlayTextItem sel) {
-    final themes = [
-      {
-        'name': 'Default',
-        'color': Colors.white,
-        'bg': Colors.transparent,
-        'bold': false,
-        'shadow': false,
-      },
-      {
-        'name': 'Bold White',
-        'color': Colors.white,
-        'bg': Colors.transparent,
-        'bold': true,
-        'shadow': true,
-      },
-      {
-        'name': 'Dark',
-        'color': Colors.black,
-        'bg': Colors.white.withOpacity(0.8),
-        'bold': false,
-        'shadow': false,
-      },
-      {
-        'name': 'Gold',
-        'color': const Color(0xFFD4AF37),
-        'bg': Colors.transparent,
-        'bold': true,
-        'shadow': true,
-      },
-      {
-        'name': 'Neon',
-        'color': Colors.greenAccent,
-        'bg': Colors.black.withOpacity(0.5),
-        'bold': true,
-        'shadow': false,
-      },
-      {
-        'name': 'Red Alert',
-        'color': Colors.white,
-        'bg': Colors.red.shade700,
-        'bold': true,
-        'shadow': false,
-      },
-    ];
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => Container(
-        color: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Text Theme',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: themes
-                  .map(
-                    (t) => GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          final i = _texts.indexWhere((x) => x.id == sel.id);
-                          if (i != -1)
-                            _texts[i] = _texts[i].copyWith(
-                              color: t['color'] as Color,
-                              backgroundColor: t['bg'] as Color,
-                              isBold: t['bold'] as bool,
-                              hasShadow: t['shadow'] as bool,
-                            );
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: (t['bg'] as Color) == Colors.transparent
-                              ? Colors.grey.shade100
-                              : t['bg'] as Color,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Text(
-                          t['name'] as String,
-                          style: TextStyle(
-                            color: t['color'] as Color,
-                            fontWeight: (t['bold'] as bool)
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ],
-        ),
+  // void _showTextThemePicker(OverlayTextItem sel) {
+  //   final themes = [
+  //     {
+  //       'name': 'Default',
+  //       'color': Colors.white,
+  //       'bg': Colors.transparent,
+  //       'bold': false,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Bold White',
+  //       'color': Colors.white,
+  //       'bg': Colors.transparent,
+  //       'bold': true,
+  //       'shadow': true,
+  //     },
+  //     {
+  //       'name': 'Dark',
+  //       'color': Colors.black,
+  //       'bg': Colors.white.withOpacity(0.8),
+  //       'bold': false,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Gold',
+  //       'color': const Color(0xFFD4AF37),
+  //       'bg': Colors.transparent,
+  //       'bold': true,
+  //       'shadow': true,
+  //     },
+  //     {
+  //       'name': 'Neon',
+  //       'color': Colors.greenAccent,
+  //       'bg': Colors.black.withOpacity(0.5),
+  //       'bold': true,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Red Alert',
+  //       'color': Colors.white,
+  //       'bg': Colors.red.shade700,
+  //       'bold': true,
+  //       'shadow': false,
+  //     },
+  //   ];
+  //   showModalBottomSheet(
+  //     context: context,
+  //     builder: (_) => Container(
+  //       color: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //       padding: const EdgeInsets.all(16),
+  //       child: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           const Text(
+  //             'Text Theme',
+  //             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           Wrap(
+  //             spacing: 10,
+  //             runSpacing: 10,
+  //             children: themes
+  //                 .map(
+  //                   (t) => GestureDetector(
+  //                     onTap: () {
+  //                       setState(() {
+  //                         final i = _texts.indexWhere((x) => x.id == sel.id);
+  //                         if (i != -1)
+  //                           _texts[i] = _texts[i].copyWith(
+  //                             color: t['color'] as Color,
+  //                             backgroundColor: t['bg'] as Color,
+  //                             isBold: t['bold'] as bool,
+  //                             hasShadow: t['shadow'] as bool,
+  //                           );
+  //                       });
+  //                       Navigator.pop(context);
+  //                     },
+  //                     child: Container(
+  //                       padding: const EdgeInsets.symmetric(
+  //                         horizontal: 14,
+  //                         vertical: 8,
+  //                       ),
+  //                       decoration: BoxDecoration(
+  //                         color: (t['bg'] as Color) == Colors.transparent
+  //                             ? Colors.grey.shade100
+  //                             : t['bg'] as Color,
+  //                         borderRadius: BorderRadius.circular(8),
+  //                         border: Border.all(color: Colors.grey.shade300),
+  //                       ),
+  //                       child: Text(
+  //                         t['name'] as String,
+  //                         style: TextStyle(
+  //                           color: t['color'] as Color,
+  //                           fontWeight: (t['bold'] as bool)
+  //                               ? FontWeight.bold
+  //                               : FontWeight.normal,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 )
+  //                 .toList(),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+
+
+//   void _showTextThemePicker(OverlayTextItem sel) {
+//   final isDarkMode = _isDarkMode;
+
+//   final themes = [
+//     {
+//       'name': 'Default',
+//       'color': Colors.white,
+//       'bg': Colors.transparent,
+//       'bold': false,
+//       'shadow': false,
+//     },
+//     {
+//       'name': 'Bold White',
+//       'color': Colors.white,
+//       'bg': Colors.transparent,
+//       'bold': true,
+//       'shadow': true,
+//     },
+//     {
+//       'name': 'Dark',
+//       'color': Colors.black,
+//       'bg': Colors.white.withOpacity(0.8),
+//       'bold': false,
+//       'shadow': false,
+//     },
+//     {
+//       'name': 'Gold',
+//       'color': const Color(0xFFD4AF37),
+//       'bg': Colors.transparent,
+//       'bold': true,
+//       'shadow': true,
+//     },
+//     {
+//       'name': 'Neon',
+//       'color': Colors.greenAccent,
+//       'bg': Colors.black.withOpacity(0.5),
+//       'bold': true,
+//       'shadow': false,
+//     },
+//     {
+//       'name': 'Red Alert',
+//       'color': Colors.white,
+//       'bg': Colors.red.shade700,
+//       'bold': true,
+//       'shadow': false,
+//     },
+//   ];
+
+//   showModalBottomSheet(
+//     context: context,
+//     backgroundColor: Colors.transparent,
+//     builder: (_) => Container(
+//       decoration: BoxDecoration(
+//         color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+//         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+//       ),
+//       padding: const EdgeInsets.all(16),
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           // Drag handle
+//           Center(
+//             child: Container(
+//               width: 40,
+//               height: 4,
+//               decoration: BoxDecoration(
+//                 color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+//                 borderRadius: BorderRadius.circular(2),
+//               ),
+//             ),
+//           ),
+//           const SizedBox(height: 12),
+//           Text(
+//             'Text Theme',
+//             style: TextStyle(
+//               fontWeight: FontWeight.bold,
+//               fontSize: 15,
+//               color: isDarkMode ? Colors.white : Colors.black87,
+//             ),
+//           ),
+//           const SizedBox(height: 12),
+//           Wrap(
+//             spacing: 10,
+//             runSpacing: 10,
+//             children: themes.map((t) {
+//               final textColor = t['color'] as Color;
+//               final bgColor = t['bg'] as Color;
+//               final isBold = t['bold'] as bool;
+//               final isTransparentBg = bgColor == Colors.transparent;
+
+//               // For transparent-bg themes (Default, Bold White, Gold),
+//               // use a contrasting chip background so text is visible
+//               final Color chipBg = isTransparentBg
+//                   ? (isDarkMode
+//                       ? const Color(0xFF374151)
+//                       : Colors.grey.shade200)
+//                   : bgColor;
+
+//               return GestureDetector(
+//                 onTap: () {
+//                   setState(() {
+//                     final i = _texts.indexWhere((x) => x.id == sel.id);
+//                     if (i != -1)
+//                       _texts[i] = _texts[i].copyWith(
+//                         color: textColor,
+//                         backgroundColor: bgColor,
+//                         isBold: isBold,
+//                         hasShadow: t['shadow'] as bool,
+//                       );
+//                   });
+//                   Navigator.pop(context);
+//                 },
+//                 child: Container(
+//                   padding: const EdgeInsets.symmetric(
+//                     horizontal: 14,
+//                     vertical: 10,
+//                   ),
+//                   decoration: BoxDecoration(
+//                     color: chipBg,
+//                     borderRadius: BorderRadius.circular(8),
+//                     border: Border.all(
+//                       color: isDarkMode
+//                           ? Colors.grey[600]!
+//                           : Colors.grey.shade300,
+//                       width: 1.5,
+//                     ),
+//                     boxShadow: [
+//                       BoxShadow(
+//                         color: Colors.black.withOpacity(0.1),
+//                         blurRadius: 4,
+//                         offset: const Offset(0, 2),
+//                       ),
+//                     ],
+//                   ),
+//                   child: Text(
+//                     t['name'] as String,
+//                     style: TextStyle(
+//                       color: textColor,
+//                       fontWeight: isBold
+//                           ? FontWeight.bold
+//                           : FontWeight.normal,
+//                       shadows: (t['shadow'] as bool)
+//                           ? [
+//                               const Shadow(
+//                                 color: Colors.black54,
+//                                 offset: Offset(1, 1),
+//                                 blurRadius: 2,
+//                               ),
+//                             ]
+//                           : null,
+//                     ),
+//                   ),
+//                 ),
+//               );
+//             }).toList(),
+//           ),
+//           const SizedBox(height: 8),
+//         ],
+//       ),
+//     ),
+//   );
+// }
+
+
+
+
+
+
+
+void _showTextThemePicker(OverlayTextItem sel) {
+  final isDarkMode = _isDarkMode;
+
+  final themes = [
+    {
+      'name': 'Default',
+      'color': isDarkMode ? Colors.white : Colors.black87,  // Dark text for light mode
+      'bg': Colors.transparent,
+      'bold': false,
+      'shadow': false,
+    },
+    {
+      'name': 'Bold White',
+      'color': isDarkMode ? Colors.white : Colors.black87,  // Dark text for light mode
+      'bg': Colors.transparent,
+      'bold': true,
+      'shadow': true,
+    },
+    {
+      'name': 'Dark',
+      'color': Colors.black,
+      'bg': Colors.white.withOpacity(0.8),
+      'bold': false,
+      'shadow': false,
+    },
+    {
+      'name': 'Gold',
+      'color': const Color(0xFFD4AF37),
+      'bg': Colors.transparent,
+      'bold': true,
+      'shadow': true,
+    },
+    {
+      'name': 'Neon',
+      'color': Colors.greenAccent,
+      'bg': Colors.black.withOpacity(0.5),
+      'bold': true,
+      'shadow': false,
+    },
+    {
+      'name': 'Red Alert',
+      'color': Colors.white,
+      'bg': Colors.red.shade700,
+      'bold': true,
+      'shadow': false,
+    },
+  ];
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (_) => Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
-    );
-  }
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Text Theme',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: themes.map((t) {
+              final textColor = t['color'] as Color;
+              final bgColor = t['bg'] as Color;
+              final isBold = t['bold'] as bool;
+              final isTransparentBg = bgColor == Colors.transparent;
+
+              // For transparent-bg themes, use a contrasting chip background
+              final Color chipBg = isTransparentBg
+                  ? (isDarkMode
+                      ? const Color(0xFF374151)
+                      : Colors.grey.shade200)
+                  : bgColor;
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    final i = _texts.indexWhere((x) => x.id == sel.id);
+                    if (i != -1)
+                      _texts[i] = _texts[i].copyWith(
+                        color: textColor,
+                        backgroundColor: bgColor,
+                        isBold: isBold,
+                        hasShadow: t['shadow'] as bool,
+                      );
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: chipBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDarkMode
+                          ? Colors.grey[600]!
+                          : Colors.grey.shade300,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    t['name'] as String,
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: isBold
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      shadows: (t['shadow'] as bool)
+                          ? [
+                              const Shadow(
+                                color: Colors.black54,
+                                offset: Offset(1, 1),
+                                blurRadius: 2,
+                              ),
+                            ]
+                          : null,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
+}
 
   // void _showFontPicker(OverlayTextItem sel) {
   //   showModalBottomSheet(

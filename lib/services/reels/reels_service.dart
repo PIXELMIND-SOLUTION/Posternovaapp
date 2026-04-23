@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:posternova/models/reels_model.dart';
 
 class ReelService {
-  static const String baseUrl = 'http://31.97.206.144:4061/api/users';
+  static const String baseUrl = 'http://82.29.162.67:4061/api/users';
 
   // Get all reels for a user
   Future<ReelsResponse?> getAllReels(String userId) async {

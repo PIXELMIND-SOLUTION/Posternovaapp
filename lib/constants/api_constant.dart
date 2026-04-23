@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'http://31.97.206.144:4061/api/users';
+  static const String baseUrl = 'http://82.29.162.67:4061/api/users';
 
   static const String login = '$baseUrl/login';
   static const String googleSignIn = '$baseUrl/api/auth/google';
@@ -20,44 +20,44 @@ class ApiConstants {
       '$baseUrl/update-customers/$userId/$customerId';
 
   static const String getAllCategories =
-      'http://31.97.206.144:4061/api/category/getall-cateogry';
+      'http://82.29.162.67:4061/api/category/getall-cateogry';
 
-  static const String festivalTemplates = 'http://31.97.206.144:4061/api/poster/festival';
+  static const String festivalTemplates = 'http://82.29.162.67:4061/api/poster/festival';
 
-  static const String getAllPlans = 'http://31.97.206.144:4061/api/plans/getallplan';
+  static const String getAllPlans = 'http://82.29.162.67:4061/api/plans/getallplan';
 
-  static const String getLogos = 'http://31.97.206.144:4061/api/admin/getlogos';
+  static const String getLogos = 'http://82.29.162.67:4061/api/admin/getlogos';
 
 
   // In your api_constant.dart file
 static String updateProfile(String userId) => '$baseUrl/users/update-user/$userId';
 
-  static String getMyPlan(String userId) => 'http://31.97.206.144:4061/api/users/myplan/$userId';
+  static String getMyPlan(String userId) => 'http://82.29.162.67:4061/api/users/myplan/$userId';
 
   // static String canvaPosters = 'http://31.97.206.144:4061/api/poster/canvasposters';
 
 
-    static String canvaPosters = 'http://31.97.206.144:4061/api/poster/weeklyposters';
+    static String canvaPosters = 'http://82.29.162.67:4061/api/poster/weeklyposters';
 
 
-  static String getAllPosters = 'http://31.97.206.144:4061/api/poster/getallposter/:userId';
+  static String getAllPosters = 'http://82.29.162.67:4061/api/poster/getallposter/:userId';
 
   static const String purchasePlan = '$baseUrl/api/payment/phonepe';
 
   static String redeem(String userId) => '$baseUrl/redeem/$userId';
 
   static String reportUser(String userId, String reportedUserId) =>
-      'http://31.97.206.144:4061/api/users/report/$userId/$reportedUserId';
+      'http://82.29.162.67:4061/api/users/report/$userId/$reportedUserId';
 
   static String blockUser(String userId, String blockedUserId) =>
-      'http://31.97.206.144:4061/api/block/$userId/$blockedUserId';
+      'http://82.29.162.67:4061/api/block/$userId/$blockedUserId';
 
   static const String registerUser = '$baseUrl/register';
 
   static const String singleCanvasPosters =
       '$baseUrl/poster/singlecanvasposters';
 
-  static const String singlePlan = 'http://31.97.206.144:4061/api/users/plans/singleplan';
+  static const String singlePlan = 'http://82.29.162.67:4061/api/users/plans/singleplan';
 
   static const String verifyOtp = '$baseUrl/verify-otp';
 
@@ -65,7 +65,7 @@ static String updateProfile(String userId) => '$baseUrl/users/update-user/$userI
   static const String resendOtp = '$baseUrl/resend-otp';
 
   static const String getposterbyCategory =
-      'http://31.97.206.144:4061/api/poster/getposterbycategory';
+      'http://82.29.162.67:4061/api/poster/getposterbycategory';
 
   static const String getUserProfile = '$baseUrl/get-profile/userId';
 

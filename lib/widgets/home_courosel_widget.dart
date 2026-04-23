@@ -712,7 +712,7 @@ class _HomeCarouselState extends State<HomeCarousel>
   Future<void> _fetchBanners() async {
     try {
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/poster/getbanners'),
+        Uri.parse('http://82.29.162.67:4061/api/poster/getbanners'),
         headers: {
           'Content-Type': 'application/json',
         },

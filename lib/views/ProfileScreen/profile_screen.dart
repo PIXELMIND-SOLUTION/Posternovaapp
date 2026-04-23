@@ -40,7 +40,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoadingProfile = false;
   Map<String, dynamic>? _profileData;
-  final String _baseUrl = 'http://31.97.206.144:4061/api/users';
+  final String _baseUrl = 'http://82.29.162.67:4061/api/users';
 
   @override
   void initState() {

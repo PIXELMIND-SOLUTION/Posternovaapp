@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:posternova/models/hot_topic_model.dart';
 
 class HotTopicReelsService {
-  static const String _baseUrl = 'http://31.97.206.144:4061/api/users';
+  static const String _baseUrl = 'http://82.29.162.67:4061/api/users';
 
   Future<HotTopicReelsModel> fetchHotTopicReels(String userId) async {
     final url = Uri.parse('$_baseUrl/allhottopicreels/$userId');

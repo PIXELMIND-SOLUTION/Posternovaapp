@@ -227,7 +227,7 @@ class _EditProfileState extends State<EditProfile> {
   String? _profileImageUrl;
   File? _selectedImage;
 
-  final String _baseUrl = 'http://31.97.206.144:4061/api/users';
+  final String _baseUrl = 'http://82.29.162.67:4061/api/users';
 
   bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
@@ -417,7 +417,7 @@ class _EditProfileState extends State<EditProfile> {
 
     try {
       final response = await http.put(
-        Uri.parse('http://31.97.206.144:4061/api/users/update-user/$userId'),
+        Uri.parse('http://82.29.162.67:4061/api/users/update-user/$userId'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'name': _nameController.text.trim(),

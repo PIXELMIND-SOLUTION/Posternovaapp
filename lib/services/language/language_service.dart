@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ApiService {
-  static const String baseUrl = 'http://31.97.206.144:4061/api';
+  static const String baseUrl = 'http://82.29.162.67:4061/api';
   
   static Future<bool> updateUserLanguage(String userId, String language) async {
     try {

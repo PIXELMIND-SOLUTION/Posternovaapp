@@ -147,7 +147,7 @@ class _WalletScreenState extends State<WalletScreen> {
       }
 
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/users/wallet/$userId'),
+        Uri.parse('http://82.29.162.67:4061/api/users/wallet/$userId'),
       );
 
       if (response.statusCode == 200) {
@@ -389,7 +389,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      "Welcome to Editezy Wallet",
+                      "Welcome to Edit Ezy Wallet",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

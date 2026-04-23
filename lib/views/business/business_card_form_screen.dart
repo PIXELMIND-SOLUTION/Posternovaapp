@@ -102,7 +102,7 @@ class _BusinessCardFormScreenState extends State<BusinessCardFormScreen> {
       final userId = userData?.user.id;
 
       final uri = Uri.parse(
-        'http://31.97.206.144:4061/api/users/addbusinessdetails/$userId',
+        'http://82.29.162.67:4061/api/users/addbusinessdetails/$userId',
       );
 
       final request = http.MultipartRequest('POST', uri);

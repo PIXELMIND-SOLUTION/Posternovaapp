@@ -605,7 +605,7 @@ class _CustomerListState extends State<CustomerList> {
     try {
       final response = await http.get(
         Uri.parse(
-          'http://31.97.206.144:4061/api/users/allcustomers/$_currentUserId',
+          'http://82.29.162.67:4061/api/users/allcustomers/$_currentUserId',
         ),
         headers: {'Content-Type': 'application/json'},
       );

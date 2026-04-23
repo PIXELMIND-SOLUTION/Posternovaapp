@@ -852,14 +852,14 @@ class _AddCustomersState extends State<CustomerScreen>
             backgroundColor: primaryColor,
             child: const Icon(Icons.add, color: Colors.white),
           ),
-          const SizedBox(height: 16), // Space between buttons
-          FloatingActionButton(
-            onPressed: () {
-              // Your existing FAB action (chat, etc.)
-              // _handleChatButton(); // You need to implement this
-            },
-            child: const Icon(Icons.chat),
-          ),
+          const SizedBox(height: 65), // Space between buttons
+          // FloatingActionButton(
+          //   onPressed: () {
+          //     // Your existing FAB action (chat, etc.)
+          //     // _handleChatButton(); // You need to implement this
+          //   },
+          //   child: const Icon(Icons.chat),
+          // ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,

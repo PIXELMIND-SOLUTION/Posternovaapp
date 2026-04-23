@@ -52,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen>
   // Glow pulse
   late Animation<double> _glow;
 
-  final String _appName = 'EditEzy';
+  final String _appName = 'Edit Ezy';
 
   static const Color _tealDark = Color(0xFF0077A8);
   static const Color _tealLight = Color(0xFF00BCD4);
@@ -377,7 +377,7 @@ class _SplashScreenState extends State<SplashScreen>
                                             32,
                                           ),
                                           child: Image.asset(
-                                            'assets/largelogo.png',
+                                            'assets/editezylogo.png',
                                             fit: BoxFit.cover,
                                             errorBuilder: (_, __, ___) =>
                                                 Container(

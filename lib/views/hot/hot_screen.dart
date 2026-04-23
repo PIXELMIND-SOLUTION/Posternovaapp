@@ -243,7 +243,7 @@ class _HotReelItemState extends State<HotReelItem> {
       if (userData == null || !mounted) return;
       final uid = userData.user.id;
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/users/get-profile/$uid'),
+        Uri.parse('http://82.29.162.67:4061/api/users/get-profile/$uid'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200 && mounted) {

@@ -799,95 +799,355 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     );
   }
 
-  // 4. Chromatic Aberration - RGB split/glitch
-  Widget _applyChromaticAberration(Widget child, double strength) {
-    double offset = 5 * strength;
+
+
+//   // 4. Chromatic Aberration - RGB split/glitch
+// Widget _applyChromaticAberration(Widget child, double strength) {
+//   // Only apply effect if strength > 0
+//   if (strength <= 0) return child;
+  
+//   // Map strength (0-1) to offset range (0-12 pixels)
+//   // Max offset of 12 pixels gives a strong glitch effect at full strength
+//   double offset = 12 * strength;
+  
+//   // Create a subtle blur at higher strengths to enhance the effect
+//   Widget baseChild = child;
+//   if (strength > 0.5) {
+//     double blurStrength = (strength - 0.5) * 4; // 0 to 2 sigma
+//     baseChild = ImageFiltered(
+//       imageFilter: ui.ImageFilter.blur(
+//         sigmaX: blurStrength,
+//         sigmaY: blurStrength,
+//       ),
+//       child: child,
+//     );
+//   }
+  
+//   return Stack(
+//     children: [
+//       // Red channel shifted left
+//       Transform.translate(
+//         offset: Offset(-offset, 0),
+//         child: ColorFiltered(
+//           colorFilter: const ColorFilter.matrix([
+//             1, 0, 0, 0, 0,  // Red channel pass through
+//             0, 0, 0, 0, 0,  // Green channel removed
+//             0, 0, 0, 0, 0,  // Blue channel removed
+//             0, 0, 0, 1, 0,  // Alpha
+//           ]),
+//           child: baseChild,
+//         ),
+//       ),
+      
+//       // Green channel shifted right (or left based on strength)
+//       Transform.translate(
+//         offset: Offset(offset * 0.7, 0),
+//         child: ColorFiltered(
+//           colorFilter: const ColorFilter.matrix([
+//             0, 0, 0, 0, 0,  // Red channel removed
+//             0, 1, 0, 0, 0,  // Green channel pass through
+//             0, 0, 0, 0, 0,  // Blue channel removed
+//             0, 0, 0, 1, 0,  // Alpha
+//           ]),
+//           child: baseChild,
+//         ),
+//       ),
+      
+//       // Blue channel shifted right
+//       Transform.translate(
+//         offset: Offset(offset, 0),
+//         child: ColorFiltered(
+//           colorFilter: const ColorFilter.matrix([
+//             0, 0, 0, 0, 0,  // Red channel removed
+//             0, 0, 0, 0, 0,  // Green channel removed
+//             0, 0, 1, 0, 0,  // Blue channel pass through
+//             0, 0, 0, 1, 0,  // Alpha
+//           ]),
+//           child: baseChild,
+//         ),
+//       ),
+//     ],
+//   );
+// }
+
+
+
+
+
+
+// 4. Chromatic Aberration - RGB split/glitch (Light to Dark intensity)
+Widget _applyChromaticAberration(Widget child, double strength) {
+  // No effect at strength 0
+  if (strength <= 0) return child;
+  
+  // Map strength 0-1 to offset range 0-10 pixels
+  // At low strength: subtle color fringing
+  // At high strength: strong glitch effect
+  final double offset = 10 * strength;
+  
+  // At low strength (0-0.3): subtle effect with opacity blending
+  // At medium strength (0.3-0.7): stronger offset with some transparency
+  // At high strength (0.7-1.0): full glitch with blending
+  
+  if (strength < 0.3) {
+    // LIGHT EFFECT: Subtle color fringing
+    final double opacity = strength / 0.3; // 0 to 1
+    final double smallOffset = offset * 0.3;
+    
     return Stack(
       children: [
-        Transform.translate(
-          offset: Offset(-offset, 0),
-          child: ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              1,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              1,
-              0,
-            ]),
-            child: child,
-          ),
-        ),
-        Transform.translate(
-          offset: Offset(offset, 0),
-          child: ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              1,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              1,
-              0,
-            ]),
-            child: child,
-          ),
-        ),
-        ColorFiltered(
-          colorFilter: const ColorFilter.matrix([
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            1,
-            0,
-            0,
-            0,
-            0,
-            0,
-            1,
-            0,
-          ]),
+        // Original image as base (80% opacity)
+        Opacity(
+          opacity: 1.0 - (opacity * 0.2),
           child: child,
+        ),
+        // Red channel subtle shift
+        Opacity(
+          opacity: opacity * 0.5,
+          child: Transform.translate(
+            offset: Offset(-smallOffset, 0),
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix([
+                1, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 1, 0,
+              ]),
+              child: child,
+            ),
+          ),
+        ),
+        // Blue channel subtle shift opposite direction
+        Opacity(
+          opacity: opacity * 0.5,
+          child: Transform.translate(
+            offset: Offset(smallOffset, 0),
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix([
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 1, 0,
+              ]),
+              child: child,
+            ),
+          ),
         ),
       ],
     );
   }
+  
+  else if (strength < 0.7) {
+    // MEDIUM EFFECT: Noticeable RGB split
+    final double intensity = (strength - 0.3) / 0.4; // 0 to 1
+    final double currentOffset = offset * (0.3 + intensity * 0.7);
+    
+    return Stack(
+      children: [
+        // Red channel shifted left
+        Transform.translate(
+          offset: Offset(-currentOffset, 0),
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              1, 0, 0, 0, 0,
+              0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0,
+              0, 0, 0, 0.8, 0,
+            ]),
+            child: child,
+          ),
+        ),
+        // Green channel centered with slight shift up/down
+        Transform.translate(
+          offset: Offset(0, currentOffset * 0.3),
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              0, 0, 0, 0, 0,
+              0, 1, 0, 0, 0,
+              0, 0, 0, 0, 0,
+              0, 0, 0, 0.8, 0,
+            ]),
+            child: child,
+          ),
+        ),
+        // Blue channel shifted right
+        Transform.translate(
+          offset: Offset(currentOffset, 0),
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0,
+              0, 0, 1, 0, 0,
+              0, 0, 0, 0.8, 0,
+            ]),
+            child: child,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  else {
+    // DARK/HEAVY EFFECT: Full glitch with scanlines and RGB split
+    final double intensity = (strength - 0.7) / 0.3; // 0 to 1
+    final double currentOffset = offset * (0.7 + intensity * 0.3);
+    final double blurAmount = 1.0 * intensity;
+    
+    Widget baseChild = child;
+    if (blurAmount > 0) {
+      baseChild = ImageFiltered(
+        imageFilter: ui.ImageFilter.blur(
+          sigmaX: blurAmount,
+          sigmaY: blurAmount,
+        ),
+        child: child,
+      );
+    }
+    
+    return Stack(
+      children: [
+        // Red channel heavily shifted left
+        Transform.translate(
+          offset: Offset(-currentOffset, 0),
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              1, 0, 0, 0, 0,
+              0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0,
+              0, 0, 0, 0.9, 0,
+            ]),
+            child: baseChild,
+          ),
+        ),
+        // Green channel shifted right with slight vertical
+        Transform.translate(
+          offset: Offset(currentOffset * 0.5, currentOffset * 0.2),
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              0, 0, 0, 0, 0,
+              0, 1, 0, 0, 0,
+              0, 0, 0, 0, 0,
+              0, 0, 0, 0.9, 0,
+            ]),
+            child: baseChild,
+          ),
+        ),
+        // Blue channel shifted right and slightly down
+        Transform.translate(
+          offset: Offset(currentOffset, currentOffset * 0.1),
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              0, 0, 0, 0, 0,
+              0, 0, 0, 0, 0,
+              0, 0, 1, 0, 0,
+              0, 0, 0, 0.9, 0,
+            ]),
+            child: baseChild,
+          ),
+        ),
+        // Scanline overlay for heavy glitch
+        if (strength > 0.85)
+          Opacity(
+            opacity: 0.15 * ((strength - 0.85) / 0.15),
+            child: CustomPaint(
+              painter: _ScanlinePainter(),
+              size: const Size(double.infinity, double.infinity),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+  // 4. Chromatic Aberration - RGB split/glitch
+  // Widget _applyChromaticAberration(Widget child, double strength) {
+  //   double offset = 5 * strength;
+  //   return Stack(
+  //     children: [
+  //       Transform.translate(
+  //         offset: Offset(-offset, 0),
+  //         child: ColorFiltered(
+  //           colorFilter: const ColorFilter.matrix([
+  //             1,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             1,
+  //             0,
+  //           ]),
+  //           child: child,
+  //         ),
+  //       ),
+  //       Transform.translate(
+  //         offset: Offset(offset, 0),
+  //         child: ColorFiltered(
+  //           colorFilter: const ColorFilter.matrix([
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             1,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             0,
+  //             1,
+  //             0,
+  //           ]),
+  //           child: child,
+  //         ),
+  //       ),
+  //       ColorFiltered(
+  //         colorFilter: const ColorFilter.matrix([
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           1,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           0,
+  //           1,
+  //           0,
+  //         ]),
+  //         child: child,
+  //       ),
+  //     ],
+  //   );
+  // }
 
   // 5. Grainy Film / Lo-Fi - Imperfect, textured
   Widget _applyGrainyFilmEffect(Widget child, double strength) {
@@ -1751,7 +2011,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
   Map<String, dynamic>? _profileData;
 
-  final String _baseUrl = 'http://31.97.206.144:4061/api/users';
+  final String _baseUrl = 'http://82.29.162.67:4061/api/users';
 
   final GlobalKey _posterKey = GlobalKey();
 
@@ -9776,115 +10036,470 @@ Future<void> _pickUserAudio() async {
   //   );
   // }
 
-  void _showTextThemePicker(OverlayTextItem sel) {
-    final themes = [
-      {
-        'name': 'Default',
-        'color': Colors.white,
-        'bg': Colors.transparent,
-        'bold': false,
-        'shadow': false,
-      },
-      {
-        'name': 'Bold White',
-        'color': Colors.white,
-        'bg': Colors.transparent,
-        'bold': true,
-        'shadow': true,
-      },
-      {
-        'name': 'Dark',
-        'color': Colors.black,
-        'bg': Colors.white.withOpacity(0.8),
-        'bold': false,
-        'shadow': false,
-      },
-      {
-        'name': 'Gold',
-        'color': const Color(0xFFD4AF37),
-        'bg': Colors.transparent,
-        'bold': true,
-        'shadow': true,
-      },
-      {
-        'name': 'Neon',
-        'color': Colors.greenAccent,
-        'bg': Colors.black.withOpacity(0.5),
-        'bold': true,
-        'shadow': false,
-      },
-      {
-        'name': 'Red Alert',
-        'color': Colors.white,
-        'bg': Colors.red.shade700,
-        'bold': true,
-        'shadow': false,
-      },
-    ];
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => Container(
-        color: Colors.white,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Text Theme',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: themes
-                  .map(
-                    (t) => GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          final i = _texts.indexWhere((x) => x.id == sel.id);
-                          if (i != -1)
-                            _texts[i] = _texts[i].copyWith(
-                              color: t['color'] as Color,
-                              backgroundColor: t['bg'] as Color,
-                              isBold: t['bold'] as bool,
-                              hasShadow: t['shadow'] as bool,
-                            );
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: (t['bg'] as Color) == Colors.transparent
-                              ? Colors.grey.shade100
-                              : t['bg'] as Color,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Text(
-                          t['name'] as String,
-                          style: TextStyle(
-                            color: t['color'] as Color,
-                            fontWeight: (t['bold'] as bool)
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ],
-        ),
+  // void _showTextThemePicker(OverlayTextItem sel) {
+  //   final themes = [
+  //     {
+  //       'name': 'Default',
+  //       'color': Colors.white,
+  //       'bg': Colors.transparent,
+  //       'bold': false,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Bold White',
+  //       'color': Colors.white,
+  //       'bg': Colors.transparent,
+  //       'bold': true,
+  //       'shadow': true,
+  //     },
+  //     {
+  //       'name': 'Dark',
+  //       'color': Colors.black,
+  //       'bg': Colors.white.withOpacity(0.8),
+  //       'bold': false,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Gold',
+  //       'color': const Color(0xFFD4AF37),
+  //       'bg': Colors.transparent,
+  //       'bold': true,
+  //       'shadow': true,
+  //     },
+  //     {
+  //       'name': 'Neon',
+  //       'color': Colors.greenAccent,
+  //       'bg': Colors.black.withOpacity(0.5),
+  //       'bold': true,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Red Alert',
+  //       'color': Colors.white,
+  //       'bg': Colors.red.shade700,
+  //       'bold': true,
+  //       'shadow': false,
+  //     },
+  //   ];
+  //   showModalBottomSheet(
+  //     context: context,
+  //     builder: (_) => Container(
+  //       color: Colors.white,
+  //       padding: const EdgeInsets.all(16),
+  //       child: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           const Text(
+  //             'Text Theme',
+  //             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           Wrap(
+  //             spacing: 10,
+  //             runSpacing: 10,
+  //             children: themes
+  //                 .map(
+  //                   (t) => GestureDetector(
+  //                     onTap: () {
+  //                       setState(() {
+  //                         final i = _texts.indexWhere((x) => x.id == sel.id);
+  //                         if (i != -1)
+  //                           _texts[i] = _texts[i].copyWith(
+  //                             color: t['color'] as Color,
+  //                             backgroundColor: t['bg'] as Color,
+  //                             isBold: t['bold'] as bool,
+  //                             hasShadow: t['shadow'] as bool,
+  //                           );
+  //                       });
+  //                       Navigator.pop(context);
+  //                     },
+  //                     child: Container(
+  //                       padding: const EdgeInsets.symmetric(
+  //                         horizontal: 14,
+  //                         vertical: 8,
+  //                       ),
+  //                       decoration: BoxDecoration(
+  //                         color: (t['bg'] as Color) == Colors.transparent
+  //                             ? Colors.grey.shade100
+  //                             : t['bg'] as Color,
+  //                         borderRadius: BorderRadius.circular(8),
+  //                         border: Border.all(color: Colors.grey.shade300),
+  //                       ),
+  //                       child: Text(
+  //                         t['name'] as String,
+  //                         style: TextStyle(
+  //                           color: t['color'] as Color,
+  //                           fontWeight: (t['bold'] as bool)
+  //                               ? FontWeight.bold
+  //                               : FontWeight.normal,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 )
+  //                 .toList(),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+
+
+//   void _showTextThemePicker(OverlayTextItem sel) {
+//   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  
+//   final themes = [
+//     {
+//       'name': 'Default',
+//       'color': Colors.white,
+//       'bg': Colors.transparent,
+//       'bold': false,
+//       'shadow': false,
+//     },
+//     {
+//       'name': 'Bold White',
+//       'color': Colors.white,
+//       'bg': Colors.transparent,
+//       'bold': true,
+//       'shadow': true,
+//     },
+//     {
+//       'name': 'Dark',
+//       'color': Colors.black,
+//       'bg': Colors.white.withOpacity(0.8),
+//       'bold': false,
+//       'shadow': false,
+//     },
+//     {
+//       'name': 'Gold',
+//       'color': const Color(0xFFD4AF37),
+//       'bg': Colors.transparent,
+//       'bold': true,
+//       'shadow': true,
+//     },
+//     {
+//       'name': 'Neon',
+//       'color': Colors.greenAccent,
+//       'bg': Colors.black.withOpacity(0.5),
+//       'bold': true,
+//       'shadow': false,
+//     },
+//     {
+//       'name': 'Red Alert',
+//       'color': Colors.white,
+//       'bg': Colors.red.shade700,
+//       'bold': true,
+//       'shadow': false,
+//     },
+//   ];
+
+//   showModalBottomSheet(
+//     context: context,
+//     backgroundColor: Colors.transparent,
+//     builder: (_) => Container(
+//       decoration: BoxDecoration(
+//         color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+//         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+//       ),
+//       padding: const EdgeInsets.all(16),
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           // Drag handle
+//           Center(
+//             child: Container(
+//               width: 40,
+//               height: 4,
+//               decoration: BoxDecoration(
+//                 color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+//                 borderRadius: BorderRadius.circular(2),
+//               ),
+//             ),
+//           ),
+//           const SizedBox(height: 12),
+//           Text(
+//             'Text Theme',
+//             style: TextStyle(
+//               fontWeight: FontWeight.bold,
+//               fontSize: 15,
+//               color: isDarkMode ? Colors.white : Colors.black87,
+//             ),
+//           ),
+//           const SizedBox(height: 12),
+//           Wrap(
+//             spacing: 10,
+//             runSpacing: 10,
+//             children: themes.map((t) {
+//               final textColor = t['color'] as Color;
+//               final bgColor = t['bg'] as Color;
+//               final isBold = t['bold'] as bool;
+//               final isTransparentBg = bgColor == Colors.transparent;
+
+//               // Determine chip background for visibility
+//               Color chipBg;
+//               if (isTransparentBg) {
+//                 // For transparent bg themes, use a contrasting preview background
+//                 chipBg = isDarkMode ? const Color(0xFF374151) : Colors.grey.shade200;
+//               } else {
+//                 chipBg = bgColor;
+//               }
+
+//               // Determine text color for readability on chip
+//               Color chipTextColor;
+//               if (isTransparentBg) {
+//                 // White text themes need dark bg preview
+//                 chipTextColor = textColor;
+//               } else {
+//                 chipTextColor = textColor;
+//               }
+
+//               return GestureDetector(
+//                 onTap: () {
+//                   setState(() {
+//                     final i = _texts.indexWhere((x) => x.id == sel.id);
+//                     if (i != -1)
+//                       _texts[i] = _texts[i].copyWith(
+//                         color: textColor,
+//                         backgroundColor: bgColor,
+//                         isBold: isBold,
+//                         hasShadow: t['shadow'] as bool,
+//                       );
+//                   });
+//                   Navigator.pop(context);
+//                 },
+//                 child: Container(
+//                   padding: const EdgeInsets.symmetric(
+//                     horizontal: 14,
+//                     vertical: 10,
+//                   ),
+//                   decoration: BoxDecoration(
+//                     color: chipBg,
+//                     borderRadius: BorderRadius.circular(8),
+//                     border: Border.all(
+//                       color: isDarkMode
+//                           ? Colors.grey[600]!
+//                           : Colors.grey.shade300,
+//                       width: 1.5,
+//                     ),
+//                     boxShadow: [
+//                       BoxShadow(
+//                         color: Colors.black.withOpacity(0.1),
+//                         blurRadius: 4,
+//                         offset: const Offset(0, 2),
+//                       ),
+//                     ],
+//                   ),
+//                   child: Text(
+//                     t['name'] as String,
+//                     style: TextStyle(
+//                       color: chipTextColor,
+//                       fontWeight: isBold
+//                           ? FontWeight.bold
+//                           : FontWeight.normal,
+//                       shadows: (t['shadow'] as bool)
+//                           ? [
+//                               const Shadow(
+//                                 color: Colors.black54,
+//                                 offset: Offset(1, 1),
+//                                 blurRadius: 2,
+//                               ),
+//                             ]
+//                           : null,
+//                     ),
+//                   ),
+//                 ),
+//               );
+//             }).toList(),
+//           ),
+//           const SizedBox(height: 8),
+//         ],
+//       ),
+//     ),
+//   );
+// }
+
+
+
+
+
+
+
+void _showTextThemePicker(OverlayTextItem sel) {
+  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  
+  final themes = [
+    {
+      'name': 'Default',
+      'color': isDarkMode ? Colors.white : Colors.black87,  // Dark text for light mode
+      'bg': Colors.transparent,
+      'bold': false,
+      'shadow': false,
+    },
+    {
+      'name': 'Bold White',
+      'color': isDarkMode ? Colors.white : Colors.black87,  // Dark text for light mode
+      'bg': Colors.transparent,
+      'bold': true,
+      'shadow': true,
+    },
+    {
+      'name': 'Dark',
+      'color': Colors.black,
+      'bg': Colors.white.withOpacity(0.8),
+      'bold': false,
+      'shadow': false,
+    },
+    {
+      'name': 'Gold',
+      'color': const Color(0xFFD4AF37),
+      'bg': Colors.transparent,
+      'bold': true,
+      'shadow': true,
+    },
+    {
+      'name': 'Neon',
+      'color': Colors.greenAccent,
+      'bg': Colors.black.withOpacity(0.5),
+      'bold': true,
+      'shadow': false,
+    },
+    {
+      'name': 'Red Alert',
+      'color': Colors.white,
+      'bg': Colors.red.shade700,
+      'bold': true,
+      'shadow': false,
+    },
+  ];
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (_) => Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
-    );
-  }
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Text Theme',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: isDarkMode ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: themes.map((t) {
+              final textColor = t['color'] as Color;
+              final bgColor = t['bg'] as Color;
+              final isBold = t['bold'] as bool;
+              final isTransparentBg = bgColor == Colors.transparent;
+
+              // Determine chip background for visibility
+              Color chipBg;
+              if (isTransparentBg) {
+                // For transparent bg themes, use a contrasting preview background
+                chipBg = isDarkMode ? const Color(0xFF374151) : Colors.grey.shade200;
+              } else {
+                chipBg = bgColor;
+              }
+
+              // Determine text color for readability on chip
+              Color chipTextColor;
+              if (isTransparentBg) {
+                chipTextColor = textColor;
+              } else {
+                chipTextColor = textColor;
+              }
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    final i = _texts.indexWhere((x) => x.id == sel.id);
+                    if (i != -1)
+                      _texts[i] = _texts[i].copyWith(
+                        color: textColor,
+                        backgroundColor: bgColor,
+                        isBold: isBold,
+                        hasShadow: t['shadow'] as bool,
+                      );
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: chipBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDarkMode
+                          ? Colors.grey[600]!
+                          : Colors.grey.shade300,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    t['name'] as String,
+                    style: TextStyle(
+                      color: chipTextColor,
+                      fontWeight: isBold
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      shadows: (t['shadow'] as bool)
+                          ? [
+                              const Shadow(
+                                color: Colors.black54,
+                                offset: Offset(1, 1),
+                                blurRadius: 2,
+                              ),
+                            ]
+                          : null,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
+}
 
   void _showFontPicker(OverlayTextItem sel) {
     showModalBottomSheet(

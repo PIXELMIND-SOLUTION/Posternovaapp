@@ -399,11 +399,11 @@ class AboutScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: const BoxDecoration(),
-                    child: Image.asset('assets/largelogo.png', width: 160),
+                    child: Image.asset('assets/editezylogo.png', width: 100),
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    "Editezy",
+                    "Edit Ezy",
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -465,7 +465,7 @@ class AboutScreen extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              "About Editezy",
+                              "About Edit Ezy",
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -477,7 +477,7 @@ class AboutScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Editezy is a smart and simple platform designed to help you create, manage, and grow your business effortlessly. Built for entrepreneurs, small business owners, and creators, Editezy brings everything you need into one easy-to-use app.\n\n'
+                        'Edit Ezy is a smart and simple platform designed to help you create, manage, and grow your business effortlessly. Built for entrepreneurs, small business owners, and creators, Editezy brings everything you need into one easy-to-use app.\n\n'
                         'In today\'s fast-moving digital world, creating professional designs and staying connected with customers should be quick and hassle-free. Editezy makes this possible with ready-made posters and customizable templates that allow you to design stunning visuals in just a few taps—no design skills required.\n\n'
                         'Whether you want to promote your business, share festival wishes, or create daily social media content, Editezy gives you professionally designed templates that you can easily customize with your text, logo, and branding.\n\n'
                         'Beyond design, Editezy helps you build stronger customer relationships. With the built-in customer management feature, you can add and organize your contacts, track important dates like birthdays and anniversaries, and stay connected with your customers consistently.\n\n'
@@ -517,7 +517,7 @@ class AboutScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        "What Editezy Offers",
+                        "What Edit Ezy Offers",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:posternova/models/get_all_plan_model.dart';
+import 'package:posternova/views/subscription/payment_success_screen.dart';
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 class Plan {
@@ -24,14 +26,14 @@ class Plan {
   });
 
   factory Plan.fromJson(Map<String, dynamic> json) => Plan(
-        id: json['_id'] ?? '',
-        name: json['name'] ?? '',
-        originalPrice: json['originalPrice'] ?? 0,
-        offerPrice: json['offerPrice'] ?? 0,
-        duration: json['duration'] ?? '1',
-        discountPercentage: json['discountPercentage'] ?? 0,
-        features: List<String>.from(json['features'] ?? []),
-      );
+    id: json['_id'] ?? '',
+    name: json['name'] ?? '',
+    originalPrice: json['originalPrice'] ?? 0,
+    offerPrice: json['offerPrice'] ?? 0,
+    duration: json['duration'] ?? '1',
+    discountPercentage: json['discountPercentage'] ?? 0,
+    features: List<String>.from(json['features'] ?? []),
+  );
 }
 
 // ─── Shimmer Painter ──────────────────────────────────────────────────────────
@@ -52,8 +54,7 @@ class _ShimmerPainter extends CustomPainter {
     );
     final rect = Rect.fromLTWH(shimmerX, 0, size.width * 0.7, size.height);
     final paint = Paint()..shader = gradient.createShader(rect);
-    canvas.drawRect(
-        Rect.fromLTWH(0, 0, size.width, size.height), paint);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
   }
 
   @override
@@ -77,8 +78,10 @@ class _StarsPainter extends CustomPainter {
         ..color = Colors.white.withOpacity(opacity)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(
-        Offset(starPositions[i].dx * size.width,
-            starPositions[i].dy * size.height),
+        Offset(
+          starPositions[i].dx * size.width,
+          starPositions[i].dy * size.height,
+        ),
         starSizes[i],
         paint,
       );
@@ -116,15 +119,9 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
   // Random star positions (generated once)
   final List<Offset> _starPositions = List.generate(
     40,
-    (i) => Offset(
-      (i * 137.508 % 100) / 100,
-      (i * 97.3 % 100) / 100,
-    ),
+    (i) => Offset((i * 137.508 % 100) / 100, (i * 97.3 % 100) / 100),
   );
-  final List<double> _starSizes = List.generate(
-    40,
-    (i) => 0.5 + (i % 3) * 0.5,
-  );
+  final List<double> _starSizes = List.generate(40, (i) => 0.5 + (i % 3) * 0.5);
 
   @override
   void initState() {
@@ -179,12 +176,13 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
     });
     try {
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/plans/getallplan'),
+        Uri.parse('http://82.29.162.67:4061/api/plans/getallplan'),
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final plans =
-            (data['plans'] as List).map((p) => Plan.fromJson(p)).toList();
+        final plans = (data['plans'] as List)
+            .map((p) => Plan.fromJson(p))
+            .toList();
         setState(() {
           _plans = plans;
           _isLoading = false;
@@ -258,20 +256,20 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
   }
 
   Widget _glowOrb(double size, Color color, double opacity) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(opacity),
-              blurRadius: size * 0.8,
-              spreadRadius: size * 0.3,
-            ),
-          ],
-          color: color.withOpacity(0.05),
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      boxShadow: [
+        BoxShadow(
+          color: color.withOpacity(opacity),
+          blurRadius: size * 0.8,
+          spreadRadius: size * 0.3,
         ),
-      );
+      ],
+      color: color.withOpacity(0.05),
+    ),
+  );
 
   Widget _buildHeader() {
     return Padding(
@@ -289,16 +287,23 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                     color: Colors.white.withOpacity(0.07),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: Colors.white.withOpacity(0.1), width: 1),
+                      color: Colors.white.withOpacity(0.1),
+                      width: 1,
+                    ),
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new,
-                      color: Colors.white, size: 16),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
               ),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF6C3DE8), Color(0xFFE83D8C)],
@@ -307,8 +312,11 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.workspace_premium,
-                        color: Colors.white, size: 14),
+                    Icon(
+                      Icons.workspace_premium,
+                      color: Colors.white,
+                      size: 14,
+                    ),
                     SizedBox(width: 4),
                     Text(
                       'UPGRADE',
@@ -403,15 +411,20 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                 color: Colors.red.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.wifi_off_rounded,
-                  color: Colors.redAccent, size: 34),
+              child: const Icon(
+                Icons.wifi_off_rounded,
+                color: Colors.redAccent,
+                size: 34,
+              ),
             ),
             const SizedBox(height: 20),
             Text(
               _error!,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: Colors.white.withOpacity(0.7), fontSize: 14),
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 24),
             _gradientButton('Try Again', _fetchPlans),
@@ -462,12 +475,13 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
     final isPopular = index == 0;
 
     // Duration label
-    final durationMonths = int.tryParse(plan.duration) ?? 1;
+    // final durationMonths = int.tryParse(plan.duration) ?? 1;
+    final durationMonths = int.tryParse(plan.duration.trim().split(' ').first) ?? 1;
     final durationLabel = durationMonths == 1
         ? '1 Month'
         : durationMonths == 12
-            ? '1 Year'
-            : '$durationMonths Months';
+        ? '1 Year'
+        : '$durationMonths Months';
 
     return GestureDetector(
       onTap: () => setState(() => _selectedPlanIndex = index),
@@ -547,7 +561,7 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                                       gradient: const LinearGradient(
                                         colors: [
                                           Color(0xFF6C3DE8),
-                                          Color(0xFFE83D8C)
+                                          Color(0xFFE83D8C),
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(10),
@@ -575,12 +589,18 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                               const SizedBox(height: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF3DE8C8).withOpacity(0.12),
+                                  color: const Color(
+                                    0xFF3DE8C8,
+                                  ).withOpacity(0.12),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: const Color(0xFF3DE8C8).withOpacity(0.3),
+                                    color: const Color(
+                                      0xFF3DE8C8,
+                                    ).withOpacity(0.3),
                                   ),
                                 ),
                                 child: Text(
@@ -603,12 +623,14 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                               Container(
                                 margin: const EdgeInsets.only(bottom: 6),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
                                     colors: [
                                       Color(0xFFFFD700),
-                                      Color(0xFFFFA500)
+                                      Color(0xFFFFA500),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(20),
@@ -651,8 +673,7 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                                 color: Colors.white.withOpacity(0.35),
                                 fontSize: 13,
                                 decoration: TextDecoration.lineThrough,
-                                decorationColor:
-                                    Colors.white.withOpacity(0.35),
+                                decorationColor: Colors.white.withOpacity(0.35),
                               ),
                             ),
                           ],
@@ -683,7 +704,9 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.greenAccent.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -693,8 +716,11 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.local_offer_rounded,
-                                  color: Colors.greenAccent, size: 13),
+                              const Icon(
+                                Icons.local_offer_rounded,
+                                color: Colors.greenAccent,
+                                size: 13,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Save ${plan.discountPercentage}%',
@@ -721,39 +747,44 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                     const SizedBox(height: 14),
 
                     // ── Features ──
-                    ...plan.features.map((feature) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF6C3DE8),
-                                      Color(0xFF3DE8C8)
-                                    ],
-                                  ),
-                                  shape: BoxShape.circle,
+                    ...plan.features.map(
+                      (feature) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF6C3DE8),
+                                    Color(0xFF3DE8C8),
+                                  ],
                                 ),
-                                child: const Icon(Icons.check,
-                                    color: Colors.white, size: 12),
+                                shape: BoxShape.circle,
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  feature,
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.8),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                feature,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            ],
-                          ),
-                        )),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
 
                     const SizedBox(height: 4),
 
@@ -764,7 +795,9 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 5),
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFD700).withOpacity(0.15),
                               borderRadius: BorderRadius.circular(20),
@@ -774,8 +807,11 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                             ),
                             child: const Row(
                               children: [
-                                Icon(Icons.check_circle,
-                                    color: Color(0xFFFFD700), size: 14),
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Color(0xFFFFD700),
+                                  size: 14,
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'Selected',
@@ -808,9 +844,7 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: BoxDecoration(
         color: const Color(0xFF0D0B1E),
-        border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.08)),
-        ),
+        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
       ),
       child: Column(
         children: [
@@ -837,14 +871,36 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
           const SizedBox(height: 14),
           AnimatedBuilder(
             animation: _pulseAnim,
-            builder: (context, child) => Transform.scale(
-              scale: _pulseAnim.value,
-              child: child,
-            ),
+            builder: (context, child) =>
+                Transform.scale(scale: _pulseAnim.value, child: child),
+
+            // child: _gradientButton(
+            //   '🚀  Get Started — ₹${selectedPlan.offerPrice}',
+            //   () {
+            //     // Handle purchase
+            //   },
+            // ),
             child: _gradientButton(
               '🚀  Get Started — ₹${selectedPlan.offerPrice}',
               () {
-                // Handle purchase
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PlanDetailsAndPaymentScreen(
+                      plan: GetAllPlanModel(
+                        id: selectedPlan.id,
+                        name: selectedPlan.name,
+                        originalPrice: selectedPlan.originalPrice,
+                        offerPrice: selectedPlan.offerPrice,
+                        duration: selectedPlan.duration,
+                        discountPercentage: selectedPlan.discountPercentage,
+                        features: selectedPlan.features,
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
+                      ),
+                    ),
+                  ),
+                );
               },
             ),
           ),

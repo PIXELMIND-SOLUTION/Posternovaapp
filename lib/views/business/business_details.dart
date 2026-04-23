@@ -37,7 +37,7 @@ class _BusinessCardResultScreenState extends State<BusinessCardResultScreen> {
   Future<void> _fetchResult() async {
     try {
       final uri = Uri.parse(
-        'http://31.97.206.144:4061/api/users/getsinglebusinesscards'
+        'http://82.29.162.67:4061/api/users/getsinglebusinesscards'
         '/${widget.userId}/${widget.templateId}',
       );
       final response = await http.get(uri);

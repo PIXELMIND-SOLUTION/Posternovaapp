@@ -3980,9 +3980,9 @@ class _CategoryScreenState extends State<CategoryScreen>
           // ),
 
            Image.asset(
-            'assets/latestlogo.png',
-            width: isTablet ? 500 : 300,
-            height: isTablet ? 500 : 300,
+            'assets/editezylogo.png',
+            width: isTablet ? 200 : 150,
+            height: isTablet ? 200 : 150,
           ),
           const SizedBox(height: 32),
           AmodersLoading(),

@@ -268,7 +268,7 @@ class _ReelItemState extends State<ReelItem>
       if (userData == null || !mounted) return;
       final userId = userData.user.id;
       final response = await http.get(
-        Uri.parse('http://31.97.206.144:4061/api/users/get-profile/$userId'),
+        Uri.parse('http://82.29.162.67:4061/api/users/get-profile/$userId'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200 && mounted) {
