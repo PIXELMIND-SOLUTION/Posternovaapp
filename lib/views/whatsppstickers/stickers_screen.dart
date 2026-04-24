@@ -696,7 +696,7 @@ class StickerItem {
 // ─── API Service ────────────────────────────────────────────────────────────
 
 class StickerApiService {
-  static const String baseUrl = 'http://82.29.162.67:4061/api';
+  static const String baseUrl = 'http://31.97.228.17:4061/api';
 
   Future<List<StickerCategory>> fetchCategories() async {
     try {

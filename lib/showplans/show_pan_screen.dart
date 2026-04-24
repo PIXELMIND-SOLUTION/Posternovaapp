@@ -176,7 +176,7 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
     });
     try {
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/plans/getallplan'),
+        Uri.parse('http://31.97.228.17:4061/api/plans/getallplan'),
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -299,37 +299,37 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
                 ),
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6C3DE8), Color(0xFFE83D8C)],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.workspace_premium,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'UPGRADE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // Container(
+              //   padding: const EdgeInsets.symmetric(
+              //     horizontal: 14,
+              //     vertical: 6,
+              //   ),
+              //   decoration: BoxDecoration(
+              //     gradient: const LinearGradient(
+              //       colors: [Color(0xFF6C3DE8), Color(0xFFE83D8C)],
+              //     ),
+              //     borderRadius: BorderRadius.circular(20),
+              //   ),
+              //   child: const Row(
+              //     children: [
+              //       Icon(
+              //         Icons.workspace_premium,
+              //         color: Colors.white,
+              //         size: 14,
+              //       ),
+              //       SizedBox(width: 4),
+              //       Text(
+              //         'UPGRADE',
+              //         style: TextStyle(
+              //           color: Colors.white,
+              //           fontSize: 11,
+              //           fontWeight: FontWeight.w800,
+              //           letterSpacing: 1.2,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
           const SizedBox(height: 24),

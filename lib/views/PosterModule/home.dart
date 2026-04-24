@@ -307,7 +307,7 @@ Future<void> _saveSubscriptionModalShownTime() async {
 
     try {
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/users/wishes/$userId'),
+        Uri.parse('http://31.97.228.17:4061/api/users/wishes/$userId'),
       );
 
       if (response.statusCode == 200) {
@@ -334,7 +334,7 @@ Future<void> _saveSubscriptionModalShownTime() async {
 
     try {
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/users/allcustomers/$userId'),
+        Uri.parse('http://31.97.228.17:4061/api/users/allcustomers/$userId'),
       );
 
       if (response.statusCode == 200) {
@@ -735,7 +735,7 @@ Future<void> _saveSubscriptionModalShownTime() async {
         });
         final response = await http.get(
           Uri.parse(
-            'http://82.29.162.67:4061/api/users/wishes/$currentUserId',
+            'http://31.97.228.17:4061/api/users/wishes/$currentUserId',
           ),
         );
         if (response.statusCode == 200) {
@@ -770,7 +770,7 @@ Future<void> _saveSubscriptionModalShownTime() async {
     if (uid == null) return;
     try {
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/users/get-profile/$uid'),
+        Uri.parse('http://31.97.228.17:4061/api/users/get-profile/$uid'),
       );
       if (response.statusCode == 200 && mounted) {
         final data = json.decode(response.body);
@@ -791,7 +791,7 @@ Future<void> _saveSubscriptionModalShownTime() async {
     setState(() => isLoadingCustomers = true);
     try {
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/users/allcustomers/$userId'),
+        Uri.parse('http://31.97.228.17:4061/api/users/allcustomers/$userId'),
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -3190,7 +3190,7 @@ Widget build(BuildContext context) {
                           uid = userData.user.id;
                           final response = await http.get(
                             Uri.parse(
-                              'http://82.29.162.67:4061/api/users/refferalcode/$uid',
+                              'http://31.97.228.17:4061/api/users/refferalcode/$uid',
                             ),
                           );
                           if (response.statusCode == 200) {

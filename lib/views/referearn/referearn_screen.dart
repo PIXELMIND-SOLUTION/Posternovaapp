@@ -821,7 +821,7 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
     if (userId == null) return;
     try {
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/users/get-profile/$userId'),
+        Uri.parse('http://31.97.228.17:4061/api/users/get-profile/$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -855,7 +855,7 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/users/refferalcode/$userId'),
+        Uri.parse('http://31.97.228.17:4061/api/users/refferalcode/$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 

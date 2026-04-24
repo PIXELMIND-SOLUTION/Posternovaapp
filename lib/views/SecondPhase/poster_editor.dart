@@ -2011,7 +2011,7 @@ Widget _applyChromaticAberration(Widget child, double strength) {
 
   Map<String, dynamic>? _profileData;
 
-  final String _baseUrl = 'http://82.29.162.67:4061/api/users';
+  final String _baseUrl = 'http://31.97.228.17:4061/api/users';
 
   final GlobalKey _posterKey = GlobalKey();
 

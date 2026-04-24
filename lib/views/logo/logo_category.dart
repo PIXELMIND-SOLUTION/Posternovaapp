@@ -63,7 +63,7 @@ class _LogoCategoryState extends State<LogoCategory> {
       });
       final response = await http.get(
         Uri.parse(
-          'http://82.29.162.67:4061/api/admin/getlogocategories/$userId',
+          'http://31.97.228.17:4061/api/admin/getlogocategories/$userId',
         ),
       );
 

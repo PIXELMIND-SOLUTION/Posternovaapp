@@ -924,7 +924,7 @@ class _LogosScreenState extends State<LogosScreen> {
 
     try {
       final url = Uri.parse(
-        'http://82.29.162.67:4061/api/admin/getlogos/${widget.userId}?logoCategoryId=${widget.categoryId}',
+        'http://31.97.228.17:4061/api/admin/getlogos/${widget.userId}?logoCategoryId=${widget.categoryId}',
       );
 
       final response = await http.get(url);

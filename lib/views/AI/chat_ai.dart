@@ -2250,18 +2250,18 @@ class _AiScreenState extends State<AiScreen> {
 
       // Show a non-intrusive snackbar so the user knows we're retrying
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Rate limited. Retrying in ${delaySec}s… (attempt $attempt)'),
-            duration: Duration(seconds: delaySec),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor:
-                _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text('Rate limited. Retrying in ${delaySec}s… (attempt $attempt)',style: TextStyle(color: Colors.black),),
+        //     duration: Duration(seconds: delaySec),
+        //     behavior: SnackBarBehavior.floating,
+        //     backgroundColor:
+        //         _isDarkMode ? const Color(0xFF1E293B) : const Color.fromARGB(255, 211, 26, 26),
+        //     shape:
+        //         RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        //     margin: const EdgeInsets.all(16),
+        //   ),
+        // );
       }
 
       await Future.delayed(Duration(seconds: delaySec));

@@ -191,7 +191,7 @@ String? _apiPhone;
   if (userId == null || userId!.isEmpty) return;
   try {
     final response = await http.get(
-      Uri.parse('http://82.29.162.67:4061/api/users/get-profile/$userId'),
+      Uri.parse('http://31.97.228.17:4061/api/users/get-profile/$userId'),
     );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

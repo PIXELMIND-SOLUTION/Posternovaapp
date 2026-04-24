@@ -21,7 +21,7 @@ class AdminAmountProvider extends ChangeNotifier {
 
     try {
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/admin/allamount'),
+        Uri.parse('http://31.97.228.17:4061/api/admin/allamount'),
       );
 
       if (response.statusCode == 200) {

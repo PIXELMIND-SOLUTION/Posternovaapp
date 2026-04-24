@@ -33,7 +33,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   List<NotificationItem> _notifications = [];
   bool _loading = true;
 
-  final String baseUrl = "http://82.29.162.67:4061/api/users";
+  final String baseUrl = "http://31.97.228.17:4061/api/users";
 
   bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 

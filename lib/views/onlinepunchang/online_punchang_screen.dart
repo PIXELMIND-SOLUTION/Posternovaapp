@@ -276,7 +276,7 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
       }
 
       final userId = userData.user.id;
-      final url = 'http://82.29.162.67:4061/api/users/panchang/$userId';
+      final url = 'http://31.97.228.17:4061/api/users/panchang/$userId';
       final payload = {
         "year": selectedDate.year,
         "month": selectedDate.month,

@@ -47,7 +47,7 @@ class _PosterListingScreenState extends State<PosterListingScreen> {
       if (widget.type == 'festival' && widget.festivalDate != null) {
         // Fetch festival posters
         final response = await http.post(
-          Uri.parse('http://82.29.162.67:4061/api/poster/festival'),
+          Uri.parse('http://31.97.228.17:4061/api/poster/festival'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'festivalDate': _formatDate(widget.festivalDate!)}),
         );
@@ -67,7 +67,7 @@ class _PosterListingScreenState extends State<PosterListingScreen> {
         // Fetch category posters - adjust URL based on your API
         final response = await http.get(
           Uri.parse(
-            'http://82.29.162.67:4061/api/poster/canvasposters',
+            'http://31.97.228.17:4061/api/poster/canvasposters',
           ),
         );
 

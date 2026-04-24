@@ -3007,7 +3007,7 @@ class _ApiPosterEditorState extends State<SamplePosterScreen> {
       });
       final res = await http.get(
         Uri.parse(
-          'http://82.29.162.67:4061/api/poster/singlecanvasposters/${widget.posterId}',
+          'http://31.97.228.17:4061/api/poster/singlecanvasposters/${widget.posterId}',
         ),
         headers: {'Content-Type': 'application/json'},
       );

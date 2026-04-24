@@ -34,7 +34,7 @@ class _RedemptionStatusScreenState extends State<RedemptionStatusScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/users/getredemptionstatus/${widget.userId}'),
+        Uri.parse('http://31.97.228.17:4061/api/users/getredemptionstatus/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           // Add auth token if required
