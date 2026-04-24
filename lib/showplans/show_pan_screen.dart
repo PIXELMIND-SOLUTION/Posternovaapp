@@ -494,7 +494,7 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
           border: Border.all(
             color: isSelected
                 ? const Color(0xFFFFD700)
-                : Colors.white.withOpacity(0.08),
+                : Colors.white.withOpacity(0.08), 
             width: isSelected ? 2 : 1,
           ),
           gradient: isSelected

@@ -164,6 +164,73 @@ Future<void> _saveSubscriptionModalShownTime() async {
   List<String> _customerCelebrationsList = [];
   bool _isLoadingCelebrations = false;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  Future<void> _showExitConfirmationDialog() async {
+  final shouldExit = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      title: const Row(
+        children: [
+          Icon(Icons.exit_to_app_rounded, color: Color(0xFFFFC107)),
+          SizedBox(width: 8),
+          Text(
+            'Exit App',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      content: const Text(
+        'Are you sure you want to exit the app?',
+        style: TextStyle(fontSize: 14, color: Colors.black54),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFFFC107),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text(
+            'Exit',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (shouldExit == true && context.mounted) {
+    SystemNavigator.pop(); // closes the app
+  }
+}
+
   // ══════════════════════════════════════════════════════════════════════════
   // LIFECYCLE
   // ══════════════════════════════════════════════════════════════════════════
@@ -821,25 +888,69 @@ Future<void> _saveSubscriptionModalShownTime() async {
   // BUILD
   // ══════════════════════════════════════════════════════════════════════════
 
+  // @override
+  // Widget build(BuildContext context) {
+  //   super.build(context);
+
+  //   // ── Body background: gradient if celebration theme active, else white ──
+  //   Widget body = _hasTheme
+  //       ? Container(
+  //           decoration: BoxDecoration(
+  //             gradient: LinearGradient(
+  //               colors: _celebrationConfig!.gradientColors!,
+  //               begin: Alignment.topLeft,
+  //               end: Alignment.bottomRight,
+  //             ),
+  //           ),
+  //           child: _buildScrollContent(),
+  //         )
+  //       : _buildScrollContent();
+
+  //   return Scaffold(
+  //     appBar: _buildAppBar(),
+  //     body: Stack(
+  //       children: [
+  //         body,
+  //         if (!_hasNetwork)
+  //           Positioned.fill(
+  //             child: IgnorePointer(
+  //               ignoring: false,
+  //               child: Container(color: Colors.black.withOpacity(0.01)),
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
+
+
+
   @override
-  Widget build(BuildContext context) {
-    super.build(context);
+Widget build(BuildContext context) {
+  super.build(context);
 
-    // ── Body background: gradient if celebration theme active, else white ──
-    Widget body = _hasTheme
-        ? Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: _celebrationConfig!.gradientColors!,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+  Widget body = _hasTheme
+      ? Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: _celebrationConfig!.gradientColors!,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            child: _buildScrollContent(),
-          )
-        : _buildScrollContent();
+          ),
+          child: _buildScrollContent(),
+        )
+      : _buildScrollContent();
 
-    return Scaffold(
+  return PopScope(                          // ← ADD THIS
+    canPop: false,                          // ← prevent instant close
+    onPopInvokedWithResult: (didPop, _) {   // ← intercept back press
+      if (didPop) return;
+      _showExitConfirmationDialog();
+    },
+    child: Scaffold(                        // ← Scaffold becomes child
       appBar: _buildAppBar(),
       body: Stack(
         children: [
@@ -853,8 +964,9 @@ Future<void> _saveSubscriptionModalShownTime() async {
             ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildScrollContent() {
     return Consumer<CelebrationProvider>(

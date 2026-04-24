@@ -2297,6 +2297,179 @@ class _AiScreenState extends State<AiScreen> {
     }
   }
 
+
+
+
+
+
+  // Show exit confirmation dialog
+Future<bool> _onWillPop() async {
+  return await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: Theme.of(context).brightness == Brightness.dark
+                  ? [const Color(0xFF1A1A24), const Color(0xFF0A0A0F)]
+                  : [Colors.white, const Color(0xFFF7FAFC)],
+            ),
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.1),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 30,
+                spreadRadius: 5,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF5C518), Color(0xFFF5C518)],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF5C518).withOpacity(0.3),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.exit_to_app_rounded,
+                  color: Colors.black87,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Title
+              const Text(
+                'Exit App?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              
+              // Message
+              Text(
+                'Are you sure you want to exit the app?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withOpacity(0.6)
+                      : Colors.black.withOpacity(0.6),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 28),
+              
+              // Buttons
+              Row(
+                children: [
+                  // Cancel button
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop(false);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white.withOpacity(0.2)
+                                : Colors.black.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white.withOpacity(0.8)
+                                : Colors.black.withOpacity(0.8),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // Exit button
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop(true);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFF5C518), Color(0xFFF5C518)],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFF5C518).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          'Exit',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  ) ?? false;
+}
+
   String _getTimeGreeting() {
     final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 12) return "Good morning";
@@ -2956,300 +3129,303 @@ class _AiScreenState extends State<AiScreen> {
   Widget build(BuildContext context) {
     final isDarkMode = _isDarkMode;
 
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor:
-            isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF7FAFC),
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          // leading: IconButton(
-          //   onPressed: () => Navigator.of(context).pop(),
-          //   icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          //   color: Colors.white,
-          // ),
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor:
+              isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF7FAFC),
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            // leading: IconButton(
+            //   onPressed: () => Navigator.of(context).pop(),
+            //   icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            //   color: Colors.white,
+            // ),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _isImageGenerationMode ? Icons.image : Icons.auto_awesome,
+                    size: 18,
+                    color: Colors.white,
+                  ),
                 ),
-                child: Icon(
-                  _isImageGenerationMode ? Icons.image : Icons.auto_awesome,
-                  size: 18,
-                  color: Colors.white,
+                const SizedBox(width: 12),
+                AppText(
+                  _isImageGenerationMode ? 'Post with Chicha' : 'chat_with_chicha',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              AppText(
-                _isImageGenerationMode ? 'Post with Chicha' : 'chat_with_chicha',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                  color: Colors.white,
+              ],
+            ),
+            centerTitle: true,
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFF5C518), Color(0xFFF5C518)],
                 ),
-              ),
-            ],
-          ),
-          centerTitle: true,
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFF5C518), Color(0xFFF5C518)],
               ),
             ),
-          ),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          actions: [
-            IconButton(
-              onPressed: _speakGreeting,
-              icon: const Icon(Icons.volume_up_rounded, size: 22),
-              color: Colors.white,
-              tooltip: 'Replay greeting',
-            ),
-            InkWell(
-              onTap: _toggleImageGenerationMode,
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _isImageGenerationMode ? Icons.chat : Icons.image,
-                      size: 22,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 2),
-                    AppText(
-                      _isImageGenerationMode ? 'Chat' : 'poster',
-                      style: const TextStyle(
-                        fontSize: 11,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            actions: [
+              IconButton(
+                onPressed: _speakGreeting,
+                icon: const Icon(Icons.volume_up_rounded, size: 22),
+                color: Colors.white,
+                tooltip: 'Replay greeting',
+              ),
+              InkWell(
+                onTap: _toggleImageGenerationMode,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _isImageGenerationMode ? Icons.chat : Icons.image,
+                        size: 22,
                         color: Colors.white,
-                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            if (_isImageGenerationMode && _logoFile != null)
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black
-                          .withOpacity(isDarkMode ? 0.3 : 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        _logoFile!,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Logo selected',
-                        style: TextStyle(
-                          fontSize: 14,
+                      const SizedBox(height: 2),
+                      AppText(
+                        _isImageGenerationMode ? 'Chat' : 'poster',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.white,
                           fontWeight: FontWeight.w500,
-                          color: isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF2D3748),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () => setState(() => _logoFile = null),
-                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            Expanded(
-              child: _messages.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, index) =>
-                          _buildMessage(_messages[index]),
-                    ),
-            ),
-          ],
-        ),
-        bottomSheet: Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          body: Column(
             children: [
-              if (_isLoading)
+              if (_isImageGenerationMode && _logoFile != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black
+                            .withOpacity(isDarkMode ? 0.3 : 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Color(0xFFF5C518),
-                          ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          _logoFile!,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        _isImageGenerationMode
-                            ? 'Creating magic...'
-                            : 'AI analyzing',
-                        style: TextStyle(
-                          color: isDarkMode
-                              ? Colors.grey[400]
-                              : Colors.grey[700],
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          'Logo selected',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF2D3748),
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (_isImageGenerationMode) const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: isDarkMode
-                                    ? const Color(0xFF0F172A)
-                                    : const Color(0xFFF7FAFC),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: isDarkMode
-                                      ? const Color(0xFF334155)
-                                      : Colors.grey[200]!,
-                                ),
-                              ),
-                              child: TextField(
-                                controller: _messageController,
-                                textInputAction: TextInputAction.send,
-                                onSubmitted: (_) => _sendMessage(),
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: isDarkMode
-                                      ? Colors.white
-                                      : const Color(0xFF2D3748),
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: _isImageGenerationMode
-                                      ? AppText.translate(
-                                          context, 'describe_poster')
-                                      : AppText.translate(
-                                          context, 'ask_me_anything'),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 14,
-                                  ),
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                minLines: 1,
-                                maxLines: 4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFF5C518), Color(0xFFF5C518)],
-                              ),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFF5C518)
-                                      .withOpacity(0.4),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              onPressed: _isLoading ? null : _sendMessage,
-                              icon: Icon(
-                                _isImageGenerationMode
-                                    ? Icons.auto_awesome
-                                    : Icons.send_rounded,
-                                size: 22,
-                              ),
-                              color: Colors.black87,
-                              splashRadius: 24,
-                            ),
-                          ),
-                        ],
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () => setState(() => _logoFile = null),
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                       ),
                     ],
                   ),
                 ),
+              Expanded(
+                child: _messages.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) =>
+                            _buildMessage(_messages[index]),
+                      ),
               ),
             ],
           ),
-        ),
-        floatingActionButton: _isImageGenerationMode
-            ? FloatingActionButton(
-                onPressed: _pickLogo,
-                backgroundColor: const Color(0xFFF5C518),
-                foregroundColor: Colors.black87,
-                elevation: 6,
-                tooltip: _logoFile == null ? 'Add Logo' : 'Change Logo',
-                child: Icon(
-                  _logoFile == null ? Icons.add_photo_alternate : Icons.edit,
-                  size: 26,
+          bottomSheet: Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
                 ),
-              )
-            : null,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_isLoading)
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFF5C518),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          _isImageGenerationMode
+                              ? 'Creating magic...'
+                              : 'AI analyzing',
+                          style: TextStyle(
+                            color: isDarkMode
+                                ? Colors.grey[400]
+                                : Colors.grey[700],
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (_isImageGenerationMode) const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isDarkMode
+                                      ? const Color(0xFF0F172A)
+                                      : const Color(0xFFF7FAFC),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: isDarkMode
+                                        ? const Color(0xFF334155)
+                                        : Colors.grey[200]!,
+                                  ),
+                                ),
+                                child: TextField(
+                                  controller: _messageController,
+                                  textInputAction: TextInputAction.send,
+                                  onSubmitted: (_) => _sendMessage(),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : const Color(0xFF2D3748),
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: _isImageGenerationMode
+                                        ? AppText.translate(
+                                            context, 'describe_poster')
+                                        : AppText.translate(
+                                            context, 'ask_me_anything'),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 14,
+                                    ),
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  minLines: 1,
+                                  maxLines: 4,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFF5C518), Color(0xFFF5C518)],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFF5C518)
+                                        .withOpacity(0.4),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                onPressed: _isLoading ? null : _sendMessage,
+                                icon: Icon(
+                                  _isImageGenerationMode
+                                      ? Icons.auto_awesome
+                                      : Icons.send_rounded,
+                                  size: 22,
+                                ),
+                                color: Colors.black87,
+                                splashRadius: 24,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          floatingActionButton: _isImageGenerationMode
+              ? FloatingActionButton(
+                  onPressed: _pickLogo,
+                  backgroundColor: const Color(0xFFF5C518),
+                  foregroundColor: Colors.black87,
+                  elevation: 6,
+                  tooltip: _logoFile == null ? 'Add Logo' : 'Change Logo',
+                  child: Icon(
+                    _logoFile == null ? Icons.add_photo_alternate : Icons.edit,
+                    size: 26,
+                  ),
+                )
+              : null,
+        ),
       ),
     );
   }

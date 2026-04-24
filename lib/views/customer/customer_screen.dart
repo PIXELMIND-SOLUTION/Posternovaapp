@@ -62,6 +62,178 @@ class _AddCustomersState extends State<CustomerScreen>
     super.dispose();
   }
 
+
+
+
+
+
+
+  // Show exit confirmation dialog
+Future<bool> _onWillPop() async {
+  return await showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+      final backgroundColor = isDarkMode ? Colors.grey[850] : Colors.white;
+      final textColor = isDarkMode ? Colors.white : Colors.black87;
+      
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDarkMode
+                  ? [const Color(0xFF1A1A24), const Color(0xFF0A0A0F)]
+                  : [Colors.white, const Color(0xFFF7FAFC)],
+            ),
+            border: Border.all(
+              color: isDarkMode
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.1),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 30,
+                spreadRadius: 5,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).primaryColor.withOpacity(0.3),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.exit_to_app_rounded,
+                  color: Theme.of(context).primaryColor,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Title
+              Text(
+                'Exit App?',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              
+              // Message
+              Text(
+                'Are you sure you want to exit the app?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isDarkMode
+                      ? Colors.white.withOpacity(0.6)
+                      : Colors.black.withOpacity(0.6),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 28),
+              
+              // Buttons
+              Row(
+                children: [
+                  // Cancel button
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop(false);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white.withOpacity(0.2)
+                                : Colors.black.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: textColor.withOpacity(0.8),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // Exit button
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop(true);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          color: Theme.of(context).primaryColor,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(context).primaryColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'Exit',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  ) ?? false;
+}
+
   Future<void> _loadUserData() async {
     final userData = await AuthPreferences.getUserData();
     if (userData != null && userData.user != null) {
@@ -622,247 +794,250 @@ class _AddCustomersState extends State<CustomerScreen>
     final subtextColor = isDarkMode ? Colors.grey[400] : Colors.grey[600];
     final primaryColor = Theme.of(context).primaryColor;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: cardColor,
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: TextStyle(color: textColor),
-                decoration: InputDecoration(
-                  hintText: AppText.translate(context, 'search_customers'),
-                  hintStyle: TextStyle(color: subtextColor),
-                  border: InputBorder.none,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: cardColor,
+          title: _isSearching
+              ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
+                    hintText: AppText.translate(context, 'search_customers'),
+                    hintStyle: TextStyle(color: subtextColor),
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                )
+              // : AppText(
+              //     'customers',
+              //     style: TextStyle(
+              //       color: textColor,
+              //       fontSize: 20,
+              //       fontWeight: FontWeight.w600,
+              //     ),
+              //   ),
+      
+             : AppText(
+                  'Contacts',
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
-              )
-            // : AppText(
-            //     'customers',
-            //     style: TextStyle(
-            //       color: textColor,
-            //       fontSize: 20,
-            //       fontWeight: FontWeight.w600,
-            //     ),
-            //   ),
-
-           : AppText(
-                'Contacts',
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        actions: [
-          // Filter button
-          IconButton(
-            icon: Stack(
-              children: [
-                Icon(Icons.filter_list, color: textColor),
-                if (_selectedReligionFilter != null)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        shape: BoxShape.circle,
+          centerTitle: true,
+          automaticallyImplyLeading: false,
+          actions: [
+            // Filter button
+            IconButton(
+              icon: Stack(
+                children: [
+                  Icon(Icons.filter_list, color: textColor),
+                  if (_selectedReligionFilter != null)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            onPressed: _showReligionFilterDialog,
-          ),
-          // Search button
-          IconButton(
-            icon: Icon(
-              _isSearching ? Icons.close : Icons.search,
-              color: textColor,
-            ),
-            onPressed: () {
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchController.clear();
-                  _searchQuery = '';
-                }
-              });
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Consumer<CreateCustomerProvider>(
-        builder: (context, customerProvider, child) {
-          if (_isLoading) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Loading customers...',
-                    style: TextStyle(color: subtextColor, fontSize: 14),
-                  ),
                 ],
               ),
-            );
-          }
-
-          final filteredCustomers = _getFilteredCustomers(
-            customerProvider.customers,
-          );
-
-          if (filteredCustomers.isEmpty) {
-            return _buildEmptyState(textColor, subtextColor!);
-          }
-
-          return Column(
-            children: [
-              // Filter chip
-              if (_selectedReligionFilter != null)
-                Container(
-                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Chip(
-                    avatar: Icon(
-                      Icons.filter_list,
-                      size: 18,
-                      color: primaryColor,
-                    ),
-                    label: Text('Religion: $_selectedReligionFilter'),
-                    deleteIcon: const Icon(Icons.close, size: 18),
-                    onDeleted: () {
-                      setState(() {
-                        _selectedReligionFilter = null;
-                      });
-                    },
-                    backgroundColor: primaryColor.withOpacity(0.1),
-                    labelStyle: TextStyle(color: primaryColor),
-                  ),
-                ),
-
-              // Summary Card
-              if (customerProvider.customers.isNotEmpty)
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(
-                          isDarkMode ? 0.1 : 0.05,
-                        ),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.people,
-                          color: primaryColor,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AppText(
-                              _selectedReligionFilter != null
-                                  ? '$_selectedReligionFilter Customers'
-                                  : 'total_customers',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: subtextColor,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${filteredCustomers.length}',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Customer List
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _refreshData,
-                  backgroundColor: cardColor,
-                  color: primaryColor,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                    itemCount: filteredCustomers.length,
-                    itemBuilder: (context, index) {
-                      final customer = filteredCustomers[index];
-                      return _buildCustomerCard(
-                        customer,
-                        cardColor,
-                        textColor,
-                        subtextColor!,
-                        primaryColor,
-                      );
-                    },
-                  ),
-                ),
+              onPressed: _showReligionFilterDialog,
+            ),
+            // Search button
+            IconButton(
+              icon: Icon(
+                _isSearching ? Icons.close : Icons.search,
+                color: textColor,
               ),
-            ],
-          );
-        },
+              onPressed: () {
+                setState(() {
+                  _isSearching = !_isSearching;
+                  if (!_isSearching) {
+                    _searchController.clear();
+                    _searchQuery = '';
+                  }
+                });
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: Consumer<CreateCustomerProvider>(
+          builder: (context, customerProvider, child) {
+            if (_isLoading) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Loading customers...',
+                      style: TextStyle(color: subtextColor, fontSize: 14),
+                    ),
+                  ],
+                ),
+              );
+            }
+      
+            final filteredCustomers = _getFilteredCustomers(
+              customerProvider.customers,
+            );
+      
+            if (filteredCustomers.isEmpty) {
+              return _buildEmptyState(textColor, subtextColor!);
+            }
+      
+            return Column(
+              children: [
+                // Filter chip
+                if (_selectedReligionFilter != null)
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: Chip(
+                      avatar: Icon(
+                        Icons.filter_list,
+                        size: 18,
+                        color: primaryColor,
+                      ),
+                      label: Text('Religion: $_selectedReligionFilter'),
+                      deleteIcon: const Icon(Icons.close, size: 18),
+                      onDeleted: () {
+                        setState(() {
+                          _selectedReligionFilter = null;
+                        });
+                      },
+                      backgroundColor: primaryColor.withOpacity(0.1),
+                      labelStyle: TextStyle(color: primaryColor),
+                    ),
+                  ),
+      
+                // Summary Card
+                if (customerProvider.customers.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(
+                            isDarkMode ? 0.1 : 0.05,
+                          ),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.people,
+                            color: primaryColor,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AppText(
+                                _selectedReligionFilter != null
+                                    ? '$_selectedReligionFilter Customers'
+                                    : 'total_customers',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: subtextColor,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${filteredCustomers.length}',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+      
+                // Customer List
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _refreshData,
+                    backgroundColor: cardColor,
+                    color: primaryColor,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                      itemCount: filteredCustomers.length,
+                      itemBuilder: (context, index) {
+                        final customer = filteredCustomers[index];
+                        return _buildCustomerCard(
+                          customer,
+                          cardColor,
+                          textColor,
+                          subtextColor!,
+                          primaryColor,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        floatingActionButton: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton(
+              onPressed: _handleAddCustomer,
+              backgroundColor: primaryColor,
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
+            const SizedBox(height: 65), // Space between buttons
+            // FloatingActionButton(
+            //   onPressed: () {
+            //     // Your existing FAB action (chat, etc.)
+            //     // _handleChatButton(); // You need to implement this
+            //   },
+            //   child: const Icon(Icons.chat),
+            // ),
+          ],
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            onPressed: _handleAddCustomer,
-            backgroundColor: primaryColor,
-            child: const Icon(Icons.add, color: Colors.white),
-          ),
-          const SizedBox(height: 65), // Space between buttons
-          // FloatingActionButton(
-          //   onPressed: () {
-          //     // Your existing FAB action (chat, etc.)
-          //     // _handleChatButton(); // You need to implement this
-          //   },
-          //   child: const Icon(Icons.chat),
-          // ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 

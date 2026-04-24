@@ -884,126 +884,301 @@ class _SpecialCategoryState extends State<SpecialCategory>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // ── Animated App Bar ──────────────────────────────────────────
-          // SliverAppBar(
-          //   expandedHeight: 240,
-          //   pinned: true,
-          //   stretch: true,
-          //   backgroundColor: const Color(0xFF0A0A0F),
-          //   elevation: 0,
-          //   flexibleSpace: FlexibleSpaceBar(
-          //     stretchModes: const [StretchMode.zoomBackground],
-          //     background: _buildHeader(),
-          //   ),
-          // ),
 
 
-          SliverAppBar(
-  expandedHeight: 240,
-  pinned: true,
-  stretch: true,
-  backgroundColor: const Color(0xFF0A0A0F),
-  elevation: 0,
-  leading: Padding(
-  padding: const EdgeInsets.all(8.0),
-  child: GestureDetector(
-    onTap: () {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigationScreen()), // Replace with your Navbar widget
-        (route) => false,
-      );
-    },
-    child: Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.08),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.15),
-          width: 1.2,
-        ),
-      ),
-      child: const Icon(
-        Icons.arrow_back_ios_new_rounded,
-        color: Colors.white,
-        size: 18,
-      ),
-    ),
-  ),
-),
-  flexibleSpace: FlexibleSpaceBar(
-    stretchModes: const [StretchMode.zoomBackground],
-    background: _buildHeader(),
-  ),
-),
 
-          // ── Section Label ─────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: FadeTransition(
-              opacity: _headerFade,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-                child: Row(
+
+
+
+
+
+
+
+
+
+   Future<bool> _onWillPop() async {
+    return await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1A1A24),
+                  const Color(0xFF0A0A0F),
+                ],
+              ),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFEC4899).withOpacity(0.3),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.exit_to_app_rounded,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Title
+                const Text(
+                  'Exit App?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Message
+                Text(
+                  'Are you sure you want to exit the app?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                
+                // Buttons
+                Row(
                   children: [
-                    Container(
-                      width: 4,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(2),
-                        gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                    // Cancel button
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop(false);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Quick Access',
-                      style: TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.2,
+                    const SizedBox(width: 12),
+                    
+                    // Exit button
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop(true);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFEC4899).withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Exit',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
+        );
+      },
+    ) ?? false;
+  }
 
-          // ── Grid ─────────────────────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
-            sliver: SliverGrid(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                return _AnimatedCard(
-                  item: categories[index],
-                  index: index,
-                  floatingAnim: _floatingAnim,
-                  parentController: _headerController,
-                );
-              }, childCount: categories.length),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: 0.85, // Increased from 0.79 to 0.85
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0A0A0F),
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // ── Animated App Bar ──────────────────────────────────────────
+            // SliverAppBar(
+            //   expandedHeight: 240,
+            //   pinned: true,
+            //   stretch: true,
+            //   backgroundColor: const Color(0xFF0A0A0F),
+            //   elevation: 0,
+            //   flexibleSpace: FlexibleSpaceBar(
+            //     stretchModes: const [StretchMode.zoomBackground],
+            //     background: _buildHeader(),
+            //   ),
+            // ),
+      
+      
+            SliverAppBar(
+        expandedHeight: 240,
+        pinned: true,
+        stretch: true,
+        backgroundColor: const Color(0xFF0A0A0F),
+        elevation: 0,
+        leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: GestureDetector(
+      onTap: () {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainNavigationScreen()), // Replace with your Navbar widget
+          (route) => false,
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.08),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.15),
+            width: 1.2,
+          ),
+        ),
+        child: const Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: Colors.white,
+          size: 18,
+        ),
+      ),
+        ),
+      ),
+        flexibleSpace: FlexibleSpaceBar(
+      stretchModes: const [StretchMode.zoomBackground],
+      background: _buildHeader(),
+        ),
+      ),
+      
+            // ── Section Label ─────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: FadeTransition(
+                opacity: _headerFade,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Quick Access',
+                        style: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-
-          // Extra bottom padding to ensure last items are visible
-          const SliverToBoxAdapter(child: SizedBox(height: 20)),
-        ],
+      
+            // ── Grid ─────────────────────────────────────────────────────
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
+              sliver: SliverGrid(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  return _AnimatedCard(
+                    item: categories[index],
+                    index: index,
+                    floatingAnim: _floatingAnim,
+                    parentController: _headerController,
+                  );
+                }, childCount: categories.length),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: 0.85, // Increased from 0.79 to 0.85
+                ),
+              ),
+            ),
+      
+            // Extra bottom padding to ensure last items are visible
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+          ],
+        ),
       ),
     );
   }
