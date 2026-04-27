@@ -571,50 +571,42 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   MyPlanProvider? _planProvider;
   bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
-
-
-
   List<AdminAudioTrack> _adminAudioTracks = [];
-bool _isLoadingAudios = false;
-String? _audioLoadError;
+  bool _isLoadingAudios = false;
+  String? _audioLoadError;
 
-
-
-
-
-
-Future<void> _fetchAdminAudios() async {
-  setState(() {
-    _isLoadingAudios = true;
-    _audioLoadError = null;
-  });
-  try {
-    final response = await http.get(
-      Uri.parse('http://31.97.228.17:4061/api/admin/getallaudios'),
-    );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List audios = data['audios'] ?? [];
+  Future<void> _fetchAdminAudios() async {
+    setState(() {
+      _isLoadingAudios = true;
+      _audioLoadError = null;
+    });
+    try {
+      final response = await http.get(
+        Uri.parse('http://31.97.228.17:4061/api/admin/getallaudios'),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List audios = data['audios'] ?? [];
+        setState(() {
+          _adminAudioTracks = audios
+              .map((a) => AdminAudioTrack.fromJson(a))
+              .where((a) => a.audioUrl.isNotEmpty)
+              .toList();
+          _isLoadingAudios = false;
+        });
+      } else {
+        setState(() {
+          _audioLoadError = 'Failed to load audios';
+          _isLoadingAudios = false;
+        });
+      }
+    } catch (e) {
       setState(() {
-        _adminAudioTracks = audios
-            .map((a) => AdminAudioTrack.fromJson(a))
-            .where((a) => a.audioUrl.isNotEmpty)
-            .toList();
-        _isLoadingAudios = false;
-      });
-    } else {
-      setState(() {
-        _audioLoadError = 'Failed to load audios';
+        _audioLoadError = 'Network error: $e';
         _isLoadingAudios = false;
       });
     }
-  } catch (e) {
-    setState(() {
-      _audioLoadError = 'Network error: $e';
-      _isLoadingAudios = false;
-    });
   }
-}
 
   List<UserAudioTrack> _userAudioTracks = [];
   String? _selectedUserAudioPath;
@@ -844,265 +836,379 @@ Future<void> _fetchAdminAudios() async {
     );
   }
 
+  //   // 4. Chromatic Aberration - RGB split/glitch
+  // Widget _applyChromaticAberration(Widget child, double strength) {
+  //   // Only apply effect if strength > 0
+  //   if (strength <= 0) return child;
 
+  //   // Map strength (0-1) to offset range (0-12 pixels)
+  //   // Max offset of 12 pixels gives a strong glitch effect at full strength
+  //   double offset = 12 * strength;
 
-//   // 4. Chromatic Aberration - RGB split/glitch
-// Widget _applyChromaticAberration(Widget child, double strength) {
-//   // Only apply effect if strength > 0
-//   if (strength <= 0) return child;
-  
-//   // Map strength (0-1) to offset range (0-12 pixels)
-//   // Max offset of 12 pixels gives a strong glitch effect at full strength
-//   double offset = 12 * strength;
-  
-//   // Create a subtle blur at higher strengths to enhance the effect
-//   Widget baseChild = child;
-//   if (strength > 0.5) {
-//     double blurStrength = (strength - 0.5) * 4; // 0 to 2 sigma
-//     baseChild = ImageFiltered(
-//       imageFilter: ui.ImageFilter.blur(
-//         sigmaX: blurStrength,
-//         sigmaY: blurStrength,
-//       ),
-//       child: child,
-//     );
-//   }
-  
-//   return Stack(
-//     children: [
-//       // Red channel shifted left
-//       Transform.translate(
-//         offset: Offset(-offset, 0),
-//         child: ColorFiltered(
-//           colorFilter: const ColorFilter.matrix([
-//             1, 0, 0, 0, 0,  // Red channel pass through
-//             0, 0, 0, 0, 0,  // Green channel removed
-//             0, 0, 0, 0, 0,  // Blue channel removed
-//             0, 0, 0, 1, 0,  // Alpha
-//           ]),
-//           child: baseChild,
-//         ),
-//       ),
-      
-//       // Green channel shifted right (or left based on strength)
-//       Transform.translate(
-//         offset: Offset(offset * 0.7, 0),
-//         child: ColorFiltered(
-//           colorFilter: const ColorFilter.matrix([
-//             0, 0, 0, 0, 0,  // Red channel removed
-//             0, 1, 0, 0, 0,  // Green channel pass through
-//             0, 0, 0, 0, 0,  // Blue channel removed
-//             0, 0, 0, 1, 0,  // Alpha
-//           ]),
-//           child: baseChild,
-//         ),
-//       ),
-      
-//       // Blue channel shifted right
-//       Transform.translate(
-//         offset: Offset(offset, 0),
-//         child: ColorFiltered(
-//           colorFilter: const ColorFilter.matrix([
-//             0, 0, 0, 0, 0,  // Red channel removed
-//             0, 0, 0, 0, 0,  // Green channel removed
-//             0, 0, 1, 0, 0,  // Blue channel pass through
-//             0, 0, 0, 1, 0,  // Alpha
-//           ]),
-//           child: baseChild,
-//         ),
-//       ),
-//     ],
-//   );
-// }
+  //   // Create a subtle blur at higher strengths to enhance the effect
+  //   Widget baseChild = child;
+  //   if (strength > 0.5) {
+  //     double blurStrength = (strength - 0.5) * 4; // 0 to 2 sigma
+  //     baseChild = ImageFiltered(
+  //       imageFilter: ui.ImageFilter.blur(
+  //         sigmaX: blurStrength,
+  //         sigmaY: blurStrength,
+  //       ),
+  //       child: child,
+  //     );
+  //   }
 
+  //   return Stack(
+  //     children: [
+  //       // Red channel shifted left
+  //       Transform.translate(
+  //         offset: Offset(-offset, 0),
+  //         child: ColorFiltered(
+  //           colorFilter: const ColorFilter.matrix([
+  //             1, 0, 0, 0, 0,  // Red channel pass through
+  //             0, 0, 0, 0, 0,  // Green channel removed
+  //             0, 0, 0, 0, 0,  // Blue channel removed
+  //             0, 0, 0, 1, 0,  // Alpha
+  //           ]),
+  //           child: baseChild,
+  //         ),
+  //       ),
 
+  //       // Green channel shifted right (or left based on strength)
+  //       Transform.translate(
+  //         offset: Offset(offset * 0.7, 0),
+  //         child: ColorFiltered(
+  //           colorFilter: const ColorFilter.matrix([
+  //             0, 0, 0, 0, 0,  // Red channel removed
+  //             0, 1, 0, 0, 0,  // Green channel pass through
+  //             0, 0, 0, 0, 0,  // Blue channel removed
+  //             0, 0, 0, 1, 0,  // Alpha
+  //           ]),
+  //           child: baseChild,
+  //         ),
+  //       ),
 
+  //       // Blue channel shifted right
+  //       Transform.translate(
+  //         offset: Offset(offset, 0),
+  //         child: ColorFiltered(
+  //           colorFilter: const ColorFilter.matrix([
+  //             0, 0, 0, 0, 0,  // Red channel removed
+  //             0, 0, 0, 0, 0,  // Green channel removed
+  //             0, 0, 1, 0, 0,  // Blue channel pass through
+  //             0, 0, 0, 1, 0,  // Alpha
+  //           ]),
+  //           child: baseChild,
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
+  // 4. Chromatic Aberration - RGB split/glitch (Light to Dark intensity)
+  Widget _applyChromaticAberration(Widget child, double strength) {
+    // No effect at strength 0
+    if (strength <= 0) return child;
 
+    // Map strength 0-1 to offset range 0-10 pixels
+    // At low strength: subtle color fringing
+    // At high strength: strong glitch effect
+    final double offset = 10 * strength;
 
-// 4. Chromatic Aberration - RGB split/glitch (Light to Dark intensity)
-Widget _applyChromaticAberration(Widget child, double strength) {
-  // No effect at strength 0
-  if (strength <= 0) return child;
-  
-  // Map strength 0-1 to offset range 0-10 pixels
-  // At low strength: subtle color fringing
-  // At high strength: strong glitch effect
-  final double offset = 10 * strength;
-  
-  // At low strength (0-0.3): subtle effect with opacity blending
-  // At medium strength (0.3-0.7): stronger offset with some transparency
-  // At high strength (0.7-1.0): full glitch with blending
-  
-  if (strength < 0.3) {
-    // LIGHT EFFECT: Subtle color fringing
-    final double opacity = strength / 0.3; // 0 to 1
-    final double smallOffset = offset * 0.3;
-    
-    return Stack(
-      children: [
-        // Original image as base (80% opacity)
-        Opacity(
-          opacity: 1.0 - (opacity * 0.2),
+    // At low strength (0-0.3): subtle effect with opacity blending
+    // At medium strength (0.3-0.7): stronger offset with some transparency
+    // At high strength (0.7-1.0): full glitch with blending
+
+    if (strength < 0.3) {
+      // LIGHT EFFECT: Subtle color fringing
+      final double opacity = strength / 0.3; // 0 to 1
+      final double smallOffset = offset * 0.3;
+
+      return Stack(
+        children: [
+          // Original image as base (80% opacity)
+          Opacity(opacity: 1.0 - (opacity * 0.2), child: child),
+          // Red channel subtle shift
+          Opacity(
+            opacity: opacity * 0.5,
+            child: Transform.translate(
+              offset: Offset(-smallOffset, 0),
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.matrix([
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                ]),
+                child: child,
+              ),
+            ),
+          ),
+          // Blue channel subtle shift opposite direction
+          Opacity(
+            opacity: opacity * 0.5,
+            child: Transform.translate(
+              offset: Offset(smallOffset, 0),
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.matrix([
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                ]),
+                child: child,
+              ),
+            ),
+          ),
+        ],
+      );
+    } else if (strength < 0.7) {
+      // MEDIUM EFFECT: Noticeable RGB split
+      final double intensity = (strength - 0.3) / 0.4; // 0 to 1
+      final double currentOffset = offset * (0.3 + intensity * 0.7);
+
+      return Stack(
+        children: [
+          // Red channel shifted left
+          Transform.translate(
+            offset: Offset(-currentOffset, 0),
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix([
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0.8,
+                0,
+              ]),
+              child: child,
+            ),
+          ),
+          // Green channel centered with slight shift up/down
+          Transform.translate(
+            offset: Offset(0, currentOffset * 0.3),
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix([
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0.8,
+                0,
+              ]),
+              child: child,
+            ),
+          ),
+          // Blue channel shifted right
+          Transform.translate(
+            offset: Offset(currentOffset, 0),
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix([
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0.8,
+                0,
+              ]),
+              child: child,
+            ),
+          ),
+        ],
+      );
+    } else {
+      // DARK/HEAVY EFFECT: Full glitch with scanlines and RGB split
+      final double intensity = (strength - 0.7) / 0.3; // 0 to 1
+      final double currentOffset = offset * (0.7 + intensity * 0.3);
+      final double blurAmount = 1.0 * intensity;
+
+      Widget baseChild = child;
+      if (blurAmount > 0) {
+        baseChild = ImageFiltered(
+          imageFilter: ui.ImageFilter.blur(
+            sigmaX: blurAmount,
+            sigmaY: blurAmount,
+          ),
           child: child,
-        ),
-        // Red channel subtle shift
-        Opacity(
-          opacity: opacity * 0.5,
-          child: Transform.translate(
-            offset: Offset(-smallOffset, 0),
+        );
+      }
+
+      return Stack(
+        children: [
+          // Red channel heavily shifted left
+          Transform.translate(
+            offset: Offset(-currentOffset, 0),
             child: ColorFiltered(
               colorFilter: const ColorFilter.matrix([
-                1, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 0, 1, 0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0.9,
+                0,
               ]),
-              child: child,
+              child: baseChild,
             ),
           ),
-        ),
-        // Blue channel subtle shift opposite direction
-        Opacity(
-          opacity: opacity * 0.5,
-          child: Transform.translate(
-            offset: Offset(smallOffset, 0),
+          // Green channel shifted right with slight vertical
+          Transform.translate(
+            offset: Offset(currentOffset * 0.5, currentOffset * 0.2),
             child: ColorFiltered(
               colorFilter: const ColorFilter.matrix([
-                0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0,
-                0, 0, 1, 0, 0,
-                0, 0, 0, 1, 0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0.9,
+                0,
               ]),
-              child: child,
+              child: baseChild,
             ),
           ),
-        ),
-      ],
-    );
-  }
-  
-  else if (strength < 0.7) {
-    // MEDIUM EFFECT: Noticeable RGB split
-    final double intensity = (strength - 0.3) / 0.4; // 0 to 1
-    final double currentOffset = offset * (0.3 + intensity * 0.7);
-    
-    return Stack(
-      children: [
-        // Red channel shifted left
-        Transform.translate(
-          offset: Offset(-currentOffset, 0),
-          child: ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              1, 0, 0, 0, 0,
-              0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0,
-              0, 0, 0, 0.8, 0,
-            ]),
-            child: child,
+          // Blue channel shifted right and slightly down
+          Transform.translate(
+            offset: Offset(currentOffset, currentOffset * 0.1),
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.matrix([
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0.9,
+                0,
+              ]),
+              child: baseChild,
+            ),
           ),
-        ),
-        // Green channel centered with slight shift up/down
-        Transform.translate(
-          offset: Offset(0, currentOffset * 0.3),
-          child: ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              0, 0, 0, 0, 0,
-              0, 1, 0, 0, 0,
-              0, 0, 0, 0, 0,
-              0, 0, 0, 0.8, 0,
-            ]),
-            child: child,
-          ),
-        ),
-        // Blue channel shifted right
-        Transform.translate(
-          offset: Offset(currentOffset, 0),
-          child: ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0,
-              0, 0, 1, 0, 0,
-              0, 0, 0, 0.8, 0,
-            ]),
-            child: child,
-          ),
-        ),
-      ],
-    );
-  }
-  
-  else {
-    // DARK/HEAVY EFFECT: Full glitch with scanlines and RGB split
-    final double intensity = (strength - 0.7) / 0.3; // 0 to 1
-    final double currentOffset = offset * (0.7 + intensity * 0.3);
-    final double blurAmount = 1.0 * intensity;
-    
-    Widget baseChild = child;
-    if (blurAmount > 0) {
-      baseChild = ImageFiltered(
-        imageFilter: ui.ImageFilter.blur(
-          sigmaX: blurAmount,
-          sigmaY: blurAmount,
-        ),
-        child: child,
+          // Scanline overlay for heavy glitch
+          if (strength > 0.85)
+            Opacity(
+              opacity: 0.15 * ((strength - 0.85) / 0.15),
+              child: CustomPaint(
+                painter: _ScanlinePainter(),
+                size: const Size(double.infinity, double.infinity),
+              ),
+            ),
+        ],
       );
     }
-    
-    return Stack(
-      children: [
-        // Red channel heavily shifted left
-        Transform.translate(
-          offset: Offset(-currentOffset, 0),
-          child: ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              1, 0, 0, 0, 0,
-              0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0,
-              0, 0, 0, 0.9, 0,
-            ]),
-            child: baseChild,
-          ),
-        ),
-        // Green channel shifted right with slight vertical
-        Transform.translate(
-          offset: Offset(currentOffset * 0.5, currentOffset * 0.2),
-          child: ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              0, 0, 0, 0, 0,
-              0, 1, 0, 0, 0,
-              0, 0, 0, 0, 0,
-              0, 0, 0, 0.9, 0,
-            ]),
-            child: baseChild,
-          ),
-        ),
-        // Blue channel shifted right and slightly down
-        Transform.translate(
-          offset: Offset(currentOffset, currentOffset * 0.1),
-          child: ColorFiltered(
-            colorFilter: const ColorFilter.matrix([
-              0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0,
-              0, 0, 1, 0, 0,
-              0, 0, 0, 0.9, 0,
-            ]),
-            child: baseChild,
-          ),
-        ),
-        // Scanline overlay for heavy glitch
-        if (strength > 0.85)
-          Opacity(
-            opacity: 0.15 * ((strength - 0.85) / 0.15),
-            child: CustomPaint(
-              painter: _ScanlinePainter(),
-              size: const Size(double.infinity, double.infinity),
-            ),
-          ),
-      ],
-    );
   }
-}
 
   // 4. Chromatic Aberration - RGB split/glitch
   // Widget _applyChromaticAberration(Widget child, double strength) {
@@ -2254,118 +2360,119 @@ Widget _applyChromaticAberration(Widget child, double strength) {
   //   }
   // }
 
-
-
-
-Future<void> _pickUserAudio() async {
-  try {
-    // Pick audio file
-    FilePickerResult? result = await FilePicker.pickFiles(
-      type: FileType.audio,
-      allowMultiple: false,
-    );
-
-    if (result == null) return;
-
-    String filePath = result.files.single.path!;
-    String fileName = result.files.single.name;
-
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
+  Future<void> _pickUserAudio() async {
     try {
-      // Get audio duration using a more reliable method
-      final tempPlayer = AudioPlayer();
-      await tempPlayer.setSourceDeviceFile(filePath);
-      
-      // Wait for duration to be available
-      Duration? duration;
-      int attempts = 0;
-      while (duration == null && attempts < 10) {
-        duration = await tempPlayer.getDuration();
-        if (duration == null) {
-          await Future.delayed(const Duration(milliseconds: 100));
-          attempts++;
+      // Pick audio file
+      FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.audio,
+        allowMultiple: false,
+      );
+
+      if (result == null) return;
+
+      String filePath = result.files.single.path!;
+      String fileName = result.files.single.name;
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        // Get audio duration using a more reliable method
+        final tempPlayer = AudioPlayer();
+        await tempPlayer.setSourceDeviceFile(filePath);
+
+        // Wait for duration to be available
+        Duration? duration;
+        int attempts = 0;
+        while (duration == null && attempts < 10) {
+          duration = await tempPlayer.getDuration();
+          if (duration == null) {
+            await Future.delayed(const Duration(milliseconds: 100));
+            attempts++;
+          }
         }
-      }
-      
-      await tempPlayer.dispose();
 
-      // Check if duration was successfully retrieved
-      if (duration == null) {
-        Navigator.pop(context); // Close loading dialog
-        _showErrorSnackBar('Could not read audio duration. Please try another file.');
-        return;
-      }
+        await tempPlayer.dispose();
 
-      print('Audio duration: ${duration.inSeconds} seconds');
+        // Check if duration was successfully retrieved
+        if (duration == null) {
+          Navigator.pop(context); // Close loading dialog
+          _showErrorSnackBar(
+            'Could not read audio duration. Please try another file.',
+          );
+          return;
+        }
 
-      // Check if duration exceeds 30 seconds
-      if (duration.inSeconds > 30) {
-        Navigator.pop(context); // Close loading dialog
-        _showErrorSnackBar(
-          '❌ Audio too long!\n'
-          'Maximum 30 seconds allowed.\n'
-          'Selected: ${duration.inSeconds} seconds\n'
-          'Please select a shorter audio file.',
+        print('Audio duration: ${duration.inSeconds} seconds');
+
+        // Check if duration exceeds 30 seconds
+        if (duration.inSeconds > 30) {
+          Navigator.pop(context); // Close loading dialog
+          _showErrorSnackBar(
+            '❌ Audio too long!\n'
+            'Maximum 30 seconds allowed.\n'
+            'Selected: ${duration.inSeconds} seconds\n'
+            'Please select a shorter audio file.',
+          );
+          return;
+        }
+
+        // Check if duration is too short (optional, minimum 1 second)
+        if (duration.inSeconds < 1) {
+          Navigator.pop(context);
+          _showErrorSnackBar(
+            'Audio is too short! Please select a longer audio file (minimum 1 second).',
+          );
+          return;
+        }
+
+        // Copy to app directory for persistence
+        final tempDir = await getTemporaryDirectory();
+        final savedPath =
+            '${tempDir.path}/user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3';
+        final File sourceFile = File(filePath);
+        await sourceFile.copy(savedPath);
+
+        // Add to user audio tracks list
+        final userTrack = UserAudioTrack(
+          name: fileName
+              .replaceAll('.mp3', '')
+              .replaceAll('.m4a', '')
+              .replaceAll('.wav', ''),
+          filePath: savedPath,
+          durationInSeconds: duration.inSeconds,
         );
-        return;
-      }
 
-      // Check if duration is too short (optional, minimum 1 second)
-      if (duration.inSeconds < 1) {
+        // Close loading dialog
         Navigator.pop(context);
-        _showErrorSnackBar(
-          'Audio is too short! Please select a longer audio file (minimum 1 second).',
+
+        setState(() {
+          _userAudioTracks.add(userTrack);
+          _selectedUserAudioPath = savedPath;
+          _selectedAudio = userTrack.name;
+        });
+
+        // Play the selected audio
+        await _playUserAudio(savedPath, userTrack.name);
+
+        _showSuccessSnackBar(
+          '✅ Audio added!\n'
+          'Duration: ${duration.inSeconds} seconds',
         );
-        return;
+      } catch (e) {
+        Navigator.pop(context); // Close loading dialog on error
+        print('Error processing audio: $e');
+        _showErrorSnackBar('Failed to process audio: ${e.toString()}');
       }
-
-      // Copy to app directory for persistence
-      final tempDir = await getTemporaryDirectory();
-      final savedPath = '${tempDir.path}/user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3';
-      final File sourceFile = File(filePath);
-      await sourceFile.copy(savedPath);
-
-      // Add to user audio tracks list
-      final userTrack = UserAudioTrack(
-        name: fileName.replaceAll('.mp3', '').replaceAll('.m4a', '').replaceAll('.wav', ''),
-        filePath: savedPath,
-        durationInSeconds: duration.inSeconds,
-      );
-
-      // Close loading dialog
-      Navigator.pop(context);
-
-      setState(() {
-        _userAudioTracks.add(userTrack);
-        _selectedUserAudioPath = savedPath;
-        _selectedAudio = userTrack.name;
-      });
-
-      // Play the selected audio
-      await _playUserAudio(savedPath, userTrack.name);
-
-      _showSuccessSnackBar(
-        '✅ Audio added!\n'
-        'Duration: ${duration.inSeconds} seconds',
-      );
-      
     } catch (e) {
-      Navigator.pop(context); // Close loading dialog on error
-      print('Error processing audio: $e');
-      _showErrorSnackBar('Failed to process audio: ${e.toString()}');
+      print('Error picking audio: $e');
+      _showErrorSnackBar('Failed to pick audio: ${e.toString()}');
     }
-    
-  } catch (e) {
-    print('Error picking audio: $e');
-    _showErrorSnackBar('Failed to pick audio: ${e.toString()}');
   }
-}
   // Future<void> _playUserAudio(String filePath, String fileName) async {
   //   try {
   //     await _audioPlayer.stop();
@@ -2387,48 +2494,43 @@ Future<void> _pickUserAudio() async {
   //   }
   // }
 
-
-
-
-
   Future<void> _playUserAudio(String filePath, String fileName) async {
-  try {
-    // Stop any currently playing audio
-    await _audioPlayer.stop();
-    await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+    try {
+      // Stop any currently playing audio
+      await _audioPlayer.stop();
+      await _audioPlayer.setReleaseMode(ReleaseMode.stop);
 
-    // Check if file exists
-    if (!await File(filePath).exists()) {
-      _showErrorSnackBar('Audio file not found');
-      return;
-    }
-
-    // Play the audio
-    await _audioPlayer.play(DeviceFileSource(filePath), volume: 1.0);
-
-    setState(() {
-      _isAudioPlaying = true;
-      _selectedAudio = fileName;
-    });
-
-    // Listen for completion
-    _audioPlayer.onPlayerComplete.listen((event) {
-      if (mounted) {
-        setState(() => _isAudioPlaying = false);
-        print('Audio playback completed');
+      // Check if file exists
+      if (!await File(filePath).exists()) {
+        _showErrorSnackBar('Audio file not found');
+        return;
       }
-    });
 
-    // Note: For audioplayers package, error handling is typically done via
-    // the onPlayerComplete stream with error states, or using try-catch
-    // around the play method. The package doesn't have a separate onPlayerError stream.
-    
-  } catch (e) {
-    setState(() => _isAudioPlaying = false);
-    print('Error playing audio: $e');
-    _showErrorSnackBar('Could not play audio: ${e.toString()}');
+      // Play the audio
+      await _audioPlayer.play(DeviceFileSource(filePath), volume: 1.0);
+
+      setState(() {
+        _isAudioPlaying = true;
+        _selectedAudio = fileName;
+      });
+
+      // Listen for completion
+      _audioPlayer.onPlayerComplete.listen((event) {
+        if (mounted) {
+          setState(() => _isAudioPlaying = false);
+          print('Audio playback completed');
+        }
+      });
+
+      // Note: For audioplayers package, error handling is typically done via
+      // the onPlayerComplete stream with error states, or using try-catch
+      // around the play method. The package doesn't have a separate onPlayerError stream.
+    } catch (e) {
+      setState(() => _isAudioPlaying = false);
+      print('Error playing audio: $e');
+      _showErrorSnackBar('Could not play audio: ${e.toString()}');
+    }
   }
-}
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
@@ -2702,27 +2804,25 @@ Future<void> _pickUserAudio() async {
             UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
       );
 
-
-
-
       // Check if it's an admin audio track
-final adminTrack = _adminAudioTracks.firstWhere(
-  (track) => track.title == trackName,
-  orElse: () => AdminAudioTrack(id: '', title: '', artist: '', audioUrl: ''),
-);
+      final adminTrack = _adminAudioTracks.firstWhere(
+        (track) => track.title == trackName,
+        orElse: () =>
+            AdminAudioTrack(id: '', title: '', artist: '', audioUrl: ''),
+      );
 
-if (adminTrack.audioUrl.isNotEmpty) {
-  await _audioPlayer.play(UrlSource(adminTrack.audioUrl), volume: 1.0);
-  setState(() {
-    _isAudioPlaying = true;
-    _selectedAudio = trackName;
-    _selectedUserAudioPath = null;
-  });
-  _audioPlayer.onPlayerComplete.listen((event) {
-    if (mounted) setState(() => _isAudioPlaying = false);
-  });
-  return;
-}
+      if (adminTrack.audioUrl.isNotEmpty) {
+        await _audioPlayer.play(UrlSource(adminTrack.audioUrl), volume: 1.0);
+        setState(() {
+          _isAudioPlaying = true;
+          _selectedAudio = trackName;
+          _selectedUserAudioPath = null;
+        });
+        _audioPlayer.onPlayerComplete.listen((event) {
+          if (mounted) setState(() => _isAudioPlaying = false);
+        });
+        return;
+      }
 
       if (userTrack.filePath.isNotEmpty &&
           await File(userTrack.filePath).exists()) {
@@ -3561,12 +3661,350 @@ if (adminTrack.audioUrl.isNotEmpty) {
   //   }
   // }
 
+  // void _startDownload() async {
+  //   print("gggggggggggggggggggggggg${_planProvider?.isPurchase}");
+  //   if (!_planProvider!.isPurchase) {
+  //     _showPremiumModal();
+  //     return;
+  //   }
+  //   setState(() {
+  //     _isDownloading = true;
+  //     _downloadProgress = 0;
+  //   });
+
+  //   try {
+  //     if (_isAnimated) {
+  //       setState(() => _downloadProgress = 0.05);
+
+  //       // ── tempDir at top ──
+  //       final tempDir = await getTemporaryDirectory();
+
+  //       final framesDir = Directory(
+  //         '${tempDir.path}/poster_frames_${DateTime.now().millisecondsSinceEpoch}',
+  //       );
+  //       await framesDir.create(recursive: true);
+
+  //       // ── Get audio duration first ──
+  //       int videoDurationSec = 3;
+
+  //       if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //         try {
+  //           // Check for user audio first
+  //           final userTrack = _userAudioTracks.firstWhere(
+  //             (track) => track.name == _selectedAudio,
+  //             orElse: () =>
+  //                 UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //           );
+
+  //           Duration? duration;
+
+  //           if (userTrack.filePath.isNotEmpty &&
+  //               await File(userTrack.filePath).exists()) {
+  //             // User audio file
+  //             final probe = AudioPlayer();
+  //             await probe.setSourceDeviceFile(userTrack.filePath);
+  //             duration = await probe.getDuration();
+  //             await probe.dispose();
+  //             print('User audio duration: ${duration?.inSeconds} seconds');
+  //           } else {
+  //             // Static audio asset
+  //             const Map<String, String> audioAssets = {
+  //               'Upbeat Pop':
+  //                   'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+  //               'Calm Acoustic':
+  //                   'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+  //               'Corporate':
+  //                   'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+  //               'Cinematic':
+  //                   'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+  //               'Electronic':
+  //                   'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //               'Jazz Lounge':
+  //                   'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //             };
+
+  //             final String? assetPath = audioAssets[_selectedAudio];
+  //             if (assetPath != null) {
+  //               final ByteData audioData = await rootBundle.load(assetPath);
+  //               final File tempAudioProbe = File(
+  //                 '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //               );
+  //               await tempAudioProbe.writeAsBytes(
+  //                 audioData.buffer.asUint8List(),
+  //               );
+
+  //               final probe = AudioPlayer();
+  //               await probe.setSourceDeviceFile(tempAudioProbe.path);
+  //               duration = await probe.getDuration();
+  //               await probe.dispose();
+
+  //               // Clean up temp file
+  //               try {
+  //                 await tempAudioProbe.delete();
+  //               } catch (e) {}
+  //             }
+  //           }
+
+  //           if (duration != null && duration.inSeconds > 0) {
+  //             videoDurationSec = duration.inSeconds;
+  //             print('Using audio duration: $videoDurationSec seconds');
+  //           }
+  //         } catch (e) {
+  //           print('Could not get audio duration: $e');
+  //         }
+  //       }
+
+  //       const int fps = 30;
+  //       final int totalFrames = videoDurationSec * fps;
+  //       final int animationDurationMs = videoDurationSec * 1000;
+
+  //       final bool wasAnimating = _animController.isAnimating;
+  //       if (wasAnimating) {
+  //         _animController.stop();
+  //         _brandAnimController.stop();
+  //       }
+
+  //       final int frameDelayMs = animationDurationMs ~/ totalFrames;
+
+  //       for (int i = 0; i < totalFrames; i++) {
+  //         final DateTime frameStartTime = DateTime.now();
+  //         final double progress =
+  //             (i % fps) / fps; // loops animation every second
+
+  //         double animValue;
+  //         switch (_selectedAnimation) {
+  //           case AnimationType.none:
+  //             animValue = 1.0;
+  //             break;
+  //           case AnimationType.rotate:
+  //           case AnimationType.flipIn:
+  //           case AnimationType.wobble:
+  //           case AnimationType.rollin:
+  //             animValue = progress;
+  //             break;
+  //           default:
+  //             animValue = (sin(progress * pi) * 0.5) + 0.5;
+  //         }
+  //         _animController.value = animValue;
+  //         _brandAnimController.value = progress;
+  //         setState(() {});
+  //         await WidgetsBinding.instance.endOfFrame;
+  //         await Future.delayed(const Duration(milliseconds: 5));
+
+  //         final RenderRepaintBoundary? boundary =
+  //             _posterKey.currentContext?.findRenderObject()
+  //                 as RenderRepaintBoundary?;
+  //         if (boundary == null) throw Exception('Poster context not found');
+  //         final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+  //         final ByteData? byteData = await image.toByteData(
+  //           format: ui.ImageByteFormat.png,
+  //         );
+  //         if (byteData == null) throw Exception('Frame $i encoding failed');
+  //         final File frameFile = File(
+  //           '${framesDir.path}/frame_${i.toString().padLeft(4, '0')}.png',
+  //         );
+  //         await frameFile.writeAsBytes(byteData.buffer.asUint8List());
+
+  //         final int elapsedMs = DateTime.now()
+  //             .difference(frameStartTime)
+  //             .inMilliseconds;
+  //         final int remainingDelay = frameDelayMs - elapsedMs;
+  //         if (remainingDelay > 0) {
+  //           await Future.delayed(Duration(milliseconds: remainingDelay));
+  //         }
+  //         setState(() => _downloadProgress = 0.05 + (i / totalFrames) * 0.55);
+  //       }
+
+  //       setState(() => _downloadProgress = 0.62);
+  //       String? audioFilePath;
+
+  //       if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //         try {
+  //           // First, check if it's a user-uploaded audio
+  //           final userTrack = _userAudioTracks.firstWhere(
+  //             (track) => track.name == _selectedAudio,
+  //             orElse: () =>
+  //                 UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //           );
+
+  //           if (userTrack.filePath.isNotEmpty &&
+  //               await File(userTrack.filePath).exists()) {
+  //             // This is a user-uploaded audio file - copy it to temp directory
+  //             final File sourceFile = File(userTrack.filePath);
+  //             final File tempAudioFile = File(
+  //               '${tempDir.path}/temp_user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //             );
+  //             await sourceFile.copy(tempAudioFile.path);
+  //             audioFilePath = tempAudioFile.path;
+  //             print('Using user audio file: ${userTrack.name}');
+  //           } else {
+  //             // Check static audio assets
+  //             const Map<String, String> audioAssets = {
+  //               'Upbeat Pop':
+  //                   'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+  //               'Calm Acoustic':
+  //                   'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+  //               'Corporate':
+  //                   'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+  //               'Cinematic':
+  //                   'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+  //               'Electronic':
+  //                   'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //               'Jazz Lounge':
+  //                   'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //             };
+
+  //             final String? assetPath = audioAssets[_selectedAudio];
+  //             if (assetPath != null) {
+  //               final ByteData audioData = await rootBundle.load(assetPath);
+  //               final File tempAudioFile = File(
+  //                 '${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //               );
+  //               await tempAudioFile.writeAsBytes(
+  //                 audioData.buffer.asUint8List(),
+  //               );
+  //               audioFilePath = tempAudioFile.path;
+  //               print('Using static audio file: $_selectedAudio');
+  //             }
+  //           }
+  //         } catch (e) {
+  //           print('Error loading audio for video: $e');
+  //         }
+  //       }
+
+  //       final String outputPath =
+  //           '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.mp4';
+  //       String ffmpegCommand;
+
+  //       if (audioFilePath != null && await File(audioFilePath).exists()) {
+  //         ffmpegCommand =
+  //             '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+  //             '-i "$audioFilePath" '
+  //             '-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest '
+  //             '-crf 23 -preset fast '
+  //             '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //             '"$outputPath"';
+  //       } else {
+  //         ffmpegCommand =
+  //             '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+  //             '-c:v libx264 -pix_fmt yuv420p '
+  //             '-crf 23 -preset fast '
+  //             '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //             '"$outputPath"';
+  //       }
+
+  //       setState(() => _downloadProgress = 0.65);
+  //       final ffmpegSession = await FFmpegKit.execute(ffmpegCommand);
+  //       final ReturnCode? returnCode = await ffmpegSession.getReturnCode();
+  //       setState(() => _downloadProgress = 0.88);
+
+  //       if (!ReturnCode.isSuccess(returnCode)) {
+  //         throw Exception('FFmpeg failed to create video');
+  //       }
+
+  //       final bool hasAccess = await Gal.hasAccess();
+  //       if (!hasAccess) await Gal.requestAccess();
+  //       await Gal.putVideo(outputPath, album: 'Poster Editor');
+  //       setState(() => _downloadProgress = 1.0);
+
+  //       try {
+  //         await framesDir.delete(recursive: true);
+  //         if (audioFilePath != null) {
+  //           final audioFile = File(audioFilePath);
+  //           if (await audioFile.exists()) {
+  //             await audioFile.delete();
+  //           }
+  //         }
+  //       } catch (e) {}
+
+  //       if (wasAnimating && mounted) {
+  //         _animController.repeat(reverse: true);
+  //         _brandAnimController.repeat();
+  //       }
+
+  //       await Future.delayed(const Duration(milliseconds: 400));
+  //       if (mounted) {
+  //         setState(() => _isDownloading = false);
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text(
+  //               audioFilePath != null
+  //                   ? '✅ Video with audio saved to gallery!'
+  //                   : '✅ Video saved to gallery!',
+  //             ),
+  //             backgroundColor: const Color(0xFF2E7D32),
+  //             duration: const Duration(seconds: 3),
+  //           ),
+  //         );
+  //       }
+  //     } else {
+  //       // ── Static image download ──
+  //       setState(() => _downloadProgress = 0.2);
+  //       await Future.delayed(const Duration(milliseconds: 300));
+
+  //       final RenderRepaintBoundary? boundary =
+  //           _posterKey.currentContext?.findRenderObject()
+  //               as RenderRepaintBoundary?;
+  //       if (boundary == null)
+  //         throw Exception('Poster not found. Please try again.');
+
+  //       setState(() => _downloadProgress = 0.4);
+  //       await Future.delayed(const Duration(milliseconds: 100));
+
+  //       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+  //       setState(() => _downloadProgress = 0.65);
+  //       final ByteData? byteData = await image.toByteData(
+  //         format: ui.ImageByteFormat.png,
+  //       );
+  //       if (byteData == null) throw Exception('Failed to encode image');
+  //       setState(() => _downloadProgress = 0.8);
+
+  //       final Uint8List pngBytes = byteData.buffer.asUint8List();
+  //       final Directory tempDir = await getTemporaryDirectory();
+  //       final String fileName =
+  //           'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+  //       final File file = File('${tempDir.path}/$fileName');
+  //       await file.writeAsBytes(pngBytes);
+  //       setState(() => _downloadProgress = 0.92);
+
+  //       final bool hasAccess = await Gal.hasAccess();
+  //       if (!hasAccess) await Gal.requestAccess();
+  //       await Gal.putImage(file.path, album: 'Poster Editor');
+  //       setState(() => _downloadProgress = 1.0);
+
+  //       await Future.delayed(const Duration(milliseconds: 400));
+  //       if (mounted) {
+  //         setState(() => _isDownloading = false);
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //             content: Text('✅ Image saved to gallery!'),
+  //             backgroundColor: Color(0xFF2E7D32),
+  //             duration: Duration(seconds: 3),
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } catch (e, stackTrace) {
+  //     print('Download error: $e\n$stackTrace');
+  //     if (mounted) {
+  //       setState(() => _isDownloading = false);
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Download failed: ${e.toString()}'),
+  //           backgroundColor: Colors.red,
+  //           duration: const Duration(seconds: 4),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
+
   void _startDownload() async {
     print("gggggggggggggggggggggggg${_planProvider?.isPurchase}");
-    if (!_planProvider!.isPurchase) {
-      _showPremiumModal();
-      return;
-    }
+    // if (!_planProvider!.isPurchase) {
+    //   _showPremiumModal();
+    //   return;
+    // }
     setState(() {
       _isDownloading = true;
       _downloadProgress = 0;
@@ -3589,59 +4027,95 @@ if (adminTrack.audioUrl.isNotEmpty) {
 
         if (_selectedAudio != null && _selectedAudio != 'No Audio') {
           try {
-            // Check for user audio first
+            Duration? duration;
+
+            // Check user uploaded audio
             final userTrack = _userAudioTracks.firstWhere(
               (track) => track.name == _selectedAudio,
               orElse: () =>
                   UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
             );
 
-            Duration? duration;
-
             if (userTrack.filePath.isNotEmpty &&
                 await File(userTrack.filePath).exists()) {
-              // User audio file
               final probe = AudioPlayer();
               await probe.setSourceDeviceFile(userTrack.filePath);
               duration = await probe.getDuration();
               await probe.dispose();
               print('User audio duration: ${duration?.inSeconds} seconds');
             } else {
-              // Static audio asset
-              const Map<String, String> audioAssets = {
-                'Upbeat Pop':
-                    'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
-                'Calm Acoustic':
-                    'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
-                'Corporate':
-                    'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
-                'Cinematic':
-                    'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
-                'Electronic':
-                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-                'Jazz Lounge':
-                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-              };
+              // Check admin audio track
+              final adminTrack = _adminAudioTracks.firstWhere(
+                (track) => track.title == _selectedAudio,
+                orElse: () => AdminAudioTrack(
+                  id: '',
+                  title: '',
+                  artist: '',
+                  audioUrl: '',
+                ),
+              );
 
-              final String? assetPath = audioAssets[_selectedAudio];
-              if (assetPath != null) {
-                final ByteData audioData = await rootBundle.load(assetPath);
-                final File tempAudioProbe = File(
-                  '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+              if (adminTrack.audioUrl.isNotEmpty) {
+                // Download temporarily to get duration
+                print(
+                  'Downloading admin audio for duration check: ${adminTrack.title}',
                 );
-                await tempAudioProbe.writeAsBytes(
-                  audioData.buffer.asUint8List(),
-                );
+                final response = await http.get(Uri.parse(adminTrack.audioUrl));
+                if (response.statusCode == 200) {
+                  final tempAudioProbe = File(
+                    '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudioProbe.writeAsBytes(response.bodyBytes);
 
-                final probe = AudioPlayer();
-                await probe.setSourceDeviceFile(tempAudioProbe.path);
-                duration = await probe.getDuration();
-                await probe.dispose();
+                  final probe = AudioPlayer();
+                  await probe.setSourceDeviceFile(tempAudioProbe.path);
+                  duration = await probe.getDuration();
+                  await probe.dispose();
 
-                // Clean up temp file
-                try {
-                  await tempAudioProbe.delete();
-                } catch (e) {}
+                  // Clean up temp file
+                  try {
+                    await tempAudioProbe.delete();
+                  } catch (e) {}
+
+                  print('Admin audio duration: ${duration?.inSeconds} seconds');
+                }
+              } else {
+                // Static audio assets
+                const Map<String, String> audioAssets = {
+                  'Upbeat Pop':
+                      'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+                  'Calm Acoustic':
+                      'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+                  'Corporate':
+                      'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+                  'Cinematic':
+                      'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+                  'Electronic':
+                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                  'Jazz Lounge':
+                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                };
+
+                final String? assetPath = audioAssets[_selectedAudio];
+                if (assetPath != null) {
+                  final ByteData audioData = await rootBundle.load(assetPath);
+                  final File tempAudioProbe = File(
+                    '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudioProbe.writeAsBytes(
+                    audioData.buffer.asUint8List(),
+                  );
+
+                  final probe = AudioPlayer();
+                  await probe.setSourceDeviceFile(tempAudioProbe.path);
+                  duration = await probe.getDuration();
+                  await probe.dispose();
+
+                  // Clean up temp file
+                  try {
+                    await tempAudioProbe.delete();
+                  } catch (e) {}
+                }
               }
             }
 
@@ -3738,33 +4212,64 @@ if (adminTrack.audioUrl.isNotEmpty) {
               audioFilePath = tempAudioFile.path;
               print('Using user audio file: ${userTrack.name}');
             } else {
-              // Check static audio assets
-              const Map<String, String> audioAssets = {
-                'Upbeat Pop':
-                    'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
-                'Calm Acoustic':
-                    'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
-                'Corporate':
-                    'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
-                'Cinematic':
-                    'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
-                'Electronic':
-                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-                'Jazz Lounge':
-                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-              };
+              // Check if it's an admin audio track
+              final adminTrack = _adminAudioTracks.firstWhere(
+                (track) => track.title == _selectedAudio,
+                orElse: () => AdminAudioTrack(
+                  id: '',
+                  title: '',
+                  artist: '',
+                  audioUrl: '',
+                ),
+              );
 
-              final String? assetPath = audioAssets[_selectedAudio];
-              if (assetPath != null) {
-                final ByteData audioData = await rootBundle.load(assetPath);
-                final File tempAudioFile = File(
-                  '${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
-                );
-                await tempAudioFile.writeAsBytes(
-                  audioData.buffer.asUint8List(),
-                );
-                audioFilePath = tempAudioFile.path;
-                print('Using static audio file: $_selectedAudio');
+              if (adminTrack.audioUrl.isNotEmpty) {
+                // Download admin audio file
+                print('Downloading admin audio for video: ${adminTrack.title}');
+                final response = await http.get(Uri.parse(adminTrack.audioUrl));
+                if (response.statusCode == 200) {
+                  final File tempAudioFile = File(
+                    '${tempDir.path}/temp_admin_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudioFile.writeAsBytes(response.bodyBytes);
+                  audioFilePath = tempAudioFile.path;
+                  print(
+                    'Admin audio downloaded successfully: ${adminTrack.title}',
+                  );
+                } else {
+                  print(
+                    'Failed to download admin audio: ${response.statusCode}',
+                  );
+                }
+              } else {
+                // Check static audio assets
+                const Map<String, String> audioAssets = {
+                  'Upbeat Pop':
+                      'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+                  'Calm Acoustic':
+                      'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+                  'Corporate':
+                      'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+                  'Cinematic':
+                      'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+                  'Electronic':
+                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                  'Jazz Lounge':
+                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                };
+
+                final String? assetPath = audioAssets[_selectedAudio];
+                if (assetPath != null) {
+                  final ByteData audioData = await rootBundle.load(assetPath);
+                  final File tempAudioFile = File(
+                    '${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudioFile.writeAsBytes(
+                    audioData.buffer.asUint8List(),
+                  );
+                  audioFilePath = tempAudioFile.path;
+                  print('Using static audio file: $_selectedAudio');
+                }
               }
             }
           } catch (e) {
@@ -10214,360 +10719,358 @@ if (adminTrack.audioUrl.isNotEmpty) {
   //   );
   // }
 
+  //   void _showTextThemePicker(OverlayTextItem sel) {
+  //   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
+  //   final themes = [
+  //     {
+  //       'name': 'Default',
+  //       'color': Colors.white,
+  //       'bg': Colors.transparent,
+  //       'bold': false,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Bold White',
+  //       'color': Colors.white,
+  //       'bg': Colors.transparent,
+  //       'bold': true,
+  //       'shadow': true,
+  //     },
+  //     {
+  //       'name': 'Dark',
+  //       'color': Colors.black,
+  //       'bg': Colors.white.withOpacity(0.8),
+  //       'bold': false,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Gold',
+  //       'color': const Color(0xFFD4AF37),
+  //       'bg': Colors.transparent,
+  //       'bold': true,
+  //       'shadow': true,
+  //     },
+  //     {
+  //       'name': 'Neon',
+  //       'color': Colors.greenAccent,
+  //       'bg': Colors.black.withOpacity(0.5),
+  //       'bold': true,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Red Alert',
+  //       'color': Colors.white,
+  //       'bg': Colors.red.shade700,
+  //       'bold': true,
+  //       'shadow': false,
+  //     },
+  //   ];
 
-//   void _showTextThemePicker(OverlayTextItem sel) {
-//   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-  
-//   final themes = [
-//     {
-//       'name': 'Default',
-//       'color': Colors.white,
-//       'bg': Colors.transparent,
-//       'bold': false,
-//       'shadow': false,
-//     },
-//     {
-//       'name': 'Bold White',
-//       'color': Colors.white,
-//       'bg': Colors.transparent,
-//       'bold': true,
-//       'shadow': true,
-//     },
-//     {
-//       'name': 'Dark',
-//       'color': Colors.black,
-//       'bg': Colors.white.withOpacity(0.8),
-//       'bold': false,
-//       'shadow': false,
-//     },
-//     {
-//       'name': 'Gold',
-//       'color': const Color(0xFFD4AF37),
-//       'bg': Colors.transparent,
-//       'bold': true,
-//       'shadow': true,
-//     },
-//     {
-//       'name': 'Neon',
-//       'color': Colors.greenAccent,
-//       'bg': Colors.black.withOpacity(0.5),
-//       'bold': true,
-//       'shadow': false,
-//     },
-//     {
-//       'name': 'Red Alert',
-//       'color': Colors.white,
-//       'bg': Colors.red.shade700,
-//       'bold': true,
-//       'shadow': false,
-//     },
-//   ];
+  //   showModalBottomSheet(
+  //     context: context,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (_) => Container(
+  //       decoration: BoxDecoration(
+  //         color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+  //       ),
+  //       padding: const EdgeInsets.all(16),
+  //       child: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           // Drag handle
+  //           Center(
+  //             child: Container(
+  //               width: 40,
+  //               height: 4,
+  //               decoration: BoxDecoration(
+  //                 color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+  //                 borderRadius: BorderRadius.circular(2),
+  //               ),
+  //             ),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           Text(
+  //             'Text Theme',
+  //             style: TextStyle(
+  //               fontWeight: FontWeight.bold,
+  //               fontSize: 15,
+  //               color: isDarkMode ? Colors.white : Colors.black87,
+  //             ),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           Wrap(
+  //             spacing: 10,
+  //             runSpacing: 10,
+  //             children: themes.map((t) {
+  //               final textColor = t['color'] as Color;
+  //               final bgColor = t['bg'] as Color;
+  //               final isBold = t['bold'] as bool;
+  //               final isTransparentBg = bgColor == Colors.transparent;
 
-//   showModalBottomSheet(
-//     context: context,
-//     backgroundColor: Colors.transparent,
-//     builder: (_) => Container(
-//       decoration: BoxDecoration(
-//         color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-//         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-//       ),
-//       padding: const EdgeInsets.all(16),
-//       child: Column(
-//         mainAxisSize: MainAxisSize.min,
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           // Drag handle
-//           Center(
-//             child: Container(
-//               width: 40,
-//               height: 4,
-//               decoration: BoxDecoration(
-//                 color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
-//                 borderRadius: BorderRadius.circular(2),
-//               ),
-//             ),
-//           ),
-//           const SizedBox(height: 12),
-//           Text(
-//             'Text Theme',
-//             style: TextStyle(
-//               fontWeight: FontWeight.bold,
-//               fontSize: 15,
-//               color: isDarkMode ? Colors.white : Colors.black87,
-//             ),
-//           ),
-//           const SizedBox(height: 12),
-//           Wrap(
-//             spacing: 10,
-//             runSpacing: 10,
-//             children: themes.map((t) {
-//               final textColor = t['color'] as Color;
-//               final bgColor = t['bg'] as Color;
-//               final isBold = t['bold'] as bool;
-//               final isTransparentBg = bgColor == Colors.transparent;
+  //               // Determine chip background for visibility
+  //               Color chipBg;
+  //               if (isTransparentBg) {
+  //                 // For transparent bg themes, use a contrasting preview background
+  //                 chipBg = isDarkMode ? const Color(0xFF374151) : Colors.grey.shade200;
+  //               } else {
+  //                 chipBg = bgColor;
+  //               }
 
-//               // Determine chip background for visibility
-//               Color chipBg;
-//               if (isTransparentBg) {
-//                 // For transparent bg themes, use a contrasting preview background
-//                 chipBg = isDarkMode ? const Color(0xFF374151) : Colors.grey.shade200;
-//               } else {
-//                 chipBg = bgColor;
-//               }
+  //               // Determine text color for readability on chip
+  //               Color chipTextColor;
+  //               if (isTransparentBg) {
+  //                 // White text themes need dark bg preview
+  //                 chipTextColor = textColor;
+  //               } else {
+  //                 chipTextColor = textColor;
+  //               }
 
-//               // Determine text color for readability on chip
-//               Color chipTextColor;
-//               if (isTransparentBg) {
-//                 // White text themes need dark bg preview
-//                 chipTextColor = textColor;
-//               } else {
-//                 chipTextColor = textColor;
-//               }
+  //               return GestureDetector(
+  //                 onTap: () {
+  //                   setState(() {
+  //                     final i = _texts.indexWhere((x) => x.id == sel.id);
+  //                     if (i != -1)
+  //                       _texts[i] = _texts[i].copyWith(
+  //                         color: textColor,
+  //                         backgroundColor: bgColor,
+  //                         isBold: isBold,
+  //                         hasShadow: t['shadow'] as bool,
+  //                       );
+  //                   });
+  //                   Navigator.pop(context);
+  //                 },
+  //                 child: Container(
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 14,
+  //                     vertical: 10,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     color: chipBg,
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     border: Border.all(
+  //                       color: isDarkMode
+  //                           ? Colors.grey[600]!
+  //                           : Colors.grey.shade300,
+  //                       width: 1.5,
+  //                     ),
+  //                     boxShadow: [
+  //                       BoxShadow(
+  //                         color: Colors.black.withOpacity(0.1),
+  //                         blurRadius: 4,
+  //                         offset: const Offset(0, 2),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   child: Text(
+  //                     t['name'] as String,
+  //                     style: TextStyle(
+  //                       color: chipTextColor,
+  //                       fontWeight: isBold
+  //                           ? FontWeight.bold
+  //                           : FontWeight.normal,
+  //                       shadows: (t['shadow'] as bool)
+  //                           ? [
+  //                               const Shadow(
+  //                                 color: Colors.black54,
+  //                                 offset: Offset(1, 1),
+  //                                 blurRadius: 2,
+  //                               ),
+  //                             ]
+  //                           : null,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               );
+  //             }).toList(),
+  //           ),
+  //           const SizedBox(height: 8),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
-//               return GestureDetector(
-//                 onTap: () {
-//                   setState(() {
-//                     final i = _texts.indexWhere((x) => x.id == sel.id);
-//                     if (i != -1)
-//                       _texts[i] = _texts[i].copyWith(
-//                         color: textColor,
-//                         backgroundColor: bgColor,
-//                         isBold: isBold,
-//                         hasShadow: t['shadow'] as bool,
-//                       );
-//                   });
-//                   Navigator.pop(context);
-//                 },
-//                 child: Container(
-//                   padding: const EdgeInsets.symmetric(
-//                     horizontal: 14,
-//                     vertical: 10,
-//                   ),
-//                   decoration: BoxDecoration(
-//                     color: chipBg,
-//                     borderRadius: BorderRadius.circular(8),
-//                     border: Border.all(
-//                       color: isDarkMode
-//                           ? Colors.grey[600]!
-//                           : Colors.grey.shade300,
-//                       width: 1.5,
-//                     ),
-//                     boxShadow: [
-//                       BoxShadow(
-//                         color: Colors.black.withOpacity(0.1),
-//                         blurRadius: 4,
-//                         offset: const Offset(0, 2),
-//                       ),
-//                     ],
-//                   ),
-//                   child: Text(
-//                     t['name'] as String,
-//                     style: TextStyle(
-//                       color: chipTextColor,
-//                       fontWeight: isBold
-//                           ? FontWeight.bold
-//                           : FontWeight.normal,
-//                       shadows: (t['shadow'] as bool)
-//                           ? [
-//                               const Shadow(
-//                                 color: Colors.black54,
-//                                 offset: Offset(1, 1),
-//                                 blurRadius: 2,
-//                               ),
-//                             ]
-//                           : null,
-//                     ),
-//                   ),
-//                 ),
-//               );
-//             }).toList(),
-//           ),
-//           const SizedBox(height: 8),
-//         ],
-//       ),
-//     ),
-//   );
-// }
+  void _showTextThemePicker(OverlayTextItem sel) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
+    final themes = [
+      {
+        'name': 'Default',
+        'color': isDarkMode
+            ? Colors.white
+            : Colors.black87, // Dark text for light mode
+        'bg': Colors.transparent,
+        'bold': false,
+        'shadow': false,
+      },
+      {
+        'name': 'Bold White',
+        'color': isDarkMode
+            ? Colors.white
+            : Colors.black87, // Dark text for light mode
+        'bg': Colors.transparent,
+        'bold': true,
+        'shadow': true,
+      },
+      {
+        'name': 'Dark',
+        'color': Colors.black,
+        'bg': Colors.white.withOpacity(0.8),
+        'bold': false,
+        'shadow': false,
+      },
+      {
+        'name': 'Gold',
+        'color': const Color(0xFFD4AF37),
+        'bg': Colors.transparent,
+        'bold': true,
+        'shadow': true,
+      },
+      {
+        'name': 'Neon',
+        'color': Colors.greenAccent,
+        'bg': Colors.black.withOpacity(0.5),
+        'bold': true,
+        'shadow': false,
+      },
+      {
+        'name': 'Red Alert',
+        'color': Colors.white,
+        'bg': Colors.red.shade700,
+        'bold': true,
+        'shadow': false,
+      },
+    ];
 
-
-
-
-
-
-void _showTextThemePicker(OverlayTextItem sel) {
-  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-  
-  final themes = [
-    {
-      'name': 'Default',
-      'color': isDarkMode ? Colors.white : Colors.black87,  // Dark text for light mode
-      'bg': Colors.transparent,
-      'bold': false,
-      'shadow': false,
-    },
-    {
-      'name': 'Bold White',
-      'color': isDarkMode ? Colors.white : Colors.black87,  // Dark text for light mode
-      'bg': Colors.transparent,
-      'bold': true,
-      'shadow': true,
-    },
-    {
-      'name': 'Dark',
-      'color': Colors.black,
-      'bg': Colors.white.withOpacity(0.8),
-      'bold': false,
-      'shadow': false,
-    },
-    {
-      'name': 'Gold',
-      'color': const Color(0xFFD4AF37),
-      'bg': Colors.transparent,
-      'bold': true,
-      'shadow': true,
-    },
-    {
-      'name': 'Neon',
-      'color': Colors.greenAccent,
-      'bg': Colors.black.withOpacity(0.5),
-      'bold': true,
-      'shadow': false,
-    },
-    {
-      'name': 'Red Alert',
-      'color': Colors.white,
-      'bg': Colors.red.shade700,
-      'bold': true,
-      'shadow': false,
-    },
-  ];
-
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.transparent,
-    builder: (_) => Container(
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Text Theme',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: isDarkMode ? Colors.white : Colors.black87,
+            const SizedBox(height: 12),
+            Text(
+              'Text Theme',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: themes.map((t) {
-              final textColor = t['color'] as Color;
-              final bgColor = t['bg'] as Color;
-              final isBold = t['bold'] as bool;
-              final isTransparentBg = bgColor == Colors.transparent;
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: themes.map((t) {
+                final textColor = t['color'] as Color;
+                final bgColor = t['bg'] as Color;
+                final isBold = t['bold'] as bool;
+                final isTransparentBg = bgColor == Colors.transparent;
 
-              // Determine chip background for visibility
-              Color chipBg;
-              if (isTransparentBg) {
-                // For transparent bg themes, use a contrasting preview background
-                chipBg = isDarkMode ? const Color(0xFF374151) : Colors.grey.shade200;
-              } else {
-                chipBg = bgColor;
-              }
+                // Determine chip background for visibility
+                Color chipBg;
+                if (isTransparentBg) {
+                  // For transparent bg themes, use a contrasting preview background
+                  chipBg = isDarkMode
+                      ? const Color(0xFF374151)
+                      : Colors.grey.shade200;
+                } else {
+                  chipBg = bgColor;
+                }
 
-              // Determine text color for readability on chip
-              Color chipTextColor;
-              if (isTransparentBg) {
-                chipTextColor = textColor;
-              } else {
-                chipTextColor = textColor;
-              }
+                // Determine text color for readability on chip
+                Color chipTextColor;
+                if (isTransparentBg) {
+                  chipTextColor = textColor;
+                } else {
+                  chipTextColor = textColor;
+                }
 
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    final i = _texts.indexWhere((x) => x.id == sel.id);
-                    if (i != -1)
-                      _texts[i] = _texts[i].copyWith(
-                        color: textColor,
-                        backgroundColor: bgColor,
-                        isBold: isBold,
-                        hasShadow: t['shadow'] as bool,
-                      );
-                  });
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: chipBg,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isDarkMode
-                          ? Colors.grey[600]!
-                          : Colors.grey.shade300,
-                      width: 1.5,
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      final i = _texts.indexWhere((x) => x.id == sel.id);
+                      if (i != -1)
+                        _texts[i] = _texts[i].copyWith(
+                          color: textColor,
+                          backgroundColor: bgColor,
+                          isBold: isBold,
+                          hasShadow: t['shadow'] as bool,
+                        );
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                    decoration: BoxDecoration(
+                      color: chipBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDarkMode
+                            ? Colors.grey[600]!
+                            : Colors.grey.shade300,
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  child: Text(
-                    t['name'] as String,
-                    style: TextStyle(
-                      color: chipTextColor,
-                      fontWeight: isBold
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      shadows: (t['shadow'] as bool)
-                          ? [
-                              const Shadow(
-                                color: Colors.black54,
-                                offset: Offset(1, 1),
-                                blurRadius: 2,
-                              ),
-                            ]
-                          : null,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      t['name'] as String,
+                      style: TextStyle(
+                        color: chipTextColor,
+                        fontWeight: isBold
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        shadows: (t['shadow'] as bool)
+                            ? [
+                                const Shadow(
+                                  color: Colors.black54,
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                ),
+                              ]
+                            : null,
+                      ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-        ],
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showFontPicker(OverlayTextItem sel) {
     showModalBottomSheet(
@@ -11267,800 +11770,786 @@ void _showTextThemePicker(OverlayTextItem sel) {
   //   );
   // }
 
+  //   void _showBgColorPicker(OverlayTextItem sel) {
+  //   final isDarkMode = _isDarkMode;
+  //   Color tempColor = sel.backgroundColor == Colors.transparent
+  //       ? Colors.white
+  //       : sel.backgroundColor;
 
+  //   double hue = 0.0;
+  //   double saturation = 1.0;
+  //   double brightness = 1.0;
 
+  //   // Quick color swatches — same as in _showColorPicker
+  //   final List<Color> quickColors = [
+  //     Colors.transparent,
+  //     Colors.white,
+  //     Colors.black,
+  //     Colors.red,
+  //     Colors.orange,
+  //     Colors.yellow,
+  //     Colors.green,
+  //     Colors.teal,
+  //     Colors.blue,
+  //     Colors.purple,
+  //     Colors.pink,
+  //     const Color(0xFFD4AF37),
+  //     Colors.brown,
+  //     Colors.grey,
+  //   ];
 
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (_) => StatefulBuilder(
+  //       builder: (ctx, setSheetState) {
+  //         return Container(
+  //           height: MediaQuery.of(ctx).size.height * 0.75,
+  //           decoration: BoxDecoration(
+  //             color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //             borderRadius: const BorderRadius.vertical(
+  //               top: Radius.circular(20),
+  //             ),
+  //           ),
+  //           child: Column(
+  //             children: [
+  //               // Drag handle
+  //               Padding(
+  //                 padding: const EdgeInsets.only(top: 12),
+  //                 child: Center(
+  //                   child: Container(
+  //                     width: 40,
+  //                     height: 4,
+  //                     decoration: BoxDecoration(
+  //                       color: isDarkMode
+  //                           ? Colors.grey[700]
+  //                           : Colors.grey.shade300,
+  //                       borderRadius: BorderRadius.circular(2),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ),
 
+  //               // Title
+  //               Padding(
+  //                 padding: const EdgeInsets.symmetric(
+  //                   horizontal: 20,
+  //                   vertical: 16,
+  //                 ),
+  //                 child: Row(
+  //                   children: [
+  //                     Icon(
+  //                       Icons.format_color_fill,
+  //                       size: 24,
+  //                       color: const Color(0xFFF5C518),
+  //                     ),
+  //                     const SizedBox(width: 10),
+  //                     Expanded(
+  //                       child: Text(
+  //                         'Choose Background Color',
+  //                         style: TextStyle(
+  //                           fontSize: 18,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: isDarkMode ? Colors.white : Colors.black87,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
 
-//   void _showBgColorPicker(OverlayTextItem sel) {
-//   final isDarkMode = _isDarkMode;
-//   Color tempColor = sel.backgroundColor == Colors.transparent
-//       ? Colors.white
-//       : sel.backgroundColor;
+  //               Expanded(
+  //                 child: SingleChildScrollView(
+  //                   padding: const EdgeInsets.symmetric(horizontal: 20),
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
 
-//   double hue = 0.0;
-//   double saturation = 1.0;
-//   double brightness = 1.0;
+  //                       // ── QUICK COLOR SWATCHES ROW ──
+  //                       Text(
+  //                         'Quick colors',
+  //                         style: TextStyle(
+  //                           fontSize: 13,
+  //                           fontWeight: FontWeight.w600,
+  //                           color: isDarkMode ? Colors.white70 : Colors.black87,
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 10),
+  //                       SizedBox(
+  //                         height: 44,
+  //                         child: ListView.separated(
+  //                           scrollDirection: Axis.horizontal,
+  //                           itemCount: quickColors.length,
+  //                           separatorBuilder: (_, __) =>
+  //                               const SizedBox(width: 10),
+  //                           itemBuilder: (_, i) {
+  //                             final c = quickColors[i];
+  //                             final isTransparent = c == Colors.transparent;
+  //                             final isSelected = isTransparent
+  //                                 ? tempColor == Colors.white &&
+  //                                     sel.backgroundColor == Colors.transparent
+  //                                 : tempColor == c;
+  //                             return GestureDetector(
+  //                               onTap: () {
+  //                                 if (isTransparent) {
+  //                                   // Apply transparent immediately
+  //                                   setState(() {
+  //                                     final idx = _texts.indexWhere(
+  //                                       (t) => t.id == sel.id,
+  //                                     );
+  //                                     if (idx != -1) {
+  //                                       _texts[idx] = _texts[idx].copyWith(
+  //                                         backgroundColor: Colors.transparent,
+  //                                       );
+  //                                     }
+  //                                   });
+  //                                   Navigator.pop(ctx);
+  //                                 } else {
+  //                                   setSheetState(() {
+  //                                     tempColor = c;
+  //                                     // Sync sliders to match chosen color
+  //                                     final hsv = HSVColor.fromColor(c);
+  //                                     hue = hsv.hue;
+  //                                     saturation = hsv.saturation;
+  //                                     brightness = hsv.value;
+  //                                   });
+  //                                 }
+  //                               },
+  //                               child: Container(
+  //                                 width: 36,
+  //                                 height: 36,
+  //                                 decoration: BoxDecoration(
+  //                                   color: isTransparent
+  //                                       ? Colors.white
+  //                                       : c,
+  //                                   shape: BoxShape.circle,
+  //                                   border: Border.all(
+  //                                     color: isSelected
+  //                                         ? const Color(0xFFF5C518)
+  //                                         : (isDarkMode
+  //                                               ? Colors.grey[600]!
+  //                                               : Colors.grey.shade400),
+  //                                     width: isSelected ? 3 : 1.5,
+  //                                   ),
+  //                                 ),
+  //                                 child: isTransparent
+  //                                     ? Center(
+  //                                         child: Text(
+  //                                           '∅',
+  //                                           style: TextStyle(
+  //                                             fontSize: 16,
+  //                                             color: isDarkMode
+  //                                                 ? Colors.white54
+  //                                                 : Colors.black45,
+  //                                           ),
+  //                                         ),
+  //                                       )
+  //                                     : null,
+  //                               ),
+  //                             );
+  //                           },
+  //                         ),
+  //                       ),
 
-//   // Quick color swatches — same as in _showColorPicker
-//   final List<Color> quickColors = [
-//     Colors.transparent,
-//     Colors.white,
-//     Colors.black,
-//     Colors.red,
-//     Colors.orange,
-//     Colors.yellow,
-//     Colors.green,
-//     Colors.teal,
-//     Colors.blue,
-//     Colors.purple,
-//     Colors.pink,
-//     const Color(0xFFD4AF37),
-//     Colors.brown,
-//     Colors.grey,
-//   ];
+  //                       const SizedBox(height: 20),
 
-//   showModalBottomSheet(
-//     context: context,
-//     isScrollControlled: true,
-//     backgroundColor: Colors.transparent,
-//     builder: (_) => StatefulBuilder(
-//       builder: (ctx, setSheetState) {
-//         return Container(
-//           height: MediaQuery.of(ctx).size.height * 0.75,
-//           decoration: BoxDecoration(
-//             color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-//             borderRadius: const BorderRadius.vertical(
-//               top: Radius.circular(20),
-//             ),
-//           ),
-//           child: Column(
-//             children: [
-//               // Drag handle
-//               Padding(
-//                 padding: const EdgeInsets.only(top: 12),
-//                 child: Center(
-//                   child: Container(
-//                     width: 40,
-//                     height: 4,
-//                     decoration: BoxDecoration(
-//                       color: isDarkMode
-//                           ? Colors.grey[700]
-//                           : Colors.grey.shade300,
-//                       borderRadius: BorderRadius.circular(2),
-//                     ),
-//                   ),
-//                 ),
-//               ),
+  //                       // Divider with OR
+  //                       Row(
+  //                         children: [
+  //                           Expanded(
+  //                             child: Divider(
+  //                               color: isDarkMode
+  //                                   ? Colors.white24
+  //                                   : Colors.grey.shade300,
+  //                               thickness: 1,
+  //                             ),
+  //                           ),
+  //                           Padding(
+  //                             padding: const EdgeInsets.symmetric(
+  //                               horizontal: 12,
+  //                             ),
+  //                             child: Text(
+  //                               'OR CUSTOM',
+  //                               style: TextStyle(
+  //                                 fontSize: 11,
+  //                                 fontWeight: FontWeight.w600,
+  //                                 letterSpacing: 0.5,
+  //                                 color: isDarkMode
+  //                                     ? Colors.white54
+  //                                     : Colors.black45,
+  //                               ),
+  //                             ),
+  //                           ),
+  //                           Expanded(
+  //                             child: Divider(
+  //                               color: isDarkMode
+  //                                   ? Colors.white24
+  //                                   : Colors.grey.shade300,
+  //                               thickness: 1,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       const SizedBox(height: 20),
 
-//               // Title
-//               Padding(
-//                 padding: const EdgeInsets.symmetric(
-//                   horizontal: 20,
-//                   vertical: 16,
-//                 ),
-//                 child: Row(
-//                   children: [
-//                     Icon(
-//                       Icons.format_color_fill,
-//                       size: 24,
-//                       color: const Color(0xFFF5C518),
-//                     ),
-//                     const SizedBox(width: 10),
-//                     Expanded(
-//                       child: Text(
-//                         'Choose Background Color',
-//                         style: TextStyle(
-//                           fontSize: 18,
-//                           fontWeight: FontWeight.bold,
-//                           color: isDarkMode ? Colors.white : Colors.black87,
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
+  //                       // Color Preview
+  //                       Container(
+  //                         width: double.infinity,
+  //                         padding: const EdgeInsets.all(16),
+  //                         decoration: BoxDecoration(
+  //                           color: tempColor,
+  //                           borderRadius: BorderRadius.circular(12),
+  //                           border: Border.all(
+  //                             color: isDarkMode
+  //                                 ? Colors.white24
+  //                                 : Colors.grey.shade300,
+  //                             width: 2,
+  //                           ),
+  //                         ),
+  //                         child: Column(
+  //                           children: [
+  //                             Text(
+  //                               'Selected Color',
+  //                               style: TextStyle(
+  //                                 fontSize: 14,
+  //                                 fontWeight: FontWeight.w500,
+  //                                 color: tempColor.computeLuminance() > 0.5
+  //                                     ? Colors.black87
+  //                                     : Colors.white,
+  //                               ),
+  //                             ),
+  //                             const SizedBox(height: 6),
+  //                             Text(
+  //                               'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
+  //                               style: TextStyle(
+  //                                 fontSize: 12,
+  //                                 color: tempColor.computeLuminance() > 0.5
+  //                                     ? Colors.black54
+  //                                     : Colors.white70,
+  //                               ),
+  //                             ),
+  //                             Text(
+  //                               '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+  //                               style: TextStyle(
+  //                                 fontSize: 11,
+  //                                 color: tempColor.computeLuminance() > 0.5
+  //                                     ? Colors.black54
+  //                                     : Colors.white70,
+  //                               ),
+  //                             ),
+  //                           ],
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 24),
 
-//               Expanded(
-//                 child: SingleChildScrollView(
-//                   padding: const EdgeInsets.symmetric(horizontal: 20),
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
+  //                       // Hue Picker
+  //                       Text(
+  //                         'Hue',
+  //                         style: TextStyle(
+  //                           fontSize: 13,
+  //                           fontWeight: FontWeight.w500,
+  //                           color: isDarkMode ? Colors.white70 : Colors.black87,
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 8),
+  //                       GestureDetector(
+  //                         onPanUpdate: (details) {
+  //                           final width =
+  //                               MediaQuery.of(ctx).size.width - 40;
+  //                           final newHue =
+  //                               (details.localPosition.dx / width)
+  //                                   .clamp(0.0, 1.0) *
+  //                               360;
+  //                           hue = newHue;
+  //                           tempColor = HSVColor.fromAHSV(
+  //                             1.0,
+  //                             hue,
+  //                             saturation,
+  //                             brightness,
+  //                           ).toColor();
+  //                           setSheetState(() {});
+  //                         },
+  //                         child: Container(
+  //                           height: 44,
+  //                           width: double.infinity,
+  //                           decoration: BoxDecoration(
+  //                             gradient: const LinearGradient(
+  //                               colors: [
+  //                                 Color(0xFFFF0000),
+  //                                 Color(0xFFFFA500),
+  //                                 Color(0xFFFFFF00),
+  //                                 Color(0xFF00FF00),
+  //                                 Color(0xFF00FFFF),
+  //                                 Color(0xFF0000FF),
+  //                                 Color(0xFFFF00FF),
+  //                                 Color(0xFFFF0000),
+  //                               ],
+  //                             ),
+  //                             borderRadius: BorderRadius.circular(10),
+  //                           ),
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 16),
 
-//                       // ── QUICK COLOR SWATCHES ROW ──
-//                       Text(
-//                         'Quick colors',
-//                         style: TextStyle(
-//                           fontSize: 13,
-//                           fontWeight: FontWeight.w600,
-//                           color: isDarkMode ? Colors.white70 : Colors.black87,
-//                         ),
-//                       ),
-//                       const SizedBox(height: 10),
-//                       SizedBox(
-//                         height: 44,
-//                         child: ListView.separated(
-//                           scrollDirection: Axis.horizontal,
-//                           itemCount: quickColors.length,
-//                           separatorBuilder: (_, __) =>
-//                               const SizedBox(width: 10),
-//                           itemBuilder: (_, i) {
-//                             final c = quickColors[i];
-//                             final isTransparent = c == Colors.transparent;
-//                             final isSelected = isTransparent
-//                                 ? tempColor == Colors.white &&
-//                                     sel.backgroundColor == Colors.transparent
-//                                 : tempColor == c;
-//                             return GestureDetector(
-//                               onTap: () {
-//                                 if (isTransparent) {
-//                                   // Apply transparent immediately
-//                                   setState(() {
-//                                     final idx = _texts.indexWhere(
-//                                       (t) => t.id == sel.id,
-//                                     );
-//                                     if (idx != -1) {
-//                                       _texts[idx] = _texts[idx].copyWith(
-//                                         backgroundColor: Colors.transparent,
-//                                       );
-//                                     }
-//                                   });
-//                                   Navigator.pop(ctx);
-//                                 } else {
-//                                   setSheetState(() {
-//                                     tempColor = c;
-//                                     // Sync sliders to match chosen color
-//                                     final hsv = HSVColor.fromColor(c);
-//                                     hue = hsv.hue;
-//                                     saturation = hsv.saturation;
-//                                     brightness = hsv.value;
-//                                   });
-//                                 }
-//                               },
-//                               child: Container(
-//                                 width: 36,
-//                                 height: 36,
-//                                 decoration: BoxDecoration(
-//                                   color: isTransparent
-//                                       ? Colors.white
-//                                       : c,
-//                                   shape: BoxShape.circle,
-//                                   border: Border.all(
-//                                     color: isSelected
-//                                         ? const Color(0xFFF5C518)
-//                                         : (isDarkMode
-//                                               ? Colors.grey[600]!
-//                                               : Colors.grey.shade400),
-//                                     width: isSelected ? 3 : 1.5,
-//                                   ),
-//                                 ),
-//                                 child: isTransparent
-//                                     ? Center(
-//                                         child: Text(
-//                                           '∅',
-//                                           style: TextStyle(
-//                                             fontSize: 16,
-//                                             color: isDarkMode
-//                                                 ? Colors.white54
-//                                                 : Colors.black45,
-//                                           ),
-//                                         ),
-//                                       )
-//                                     : null,
-//                               ),
-//                             );
-//                           },
-//                         ),
-//                       ),
+  //                       // Saturation Slider
+  //                       Text(
+  //                         'Saturation',
+  //                         style: TextStyle(
+  //                           fontSize: 13,
+  //                           fontWeight: FontWeight.w500,
+  //                           color: isDarkMode ? Colors.white70 : Colors.black87,
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 8),
+  //                       Slider(
+  //                         value: saturation,
+  //                         onChanged: (value) {
+  //                           saturation = value;
+  //                           tempColor = HSVColor.fromAHSV(
+  //                             1.0,
+  //                             hue,
+  //                             saturation,
+  //                             brightness,
+  //                           ).toColor();
+  //                           setSheetState(() {});
+  //                         },
+  //                         activeColor: const Color(0xFFF5C518),
+  //                         inactiveColor: isDarkMode
+  //                             ? Colors.grey[700]
+  //                             : Colors.grey[300],
+  //                         min: 0,
+  //                         max: 1,
+  //                       ),
+  //                       const SizedBox(height: 8),
 
-//                       const SizedBox(height: 20),
+  //                       // Brightness Slider
+  //                       Text(
+  //                         'Brightness',
+  //                         style: TextStyle(
+  //                           fontSize: 13,
+  //                           fontWeight: FontWeight.w500,
+  //                           color: isDarkMode ? Colors.white70 : Colors.black87,
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 8),
+  //                       Slider(
+  //                         value: brightness,
+  //                         onChanged: (value) {
+  //                           brightness = value;
+  //                           tempColor = HSVColor.fromAHSV(
+  //                             1.0,
+  //                             hue,
+  //                             saturation,
+  //                             brightness,
+  //                           ).toColor();
+  //                           setSheetState(() {});
+  //                         },
+  //                         activeColor: const Color(0xFFF5C518),
+  //                         inactiveColor: isDarkMode
+  //                             ? Colors.grey[700]
+  //                             : Colors.grey[300],
+  //                         min: 0,
+  //                         max: 1,
+  //                       ),
+  //                       const SizedBox(height: 24),
 
-//                       // Divider with OR
-//                       Row(
-//                         children: [
-//                           Expanded(
-//                             child: Divider(
-//                               color: isDarkMode
-//                                   ? Colors.white24
-//                                   : Colors.grey.shade300,
-//                               thickness: 1,
-//                             ),
-//                           ),
-//                           Padding(
-//                             padding: const EdgeInsets.symmetric(
-//                               horizontal: 12,
-//                             ),
-//                             child: Text(
-//                               'OR CUSTOM',
-//                               style: TextStyle(
-//                                 fontSize: 11,
-//                                 fontWeight: FontWeight.w600,
-//                                 letterSpacing: 0.5,
-//                                 color: isDarkMode
-//                                     ? Colors.white54
-//                                     : Colors.black45,
-//                               ),
-//                             ),
-//                           ),
-//                           Expanded(
-//                             child: Divider(
-//                               color: isDarkMode
-//                                   ? Colors.white24
-//                                   : Colors.grey.shade300,
-//                               thickness: 1,
-//                             ),
-//                           ),
-//                         ],
-//                       ),
-//                       const SizedBox(height: 20),
+  //                       // Action Buttons
+  //                       Row(
+  //                         children: [
+  //                           Expanded(
+  //                             child: OutlinedButton(
+  //                               onPressed: () => Navigator.pop(ctx),
+  //                               style: OutlinedButton.styleFrom(
+  //                                 foregroundColor: isDarkMode
+  //                                     ? Colors.white70
+  //                                     : Colors.black87,
+  //                                 side: BorderSide(
+  //                                   color: isDarkMode
+  //                                       ? Colors.white38
+  //                                       : Colors.grey.shade400,
+  //                                 ),
+  //                                 padding: const EdgeInsets.symmetric(
+  //                                   vertical: 14,
+  //                                 ),
+  //                                 shape: RoundedRectangleBorder(
+  //                                   borderRadius: BorderRadius.circular(10),
+  //                                 ),
+  //                               ),
+  //                               child: const Text('Cancel'),
+  //                             ),
+  //                           ),
+  //                           const SizedBox(width: 12),
+  //                           Expanded(
+  //                             child: ElevatedButton(
+  //                               onPressed: () {
+  //                                 setState(() {
+  //                                   final idx = _texts.indexWhere(
+  //                                     (t) => t.id == sel.id,
+  //                                   );
+  //                                   if (idx != -1) {
+  //                                     _texts[idx] = _texts[idx].copyWith(
+  //                                       backgroundColor: tempColor,
+  //                                     );
+  //                                   }
+  //                                 });
+  //                                 Navigator.pop(ctx);
+  //                               },
+  //                               style: ElevatedButton.styleFrom(
+  //                                 backgroundColor: const Color(0xFFF5C518),
+  //                                 foregroundColor: Colors.black87,
+  //                                 padding: const EdgeInsets.symmetric(
+  //                                   vertical: 14,
+  //                                 ),
+  //                                 shape: RoundedRectangleBorder(
+  //                                   borderRadius: BorderRadius.circular(10),
+  //                                 ),
+  //                               ),
+  //                               child: const Text(
+  //                                 'Apply',
+  //                                 style: TextStyle(fontWeight: FontWeight.bold),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       const SizedBox(height: 20),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
 
-//                       // Color Preview
-//                       Container(
-//                         width: double.infinity,
-//                         padding: const EdgeInsets.all(16),
-//                         decoration: BoxDecoration(
-//                           color: tempColor,
-//                           borderRadius: BorderRadius.circular(12),
-//                           border: Border.all(
-//                             color: isDarkMode
-//                                 ? Colors.white24
-//                                 : Colors.grey.shade300,
-//                             width: 2,
-//                           ),
-//                         ),
-//                         child: Column(
-//                           children: [
-//                             Text(
-//                               'Selected Color',
-//                               style: TextStyle(
-//                                 fontSize: 14,
-//                                 fontWeight: FontWeight.w500,
-//                                 color: tempColor.computeLuminance() > 0.5
-//                                     ? Colors.black87
-//                                     : Colors.white,
-//                               ),
-//                             ),
-//                             const SizedBox(height: 6),
-//                             Text(
-//                               'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
-//                               style: TextStyle(
-//                                 fontSize: 12,
-//                                 color: tempColor.computeLuminance() > 0.5
-//                                     ? Colors.black54
-//                                     : Colors.white70,
-//                               ),
-//                             ),
-//                             Text(
-//                               '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
-//                               style: TextStyle(
-//                                 fontSize: 11,
-//                                 color: tempColor.computeLuminance() > 0.5
-//                                     ? Colors.black54
-//                                     : Colors.white70,
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ),
-//                       const SizedBox(height: 24),
+  void _showBgColorPicker(OverlayTextItem sel) {
+    final isDarkMode = _isDarkMode;
+    Color tempColor = sel.backgroundColor == Colors.transparent
+        ? Colors.white
+        : sel.backgroundColor;
 
-//                       // Hue Picker
-//                       Text(
-//                         'Hue',
-//                         style: TextStyle(
-//                           fontSize: 13,
-//                           fontWeight: FontWeight.w500,
-//                           color: isDarkMode ? Colors.white70 : Colors.black87,
-//                         ),
-//                       ),
-//                       const SizedBox(height: 8),
-//                       GestureDetector(
-//                         onPanUpdate: (details) {
-//                           final width =
-//                               MediaQuery.of(ctx).size.width - 40;
-//                           final newHue =
-//                               (details.localPosition.dx / width)
-//                                   .clamp(0.0, 1.0) *
-//                               360;
-//                           hue = newHue;
-//                           tempColor = HSVColor.fromAHSV(
-//                             1.0,
-//                             hue,
-//                             saturation,
-//                             brightness,
-//                           ).toColor();
-//                           setSheetState(() {});
-//                         },
-//                         child: Container(
-//                           height: 44,
-//                           width: double.infinity,
-//                           decoration: BoxDecoration(
-//                             gradient: const LinearGradient(
-//                               colors: [
-//                                 Color(0xFFFF0000),
-//                                 Color(0xFFFFA500),
-//                                 Color(0xFFFFFF00),
-//                                 Color(0xFF00FF00),
-//                                 Color(0xFF00FFFF),
-//                                 Color(0xFF0000FF),
-//                                 Color(0xFFFF00FF),
-//                                 Color(0xFFFF0000),
-//                               ],
-//                             ),
-//                             borderRadius: BorderRadius.circular(10),
-//                           ),
-//                         ),
-//                       ),
-//                       const SizedBox(height: 16),
+    // Quick color swatches
+    final List<Color> quickColors = [
+      Colors.transparent,
+      Colors.white,
+      Colors.black,
+      Colors.red,
+      Colors.orange,
+      Colors.yellow,
+      Colors.green,
+      Colors.teal,
+      Colors.blue,
+      Colors.purple,
+      Colors.pink,
+      const Color(0xFFD4AF37),
+      Colors.brown,
+      Colors.grey,
+    ];
 
-//                       // Saturation Slider
-//                       Text(
-//                         'Saturation',
-//                         style: TextStyle(
-//                           fontSize: 13,
-//                           fontWeight: FontWeight.w500,
-//                           color: isDarkMode ? Colors.white70 : Colors.black87,
-//                         ),
-//                       ),
-//                       const SizedBox(height: 8),
-//                       Slider(
-//                         value: saturation,
-//                         onChanged: (value) {
-//                           saturation = value;
-//                           tempColor = HSVColor.fromAHSV(
-//                             1.0,
-//                             hue,
-//                             saturation,
-//                             brightness,
-//                           ).toColor();
-//                           setSheetState(() {});
-//                         },
-//                         activeColor: const Color(0xFFF5C518),
-//                         inactiveColor: isDarkMode
-//                             ? Colors.grey[700]
-//                             : Colors.grey[300],
-//                         min: 0,
-//                         max: 1,
-//                       ),
-//                       const SizedBox(height: 8),
-
-//                       // Brightness Slider
-//                       Text(
-//                         'Brightness',
-//                         style: TextStyle(
-//                           fontSize: 13,
-//                           fontWeight: FontWeight.w500,
-//                           color: isDarkMode ? Colors.white70 : Colors.black87,
-//                         ),
-//                       ),
-//                       const SizedBox(height: 8),
-//                       Slider(
-//                         value: brightness,
-//                         onChanged: (value) {
-//                           brightness = value;
-//                           tempColor = HSVColor.fromAHSV(
-//                             1.0,
-//                             hue,
-//                             saturation,
-//                             brightness,
-//                           ).toColor();
-//                           setSheetState(() {});
-//                         },
-//                         activeColor: const Color(0xFFF5C518),
-//                         inactiveColor: isDarkMode
-//                             ? Colors.grey[700]
-//                             : Colors.grey[300],
-//                         min: 0,
-//                         max: 1,
-//                       ),
-//                       const SizedBox(height: 24),
-
-//                       // Action Buttons
-//                       Row(
-//                         children: [
-//                           Expanded(
-//                             child: OutlinedButton(
-//                               onPressed: () => Navigator.pop(ctx),
-//                               style: OutlinedButton.styleFrom(
-//                                 foregroundColor: isDarkMode
-//                                     ? Colors.white70
-//                                     : Colors.black87,
-//                                 side: BorderSide(
-//                                   color: isDarkMode
-//                                       ? Colors.white38
-//                                       : Colors.grey.shade400,
-//                                 ),
-//                                 padding: const EdgeInsets.symmetric(
-//                                   vertical: 14,
-//                                 ),
-//                                 shape: RoundedRectangleBorder(
-//                                   borderRadius: BorderRadius.circular(10),
-//                                 ),
-//                               ),
-//                               child: const Text('Cancel'),
-//                             ),
-//                           ),
-//                           const SizedBox(width: 12),
-//                           Expanded(
-//                             child: ElevatedButton(
-//                               onPressed: () {
-//                                 setState(() {
-//                                   final idx = _texts.indexWhere(
-//                                     (t) => t.id == sel.id,
-//                                   );
-//                                   if (idx != -1) {
-//                                     _texts[idx] = _texts[idx].copyWith(
-//                                       backgroundColor: tempColor,
-//                                     );
-//                                   }
-//                                 });
-//                                 Navigator.pop(ctx);
-//                               },
-//                               style: ElevatedButton.styleFrom(
-//                                 backgroundColor: const Color(0xFFF5C518),
-//                                 foregroundColor: Colors.black87,
-//                                 padding: const EdgeInsets.symmetric(
-//                                   vertical: 14,
-//                                 ),
-//                                 shape: RoundedRectangleBorder(
-//                                   borderRadius: BorderRadius.circular(10),
-//                                 ),
-//                               ),
-//                               child: const Text(
-//                                 'Apply',
-//                                 style: TextStyle(fontWeight: FontWeight.bold),
-//                               ),
-//                             ),
-//                           ),
-//                         ],
-//                       ),
-//                       const SizedBox(height: 20),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         );
-//       },
-//     ),
-//   );
-// }
-
-
-
-
-
-
-void _showBgColorPicker(OverlayTextItem sel) {
-  final isDarkMode = _isDarkMode;
-  Color tempColor = sel.backgroundColor == Colors.transparent
-      ? Colors.white
-      : sel.backgroundColor;
-
-  // Quick color swatches
-  final List<Color> quickColors = [
-    Colors.transparent,
-    Colors.white,
-    Colors.black,
-    Colors.red,
-    Colors.orange,
-    Colors.yellow,
-    Colors.green,
-    Colors.teal,
-    Colors.blue,
-    Colors.purple,
-    Colors.pink,
-    const Color(0xFFD4AF37),
-    Colors.brown,
-    Colors.grey,
-  ];
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => StatefulBuilder(
-      builder: (ctx, setSheetState) {
-        return Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(16),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
             ),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Drag handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? Colors.grey[700]
-                        : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Title
-                Row(
-                  children: [
-                    Icon(
-                      Icons.format_color_fill,
-                      size: 24,
-                      color: const Color(0xFFF5C518),
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? Colors.grey[700]
+                          : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Choose Background Color',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.format_color_fill,
+                        size: 24,
+                        color: const Color(0xFFF5C518),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Choose Background Color',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Quick color swatches row
-                Text(
-                  'Quick colors',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white70 : Colors.black87,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 44,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: quickColors.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
-                    itemBuilder: (_, i) {
-                      final c = quickColors[i];
-                      final isTransparent = c == Colors.transparent;
-                      final isSelected = isTransparent
-                          ? sel.backgroundColor == Colors.transparent
-                          : tempColor == c;
-                      return GestureDetector(
-                        onTap: () {
-                          if (isTransparent) {
+                  const SizedBox(height: 20),
+
+                  // Quick color swatches row
+                  Text(
+                    'Quick colors',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 44,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: quickColors.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      itemBuilder: (_, i) {
+                        final c = quickColors[i];
+                        final isTransparent = c == Colors.transparent;
+                        final isSelected = isTransparent
+                            ? sel.backgroundColor == Colors.transparent
+                            : tempColor == c;
+                        return GestureDetector(
+                          onTap: () {
+                            if (isTransparent) {
+                              setState(() {
+                                final idx = _texts.indexWhere(
+                                  (t) => t.id == sel.id,
+                                );
+                                if (idx != -1) {
+                                  _texts[idx] = _texts[idx].copyWith(
+                                    backgroundColor: Colors.transparent,
+                                  );
+                                }
+                              });
+                              Navigator.pop(ctx);
+                            } else {
+                              setSheetState(() {
+                                tempColor = c;
+                              });
+                            }
+                          },
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: isTransparent ? Colors.white : c,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFFF5C518)
+                                    : (isDarkMode
+                                          ? Colors.grey[600]!
+                                          : Colors.grey.shade400),
+                                width: isSelected ? 3 : 1.5,
+                              ),
+                            ),
+                            child: isTransparent
+                                ? Center(
+                                    child: Text(
+                                      '∅',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: isDarkMode
+                                            ? Colors.white54
+                                            : Colors.black45,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Divider with OR
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: isDarkMode
+                              ? Colors.white24
+                              : Colors.grey.shade300,
+                          thickness: 1,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'OR CUSTOM',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                            color: isDarkMode ? Colors.white54 : Colors.black45,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: isDarkMode
+                              ? Colors.white24
+                              : Colors.grey.shade300,
+                          thickness: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Color picker widget (same as text color picker)
+                  SizedBox(
+                    height: MediaQuery.of(ctx).size.height * 0.35,
+                    child: ColorPicker(
+                      pickerColor: tempColor,
+                      onColorChanged: (color) {
+                        setSheetState(() {
+                          tempColor = color;
+                        });
+                      },
+                      showLabel: false,
+                      pickerAreaHeightPercent: 0.7,
+                      enableAlpha: false,
+                      displayThumbColor: true,
+                      paletteType: PaletteType.hsv,
+                      portraitOnly: true,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Color preview with RGB
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: tempColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDarkMode
+                            ? Colors.white24
+                            : Colors.grey.shade300,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Selected Color',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: tempColor.computeLuminance() > 0.5
+                                ? Colors.black87
+                                : Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: tempColor.computeLuminance() > 0.5
+                                ? Colors.black54
+                                : Colors.white70,
+                          ),
+                        ),
+                        Text(
+                          '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: tempColor.computeLuminance() > 0.5
+                                ? Colors.black54
+                                : Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isDarkMode
+                                ? Colors.white70
+                                : Colors.black87,
+                            side: BorderSide(
+                              color: isDarkMode
+                                  ? Colors.white38
+                                  : Colors.grey.shade400,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
                             setState(() {
                               final idx = _texts.indexWhere(
                                 (t) => t.id == sel.id,
                               );
                               if (idx != -1) {
                                 _texts[idx] = _texts[idx].copyWith(
-                                  backgroundColor: Colors.transparent,
+                                  backgroundColor: tempColor,
                                 );
                               }
                             });
                             Navigator.pop(ctx);
-                          } else {
-                            setSheetState(() {
-                              tempColor = c;
-                            });
-                          }
-                        },
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: isTransparent ? Colors.white : c,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFFF5C518)
-                                  : (isDarkMode
-                                        ? Colors.grey[600]!
-                                        : Colors.grey.shade400),
-                              width: isSelected ? 3 : 1.5,
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF5C518),
+                            foregroundColor: Colors.black87,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: isTransparent
-                              ? Center(
-                                  child: Text(
-                                    '∅',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: isDarkMode
-                                          ? Colors.white54
-                                          : Colors.black45,
-                                    ),
-                                  ),
-                                )
-                              : null,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Divider with OR
-                Row(
-                  children: [
-                    Expanded(
-                      child: Divider(
-                        color: isDarkMode
-                            ? Colors.white24
-                            : Colors.grey.shade300,
-                        thickness: 1,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                      ),
-                      child: Text(
-                        'OR CUSTOM',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                          color: isDarkMode
-                              ? Colors.white54
-                              : Colors.black45,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Divider(
-                        color: isDarkMode
-                            ? Colors.white24
-                            : Colors.grey.shade300,
-                        thickness: 1,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Color picker widget (same as text color picker)
-                SizedBox(
-                  height: MediaQuery.of(ctx).size.height * 0.35,
-                  child: ColorPicker(
-                    pickerColor: tempColor,
-                    onColorChanged: (color) {
-                      setSheetState(() {
-                        tempColor = color;
-                      });
-                    },
-                    showLabel: false,
-                    pickerAreaHeightPercent: 0.7,
-                    enableAlpha: false,
-                    displayThumbColor: true,
-                    paletteType: PaletteType.hsv,
-                    portraitOnly: true,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Color preview with RGB
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: tempColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDarkMode
-                          ? Colors.white24
-                          : Colors.grey.shade300,
-                      width: 2,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Selected Color',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: tempColor.computeLuminance() > 0.5
-                              ? Colors.black87
-                              : Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: tempColor.computeLuminance() > 0.5
-                              ? Colors.black54
-                              : Colors.white70,
-                        ),
-                      ),
-                      Text(
-                        '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: tempColor.computeLuminance() > 0.5
-                              ? Colors.black54
-                              : Colors.white70,
+                          child: const Text(
+                            'Apply',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
-
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: isDarkMode
-                              ? Colors.white70
-                              : Colors.black87,
-                          side: BorderSide(
-                            color: isDarkMode
-                                ? Colors.white38
-                                : Colors.grey.shade400,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            final idx = _texts.indexWhere(
-                              (t) => t.id == sel.id,
-                            );
-                            if (idx != -1) {
-                              _texts[idx] = _texts[idx].copyWith(
-                                backgroundColor: tempColor,
-                              );
-                            }
-                          });
-                          Navigator.pop(ctx);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF5C518),
-                          foregroundColor: Colors.black87,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Apply',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    ),
-  );
-}
+          );
+        },
+      ),
+    );
+  }
   // ── FRAMES PANEL ──────────────────────────
 
   Widget _buildFramesPanel() {
@@ -12833,456 +13322,454 @@ void _showBgColorPicker(OverlayTextItem sel) {
   //   );
   // }
 
-// previous one is the correct one this is code to remove the static music////
+  // previous one is the correct one this is code to remove the static music////
 
-
-
-
-
-
-Widget _buildAudioPanel() {
-  final isDarkMode = _isDarkMode;
-  return Container(
-    height: 220,
-    color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          child: Row(
-            children: [
-              Text(
-                'Audio',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: isDarkMode ? Colors.white : Colors.black87,
+  Widget _buildAudioPanel() {
+    final isDarkMode = _isDarkMode;
+    return Container(
+      height: 220,
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Row(
+              children: [
+                Text(
+                  'Audio',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
                 ),
-              ),
-              if (_isLoadingAudios) ...[
-                const SizedBox(width: 8),
-                const SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ],
-              if (_audioLoadError != null) ...[
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _fetchAdminAudios,
-                  child: const Icon(Icons.refresh, size: 16, color: Colors.orange),
-                ),
-              ],
-            ],
-          ),
-        ),
-        Expanded(
-          child: _isLoadingAudios
-              ? const Center(child: CircularProgressIndicator())
-              : ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  children: [
-                    // No Audio option
-                    GestureDetector(
-                      onTap: () {
-                        setState(() => _selectedAudio = null);
-                        _playAudio(null);
-                      },
-                      child: _audioChip('No Audio', _selectedAudio == null),
+                if (_isLoadingAudios) ...[
+                  const SizedBox(width: 8),
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ],
+                if (_audioLoadError != null) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _fetchAdminAudios,
+                    child: const Icon(
+                      Icons.refresh,
+                      size: 16,
+                      color: Colors.orange,
                     ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Expanded(
+            child: _isLoadingAudios
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    children: [
+                      // No Audio option
+                      GestureDetector(
+                        onTap: () {
+                          setState(() => _selectedAudio = null);
+                          _playAudio(null);
+                        },
+                        child: _audioChip('No Audio', _selectedAudio == null),
+                      ),
 
-                    // Upload user audio button
-                    GestureDetector(
-                      onTap: _pickUserAudio,
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 10),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5C518),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: const Color(0xFFF5C518),
-                            width: 1,
+                      // Upload user audio button
+                      GestureDetector(
+                        onTap: _pickUserAudio,
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
                           ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.upload_file, size: 14, color: Colors.black87),
-                            SizedBox(width: 4),
-                            Text(
-                              'Upload',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5C518),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFFF5C518),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.upload_file,
+                                size: 14,
                                 color: Colors.black87,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // User uploaded audio tracks
-                    ..._userAudioTracks.map(
-                      (userTrack) => Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              setState(() => _selectedAudio = userTrack.name);
-                              _playAudio(userTrack.name);
-                            },
-                            child: _audioChip(
-                              '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
-                              _selectedAudio == userTrack.name,
-                            ),
-                          ),
-                          Positioned(
-                            top: -4,
-                            right: -4,
-                            child: GestureDetector(
-                              onTap: () => _showDeleteAudioConfirmation(userTrack),
-                              child: Container(
-                                width: 18,
-                                height: 18,
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Admin audio tracks from API
-                    if (_audioLoadError != null)
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
+                              SizedBox(width: 4),
                               Text(
-                                'Could not load audios',
+                                'Upload',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isDarkMode ? Colors.white54 : Colors.black45,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: _fetchAdminAudios,
-                                child: Text(
-                                  'Tap to retry',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.blueAccent,
-                                    decoration: TextDecoration.underline,
-                                  ),
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      )
-                    else
-                      ..._adminAudioTracks.map(
-                        (adminTrack) => GestureDetector(
-                          onTap: () {
-                            setState(() => _selectedAudio = adminTrack.title);
-                            _playAudio(adminTrack.title);
-                          },
-                          child: _adminAudioChip(adminTrack, isDarkMode),
+                      ),
+
+                      // User uploaded audio tracks
+                      ..._userAudioTracks.map(
+                        (userTrack) => Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedAudio = userTrack.name);
+                                _playAudio(userTrack.name);
+                              },
+                              child: _audioChip(
+                                '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+                                _selectedAudio == userTrack.name,
+                              ),
+                            ),
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: GestureDetector(
+                                onTap: () =>
+                                    _showDeleteAudioConfirmation(userTrack),
+                                child: Container(
+                                  width: 18,
+                                  height: 18,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                  ],
-                ),
-        ),
-        if (_selectedAudio != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-            child: Row(
-              children: [
-                Icon(
-                  _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
-                  size: 16,
-                  color: _isAudioPlaying ? Colors.green : Colors.amber,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _isAudioPlaying
-                        ? 'Playing: $_selectedAudio'
-                        : 'Selected: $_selectedAudio',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: _isAudioPlaying
-                          ? Colors.green
-                          : (isDarkMode ? Colors.white54 : Colors.black54),
-                    ),
-                    overflow: TextOverflow.ellipsis,
+
+                      // Admin audio tracks from API
+                      if (_audioLoadError != null)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Could not load audios',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDarkMode
+                                        ? Colors.white54
+                                        : Colors.black45,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: _fetchAdminAudios,
+                                  child: Text(
+                                    'Tap to retry',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.blueAccent,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        ..._adminAudioTracks.map(
+                          (adminTrack) => GestureDetector(
+                            onTap: () {
+                              setState(() => _selectedAudio = adminTrack.title);
+                              _playAudio(adminTrack.title);
+                            },
+                            child: _adminAudioChip(adminTrack, isDarkMode),
+                          ),
+                        ),
+                    ],
                   ),
-                ),
-                if (_isAudioPlaying)
-                  IconButton(
-                    icon: const Icon(Icons.stop, size: 18),
-                    onPressed: () async {
-                      await _audioPlayer.stop();
-                      setState(() => _isAudioPlaying = false);
-                    },
-                  ),
-                const Icon(Icons.audiotrack, size: 18, color: Colors.green),
-              ],
-            ),
           ),
-      ],
-    ),
-  );
-}
-
-
-
-
-
-Widget _adminAudioChip(AdminAudioTrack track, bool isDarkMode) {
-  final isSelected = _selectedAudio == track.title;
-  final isPlaying = _isAudioPlaying && isSelected;
-  return Container(
-    margin: const EdgeInsets.only(right: 10),
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-    decoration: BoxDecoration(
-      color: isSelected
-          ? const Color(0xFFF5C518)
-          : (isDarkMode ? const Color(0xFF0F172A) : Colors.grey.shade100),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(
-        color: isPlaying
-            ? Colors.green
-            : (isSelected
-                  ? const Color(0xFFF5C518)
-                  : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300)),
-        width: isPlaying ? 2 : 1,
-      ),
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isPlaying ? Icons.play_arrow : Icons.music_note,
-              size: 12,
-              color: isPlaying
-                  ? Colors.green
-                  : (isSelected
-                        ? Colors.black87
-                        : (isDarkMode ? Colors.white54 : Colors.black45)),
+          if (_selectedAudio != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
+                    size: 16,
+                    color: _isAudioPlaying ? Colors.green : Colors.amber,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _isAudioPlaying
+                          ? 'Playing: $_selectedAudio'
+                          : 'Selected: $_selectedAudio',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _isAudioPlaying
+                            ? Colors.green
+                            : (isDarkMode ? Colors.white54 : Colors.black54),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (_isAudioPlaying)
+                    IconButton(
+                      icon: const Icon(Icons.stop, size: 18),
+                      onPressed: () async {
+                        await _audioPlayer.stop();
+                        setState(() => _isAudioPlaying = false);
+                      },
+                    ),
+                  const Icon(Icons.audiotrack, size: 18, color: Colors.green),
+                ],
+              ),
             ),
-            const SizedBox(width: 4),
-            Text(
-              track.title,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ],
+      ),
+    );
+  }
+
+  Widget _adminAudioChip(AdminAudioTrack track, bool isDarkMode) {
+    final isSelected = _selectedAudio == track.title;
+    final isPlaying = _isAudioPlaying && isSelected;
+    return Container(
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? const Color(0xFFF5C518)
+            : (isDarkMode ? const Color(0xFF0F172A) : Colors.grey.shade100),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isPlaying
+              ? Colors.green
+              : (isSelected
+                    ? const Color(0xFFF5C518)
+                    : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300)),
+          width: isPlaying ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isPlaying ? Icons.play_arrow : Icons.music_note,
+                size: 12,
                 color: isPlaying
                     ? Colors.green
                     : (isSelected
                           ? Colors.black87
-                          : (isDarkMode ? Colors.white70 : Colors.black87)),
+                          : (isDarkMode ? Colors.white54 : Colors.black45)),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                track.title,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isPlaying
+                      ? Colors.green
+                      : (isSelected
+                            ? Colors.black87
+                            : (isDarkMode ? Colors.white70 : Colors.black87)),
+                ),
+              ),
+            ],
+          ),
+          if (track.artist.isNotEmpty)
+            Text(
+              track.artist,
+              style: TextStyle(
+                fontSize: 9,
+                color: isSelected
+                    ? Colors.black54
+                    : (isDarkMode ? Colors.white38 : Colors.black38),
               ),
             ),
-          ],
-        ),
-        if (track.artist.isNotEmpty)
-          Text(
-            track.artist,
-            style: TextStyle(
-              fontSize: 9,
-              color: isSelected
-                  ? Colors.black54
-                  : (isDarkMode ? Colors.white38 : Colors.black38),
-            ),
-          ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
-// Widget _buildAudioPanel() {
-//   final isDarkMode = _isDarkMode;
-//   return Container(
-//     height: 220, // Increased height
-//     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-//     child: Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Padding(
-//           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-//           child: Text(
-//             'Audio',
-//             style: TextStyle(
-//               fontWeight: FontWeight.bold,
-//               fontSize: 13,
-//               color: isDarkMode ? Colors.white : Colors.black87,
-//             ),
-//           ),
-//         ),
-//         Expanded(
-//           child: ListView(
-//             scrollDirection: Axis.horizontal,
-//             padding: const EdgeInsets.symmetric(horizontal: 12),
-//             children: [
-//               // 1. No Audio option
-//               GestureDetector(
-//                 onTap: () {
-//                   setState(() => _selectedAudio = null);
-//                   _playAudio(null);
-//                 },
-//                 child: _audioChip('No Audio', _selectedAudio == null),
-//               ),
+  // Widget _buildAudioPanel() {
+  //   final isDarkMode = _isDarkMode;
+  //   return Container(
+  //     height: 220, // Increased height
+  //     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Padding(
+  //           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+  //           child: Text(
+  //             'Audio',
+  //             style: TextStyle(
+  //               fontWeight: FontWeight.bold,
+  //               fontSize: 13,
+  //               color: isDarkMode ? Colors.white : Colors.black87,
+  //             ),
+  //           ),
+  //         ),
+  //         Expanded(
+  //           child: ListView(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             children: [
+  //               // 1. No Audio option
+  //               GestureDetector(
+  //                 onTap: () {
+  //                   setState(() => _selectedAudio = null);
+  //                   _playAudio(null);
+  //                 },
+  //                 child: _audioChip('No Audio', _selectedAudio == null),
+  //               ),
 
-//               // 2. Upload button
-//               GestureDetector(
-//                 onTap: _pickUserAudio,
-//                 child: Container(
-//                   margin: const EdgeInsets.only(right: 10),
-//                   padding: const EdgeInsets.symmetric(
-//                     horizontal: 14,
-//                     vertical: 8,
-//                   ),
-//                   decoration: BoxDecoration(
-//                     color: const Color(0xFFF5C518),
-//                     borderRadius: BorderRadius.circular(20),
-//                     border: Border.all(
-//                       color: const Color(0xFFF5C518),
-//                       width: 1,
-//                     ),
-//                   ),
-//                   child: Row(
-//                     children: [
-//                       const Icon(
-//                         Icons.upload_file,
-//                         size: 14,
-//                         color: Colors.black87,
-//                       ),
-//                       const SizedBox(width: 4),
-//                       Text(
-//                         'Upload',
-//                         style: TextStyle(
-//                           fontSize: 11,
-//                           fontWeight: FontWeight.bold,
-//                           color: Colors.black87,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               ),
+  //               // 2. Upload button
+  //               GestureDetector(
+  //                 onTap: _pickUserAudio,
+  //                 child: Container(
+  //                   margin: const EdgeInsets.only(right: 10),
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 14,
+  //                     vertical: 8,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     color: const Color(0xFFF5C518),
+  //                     borderRadius: BorderRadius.circular(20),
+  //                     border: Border.all(
+  //                       color: const Color(0xFFF5C518),
+  //                       width: 1,
+  //                     ),
+  //                   ),
+  //                   child: Row(
+  //                     children: [
+  //                       const Icon(
+  //                         Icons.upload_file,
+  //                         size: 14,
+  //                         color: Colors.black87,
+  //                       ),
+  //                       const SizedBox(width: 4),
+  //                       Text(
+  //                         'Upload',
+  //                         style: TextStyle(
+  //                           fontSize: 11,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: Colors.black87,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
 
-//               // 3. User uploaded audio tracks only (no static tracks)
-//               ..._userAudioTracks.map(
-//                 (userTrack) => Stack(
-//                   children: [
-//                     GestureDetector(
-//                       onTap: () {
-//                         setState(() => _selectedAudio = userTrack.name);
-//                         _playAudio(userTrack.name);
-//                       },
-//                       child: _audioChip(
-//                         '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
-//                         _selectedAudio == userTrack.name,
-//                       ),
-//                     ),
-//                     // Delete button
-//                     Positioned(
-//                       top: -4,
-//                       right: -4,
-//                       child: GestureDetector(
-//                         onTap: () {
-//                           _showDeleteAudioConfirmation(userTrack);
-//                         },
-//                         child: Container(
-//                           width: 18,
-//                           height: 18,
-//                           decoration: const BoxDecoration(
-//                             color: Colors.red,
-//                             shape: BoxShape.circle,
-//                           ),
-//                           child: const Icon(
-//                             Icons.close,
-//                             size: 12,
-//                             color: Colors.white,
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//         if (_selectedAudio != null)
-//           Padding(
-//             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-//             child: Row(
-//               children: [
-//                 Icon(
-//                   _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
-//                   size: 16,
-//                   color: _isAudioPlaying ? Colors.green : Colors.amber,
-//                 ),
-//                 const SizedBox(width: 8),
-//                 Expanded(
-//                   child: Text(
-//                     _isAudioPlaying
-//                         ? 'Playing: $_selectedAudio'
-//                         : 'Selected: $_selectedAudio',
-//                     style: TextStyle(
-//                       fontSize: 11,
-//                       color: _isAudioPlaying
-//                           ? Colors.green
-//                           : (isDarkMode ? Colors.white54 : Colors.black54),
-//                     ),
-//                     overflow: TextOverflow.ellipsis,
-//                   ),
-//                 ),
-//                 if (_isAudioPlaying)
-//                   IconButton(
-//                     icon: const Icon(Icons.stop, size: 18),
-//                     onPressed: () async {
-//                       await _audioPlayer.stop();
-//                       setState(() => _isAudioPlaying = false);
-//                     },
-//                   ),
-//                 const Icon(Icons.audiotrack, size: 18, color: Colors.green),
-//               ],
-//             ),
-//           ),
-//       ],
-//     ),
-//   );
-// }
-
-
-
-
+  //               // 3. User uploaded audio tracks only (no static tracks)
+  //               ..._userAudioTracks.map(
+  //                 (userTrack) => Stack(
+  //                   children: [
+  //                     GestureDetector(
+  //                       onTap: () {
+  //                         setState(() => _selectedAudio = userTrack.name);
+  //                         _playAudio(userTrack.name);
+  //                       },
+  //                       child: _audioChip(
+  //                         '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+  //                         _selectedAudio == userTrack.name,
+  //                       ),
+  //                     ),
+  //                     // Delete button
+  //                     Positioned(
+  //                       top: -4,
+  //                       right: -4,
+  //                       child: GestureDetector(
+  //                         onTap: () {
+  //                           _showDeleteAudioConfirmation(userTrack);
+  //                         },
+  //                         child: Container(
+  //                           width: 18,
+  //                           height: 18,
+  //                           decoration: const BoxDecoration(
+  //                             color: Colors.red,
+  //                             shape: BoxShape.circle,
+  //                           ),
+  //                           child: const Icon(
+  //                             Icons.close,
+  //                             size: 12,
+  //                             color: Colors.white,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         if (_selectedAudio != null)
+  //           Padding(
+  //             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
+  //                   size: 16,
+  //                   color: _isAudioPlaying ? Colors.green : Colors.amber,
+  //                 ),
+  //                 const SizedBox(width: 8),
+  //                 Expanded(
+  //                   child: Text(
+  //                     _isAudioPlaying
+  //                         ? 'Playing: $_selectedAudio'
+  //                         : 'Selected: $_selectedAudio',
+  //                     style: TextStyle(
+  //                       fontSize: 11,
+  //                       color: _isAudioPlaying
+  //                           ? Colors.green
+  //                           : (isDarkMode ? Colors.white54 : Colors.black54),
+  //                     ),
+  //                     overflow: TextOverflow.ellipsis,
+  //                   ),
+  //                 ),
+  //                 if (_isAudioPlaying)
+  //                   IconButton(
+  //                     icon: const Icon(Icons.stop, size: 18),
+  //                     onPressed: () async {
+  //                       await _audioPlayer.stop();
+  //                       setState(() => _isAudioPlaying = false);
+  //                     },
+  //                   ),
+  //                 const Icon(Icons.audiotrack, size: 18, color: Colors.green),
+  //               ],
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   void _showDeleteAudioConfirmation(UserAudioTrack userTrack) {
     final isDarkMode = _isDarkMode;
@@ -16005,10 +16492,6 @@ class _EffectData {
   final String label;
   _EffectData(this.type, this.icon, this.label);
 }
-
-
-
-
 
 class AdminAudioTrack {
   final String id;

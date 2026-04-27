@@ -8,7 +8,7 @@
 
 
     <application
-        android:label="Editezy"
+        android:label="Edit Ezy"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

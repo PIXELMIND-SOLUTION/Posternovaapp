@@ -29,6 +29,29 @@ import 'package:file_picker/file_picker.dart';
 
 enum BottomTab { text, frames, audio, animation, brandInfo, sticker, fonts }
 
+class AdminAudioTrack {
+  final String id;
+  final String title;
+  final String artist;
+  final String audioUrl;
+
+  AdminAudioTrack({
+    required this.id,
+    required this.title,
+    required this.artist,
+    required this.audioUrl,
+  });
+
+  factory AdminAudioTrack.fromJson(Map<String, dynamic> json) {
+    return AdminAudioTrack(
+      id: json['_id'] ?? '',
+      title: json['title'] ?? 'Unknown',
+      artist: json['artist'] ?? '',
+      audioUrl: json['audioUrl'] ?? '',
+    );
+  }
+}
+
 enum AnimationType {
   none,
   fade,
@@ -735,6 +758,7 @@ class _TemplateCreateState extends State<TemplateCreate>
   void initState() {
     super.initState();
     _fetchProfileData();
+    _fetchAdminAudios(); // Add this line
 
     _brandElements = [
       BrandElement(
@@ -921,6 +945,43 @@ class _TemplateCreateState extends State<TemplateCreate>
     }
   }
 
+  List<AdminAudioTrack> _adminAudioTracks = [];
+  bool _isLoadingAudios = false;
+  String? _audioLoadError;
+
+  Future<void> _fetchAdminAudios() async {
+    setState(() {
+      _isLoadingAudios = true;
+      _audioLoadError = null;
+    });
+    try {
+      final response = await http.get(
+        Uri.parse('http://31.97.228.17:4061/api/admin/getallaudios'),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List audios = data['audios'] ?? [];
+        setState(() {
+          _adminAudioTracks = audios
+              .map((a) => AdminAudioTrack.fromJson(a))
+              .where((a) => a.audioUrl.isNotEmpty)
+              .toList();
+          _isLoadingAudios = false;
+        });
+      } else {
+        setState(() {
+          _audioLoadError = 'Failed to load audios';
+          _isLoadingAudios = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _audioLoadError = 'Network error: $e';
+        _isLoadingAudios = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _audioPlayer.dispose();
@@ -1007,6 +1068,64 @@ class _TemplateCreateState extends State<TemplateCreate>
   //   }
   // }
 
+  // Future<void> _playAudio(String? trackName) async {
+  //   try {
+  //     await _audioPlayer.stop();
+  //     await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+
+  //     if (trackName == null || trackName == 'No Audio') {
+  //       setState(() {
+  //         _isAudioPlaying = false;
+  //         _selectedAudio = null;
+  //         _selectedUserAudioPath = null;
+  //       });
+  //       return;
+  //     }
+
+  //     // Check if it's a user uploaded audio
+  //     final userTrack = _userAudioTracks.firstWhere(
+  //       (track) => track.name == trackName,
+  //       orElse: () =>
+  //           UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //     );
+
+  //     if (userTrack.filePath.isNotEmpty &&
+  //         await File(userTrack.filePath).exists()) {
+  //       // Play user uploaded audio
+  //       await _audioPlayer.play(
+  //         DeviceFileSource(userTrack.filePath),
+  //         volume: 1.0,
+  //       );
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = userTrack.filePath;
+  //       });
+  //     } else {
+  //       // Play static asset audio
+  //       final selectedTrack = _audioTracks.firstWhere(
+  //         (track) => track.name == trackName,
+  //       );
+  //       await _audioPlayer.play(
+  //         AssetSource(selectedTrack.assetPath),
+  //         volume: 1.0,
+  //       );
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = null;
+  //       });
+  //     }
+
+  //     _audioPlayer.onPlayerComplete.listen((event) {
+  //       if (mounted) setState(() => _isAudioPlaying = false);
+  //     });
+  //   } catch (e) {
+  //     setState(() => _isAudioPlaying = false);
+  //     _showErrorSnackBar('Could not play audio: $e');
+  //   }
+  // }
+
   Future<void> _playAudio(String? trackName) async {
     try {
       await _audioPlayer.stop();
@@ -1028,6 +1147,13 @@ class _TemplateCreateState extends State<TemplateCreate>
             UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
       );
 
+      // Check if it's an admin audio track
+      final adminTrack = _adminAudioTracks.firstWhere(
+        (track) => track.title == trackName,
+        orElse: () =>
+            AdminAudioTrack(id: '', title: '', artist: '', audioUrl: ''),
+      );
+
       if (userTrack.filePath.isNotEmpty &&
           await File(userTrack.filePath).exists()) {
         // Play user uploaded audio
@@ -1039,6 +1165,14 @@ class _TemplateCreateState extends State<TemplateCreate>
           _isAudioPlaying = true;
           _selectedAudio = trackName;
           _selectedUserAudioPath = userTrack.filePath;
+        });
+      } else if (adminTrack.audioUrl.isNotEmpty) {
+        // Play admin audio from URL
+        await _audioPlayer.play(UrlSource(adminTrack.audioUrl), volume: 1.0);
+        setState(() {
+          _isAudioPlaying = true;
+          _selectedAudio = trackName;
+          _selectedUserAudioPath = null;
         });
       } else {
         // Play static asset audio
@@ -1813,6 +1947,345 @@ class _TemplateCreateState extends State<TemplateCreate>
   //   }
   // }
 
+  // void _startDownload() async {
+  //   setState(() {
+  //     _isDownloading = true;
+  //     _downloadProgress = 0;
+  //   });
+
+  //   try {
+  //     if (_isAnimated) {
+  //       setState(() => _downloadProgress = 0.05);
+
+  //       // ── tempDir at top ──
+  //       final tempDir = await getTemporaryDirectory();
+
+  //       final framesDir = Directory(
+  //         '${tempDir.path}/poster_frames_${DateTime.now().millisecondsSinceEpoch}',
+  //       );
+  //       await framesDir.create(recursive: true);
+
+  //       // ── Get audio duration first ──
+  //       int videoDurationSec = 3;
+
+  //       if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //         try {
+  //           // Check for user audio first
+  //           final userTrack = _userAudioTracks.firstWhere(
+  //             (track) => track.name == _selectedAudio,
+  //             orElse: () =>
+  //                 UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //           );
+
+  //           Duration? duration;
+
+  //           if (userTrack.filePath.isNotEmpty &&
+  //               await File(userTrack.filePath).exists()) {
+  //             // User audio file
+  //             final probe = AudioPlayer();
+  //             await probe.setSourceDeviceFile(userTrack.filePath);
+  //             duration = await probe.getDuration();
+  //             await probe.dispose();
+  //             print('User audio duration: ${duration?.inSeconds} seconds');
+  //           } else {
+  //             // Static audio asset
+  //             const Map<String, String> audioAssets = {
+  //               'Upbeat Pop':
+  //                   'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+  //               'Calm Acoustic':
+  //                   'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+  //               'Corporate':
+  //                   'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+  //               'Cinematic':
+  //                   'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+  //               'Electronic':
+  //                   'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //               'Jazz Lounge':
+  //                   'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //             };
+
+  //             final String? assetPath = audioAssets[_selectedAudio];
+  //             if (assetPath != null) {
+  //               final ByteData audioData = await rootBundle.load(assetPath);
+  //               final File tempAudioProbe = File(
+  //                 '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //               );
+  //               await tempAudioProbe.writeAsBytes(
+  //                 audioData.buffer.asUint8List(),
+  //               );
+
+  //               final probe = AudioPlayer();
+  //               await probe.setSourceDeviceFile(tempAudioProbe.path);
+  //               duration = await probe.getDuration();
+  //               await probe.dispose();
+
+  //               // Clean up temp file
+  //               try {
+  //                 await tempAudioProbe.delete();
+  //               } catch (e) {}
+  //             }
+  //           }
+
+  //           if (duration != null && duration.inSeconds > 0) {
+  //             videoDurationSec = duration.inSeconds;
+  //             print('Using audio duration: $videoDurationSec seconds');
+  //           }
+  //         } catch (e) {
+  //           print('Could not get audio duration: $e');
+  //         }
+  //       }
+
+  //       const int fps = 30;
+  //       final int totalFrames = videoDurationSec * fps;
+  //       final int animationDurationMs = videoDurationSec * 1000;
+
+  //       final bool wasAnimating = _animController.isAnimating;
+  //       if (wasAnimating) {
+  //         _animController.stop();
+  //         _brandAnimController.stop();
+  //       }
+
+  //       final int frameDelayMs = animationDurationMs ~/ totalFrames;
+
+  //       for (int i = 0; i < totalFrames; i++) {
+  //         final DateTime frameStartTime = DateTime.now();
+  //         final double progress =
+  //             (i % fps) / fps; // loops animation every second
+
+  //         double animValue;
+  //         switch (_selectedAnimation) {
+  //           case AnimationType.none:
+  //             animValue = 1.0;
+  //             break;
+  //           case AnimationType.rotate:
+  //           case AnimationType.flipIn:
+  //           case AnimationType.wobble:
+  //           case AnimationType.rollin:
+  //             animValue = progress;
+  //             break;
+  //           default:
+  //             animValue = (sin(progress * pi) * 0.5) + 0.5;
+  //         }
+  //         _animController.value = animValue;
+  //         _brandAnimController.value = progress;
+  //         setState(() {});
+  //         await WidgetsBinding.instance.endOfFrame;
+  //         await Future.delayed(const Duration(milliseconds: 5));
+
+  //         final RenderRepaintBoundary? boundary =
+  //             _posterKey.currentContext?.findRenderObject()
+  //                 as RenderRepaintBoundary?;
+  //         if (boundary == null) throw Exception('Poster context not found');
+  //         final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+  //         final ByteData? byteData = await image.toByteData(
+  //           format: ui.ImageByteFormat.png,
+  //         );
+  //         if (byteData == null) throw Exception('Frame $i encoding failed');
+  //         final File frameFile = File(
+  //           '${framesDir.path}/frame_${i.toString().padLeft(4, '0')}.png',
+  //         );
+  //         await frameFile.writeAsBytes(byteData.buffer.asUint8List());
+
+  //         final int elapsedMs = DateTime.now()
+  //             .difference(frameStartTime)
+  //             .inMilliseconds;
+  //         final int remainingDelay = frameDelayMs - elapsedMs;
+  //         if (remainingDelay > 0) {
+  //           await Future.delayed(Duration(milliseconds: remainingDelay));
+  //         }
+  //         setState(() => _downloadProgress = 0.05 + (i / totalFrames) * 0.55);
+  //       }
+
+  //       setState(() => _downloadProgress = 0.62);
+  //       String? audioFilePath;
+
+  //       if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //         try {
+  //           // First, check if it's a user-uploaded audio
+  //           final userTrack = _userAudioTracks.firstWhere(
+  //             (track) => track.name == _selectedAudio,
+  //             orElse: () =>
+  //                 UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //           );
+
+  //           if (userTrack.filePath.isNotEmpty &&
+  //               await File(userTrack.filePath).exists()) {
+  //             // This is a user-uploaded audio file - copy it to temp directory
+  //             final File sourceFile = File(userTrack.filePath);
+  //             final File tempAudioFile = File(
+  //               '${tempDir.path}/temp_user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //             );
+  //             await sourceFile.copy(tempAudioFile.path);
+  //             audioFilePath = tempAudioFile.path;
+  //             print('Using user audio file: ${userTrack.name}');
+  //           } else {
+  //             // Check static audio assets
+  //             const Map<String, String> audioAssets = {
+  //               'Upbeat Pop':
+  //                   'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+  //               'Calm Acoustic':
+  //                   'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+  //               'Corporate':
+  //                   'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+  //               'Cinematic':
+  //                   'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+  //               'Electronic':
+  //                   'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //               'Jazz Lounge':
+  //                   'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //             };
+
+  //             final String? assetPath = audioAssets[_selectedAudio];
+  //             if (assetPath != null) {
+  //               final ByteData audioData = await rootBundle.load(assetPath);
+  //               final File tempAudioFile = File(
+  //                 '${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //               );
+  //               await tempAudioFile.writeAsBytes(
+  //                 audioData.buffer.asUint8List(),
+  //               );
+  //               audioFilePath = tempAudioFile.path;
+  //               print('Using static audio file: $_selectedAudio');
+  //             }
+  //           }
+  //         } catch (e) {
+  //           print('Error loading audio for video: $e');
+  //         }
+  //       }
+
+  //       final String outputPath =
+  //           '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.mp4';
+  //       String ffmpegCommand;
+
+  //       if (audioFilePath != null && await File(audioFilePath).exists()) {
+  //         ffmpegCommand =
+  //             '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+  //             '-i "$audioFilePath" '
+  //             '-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest '
+  //             '-crf 23 -preset fast '
+  //             '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //             '"$outputPath"';
+  //       } else {
+  //         ffmpegCommand =
+  //             '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+  //             '-c:v libx264 -pix_fmt yuv420p '
+  //             '-crf 23 -preset fast '
+  //             '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //             '"$outputPath"';
+  //       }
+
+  //       setState(() => _downloadProgress = 0.65);
+  //       final ffmpegSession = await FFmpegKit.execute(ffmpegCommand);
+  //       final ReturnCode? returnCode = await ffmpegSession.getReturnCode();
+  //       setState(() => _downloadProgress = 0.88);
+
+  //       if (!ReturnCode.isSuccess(returnCode)) {
+  //         throw Exception('FFmpeg failed to create video');
+  //       }
+
+  //       final bool hasAccess = await Gal.hasAccess();
+  //       if (!hasAccess) await Gal.requestAccess();
+  //       await Gal.putVideo(outputPath, album: 'Poster Editor');
+  //       setState(() => _downloadProgress = 1.0);
+
+  //       try {
+  //         await framesDir.delete(recursive: true);
+  //         if (audioFilePath != null) {
+  //           final audioFile = File(audioFilePath);
+  //           if (await audioFile.exists()) {
+  //             await audioFile.delete();
+  //           }
+  //         }
+  //       } catch (e) {}
+
+  //       if (wasAnimating && mounted) {
+  //         _animController.repeat(reverse: true);
+  //         _brandAnimController.repeat();
+  //       }
+
+  //       await Future.delayed(const Duration(milliseconds: 400));
+  //       if (mounted) {
+  //         setState(() => _isDownloading = false);
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text(
+  //               audioFilePath != null
+  //                   ? '✅ Video with audio saved to gallery!'
+  //                   : '✅ Video saved to gallery!',
+  //             ),
+  //             backgroundColor: const Color(0xFF2E7D32),
+  //             duration: const Duration(seconds: 3),
+  //           ),
+  //         );
+  //       }
+  //     } else {
+  //       // ── Static image download ──
+  //       setState(() => _downloadProgress = 0.2);
+  //       await Future.delayed(const Duration(milliseconds: 300));
+
+  //       final RenderRepaintBoundary? boundary =
+  //           _posterKey.currentContext?.findRenderObject()
+  //               as RenderRepaintBoundary?;
+  //       if (boundary == null)
+  //         throw Exception('Poster not found. Please try again.');
+
+  //       setState(() => _downloadProgress = 0.4);
+  //       await Future.delayed(const Duration(milliseconds: 100));
+
+  //       final double targetPixelRatio =
+  //           widget.posterSize.width / boundary.size.width;
+  //       final ui.Image image = await boundary.toImage(
+  //         pixelRatio: targetPixelRatio,
+  //       );
+
+  //       setState(() => _downloadProgress = 0.65);
+  //       final ByteData? byteData = await image.toByteData(
+  //         format: ui.ImageByteFormat.png,
+  //       );
+  //       if (byteData == null) throw Exception('Failed to encode image');
+
+  //       setState(() => _downloadProgress = 0.8);
+  //       final Uint8List pngBytes = byteData.buffer.asUint8List();
+  //       final Directory tempDir = await getTemporaryDirectory();
+  //       final String fileName =
+  //           'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+  //       final File file = File('${tempDir.path}/$fileName');
+  //       await file.writeAsBytes(pngBytes);
+
+  //       setState(() => _downloadProgress = 0.92);
+  //       final bool hasAccess = await Gal.hasAccess();
+  //       if (!hasAccess) await Gal.requestAccess();
+  //       await Gal.putImage(file.path, album: 'Poster Editor');
+
+  //       setState(() => _downloadProgress = 1.0);
+  //       await Future.delayed(const Duration(milliseconds: 400));
+
+  //       if (mounted) {
+  //         setState(() => _isDownloading = false);
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //             content: Text('✅ Image saved to gallery!'),
+  //             backgroundColor: Color(0xFF2E7D32),
+  //             duration: Duration(seconds: 3),
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } catch (e, stackTrace) {
+  //     print('Download error: $e\n$stackTrace');
+  //     if (mounted) {
+  //       setState(() => _isDownloading = false);
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Download failed: ${e.toString()}'),
+  //           backgroundColor: Colors.red,
+  //           duration: const Duration(seconds: 4),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
+
   void _startDownload() async {
     setState(() {
       _isDownloading = true;
@@ -1836,59 +2309,95 @@ class _TemplateCreateState extends State<TemplateCreate>
 
         if (_selectedAudio != null && _selectedAudio != 'No Audio') {
           try {
-            // Check for user audio first
+            Duration? duration;
+
+            // Check user uploaded audio
             final userTrack = _userAudioTracks.firstWhere(
               (track) => track.name == _selectedAudio,
               orElse: () =>
                   UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
             );
 
-            Duration? duration;
-
             if (userTrack.filePath.isNotEmpty &&
                 await File(userTrack.filePath).exists()) {
-              // User audio file
               final probe = AudioPlayer();
               await probe.setSourceDeviceFile(userTrack.filePath);
               duration = await probe.getDuration();
               await probe.dispose();
               print('User audio duration: ${duration?.inSeconds} seconds');
             } else {
-              // Static audio asset
-              const Map<String, String> audioAssets = {
-                'Upbeat Pop':
-                    'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
-                'Calm Acoustic':
-                    'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
-                'Corporate':
-                    'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
-                'Cinematic':
-                    'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
-                'Electronic':
-                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-                'Jazz Lounge':
-                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-              };
+              // Check admin audio track
+              final adminTrack = _adminAudioTracks.firstWhere(
+                (track) => track.title == _selectedAudio,
+                orElse: () => AdminAudioTrack(
+                  id: '',
+                  title: '',
+                  artist: '',
+                  audioUrl: '',
+                ),
+              );
 
-              final String? assetPath = audioAssets[_selectedAudio];
-              if (assetPath != null) {
-                final ByteData audioData = await rootBundle.load(assetPath);
-                final File tempAudioProbe = File(
-                  '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+              if (adminTrack.audioUrl.isNotEmpty) {
+                // Download temporarily to get duration
+                print(
+                  'Downloading admin audio for duration check: ${adminTrack.title}',
                 );
-                await tempAudioProbe.writeAsBytes(
-                  audioData.buffer.asUint8List(),
-                );
+                final response = await http.get(Uri.parse(adminTrack.audioUrl));
+                if (response.statusCode == 200) {
+                  final tempAudioProbe = File(
+                    '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudioProbe.writeAsBytes(response.bodyBytes);
 
-                final probe = AudioPlayer();
-                await probe.setSourceDeviceFile(tempAudioProbe.path);
-                duration = await probe.getDuration();
-                await probe.dispose();
+                  final probe = AudioPlayer();
+                  await probe.setSourceDeviceFile(tempAudioProbe.path);
+                  duration = await probe.getDuration();
+                  await probe.dispose();
 
-                // Clean up temp file
-                try {
-                  await tempAudioProbe.delete();
-                } catch (e) {}
+                  // Clean up temp file
+                  try {
+                    await tempAudioProbe.delete();
+                  } catch (e) {}
+
+                  print('Admin audio duration: ${duration?.inSeconds} seconds');
+                }
+              } else {
+                // Static audio assets
+                const Map<String, String> audioAssets = {
+                  'Upbeat Pop':
+                      'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+                  'Calm Acoustic':
+                      'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+                  'Corporate':
+                      'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+                  'Cinematic':
+                      'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+                  'Electronic':
+                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                  'Jazz Lounge':
+                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                };
+
+                final String? assetPath = audioAssets[_selectedAudio];
+                if (assetPath != null) {
+                  final ByteData audioData = await rootBundle.load(assetPath);
+                  final File tempAudioProbe = File(
+                    '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudioProbe.writeAsBytes(
+                    audioData.buffer.asUint8List(),
+                  );
+
+                  final probe = AudioPlayer();
+                  await probe.setSourceDeviceFile(tempAudioProbe.path);
+                  duration = await probe.getDuration();
+                  await probe.dispose();
+
+                  // Clean up temp file
+                  try {
+                    await tempAudioProbe.delete();
+                  } catch (e) {}
+                }
               }
             }
 
@@ -1985,33 +2494,64 @@ class _TemplateCreateState extends State<TemplateCreate>
               audioFilePath = tempAudioFile.path;
               print('Using user audio file: ${userTrack.name}');
             } else {
-              // Check static audio assets
-              const Map<String, String> audioAssets = {
-                'Upbeat Pop':
-                    'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
-                'Calm Acoustic':
-                    'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
-                'Corporate':
-                    'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
-                'Cinematic':
-                    'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
-                'Electronic':
-                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-                'Jazz Lounge':
-                    'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-              };
+              // Check if it's an admin audio track
+              final adminTrack = _adminAudioTracks.firstWhere(
+                (track) => track.title == _selectedAudio,
+                orElse: () => AdminAudioTrack(
+                  id: '',
+                  title: '',
+                  artist: '',
+                  audioUrl: '',
+                ),
+              );
 
-              final String? assetPath = audioAssets[_selectedAudio];
-              if (assetPath != null) {
-                final ByteData audioData = await rootBundle.load(assetPath);
-                final File tempAudioFile = File(
-                  '${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
-                );
-                await tempAudioFile.writeAsBytes(
-                  audioData.buffer.asUint8List(),
-                );
-                audioFilePath = tempAudioFile.path;
-                print('Using static audio file: $_selectedAudio');
+              if (adminTrack.audioUrl.isNotEmpty) {
+                // Download admin audio file
+                print('Downloading admin audio for video: ${adminTrack.title}');
+                final response = await http.get(Uri.parse(adminTrack.audioUrl));
+                if (response.statusCode == 200) {
+                  final File tempAudioFile = File(
+                    '${tempDir.path}/temp_admin_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudioFile.writeAsBytes(response.bodyBytes);
+                  audioFilePath = tempAudioFile.path;
+                  print(
+                    'Admin audio downloaded successfully: ${adminTrack.title}',
+                  );
+                } else {
+                  print(
+                    'Failed to download admin audio: ${response.statusCode}',
+                  );
+                }
+              } else {
+                // Check static audio assets
+                const Map<String, String> audioAssets = {
+                  'Upbeat Pop':
+                      'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+                  'Calm Acoustic':
+                      'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+                  'Corporate':
+                      'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+                  'Cinematic':
+                      'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+                  'Electronic':
+                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                  'Jazz Lounge':
+                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+                };
+
+                final String? assetPath = audioAssets[_selectedAudio];
+                if (assetPath != null) {
+                  final ByteData audioData = await rootBundle.load(assetPath);
+                  final File tempAudioFile = File(
+                    '${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudioFile.writeAsBytes(
+                    audioData.buffer.asUint8List(),
+                  );
+                  audioFilePath = tempAudioFile.path;
+                  print('Using static audio file: $_selectedAudio');
+                }
               }
             }
           } catch (e) {
@@ -8321,7 +8861,7 @@ class _TemplateCreateState extends State<TemplateCreate>
                 //   sel == null ? null : () => _showFontPicker(sel),
                 //   isDarkMode,
                 // ),
-                 _ta(
+                _ta(
                   Icons.font_download_outlined,
                   'Size',
                   sel == null ? null : () => _showFontPicker(sel),
@@ -8776,340 +9316,336 @@ class _TemplateCreateState extends State<TemplateCreate>
   //   );
   // }
 
+  //   void _showTextThemePicker(OverlayTextItem sel) {
+  //   final isDarkMode = _isDarkMode;
 
+  //   final themes = [
+  //     {
+  //       'name': 'Default',
+  //       'color': Colors.white,
+  //       'bg': Colors.transparent,
+  //       'bold': false,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Bold White',
+  //       'color': Colors.white,
+  //       'bg': Colors.transparent,
+  //       'bold': true,
+  //       'shadow': true,
+  //     },
+  //     {
+  //       'name': 'Dark',
+  //       'color': Colors.black,
+  //       'bg': Colors.white.withOpacity(0.8),
+  //       'bold': false,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Gold',
+  //       'color': const Color(0xFFD4AF37),
+  //       'bg': Colors.transparent,
+  //       'bold': true,
+  //       'shadow': true,
+  //     },
+  //     {
+  //       'name': 'Neon',
+  //       'color': Colors.greenAccent,
+  //       'bg': Colors.black.withOpacity(0.5),
+  //       'bold': true,
+  //       'shadow': false,
+  //     },
+  //     {
+  //       'name': 'Red Alert',
+  //       'color': Colors.white,
+  //       'bg': Colors.red.shade700,
+  //       'bold': true,
+  //       'shadow': false,
+  //     },
+  //   ];
 
-//   void _showTextThemePicker(OverlayTextItem sel) {
-//   final isDarkMode = _isDarkMode;
+  //   showModalBottomSheet(
+  //     context: context,
+  //     backgroundColor: Colors.transparent,
+  //     builder: (_) => Container(
+  //       decoration: BoxDecoration(
+  //         color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+  //       ),
+  //       padding: const EdgeInsets.all(16),
+  //       child: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           // Drag handle
+  //           Center(
+  //             child: Container(
+  //               width: 40,
+  //               height: 4,
+  //               decoration: BoxDecoration(
+  //                 color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+  //                 borderRadius: BorderRadius.circular(2),
+  //               ),
+  //             ),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           Text(
+  //             'Text Theme',
+  //             style: TextStyle(
+  //               fontWeight: FontWeight.bold,
+  //               fontSize: 15,
+  //               color: isDarkMode ? Colors.white : Colors.black87,
+  //             ),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           Wrap(
+  //             spacing: 10,
+  //             runSpacing: 10,
+  //             children: themes.map((t) {
+  //               final textColor = t['color'] as Color;
+  //               final bgColor = t['bg'] as Color;
+  //               final isBold = t['bold'] as bool;
+  //               final isTransparentBg = bgColor == Colors.transparent;
 
-//   final themes = [
-//     {
-//       'name': 'Default',
-//       'color': Colors.white,
-//       'bg': Colors.transparent,
-//       'bold': false,
-//       'shadow': false,
-//     },
-//     {
-//       'name': 'Bold White',
-//       'color': Colors.white,
-//       'bg': Colors.transparent,
-//       'bold': true,
-//       'shadow': true,
-//     },
-//     {
-//       'name': 'Dark',
-//       'color': Colors.black,
-//       'bg': Colors.white.withOpacity(0.8),
-//       'bold': false,
-//       'shadow': false,
-//     },
-//     {
-//       'name': 'Gold',
-//       'color': const Color(0xFFD4AF37),
-//       'bg': Colors.transparent,
-//       'bold': true,
-//       'shadow': true,
-//     },
-//     {
-//       'name': 'Neon',
-//       'color': Colors.greenAccent,
-//       'bg': Colors.black.withOpacity(0.5),
-//       'bold': true,
-//       'shadow': false,
-//     },
-//     {
-//       'name': 'Red Alert',
-//       'color': Colors.white,
-//       'bg': Colors.red.shade700,
-//       'bold': true,
-//       'shadow': false,
-//     },
-//   ];
+  //               // For transparent-bg themes (Default, Bold White, Gold),
+  //               // use a contrasting chip background so text is visible
+  //               final Color chipBg = isTransparentBg
+  //                   ? (isDarkMode
+  //                       ? const Color(0xFF374151)
+  //                       : Colors.grey.shade200)
+  //                   : bgColor;
 
-//   showModalBottomSheet(
-//     context: context,
-//     backgroundColor: Colors.transparent,
-//     builder: (_) => Container(
-//       decoration: BoxDecoration(
-//         color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-//         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-//       ),
-//       padding: const EdgeInsets.all(16),
-//       child: Column(
-//         mainAxisSize: MainAxisSize.min,
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           // Drag handle
-//           Center(
-//             child: Container(
-//               width: 40,
-//               height: 4,
-//               decoration: BoxDecoration(
-//                 color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
-//                 borderRadius: BorderRadius.circular(2),
-//               ),
-//             ),
-//           ),
-//           const SizedBox(height: 12),
-//           Text(
-//             'Text Theme',
-//             style: TextStyle(
-//               fontWeight: FontWeight.bold,
-//               fontSize: 15,
-//               color: isDarkMode ? Colors.white : Colors.black87,
-//             ),
-//           ),
-//           const SizedBox(height: 12),
-//           Wrap(
-//             spacing: 10,
-//             runSpacing: 10,
-//             children: themes.map((t) {
-//               final textColor = t['color'] as Color;
-//               final bgColor = t['bg'] as Color;
-//               final isBold = t['bold'] as bool;
-//               final isTransparentBg = bgColor == Colors.transparent;
+  //               return GestureDetector(
+  //                 onTap: () {
+  //                   setState(() {
+  //                     final i = _texts.indexWhere((x) => x.id == sel.id);
+  //                     if (i != -1)
+  //                       _texts[i] = _texts[i].copyWith(
+  //                         color: textColor,
+  //                         backgroundColor: bgColor,
+  //                         isBold: isBold,
+  //                         hasShadow: t['shadow'] as bool,
+  //                       );
+  //                   });
+  //                   Navigator.pop(context);
+  //                 },
+  //                 child: Container(
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 14,
+  //                     vertical: 10,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     color: chipBg,
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     border: Border.all(
+  //                       color: isDarkMode
+  //                           ? Colors.grey[600]!
+  //                           : Colors.grey.shade300,
+  //                       width: 1.5,
+  //                     ),
+  //                     boxShadow: [
+  //                       BoxShadow(
+  //                         color: Colors.black.withOpacity(0.1),
+  //                         blurRadius: 4,
+  //                         offset: const Offset(0, 2),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   child: Text(
+  //                     t['name'] as String,
+  //                     style: TextStyle(
+  //                       color: textColor,
+  //                       fontWeight: isBold
+  //                           ? FontWeight.bold
+  //                           : FontWeight.normal,
+  //                       shadows: (t['shadow'] as bool)
+  //                           ? [
+  //                               const Shadow(
+  //                                 color: Colors.black54,
+  //                                 offset: Offset(1, 1),
+  //                                 blurRadius: 2,
+  //                               ),
+  //                             ]
+  //                           : null,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               );
+  //             }).toList(),
+  //           ),
+  //           const SizedBox(height: 8),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
-//               // For transparent-bg themes (Default, Bold White, Gold),
-//               // use a contrasting chip background so text is visible
-//               final Color chipBg = isTransparentBg
-//                   ? (isDarkMode
-//                       ? const Color(0xFF374151)
-//                       : Colors.grey.shade200)
-//                   : bgColor;
+  void _showTextThemePicker(OverlayTextItem sel) {
+    final isDarkMode = _isDarkMode;
 
-//               return GestureDetector(
-//                 onTap: () {
-//                   setState(() {
-//                     final i = _texts.indexWhere((x) => x.id == sel.id);
-//                     if (i != -1)
-//                       _texts[i] = _texts[i].copyWith(
-//                         color: textColor,
-//                         backgroundColor: bgColor,
-//                         isBold: isBold,
-//                         hasShadow: t['shadow'] as bool,
-//                       );
-//                   });
-//                   Navigator.pop(context);
-//                 },
-//                 child: Container(
-//                   padding: const EdgeInsets.symmetric(
-//                     horizontal: 14,
-//                     vertical: 10,
-//                   ),
-//                   decoration: BoxDecoration(
-//                     color: chipBg,
-//                     borderRadius: BorderRadius.circular(8),
-//                     border: Border.all(
-//                       color: isDarkMode
-//                           ? Colors.grey[600]!
-//                           : Colors.grey.shade300,
-//                       width: 1.5,
-//                     ),
-//                     boxShadow: [
-//                       BoxShadow(
-//                         color: Colors.black.withOpacity(0.1),
-//                         blurRadius: 4,
-//                         offset: const Offset(0, 2),
-//                       ),
-//                     ],
-//                   ),
-//                   child: Text(
-//                     t['name'] as String,
-//                     style: TextStyle(
-//                       color: textColor,
-//                       fontWeight: isBold
-//                           ? FontWeight.bold
-//                           : FontWeight.normal,
-//                       shadows: (t['shadow'] as bool)
-//                           ? [
-//                               const Shadow(
-//                                 color: Colors.black54,
-//                                 offset: Offset(1, 1),
-//                                 blurRadius: 2,
-//                               ),
-//                             ]
-//                           : null,
-//                     ),
-//                   ),
-//                 ),
-//               );
-//             }).toList(),
-//           ),
-//           const SizedBox(height: 8),
-//         ],
-//       ),
-//     ),
-//   );
-// }
+    final themes = [
+      {
+        'name': 'Default',
+        'color': isDarkMode
+            ? Colors.white
+            : Colors.black87, // Dark text for light mode
+        'bg': Colors.transparent,
+        'bold': false,
+        'shadow': false,
+      },
+      {
+        'name': 'Bold White',
+        'color': isDarkMode
+            ? Colors.white
+            : Colors.black87, // Dark text for light mode
+        'bg': Colors.transparent,
+        'bold': true,
+        'shadow': true,
+      },
+      {
+        'name': 'Dark',
+        'color': Colors.black,
+        'bg': Colors.white.withOpacity(0.8),
+        'bold': false,
+        'shadow': false,
+      },
+      {
+        'name': 'Gold',
+        'color': const Color(0xFFD4AF37),
+        'bg': Colors.transparent,
+        'bold': true,
+        'shadow': true,
+      },
+      {
+        'name': 'Neon',
+        'color': Colors.greenAccent,
+        'bg': Colors.black.withOpacity(0.5),
+        'bold': true,
+        'shadow': false,
+      },
+      {
+        'name': 'Red Alert',
+        'color': Colors.white,
+        'bg': Colors.red.shade700,
+        'bold': true,
+        'shadow': false,
+      },
+    ];
 
-
-
-
-
-
-
-void _showTextThemePicker(OverlayTextItem sel) {
-  final isDarkMode = _isDarkMode;
-
-  final themes = [
-    {
-      'name': 'Default',
-      'color': isDarkMode ? Colors.white : Colors.black87,  // Dark text for light mode
-      'bg': Colors.transparent,
-      'bold': false,
-      'shadow': false,
-    },
-    {
-      'name': 'Bold White',
-      'color': isDarkMode ? Colors.white : Colors.black87,  // Dark text for light mode
-      'bg': Colors.transparent,
-      'bold': true,
-      'shadow': true,
-    },
-    {
-      'name': 'Dark',
-      'color': Colors.black,
-      'bg': Colors.white.withOpacity(0.8),
-      'bold': false,
-      'shadow': false,
-    },
-    {
-      'name': 'Gold',
-      'color': const Color(0xFFD4AF37),
-      'bg': Colors.transparent,
-      'bold': true,
-      'shadow': true,
-    },
-    {
-      'name': 'Neon',
-      'color': Colors.greenAccent,
-      'bg': Colors.black.withOpacity(0.5),
-      'bold': true,
-      'shadow': false,
-    },
-    {
-      'name': 'Red Alert',
-      'color': Colors.white,
-      'bg': Colors.red.shade700,
-      'bold': true,
-      'shadow': false,
-    },
-  ];
-
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.transparent,
-    builder: (_) => Container(
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Text Theme',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: isDarkMode ? Colors.white : Colors.black87,
+            const SizedBox(height: 12),
+            Text(
+              'Text Theme',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: themes.map((t) {
-              final textColor = t['color'] as Color;
-              final bgColor = t['bg'] as Color;
-              final isBold = t['bold'] as bool;
-              final isTransparentBg = bgColor == Colors.transparent;
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: themes.map((t) {
+                final textColor = t['color'] as Color;
+                final bgColor = t['bg'] as Color;
+                final isBold = t['bold'] as bool;
+                final isTransparentBg = bgColor == Colors.transparent;
 
-              // For transparent-bg themes, use a contrasting chip background
-              final Color chipBg = isTransparentBg
-                  ? (isDarkMode
-                      ? const Color(0xFF374151)
-                      : Colors.grey.shade200)
-                  : bgColor;
+                // For transparent-bg themes, use a contrasting chip background
+                final Color chipBg = isTransparentBg
+                    ? (isDarkMode
+                          ? const Color(0xFF374151)
+                          : Colors.grey.shade200)
+                    : bgColor;
 
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    final i = _texts.indexWhere((x) => x.id == sel.id);
-                    if (i != -1)
-                      _texts[i] = _texts[i].copyWith(
-                        color: textColor,
-                        backgroundColor: bgColor,
-                        isBold: isBold,
-                        hasShadow: t['shadow'] as bool,
-                      );
-                  });
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: chipBg,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isDarkMode
-                          ? Colors.grey[600]!
-                          : Colors.grey.shade300,
-                      width: 1.5,
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      final i = _texts.indexWhere((x) => x.id == sel.id);
+                      if (i != -1)
+                        _texts[i] = _texts[i].copyWith(
+                          color: textColor,
+                          backgroundColor: bgColor,
+                          isBold: isBold,
+                          hasShadow: t['shadow'] as bool,
+                        );
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                    decoration: BoxDecoration(
+                      color: chipBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDarkMode
+                            ? Colors.grey[600]!
+                            : Colors.grey.shade300,
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  child: Text(
-                    t['name'] as String,
-                    style: TextStyle(
-                      color: textColor,
-                      fontWeight: isBold
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      shadows: (t['shadow'] as bool)
-                          ? [
-                              const Shadow(
-                                color: Colors.black54,
-                                offset: Offset(1, 1),
-                                blurRadius: 2,
-                              ),
-                            ]
-                          : null,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      t['name'] as String,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: isBold
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        shadows: (t['shadow'] as bool)
+                            ? [
+                                const Shadow(
+                                  color: Colors.black54,
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                ),
+                              ]
+                            : null,
+                      ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-        ],
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // void _showFontPicker(OverlayTextItem sel) {
   //   showModalBottomSheet(
@@ -9344,219 +9880,218 @@ void _showTextThemePicker(OverlayTextItem sel) {
   //   );
   // }
 
-
-
-
   void _showFontPicker(OverlayTextItem sel) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) {
-      OverlayTextItem currentItem = sel;
-      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        OverlayTextItem currentItem = sel;
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-      return StatefulBuilder(
-        builder: (context, setModalState) {
-          final liveItem = _texts.firstWhere(
-            (t) => t.id == sel.id,
-            orElse: () => sel,
-          );
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final liveItem = _texts.firstWhere(
+              (t) => t.id == sel.id,
+              orElse: () => sel,
+            );
 
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDarkMode
-                            ? Colors.grey[700]
-                            : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.grey[700]
+                              : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.font_download_outlined,
-                        size: 24,
-                        color: const Color(0xFFF5C518),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.font_download_outlined,
+                          size: 24,
+                          color: const Color(0xFFF5C518),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Font Size',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Slider(
+                      value: liveItem.fontSize,
+                      min: 10,
+                      max: 72,
+                      divisions: 62,
+                      activeColor: const Color(0xFFF5C518),
+                      inactiveColor: isDarkMode
+                          ? Colors.grey[700]
+                          : Colors.grey[300],
+                      label: liveItem.fontSize.toStringAsFixed(0),
+                      onChanged: (v) {
+                        setModalState(() {
+                          currentItem = currentItem.copyWith(fontSize: v);
+                        });
+                        setState(() {
+                          final i = _texts.indexWhere((t) => t.id == sel.id);
+                          if (i != -1) {
+                            _texts[i] = _texts[i].copyWith(fontSize: v);
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF0F172A)
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: Text(
-                          'Font Size',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
+                          '${liveItem.fontSize.toStringAsFixed(0)}px',
+                          style: const TextStyle(
                             fontSize: 16,
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFF5C518),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Slider(
-                    value: liveItem.fontSize,
-                    min: 10,
-                    max: 72,
-                    divisions: 62,
-                    activeColor: const Color(0xFFF5C518),
-                    inactiveColor: isDarkMode
-                        ? Colors.grey[700]
-                        : Colors.grey[300],
-                    label: liveItem.fontSize.toStringAsFixed(0),
-                    onChanged: (v) {
-                      setModalState(() {
-                        currentItem = currentItem.copyWith(fontSize: v);
-                      });
-                      setState(() {
-                        final i = _texts.indexWhere((t) => t.id == sel.id);
-                        if (i != -1) {
-                          _texts[i] = _texts[i].copyWith(fontSize: v);
-                        }
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDarkMode
-                            ? const Color(0xFF0F172A)
-                            : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${liveItem.fontSize.toStringAsFixed(0)}px',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFF5C518),
-                        ),
-                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    alignment: WrapAlignment.center,
-                    children: [12, 16, 20, 24, 28, 32, 36, 42, 48, 56, 64, 72]
-                        .map((size) {
-                          final isSelected =
-                              liveItem.fontSize.round() == size;
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                final i = _texts.indexWhere(
-                                  (t) => t.id == sel.id,
-                                );
-                                if (i != -1) {
-                                  _texts[i] = _texts[i].copyWith(
+                    const SizedBox(height: 20),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      alignment: WrapAlignment.center,
+                      children: [12, 16, 20, 24, 28, 32, 36, 42, 48, 56, 64, 72]
+                          .map((size) {
+                            final isSelected =
+                                liveItem.fontSize.round() == size;
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  final i = _texts.indexWhere(
+                                    (t) => t.id == sel.id,
+                                  );
+                                  if (i != -1) {
+                                    _texts[i] = _texts[i].copyWith(
+                                      fontSize: size.toDouble(),
+                                    );
+                                  }
+                                });
+                                setModalState(() {
+                                  currentItem = currentItem.copyWith(
                                     fontSize: size.toDouble(),
                                   );
-                                }
-                              });
-                              setModalState(() {
-                                currentItem = currentItem.copyWith(
-                                  fontSize: size.toDouble(),
-                                );
-                              });
-                            },
-                            child: Container(
-                              width: 45,
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFFF5C518)
-                                    : (isDarkMode
-                                          ? const Color(0xFF0F172A)
-                                          : Colors.grey.shade100),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
+                                });
+                              },
+                              child: Container(
+                                width: 45,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
                                   color: isSelected
                                       ? const Color(0xFFF5C518)
                                       : (isDarkMode
-                                            ? Colors.grey[700]!
-                                            : Colors.grey.shade300),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  size.toString(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
+                                            ? const Color(0xFF0F172A)
+                                            : Colors.grey.shade100),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
                                     color: isSelected
-                                        ? Colors.black87
+                                        ? const Color(0xFFF5C518)
                                         : (isDarkMode
-                                              ? Colors.white70
-                                              : Colors.black87),
+                                              ? Colors.grey[700]!
+                                              : Colors.grey.shade300),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    size.toString(),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isSelected
+                                          ? Colors.black87
+                                          : (isDarkMode
+                                                ? Colors.white70
+                                                : Colors.black87),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        })
-                        .toList(),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF5C518),
-                        foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                            );
+                          })
+                          .toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF5C518),
+                          foregroundColor: Colors.black87,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'Done',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Done',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+            );
+          },
+        );
+      },
+    );
+  }
 
   // void _showColorPicker(OverlayTextItem sel) {
   //   final colors = [
@@ -9626,196 +10161,192 @@ void _showTextThemePicker(OverlayTextItem sel) {
   //   );
   // }
 
-
-
-
-
   void _showColorPicker(OverlayTextItem sel) {
-  final isDarkMode = _isDarkMode;
+    final isDarkMode = _isDarkMode;
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) {
-      Color tempColor = sel.color;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        Color tempColor = sel.color;
 
-      return StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return Container(
-            decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
               ),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? Colors.grey[700]
-                          : Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.color_lens,
-                        size: 24,
-                        color: Color(0xFFF5C518),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Choose Text Color',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    height: MediaQuery.of(ctx).size.height * 0.35,
-                    child: ColorPicker(
-                      pickerColor: tempColor,
-                      onColorChanged: (color) {
-                        setSheetState(() {
-                          tempColor = color;
-                        });
-                      },
-                      showLabel: false,
-                      pickerAreaHeightPercent: 0.7,
-                      enableAlpha: false,
-                      displayThumbColor: true,
-                      paletteType: PaletteType.hsv,
-                      portraitOnly: true,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: tempColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
+              padding: const EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
                         color: isDarkMode
-                            ? Colors.white24
+                            ? Colors.grey[700]
                             : Colors.grey.shade300,
-                        width: 2,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    child: Column(
+                    const SizedBox(height: 20),
+                    Row(
                       children: [
-                        Text(
-                          'Selected Color',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: tempColor.computeLuminance() > 0.5
-                                ? Colors.black87
-                                : Colors.white,
-                          ),
+                        const Icon(
+                          Icons.color_lens,
+                          size: 24,
+                          color: Color(0xFFF5C518),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: tempColor.computeLuminance() > 0.5
-                                ? Colors.black54
-                                : Colors.white70,
-                          ),
-                        ),
-                        Text(
-                          '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: tempColor.computeLuminance() > 0.5
-                                ? Colors.black54
-                                : Colors.white70,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Choose Text Color',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: isDarkMode
-                                ? Colors.white70
-                                : Colors.black87,
-                            side: BorderSide(
-                              color: isDarkMode
-                                  ? Colors.white38
-                                  : Colors.grey.shade400,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text('Cancel'),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      height: MediaQuery.of(ctx).size.height * 0.35,
+                      child: ColorPicker(
+                        pickerColor: tempColor,
+                        onColorChanged: (color) {
+                          setSheetState(() {
+                            tempColor = color;
+                          });
+                        },
+                        showLabel: false,
+                        pickerAreaHeightPercent: 0.7,
+                        enableAlpha: false,
+                        displayThumbColor: true,
+                        paletteType: PaletteType.hsv,
+                        portraitOnly: true,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: tempColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Colors.white24
+                              : Colors.grey.shade300,
+                          width: 2,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              final i = _texts.indexWhere(
-                                (t) => t.id == sel.id,
-                              );
-                              if (i != -1) {
-                                _texts[i] = _texts[i].copyWith(
-                                  color: tempColor,
+                      child: Column(
+                        children: [
+                          Text(
+                            'Selected Color',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: tempColor.computeLuminance() > 0.5
+                                  ? Colors.black87
+                                  : Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: tempColor.computeLuminance() > 0.5
+                                  ? Colors.black54
+                                  : Colors.white70,
+                            ),
+                          ),
+                          Text(
+                            '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: tempColor.computeLuminance() > 0.5
+                                  ? Colors.black54
+                                  : Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: isDarkMode
+                                  ? Colors.white70
+                                  : Colors.black87,
+                              side: BorderSide(
+                                color: isDarkMode
+                                    ? Colors.white38
+                                    : Colors.grey.shade400,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                final i = _texts.indexWhere(
+                                  (t) => t.id == sel.id,
                                 );
-                              }
-                            });
-                            Navigator.pop(ctx);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF5C518),
-                            foregroundColor: Colors.black87,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                                if (i != -1) {
+                                  _texts[i] = _texts[i].copyWith(
+                                    color: tempColor,
+                                  );
+                                }
+                              });
+                              Navigator.pop(ctx);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF5C518),
+                              foregroundColor: Colors.black87,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text(
+                              'Apply',
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
-                          child: const Text(
-                            'Apply',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+            );
+          },
+        );
+      },
+    );
+  }
 
   // void _showBgColorPicker(OverlayTextItem sel) {
   //   final colors = [
@@ -9882,329 +10413,324 @@ void _showTextThemePicker(OverlayTextItem sel) {
   //   );
   // }
 
-
-
-
-
   void _showBgColorPicker(OverlayTextItem sel) {
-  final isDarkMode = _isDarkMode;
+    final isDarkMode = _isDarkMode;
 
-  final List<Color> quickColors = [
-    Colors.transparent,
-    Colors.white,
-    Colors.black,
-    Colors.red,
-    Colors.orange,
-    Colors.yellow,
-    Colors.green,
-    Colors.teal,
-    Colors.blue,
-    Colors.purple,
-    Colors.pink,
-    const Color(0xFFD4AF37),
-    Colors.brown,
-    Colors.grey,
-  ];
+    final List<Color> quickColors = [
+      Colors.transparent,
+      Colors.white,
+      Colors.black,
+      Colors.red,
+      Colors.orange,
+      Colors.yellow,
+      Colors.green,
+      Colors.teal,
+      Colors.blue,
+      Colors.purple,
+      Colors.pink,
+      const Color(0xFFD4AF37),
+      Colors.brown,
+      Colors.grey,
+    ];
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) {
-      Color tempColor = sel.backgroundColor == Colors.transparent
-          ? Colors.white
-          : sel.backgroundColor;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        Color tempColor = sel.backgroundColor == Colors.transparent
+            ? Colors.white
+            : sel.backgroundColor;
 
-      return StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return Container(
-            decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
               ),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? Colors.grey[700]
-                          : Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.format_color_fill,
-                        size: 24,
-                        color: Color(0xFFF5C518),
+              padding: const EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? Colors.grey[700]
+                            : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Choose Background Color',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.format_color_fill,
+                          size: 24,
+                          color: Color(0xFFF5C518),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Choose Background Color',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Quick colors',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDarkMode ? Colors.white70 : Colors.black87,
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Quick colors',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 44,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: quickColors.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(width: 10),
-                      itemBuilder: (_, i) {
-                        final c = quickColors[i];
-                        final isTransparent = c == Colors.transparent;
-                        final isSelected = isTransparent
-                            ? sel.backgroundColor == Colors.transparent
-                            : tempColor == c;
-                        return GestureDetector(
-                          onTap: () {
-                            if (isTransparent) {
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 44,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: quickColors.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        itemBuilder: (_, i) {
+                          final c = quickColors[i];
+                          final isTransparent = c == Colors.transparent;
+                          final isSelected = isTransparent
+                              ? sel.backgroundColor == Colors.transparent
+                              : tempColor == c;
+                          return GestureDetector(
+                            onTap: () {
+                              if (isTransparent) {
+                                setState(() {
+                                  final idx = _texts.indexWhere(
+                                    (t) => t.id == sel.id,
+                                  );
+                                  if (idx != -1) {
+                                    _texts[idx] = _texts[idx].copyWith(
+                                      backgroundColor: Colors.transparent,
+                                    );
+                                  }
+                                });
+                                Navigator.pop(ctx);
+                              } else {
+                                setSheetState(() {
+                                  tempColor = c;
+                                });
+                              }
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: isTransparent ? Colors.white : c,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFFF5C518)
+                                      : (isDarkMode
+                                            ? Colors.grey[600]!
+                                            : Colors.grey.shade400),
+                                  width: isSelected ? 3 : 1.5,
+                                ),
+                              ),
+                              child: isTransparent
+                                  ? Center(
+                                      child: Text(
+                                        '∅',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: isDarkMode
+                                              ? Colors.white54
+                                              : Colors.black45,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(
+                            color: isDarkMode
+                                ? Colors.white24
+                                : Colors.grey.shade300,
+                            thickness: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'OR CUSTOM',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                              color: isDarkMode
+                                  ? Colors.white54
+                                  : Colors.black45,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: isDarkMode
+                                ? Colors.white24
+                                : Colors.grey.shade300,
+                            thickness: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      height: MediaQuery.of(ctx).size.height * 0.35,
+                      child: ColorPicker(
+                        pickerColor: tempColor,
+                        onColorChanged: (color) {
+                          setSheetState(() {
+                            tempColor = color;
+                          });
+                        },
+                        showLabel: false,
+                        pickerAreaHeightPercent: 0.7,
+                        enableAlpha: false,
+                        displayThumbColor: true,
+                        paletteType: PaletteType.hsv,
+                        portraitOnly: true,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: tempColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Colors.white24
+                              : Colors.grey.shade300,
+                          width: 2,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Selected Color',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: tempColor.computeLuminance() > 0.5
+                                  ? Colors.black87
+                                  : Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: tempColor.computeLuminance() > 0.5
+                                  ? Colors.black54
+                                  : Colors.white70,
+                            ),
+                          ),
+                          Text(
+                            '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: tempColor.computeLuminance() > 0.5
+                                  ? Colors.black54
+                                  : Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: isDarkMode
+                                  ? Colors.white70
+                                  : Colors.black87,
+                              side: BorderSide(
+                                color: isDarkMode
+                                    ? Colors.white38
+                                    : Colors.grey.shade400,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
                               setState(() {
                                 final idx = _texts.indexWhere(
                                   (t) => t.id == sel.id,
                                 );
                                 if (idx != -1) {
                                   _texts[idx] = _texts[idx].copyWith(
-                                    backgroundColor: Colors.transparent,
+                                    backgroundColor: tempColor,
                                   );
                                 }
                               });
                               Navigator.pop(ctx);
-                            } else {
-                              setSheetState(() {
-                                tempColor = c;
-                              });
-                            }
-                          },
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: isTransparent ? Colors.white : c,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFFF5C518)
-                                    : (isDarkMode
-                                          ? Colors.grey[600]!
-                                          : Colors.grey.shade400),
-                                width: isSelected ? 3 : 1.5,
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF5C518),
+                              foregroundColor: Colors.black87,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            child: isTransparent
-                                ? Center(
-                                    child: Text(
-                                      '∅',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: isDarkMode
-                                            ? Colors.white54
-                                            : Colors.black45,
-                                      ),
-                                    ),
-                                  )
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: isDarkMode
-                              ? Colors.white24
-                              : Colors.grey.shade300,
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          'OR CUSTOM',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                            color: isDarkMode
-                                ? Colors.white54
-                                : Colors.black45,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: isDarkMode
-                              ? Colors.white24
-                              : Colors.grey.shade300,
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    height: MediaQuery.of(ctx).size.height * 0.35,
-                    child: ColorPicker(
-                      pickerColor: tempColor,
-                      onColorChanged: (color) {
-                        setSheetState(() {
-                          tempColor = color;
-                        });
-                      },
-                      showLabel: false,
-                      pickerAreaHeightPercent: 0.7,
-                      enableAlpha: false,
-                      displayThumbColor: true,
-                      paletteType: PaletteType.hsv,
-                      portraitOnly: true,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: tempColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDarkMode
-                            ? Colors.white24
-                            : Colors.grey.shade300,
-                        width: 2,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Selected Color',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: tempColor.computeLuminance() > 0.5
-                                ? Colors.black87
-                                : Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: tempColor.computeLuminance() > 0.5
-                                ? Colors.black54
-                                : Colors.white70,
-                          ),
-                        ),
-                        Text(
-                          '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: tempColor.computeLuminance() > 0.5
-                                ? Colors.black54
-                                : Colors.white70,
+                            child: const Text(
+                              'Apply',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: isDarkMode
-                                ? Colors.white70
-                                : Colors.black87,
-                            side: BorderSide(
-                              color: isDarkMode
-                                  ? Colors.white38
-                                  : Colors.grey.shade400,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              final idx = _texts.indexWhere(
-                                (t) => t.id == sel.id,
-                              );
-                              if (idx != -1) {
-                                _texts[idx] = _texts[idx].copyWith(
-                                  backgroundColor: tempColor,
-                                );
-                              }
-                            });
-                            Navigator.pop(ctx);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF5C518),
-                            foregroundColor: Colors.black87,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text(
-                            'Apply',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+            );
+          },
+        );
+      },
+    );
+  }
 
   // ── FRAMES PANEL ──────────────────────────
 
@@ -10841,6 +11367,168 @@ void _showTextThemePicker(OverlayTextItem sel) {
   //   );
   // }
 
+  // Widget _buildAudioPanel(bool isDarkMode) {
+  //   return Container(
+  //     height: 220,
+  //     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Padding(
+  //           padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+  //           child: Text(
+  //             'Audio',
+  //             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+  //           ),
+  //         ),
+  //         Expanded(
+  //           child: ListView(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             children: [
+  //               // 1. No Audio option (always first)
+  //               GestureDetector(
+  //                 onTap: () {
+  //                   setState(() => _selectedAudio = null);
+  //                   _playAudio(null);
+  //                 },
+  //                 child: _audioChip('No Audio', _selectedAudio == null),
+  //               ),
+
+  //               // 2. Upload button (right after No Audio)
+  //               GestureDetector(
+  //                 onTap: _pickUserAudio,
+  //                 child: Container(
+  //                   margin: const EdgeInsets.only(right: 10),
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 14,
+  //                     vertical: 8,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     color: const Color(0xFFF5C518),
+  //                     borderRadius: BorderRadius.circular(20),
+  //                     border: Border.all(
+  //                       color: const Color(0xFFF5C518),
+  //                       width: 1,
+  //                     ),
+  //                   ),
+  //                   child: Row(
+  //                     children: [
+  //                       const Icon(
+  //                         Icons.upload_file,
+  //                         size: 14,
+  //                         color: Colors.black87,
+  //                       ),
+  //                       const SizedBox(width: 4),
+  //                       Text(
+  //                         'Upload',
+  //                         style: TextStyle(
+  //                           fontSize: 11,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: Colors.black87,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+
+  //               // 3. User uploaded audio tracks
+  //               ..._userAudioTracks.map(
+  //                 (userTrack) => Stack(
+  //                   children: [
+  //                     GestureDetector(
+  //                       onTap: () {
+  //                         setState(() => _selectedAudio = userTrack.name);
+  //                         _playAudio(userTrack.name);
+  //                       },
+  //                       child: _audioChip(
+  //                         '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+  //                         _selectedAudio == userTrack.name,
+  //                       ),
+  //                     ),
+  //                     // Delete button for user audio
+  //                     Positioned(
+  //                       top: -4,
+  //                       right: -4,
+  //                       child: GestureDetector(
+  //                         onTap: () {
+  //                           _showDeleteAudioConfirmation(userTrack);
+  //                         },
+  //                         child: Container(
+  //                           width: 18,
+  //                           height: 18,
+  //                           decoration: const BoxDecoration(
+  //                             color: Colors.red,
+  //                             shape: BoxShape.circle,
+  //                           ),
+  //                           child: const Icon(
+  //                             Icons.close,
+  //                             size: 12,
+  //                             color: Colors.white,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+
+  //               // 4. Static audio tracks (after user uploads)
+  //               ..._audioTracks.map(
+  //                 (track) => GestureDetector(
+  //                   onTap: () {
+  //                     setState(() => _selectedAudio = track.name);
+  //                     _playAudio(track.name);
+  //                   },
+  //                   child: _audioChip(track.name, _selectedAudio == track.name),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         if (_selectedAudio != null)
+  //           Padding(
+  //             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
+  //                   size: 16,
+  //                   color: _isAudioPlaying ? Colors.green : Colors.amber,
+  //                 ),
+  //                 const SizedBox(width: 8),
+  //                 Expanded(
+  //                   child: Text(
+  //                     _isAudioPlaying
+  //                         ? 'Playing: $_selectedAudio'
+  //                         : 'Selected: $_selectedAudio',
+  //                     style: TextStyle(
+  //                       fontSize: 11,
+  //                       color: _isAudioPlaying
+  //                           ? Colors.green
+  //                           : (isDarkMode ? Colors.white54 : Colors.black54),
+  //                     ),
+  //                     overflow: TextOverflow.ellipsis,
+  //                   ),
+  //                 ),
+  //                 if (_isAudioPlaying)
+  //                   IconButton(
+  //                     icon: const Icon(Icons.stop, size: 18),
+  //                     onPressed: () async {
+  //                       await _audioPlayer.stop();
+  //                       setState(() => _isAudioPlaying = false);
+  //                     },
+  //                   ),
+  //                 const Icon(Icons.audiotrack, size: 18, color: Colors.green),
+  //               ],
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildAudioPanel(bool isDarkMode) {
     return Container(
       height: 220,
@@ -10848,118 +11536,192 @@ void _showTextThemePicker(OverlayTextItem sel) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
-            child: Text(
-              'Audio',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Row(
+              children: [
+                Text(
+                  'Audio',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                if (_isLoadingAudios) ...[
+                  const SizedBox(width: 8),
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ],
+                if (_audioLoadError != null) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _fetchAdminAudios,
+                    child: const Icon(
+                      Icons.refresh,
+                      size: 16,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           Expanded(
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: [
-                // 1. No Audio option (always first)
-                GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedAudio = null);
-                    _playAudio(null);
-                  },
-                  child: _audioChip('No Audio', _selectedAudio == null),
-                ),
-
-                // 2. Upload button (right after No Audio)
-                GestureDetector(
-                  onTap: _pickUserAudio,
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 10),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5C518),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0xFFF5C518),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.upload_file,
-                          size: 14,
-                          color: Colors.black87,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Upload',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // 3. User uploaded audio tracks
-                ..._userAudioTracks.map(
-                  (userTrack) => Stack(
+            child: _isLoadingAudios
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     children: [
+                      // No Audio option
                       GestureDetector(
                         onTap: () {
-                          setState(() => _selectedAudio = userTrack.name);
-                          _playAudio(userTrack.name);
+                          setState(() => _selectedAudio = null);
+                          _playAudio(null);
                         },
-                        child: _audioChip(
-                          '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
-                          _selectedAudio == userTrack.name,
+                        child: _audioChip('No Audio', _selectedAudio == null),
+                      ),
+
+                      // Upload button
+                      GestureDetector(
+                        onTap: _pickUserAudio,
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5C518),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFFF5C518),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.upload_file,
+                                size: 14,
+                                color: Colors.black87,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Upload',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      // Delete button for user audio
-                      Positioned(
-                        top: -4,
-                        right: -4,
-                        child: GestureDetector(
+
+                      // User uploaded audio tracks
+                      ..._userAudioTracks.map(
+                        (userTrack) => Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedAudio = userTrack.name);
+                                _playAudio(userTrack.name);
+                              },
+                              child: _audioChip(
+                                '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+                                _selectedAudio == userTrack.name,
+                              ),
+                            ),
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: GestureDetector(
+                                onTap: () =>
+                                    _showDeleteAudioConfirmation(userTrack),
+                                child: Container(
+                                  width: 18,
+                                  height: 18,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Admin audio tracks from API
+                      if (_audioLoadError != null)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Could not load audios',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDarkMode
+                                        ? Colors.white54
+                                        : Colors.black45,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: _fetchAdminAudios,
+                                  child: Text(
+                                    'Tap to retry',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.blueAccent,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        ..._adminAudioTracks.map(
+                          (adminTrack) => GestureDetector(
+                            onTap: () {
+                              setState(() => _selectedAudio = adminTrack.title);
+                              _playAudio(adminTrack.title);
+                            },
+                            child: _adminAudioChip(adminTrack, isDarkMode),
+                          ),
+                        ),
+
+                      // Static audio tracks (optional - you can keep or remove)
+                      ..._audioTracks.map(
+                        (track) => GestureDetector(
                           onTap: () {
-                            _showDeleteAudioConfirmation(userTrack);
+                            setState(() => _selectedAudio = track.name);
+                            _playAudio(track.name);
                           },
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 12,
-                              color: Colors.white,
-                            ),
+                          child: _audioChip(
+                            track.name,
+                            _selectedAudio == track.name,
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-
-                // 4. Static audio tracks (after user uploads)
-                ..._audioTracks.map(
-                  (track) => GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedAudio = track.name);
-                      _playAudio(track.name);
-                    },
-                    child: _audioChip(track.name, _selectedAudio == track.name),
-                  ),
-                ),
-              ],
-            ),
           ),
           if (_selectedAudio != null)
             Padding(
@@ -10996,6 +11758,73 @@ void _showTextThemePicker(OverlayTextItem sel) {
                     ),
                   const Icon(Icons.audiotrack, size: 18, color: Colors.green),
                 ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _adminAudioChip(AdminAudioTrack track, bool isDarkMode) {
+    final isSelected = _selectedAudio == track.title;
+    final isPlaying = _isAudioPlaying && isSelected;
+    return Container(
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? const Color(0xFFF5C518)
+            : (isDarkMode ? const Color(0xFF0F172A) : Colors.grey.shade100),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isPlaying
+              ? Colors.green
+              : (isSelected
+                    ? const Color(0xFFF5C518)
+                    : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300)),
+          width: isPlaying ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isPlaying ? Icons.play_arrow : Icons.music_note,
+                size: 12,
+                color: isPlaying
+                    ? Colors.green
+                    : (isSelected
+                          ? Colors.black87
+                          : (isDarkMode ? Colors.white54 : Colors.black45)),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                track.title,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isPlaying
+                      ? Colors.green
+                      : (isSelected
+                            ? Colors.black87
+                            : (isDarkMode ? Colors.white70 : Colors.black87)),
+                ),
+              ),
+            ],
+          ),
+          if (track.artist.isNotEmpty)
+            Text(
+              track.artist,
+              style: TextStyle(
+                fontSize: 9,
+                color: isSelected
+                    ? Colors.black54
+                    : (isDarkMode ? Colors.white38 : Colors.black38),
               ),
             ),
         ],
