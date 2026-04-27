@@ -206,7 +206,7 @@ import 'package:dio/dio.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class ChatService {
-  static const String baseUrl = 'http://82.29.162.67:4061';
+  static const String baseUrl = 'http://31.97.228.17:4061';
   late final Dio _dio;
   IO.Socket? _socket;
   

@@ -571,6 +571,51 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   MyPlanProvider? _planProvider;
   bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
 
+
+
+
+  List<AdminAudioTrack> _adminAudioTracks = [];
+bool _isLoadingAudios = false;
+String? _audioLoadError;
+
+
+
+
+
+
+Future<void> _fetchAdminAudios() async {
+  setState(() {
+    _isLoadingAudios = true;
+    _audioLoadError = null;
+  });
+  try {
+    final response = await http.get(
+      Uri.parse('http://31.97.228.17:4061/api/admin/getallaudios'),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List audios = data['audios'] ?? [];
+      setState(() {
+        _adminAudioTracks = audios
+            .map((a) => AdminAudioTrack.fromJson(a))
+            .where((a) => a.audioUrl.isNotEmpty)
+            .toList();
+        _isLoadingAudios = false;
+      });
+    } else {
+      setState(() {
+        _audioLoadError = 'Failed to load audios';
+        _isLoadingAudios = false;
+      });
+    }
+  } catch (e) {
+    setState(() {
+      _audioLoadError = 'Network error: $e';
+      _isLoadingAudios = false;
+    });
+  }
+}
+
   List<UserAudioTrack> _userAudioTracks = [];
   String? _selectedUserAudioPath;
 
@@ -2032,6 +2077,7 @@ Widget _applyChromaticAberration(Widget child, double strength) {
     _planProvider = Provider.of<MyPlanProvider>(context, listen: false);
     _checkPurchaseStatus();
     _fetchProfileData();
+    _fetchAdminAudios();
     _fetchPosterPriceFromProvider();
 
     _brandElements = [
@@ -2655,6 +2701,28 @@ Future<void> _pickUserAudio() async {
         orElse: () =>
             UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
       );
+
+
+
+
+      // Check if it's an admin audio track
+final adminTrack = _adminAudioTracks.firstWhere(
+  (track) => track.title == trackName,
+  orElse: () => AdminAudioTrack(id: '', title: '', artist: '', audioUrl: ''),
+);
+
+if (adminTrack.audioUrl.isNotEmpty) {
+  await _audioPlayer.play(UrlSource(adminTrack.audioUrl), volume: 1.0);
+  setState(() {
+    _isAudioPlaying = true;
+    _selectedAudio = trackName;
+    _selectedUserAudioPath = null;
+  });
+  _audioPlayer.onPlayerComplete.listen((event) {
+    if (mounted) setState(() => _isAudioPlaying = false);
+  });
+  return;
+}
 
       if (userTrack.filePath.isNotEmpty &&
           await File(userTrack.filePath).exists()) {
@@ -12767,119 +12835,181 @@ void _showBgColorPicker(OverlayTextItem sel) {
 
 // previous one is the correct one this is code to remove the static music////
 
+
+
+
+
+
 Widget _buildAudioPanel() {
   final isDarkMode = _isDarkMode;
   return Container(
-    height: 220, // Increased height
+    height: 220,
     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          child: Text(
-            'Audio',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              color: isDarkMode ? Colors.white : Colors.black87,
-            ),
+          child: Row(
+            children: [
+              Text(
+                'Audio',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
+              ),
+              if (_isLoadingAudios) ...[
+                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ],
+              if (_audioLoadError != null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _fetchAdminAudios,
+                  child: const Icon(Icons.refresh, size: 16, color: Colors.orange),
+                ),
+              ],
+            ],
           ),
         ),
         Expanded(
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            children: [
-              // 1. No Audio option
-              GestureDetector(
-                onTap: () {
-                  setState(() => _selectedAudio = null);
-                  _playAudio(null);
-                },
-                child: _audioChip('No Audio', _selectedAudio == null),
-              ),
-
-              // 2. Upload button
-              GestureDetector(
-                onTap: _pickUserAudio,
-                child: Container(
-                  margin: const EdgeInsets.only(right: 10),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5C518),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFFF5C518),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.upload_file,
-                        size: 14,
-                        color: Colors.black87,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Upload',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 3. User uploaded audio tracks only (no static tracks)
-              ..._userAudioTracks.map(
-                (userTrack) => Stack(
+          child: _isLoadingAudios
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   children: [
+                    // No Audio option
                     GestureDetector(
                       onTap: () {
-                        setState(() => _selectedAudio = userTrack.name);
-                        _playAudio(userTrack.name);
+                        setState(() => _selectedAudio = null);
+                        _playAudio(null);
                       },
-                      child: _audioChip(
-                        '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
-                        _selectedAudio == userTrack.name,
-                      ),
+                      child: _audioChip('No Audio', _selectedAudio == null),
                     ),
-                    // Delete button
-                    Positioned(
-                      top: -4,
-                      right: -4,
-                      child: GestureDetector(
-                        onTap: () {
-                          _showDeleteAudioConfirmation(userTrack);
-                        },
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
+
+                    // Upload user audio button
+                    GestureDetector(
+                      onTap: _pickUserAudio,
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5C518),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFFF5C518),
+                            width: 1,
                           ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 12,
-                            color: Colors.white,
-                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.upload_file, size: 14, color: Colors.black87),
+                            SizedBox(width: 4),
+                            Text(
+                              'Upload',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+
+                    // User uploaded audio tracks
+                    ..._userAudioTracks.map(
+                      (userTrack) => Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              setState(() => _selectedAudio = userTrack.name);
+                              _playAudio(userTrack.name);
+                            },
+                            child: _audioChip(
+                              '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+                              _selectedAudio == userTrack.name,
+                            ),
+                          ),
+                          Positioned(
+                            top: -4,
+                            right: -4,
+                            child: GestureDetector(
+                              onTap: () => _showDeleteAudioConfirmation(userTrack),
+                              child: Container(
+                                width: 18,
+                                height: 18,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Admin audio tracks from API
+                    if (_audioLoadError != null)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Could not load audios',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDarkMode ? Colors.white54 : Colors.black45,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: _fetchAdminAudios,
+                                child: Text(
+                                  'Tap to retry',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.blueAccent,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ..._adminAudioTracks.map(
+                        (adminTrack) => GestureDetector(
+                          onTap: () {
+                            setState(() => _selectedAudio = adminTrack.title);
+                            _playAudio(adminTrack.title);
+                          },
+                          child: _adminAudioChip(adminTrack, isDarkMode),
+                        ),
+                      ),
                   ],
                 ),
-              ),
-            ],
-          ),
         ),
         if (_selectedAudio != null)
           Padding(
@@ -12922,6 +13052,238 @@ Widget _buildAudioPanel() {
     ),
   );
 }
+
+
+
+
+
+Widget _adminAudioChip(AdminAudioTrack track, bool isDarkMode) {
+  final isSelected = _selectedAudio == track.title;
+  final isPlaying = _isAudioPlaying && isSelected;
+  return Container(
+    margin: const EdgeInsets.only(right: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+    decoration: BoxDecoration(
+      color: isSelected
+          ? const Color(0xFFF5C518)
+          : (isDarkMode ? const Color(0xFF0F172A) : Colors.grey.shade100),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: isPlaying
+            ? Colors.green
+            : (isSelected
+                  ? const Color(0xFFF5C518)
+                  : (isDarkMode ? Colors.grey[700]! : Colors.grey.shade300)),
+        width: isPlaying ? 2 : 1,
+      ),
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isPlaying ? Icons.play_arrow : Icons.music_note,
+              size: 12,
+              color: isPlaying
+                  ? Colors.green
+                  : (isSelected
+                        ? Colors.black87
+                        : (isDarkMode ? Colors.white54 : Colors.black45)),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              track.title,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isPlaying
+                    ? Colors.green
+                    : (isSelected
+                          ? Colors.black87
+                          : (isDarkMode ? Colors.white70 : Colors.black87)),
+              ),
+            ),
+          ],
+        ),
+        if (track.artist.isNotEmpty)
+          Text(
+            track.artist,
+            style: TextStyle(
+              fontSize: 9,
+              color: isSelected
+                  ? Colors.black54
+                  : (isDarkMode ? Colors.white38 : Colors.black38),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+// Widget _buildAudioPanel() {
+//   final isDarkMode = _isDarkMode;
+//   return Container(
+//     height: 220, // Increased height
+//     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+//     child: Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Padding(
+//           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+//           child: Text(
+//             'Audio',
+//             style: TextStyle(
+//               fontWeight: FontWeight.bold,
+//               fontSize: 13,
+//               color: isDarkMode ? Colors.white : Colors.black87,
+//             ),
+//           ),
+//         ),
+//         Expanded(
+//           child: ListView(
+//             scrollDirection: Axis.horizontal,
+//             padding: const EdgeInsets.symmetric(horizontal: 12),
+//             children: [
+//               // 1. No Audio option
+//               GestureDetector(
+//                 onTap: () {
+//                   setState(() => _selectedAudio = null);
+//                   _playAudio(null);
+//                 },
+//                 child: _audioChip('No Audio', _selectedAudio == null),
+//               ),
+
+//               // 2. Upload button
+//               GestureDetector(
+//                 onTap: _pickUserAudio,
+//                 child: Container(
+//                   margin: const EdgeInsets.only(right: 10),
+//                   padding: const EdgeInsets.symmetric(
+//                     horizontal: 14,
+//                     vertical: 8,
+//                   ),
+//                   decoration: BoxDecoration(
+//                     color: const Color(0xFFF5C518),
+//                     borderRadius: BorderRadius.circular(20),
+//                     border: Border.all(
+//                       color: const Color(0xFFF5C518),
+//                       width: 1,
+//                     ),
+//                   ),
+//                   child: Row(
+//                     children: [
+//                       const Icon(
+//                         Icons.upload_file,
+//                         size: 14,
+//                         color: Colors.black87,
+//                       ),
+//                       const SizedBox(width: 4),
+//                       Text(
+//                         'Upload',
+//                         style: TextStyle(
+//                           fontSize: 11,
+//                           fontWeight: FontWeight.bold,
+//                           color: Colors.black87,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+
+//               // 3. User uploaded audio tracks only (no static tracks)
+//               ..._userAudioTracks.map(
+//                 (userTrack) => Stack(
+//                   children: [
+//                     GestureDetector(
+//                       onTap: () {
+//                         setState(() => _selectedAudio = userTrack.name);
+//                         _playAudio(userTrack.name);
+//                       },
+//                       child: _audioChip(
+//                         '📱 ${userTrack.name} (${userTrack.durationInSeconds}s)',
+//                         _selectedAudio == userTrack.name,
+//                       ),
+//                     ),
+//                     // Delete button
+//                     Positioned(
+//                       top: -4,
+//                       right: -4,
+//                       child: GestureDetector(
+//                         onTap: () {
+//                           _showDeleteAudioConfirmation(userTrack);
+//                         },
+//                         child: Container(
+//                           width: 18,
+//                           height: 18,
+//                           decoration: const BoxDecoration(
+//                             color: Colors.red,
+//                             shape: BoxShape.circle,
+//                           ),
+//                           child: const Icon(
+//                             Icons.close,
+//                             size: 12,
+//                             color: Colors.white,
+//                           ),
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//         if (_selectedAudio != null)
+//           Padding(
+//             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+//             child: Row(
+//               children: [
+//                 Icon(
+//                   _isAudioPlaying ? Icons.volume_up : Icons.volume_off,
+//                   size: 16,
+//                   color: _isAudioPlaying ? Colors.green : Colors.amber,
+//                 ),
+//                 const SizedBox(width: 8),
+//                 Expanded(
+//                   child: Text(
+//                     _isAudioPlaying
+//                         ? 'Playing: $_selectedAudio'
+//                         : 'Selected: $_selectedAudio',
+//                     style: TextStyle(
+//                       fontSize: 11,
+//                       color: _isAudioPlaying
+//                           ? Colors.green
+//                           : (isDarkMode ? Colors.white54 : Colors.black54),
+//                     ),
+//                     overflow: TextOverflow.ellipsis,
+//                   ),
+//                 ),
+//                 if (_isAudioPlaying)
+//                   IconButton(
+//                     icon: const Icon(Icons.stop, size: 18),
+//                     onPressed: () async {
+//                       await _audioPlayer.stop();
+//                       setState(() => _isAudioPlaying = false);
+//                     },
+//                   ),
+//                 const Icon(Icons.audiotrack, size: 18, color: Colors.green),
+//               ],
+//             ),
+//           ),
+//       ],
+//     ),
+//   );
+// }
+
+
+
+
+
   void _showDeleteAudioConfirmation(UserAudioTrack userTrack) {
     final isDarkMode = _isDarkMode;
 
@@ -15642,4 +16004,31 @@ class _EffectData {
   final IconData icon;
   final String label;
   _EffectData(this.type, this.icon, this.label);
+}
+
+
+
+
+
+class AdminAudioTrack {
+  final String id;
+  final String title;
+  final String artist;
+  final String audioUrl;
+
+  AdminAudioTrack({
+    required this.id,
+    required this.title,
+    required this.artist,
+    required this.audioUrl,
+  });
+
+  factory AdminAudioTrack.fromJson(Map<String, dynamic> json) {
+    return AdminAudioTrack(
+      id: json['_id'] ?? '',
+      title: json['title'] ?? 'Unknown',
+      artist: json['artist'] ?? '',
+      audioUrl: json['audioUrl'] ?? '',
+    );
+  }
 }

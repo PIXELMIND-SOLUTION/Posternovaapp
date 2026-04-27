@@ -476,12 +476,27 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
 
     // Duration label
     // final durationMonths = int.tryParse(plan.duration) ?? 1;
-    final durationMonths = int.tryParse(plan.duration.trim().split(' ').first) ?? 1;
-    final durationLabel = durationMonths == 1
-        ? '1 Month'
-        : durationMonths == 12
-        ? '1 Year'
-        : '$durationMonths Months';
+    // final durationMonths = int.tryParse(plan.duration.trim().split(' ').first) ?? 1;
+    // final durationLabel = durationMonths == 1
+    //     ? '1 Month'
+    //     : durationMonths == 12
+    //     ? '1 Year'
+    //     : '$durationMonths Months';
+
+    final durationParts = plan.duration.trim().split(' ');
+    final durationNumber = int.tryParse(durationParts.first) ?? 1;
+    final durationUnit = durationParts.length > 1
+        ? durationParts[1].toLowerCase()
+        : 'month';
+
+    final String durationLabel;
+    if (durationUnit.startsWith('year')) {
+      durationLabel = durationNumber == 1 ? '1 Year' : '$durationNumber Years';
+    } else {
+      durationLabel = durationNumber == 1
+          ? '1 Month'
+          : '$durationNumber Months';
+    }
 
     return GestureDetector(
       onTap: () => setState(() => _selectedPlanIndex = index),
@@ -494,7 +509,7 @@ class _ShowPlanScreenState extends State<ShowPlanScreen>
           border: Border.all(
             color: isSelected
                 ? const Color(0xFFFFD700)
-                : Colors.white.withOpacity(0.08), 
+                : Colors.white.withOpacity(0.08),
             width: isSelected ? 2 : 1,
           ),
           gradient: isSelected

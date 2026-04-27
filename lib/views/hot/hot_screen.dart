@@ -74,7 +74,7 @@ class _HotScreenState extends State<HotScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: const Text(
-            'Hot Topics',
+            'Trending Posters',
             style: TextStyle(
               color: Colors.white,
               fontSize: 24,

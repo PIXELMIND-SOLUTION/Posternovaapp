@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:posternova/models/poster_model.dart';
 
 class NewCanvasPosterService {
-  static const String baseUrl = 'http://82.29.162.67:4061/api/poster';
+  static const String baseUrl = 'http://31.97.228.17:4061/api/poster';
 
   // Fetch weekly posters from the API
   Future<List<CanvasPosterModel>> fetchWeeklyPosters(String userId) async {
