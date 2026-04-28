@@ -10,6 +10,7 @@ import 'package:posternova/models/banner_model.dart';
 import 'package:posternova/models/category_model.dart';
 import 'package:posternova/models/festival_poster_model.dart';
 import 'package:posternova/models/hot_top.dart';
+import 'package:posternova/models/trending_poster_model.dart';
 import 'package:posternova/models/weekly_template_model.dart';
 import 'package:posternova/providers/PosterProvider/getall_poster_provider.dart';
 import 'package:posternova/providers/PosterProvider/poster_provider.dart';
@@ -21,6 +22,7 @@ import 'package:posternova/providers/festivals/date_time_provider.dart';
 import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/providers/story/story_provider.dart';
 import 'package:posternova/providers/topics/hot_topic_provider.dart';
+import 'package:posternova/providers/topics/trending_poster_provider.dart';
 import 'package:posternova/providers/weekly/weekly_templates_provider.dart';
 import 'package:posternova/views/ProfileScreen/profile_screen.dart';
 import 'package:posternova/views/SecondPhase/poster_editor.dart';
@@ -501,6 +503,9 @@ Future<void> _saveSubscriptionModalShownTime() async {
       listen: false,
     );
     await celebrationProvider.fetchCelebrationConfig();
+
+    await Provider.of<TrendingPosterProvider>(context, listen: false)
+    .fetchTrendingPosters(userId!);
 
     final adminAmountProvider = Provider.of<AdminAmountProvider>(
       context,
@@ -2255,64 +2260,246 @@ Widget build(BuildContext context) {
   // HOT TOPICS / REELS
   // ══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildHotTopicsSection() {
-    return Consumer<HotTopicsProvider>(
-      builder: (context, hotTopicsProvider, _) {
-        return Container(
-          // color: Colors.white,
-          padding: const EdgeInsets.only(top: 12, bottom: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 2,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // const Text(
-                    //   'Hot Topics',
-                    //   style: TextStyle(
-                    //     fontSize: 17,
-                    //     fontWeight: FontWeight.bold,
-                    //     color: Colors.black87,
-                    //   ),
-                    // ),
-                     const Text(
-                      'Trending Posters',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+
+
+  // ══════════════════════════════════════════════════════════════════════════
+// TRENDING POSTERS (replaces Hot Topics/Reels)
+// ══════════════════════════════════════════════════════════════════════════
+
+Widget _buildHotTopicsSection() {
+  return Consumer<TrendingPosterProvider>(
+    builder: (context, trendingProvider, _) {
+      return Container(
+        padding: const EdgeInsets.only(top: 12, bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Trending Posters',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
-                    GestureDetector(
-                      onTap: () => _goToReelsScreen(0),
-                      child: const Text(
-                        'View All',
-                        style: TextStyle(
-                          color: Color(0xFFFFC107),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      if (!_requireNetwork()) return;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DetailsScreen(category: 'Trending'),
                         ),
+                      );
+                    },
+                    child: const Text(
+                      'View All',
+                      style: TextStyle(
+                        color: Color(0xFFFFC107),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 180,
-                child: _buildReelsContent(hotTopicsProvider),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 180,
+              child: _buildTrendingPostersContent(trendingProvider),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+Widget _buildTrendingPostersContent(TrendingPosterProvider provider) {
+  if (provider.isLoading) {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      itemCount: 5,
+      itemBuilder: (_, __) => Container(
+        width: 120,
+        margin: const EdgeInsets.only(right: 10),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const SkeletonBox(width: 120, height: 180, borderRadius: 12),
+      ),
     );
   }
+
+  if (provider.posters.isEmpty) {
+    return const Center(
+      child: Text(
+        'No trending posters available',
+        style: TextStyle(color: Colors.grey, fontSize: 13),
+      ),
+    );
+  }
+
+  return ListView.builder(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    itemCount: provider.posters.length,
+    itemBuilder: (_, i) => _buildTrendingPosterCard(provider.posters[i]),
+  );
+}
+
+Widget _buildTrendingPosterCard(TrendingPoster poster) {
+  return GestureDetector(
+    onTap: () {
+      if (!_requireNetwork()) return;
+      final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
+          ? poster.designData.bgImage.url
+          : poster.posterImage.url;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PosterEditorScreen(
+            posterAsset: bgImageUrl,
+            itemid: poster.id,
+          ),
+        ),
+      );
+    },
+    child: Container(
+      width: 120,
+      margin: const EdgeInsets.only(right: 10),
+      decoration: BoxDecoration(
+        color: _sectionBg,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.10),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              poster.posterImage.url,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                color: const Color(0xFFF3F4F6),
+                child: const Center(
+                  child: Icon(Icons.image_outlined, color: Colors.grey, size: 32),
+                ),
+              ),
+              loadingBuilder: (_, child, progress) {
+                if (progress == null) return child;
+                return const SkeletonBox(width: 120, height: 180, borderRadius: 0);
+              },
+            ),
+            // Gradient overlay at bottom
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.65),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Text(
+                  poster.title.isNotEmpty ? poster.title : poster.categoryName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+  // Widget _buildHotTopicsSection() {
+  //   return Consumer<HotTopicsProvider>(
+  //     builder: (context, hotTopicsProvider, _) {
+  //       return Container(
+  //         // color: Colors.white,
+  //         padding: const EdgeInsets.only(top: 12, bottom: 12),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Padding(
+  //               padding: const EdgeInsets.symmetric(
+  //                 horizontal: 16,
+  //                 vertical: 2,
+  //               ),
+  //               child: Row(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                 children: [
+  //                   // const Text(
+  //                   //   'Hot Topics',
+  //                   //   style: TextStyle(
+  //                   //     fontSize: 17,
+  //                   //     fontWeight: FontWeight.bold,
+  //                   //     color: Colors.black87,
+  //                   //   ),
+  //                   // ),
+  //                    const Text(
+  //                     'Trending Posters',
+  //                     style: TextStyle(
+  //                       fontSize: 17,
+  //                       fontWeight: FontWeight.bold,
+  //                       color: Colors.black87,
+  //                     ),
+  //                   ),
+  //                   GestureDetector(
+  //                     onTap: () => _goToReelsScreen(0),
+  //                     child: const Text(
+  //                       'View All',
+  //                       style: TextStyle(
+  //                         color: Color(0xFFFFC107),
+  //                         fontSize: 13,
+  //                         fontWeight: FontWeight.w600,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             const SizedBox(height: 10),
+  //             SizedBox(
+  //               height: 180,
+  //               child: _buildReelsContent(hotTopicsProvider),
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   Widget _buildReelsContent(HotTopicsProvider provider) {
     // Show loading only on first load when no data

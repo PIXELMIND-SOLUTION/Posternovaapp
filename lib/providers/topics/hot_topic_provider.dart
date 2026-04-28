@@ -70,7 +70,7 @@ class HotTopicsProvider extends ChangeNotifier {
     try {
       final response = await http.get(
         Uri.parse(
-          'http://31.97.228.17:4061/api/users/allhottopicreels/$effectiveUserId',
+          'http://82.29.162.67:4061/api/users/allhottopicreels/$effectiveUserId',
         ),
       );
 
@@ -152,7 +152,7 @@ class HotTopicsProvider extends ChangeNotifier {
 
       // Make API call to update like status
       final response = await http.post(
-        Uri.parse('http://31.97.228.17:4061/api/topics/toggle-like'),
+        Uri.parse('http://82.29.162.67:4061/api/topics/toggle-like'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'userId': userId,
@@ -233,7 +233,7 @@ class HotTopicsProvider extends ChangeNotifier {
       if (userId != null) {
         http
             .post(
-              Uri.parse('http://31.97.228.17:4061/api/topics/increment-view'),
+              Uri.parse('http://82.29.162.67:4061/api/topics/increment-view'),
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({'userId': userId, 'reelId': reelId}),
             )

@@ -31,25 +31,48 @@ class SmsProvider extends ChangeNotifier {
   String? get mobileNumber => _mobileNumber;
 
   /// LOGIN
+  // Future<bool> login(String mobile) async {
+  //   _setLoading(true);
+  //   _clearError();
+
+  //   try {
+  //     _mobileNumber = mobile;
+  //     final res = await _smsService.login(LoginRequest(mobile: mobile));
+
+  //     if (!res) {
+  //       _errorMessage = _loginResponse?.body;
+  //     }
+  //     return true;
+  //   } catch (e) {
+  //     _errorMessage = e.toString();
+  //     return false;
+  //   } finally {
+  //     _setLoading(false);
+  //   }
+  // }
+
+
+
+
   Future<bool> login(String mobile) async {
-    _setLoading(true);
-    _clearError();
+  _setLoading(true);
+  _clearError();
 
-    try {
-      _mobileNumber = mobile;
-      final res = await _smsService.login(LoginRequest(mobile: mobile));
+  try {
+    _mobileNumber = mobile;
+    final res = await _smsService.login(LoginRequest(mobile: mobile));
 
-      if (!res) {
-        _errorMessage = _loginResponse?.body;
-      }
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      return false;
-    } finally {
-      _setLoading(false);
+    if (!res) {
+      _errorMessage = _loginResponse?.body;
     }
+    return true; // ← Always returns true regardless of res
+  } catch (e) {
+    _errorMessage = e.toString();
+    return false;
+  } finally {
+    _setLoading(false);
   }
+}
 
   /// VERIFY OTP (FCM SAFE)
   Future<void> verifyOtp(

@@ -1653,59 +1653,102 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     }
   }
 
+  // Future<void> _handleVerifyOtp() async {
+  //   final mobile = _mobileCtrl.text.trim();
+  //   final enteredOtp = _otpController.text.trim();
+
+  //   if (enteredOtp.length < _otpLength) {
+  //     _snack('Please enter the complete $_otpLength-digit OTP');
+  //     return;
+  //   }
+
+  //   final smsProvider = Provider.of<SmsProvider>(context, listen: false);
+  //   final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+  //   if (_isBypassNumber) {
+  //     await smsProvider.verifyOtp(enteredOtp, mobile, context);
+
+  //     if (smsProvider.otpResponse?.statusCode == 200) {
+  //       final userData = jsonDecode(smsProvider.otpResponse!.body);
+  //       final user = userData['user'];
+
+  //       final hasName =
+  //           user['name'] != null && user['name'].toString().isNotEmpty;
+  //       final hasEmail =
+  //           user['email'] != null && user['email'].toString().isNotEmpty;
+
+  //       if (!hasName || !hasEmail) {
+  //         setState(() => _isMobileLocked = true);
+  //         _goTo(AuthStep.signup);
+  //         return;
+  //       }
+
+  //       final success = await authProvider.login(mobile);
+  //       if (success) {
+  //         Navigator.pushReplacement(
+  //           context,
+  //           MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+  //         );
+  //       }
+  //     } else {
+  //       _snack("Invalid OTP");
+  //     }
+  //     return;
+  //   }
+
+  //   await smsProvider.verifyOtp(enteredOtp, mobile, context);
+
+  //   if (smsProvider.otpResponse?.statusCode == 200) {
+  //     final userData = jsonDecode(smsProvider.otpResponse!.body);
+  //     final user = userData['user'];
+
+  //     final hasName =
+  //         user['name'] != null && user['name'].toString().isNotEmpty;
+  //     final hasEmail =
+  //         user['email'] != null && user['email'].toString().isNotEmpty;
+
+  //     if (!hasName || !hasEmail) {
+  //       setState(() => _isMobileLocked = true);
+  //       _goTo(AuthStep.signup);
+  //       return;
+  //     }
+
+  //     final success = await authProvider.login(mobile);
+  //     if (success) {
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+  //       );
+  //     }
+  //   } else {
+  //     _snack(smsProvider.errorMessage ?? "Invalid OTP");
+  //   }
+  // }
+
+
+
+
+
   Future<void> _handleVerifyOtp() async {
-    final mobile = _mobileCtrl.text.trim();
-    final enteredOtp = _otpController.text.trim();
+  final mobile = _mobileCtrl.text.trim();
+  final enteredOtp = _otpController.text.trim();
 
-    if (enteredOtp.length < _otpLength) {
-      _snack('Please enter the complete $_otpLength-digit OTP');
-      return;
-    }
+  if (enteredOtp.length < _otpLength) {
+    _snack('Please enter the complete $_otpLength-digit OTP');
+    return;
+  }
 
-    final smsProvider = Provider.of<SmsProvider>(context, listen: false);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  final smsProvider = Provider.of<SmsProvider>(context, listen: false);
 
-    if (_isBypassNumber) {
-      await smsProvider.verifyOtp(enteredOtp, mobile, context);
-
-      if (smsProvider.otpResponse?.statusCode == 200) {
-        final userData = jsonDecode(smsProvider.otpResponse!.body);
-        final user = userData['user'];
-
-        final hasName =
-            user['name'] != null && user['name'].toString().isNotEmpty;
-        final hasEmail =
-            user['email'] != null && user['email'].toString().isNotEmpty;
-
-        if (!hasName || !hasEmail) {
-          setState(() => _isMobileLocked = true);
-          _goTo(AuthStep.signup);
-          return;
-        }
-
-        final success = await authProvider.login(mobile);
-        if (success) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => MainNavigationScreen()),
-          );
-        }
-      } else {
-        _snack("Invalid OTP");
-      }
-      return;
-    }
-
+  if (_isBypassNumber) {
     await smsProvider.verifyOtp(enteredOtp, mobile, context);
 
     if (smsProvider.otpResponse?.statusCode == 200) {
       final userData = jsonDecode(smsProvider.otpResponse!.body);
       final user = userData['user'];
 
-      final hasName =
-          user['name'] != null && user['name'].toString().isNotEmpty;
-      final hasEmail =
-          user['email'] != null && user['email'].toString().isNotEmpty;
+      final hasName = user['name'] != null && user['name'].toString().isNotEmpty;
+      final hasEmail = user['email'] != null && user['email'].toString().isNotEmpty;
 
       if (!hasName || !hasEmail) {
         setState(() => _isMobileLocked = true);
@@ -1713,17 +1756,41 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         return;
       }
 
-      final success = await authProvider.login(mobile);
-      if (success) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => MainNavigationScreen()),
-        );
-      }
+      // ✅ Remove authProvider.login(mobile) — verifyOtp already calls setUser()
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+      );
     } else {
-      _snack(smsProvider.errorMessage ?? "Invalid OTP");
+      _snack("Invalid OTP");
     }
+    return;
   }
+
+  await smsProvider.verifyOtp(enteredOtp, mobile, context);
+
+  if (smsProvider.otpResponse?.statusCode == 200) {
+    final userData = jsonDecode(smsProvider.otpResponse!.body);
+    final user = userData['user'];
+
+    final hasName = user['name'] != null && user['name'].toString().isNotEmpty;
+    final hasEmail = user['email'] != null && user['email'].toString().isNotEmpty;
+
+    if (!hasName || !hasEmail) {
+      setState(() => _isMobileLocked = true);
+      _goTo(AuthStep.signup);
+      return;
+    }
+
+    // ✅ Remove authProvider.login(mobile) — verifyOtp already calls setUser()
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+    );
+  } else {
+    _snack(smsProvider.errorMessage ?? "Invalid OTP");
+  }
+}
 
   Future<void> _handleResendOtp() async {
     final mobile = _mobileCtrl.text.trim();

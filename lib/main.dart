@@ -11,6 +11,7 @@ import 'package:posternova/providers/category/categories_provider.dart';
 import 'package:posternova/providers/celebration/celebration_provider.dart';
 import 'package:posternova/providers/festival/festival_posters_provider.dart';
 import 'package:posternova/providers/topics/hot_topic_provider.dart';
+import 'package:posternova/providers/topics/trending_poster_provider.dart';
 import 'package:posternova/providers/usage/usage_provider.dart';
 import 'package:posternova/providers/weekly/weekly_templates_provider.dart';
 import 'package:provider/provider.dart';
@@ -122,6 +123,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CategoriesProvider()),
         ChangeNotifierProvider(create: (_) => CelebrationProvider()),
         ChangeNotifierProvider(create: (_) => AdminAmountProvider()),
+                ChangeNotifierProvider(create: (_) => TrendingPosterProvider()),
 
         ChangeNotifierProvider(create: (_) => UsageProvider()..init()),
       ],
