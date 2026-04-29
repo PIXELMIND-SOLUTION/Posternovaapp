@@ -10,6 +10,87 @@ class TrendingPosterResponse {
   }
 }
 
+// class TrendingPoster {
+//   final String id;
+//   final String name;
+//   final String categoryName;
+//   final String title;
+//   final String description;
+//   final String size;
+//   final bool inStock;
+//   final bool isTrending;
+//   final DateTime festivalDate;
+//   final DateTime createdAt;
+//   final DateTime updatedAt;
+//   final List<String> images;
+//   final List<String> tags;
+//   final PosterImage posterImage;
+//   final DesignData designData;
+
+//   TrendingPoster({
+//     required this.id,
+//     required this.name,
+//     required this.categoryName,
+//     required this.title,
+//     required this.description,
+//     required this.size,
+//     required this.inStock,
+//     required this.isTrending,
+//     required this.festivalDate,
+//     required this.createdAt,
+//     required this.updatedAt,
+//     required this.images,
+//     required this.tags,
+//     required this.posterImage,
+//     required this.designData,
+//   });
+
+//   factory TrendingPoster.fromJson(Map<String, dynamic> json) {
+//     return TrendingPoster(
+//       id: json['_id'] ?? '',
+//       name: json['name'] ?? '',
+//       categoryName: json['categoryName'] ?? '',
+//       title: json['title'] ?? '',
+//       description: json['description'] ?? '',
+//       size: json['size'] ?? '',
+//       inStock: json['inStock'] ?? false,
+//       isTrending: json['isTrending'] ?? false,
+//       festivalDate: DateTime.parse(json['festivalDate']),
+//       createdAt: DateTime.parse(json['createdAt']),
+//       updatedAt: DateTime.parse(json['updatedAt']),
+//       images: List<String>.from(json['images'] ?? []),
+//       tags: List<String>.from(json['tags'] ?? []),
+//       posterImage: PosterImage.fromJson(json['posterImage']),
+//       designData: DesignData.fromJson(json['designData']),
+//     );
+//   }
+
+//   Map<String, dynamic> toJson() {
+//     return {
+//       '_id': id,
+//       'name': name,
+//       'categoryName': categoryName,
+//       'title': title,
+//       'description': description,
+//       'size': size,
+//       'inStock': inStock,
+//       'isTrending': isTrending,
+//       'festivalDate': festivalDate.toIso8601String(),
+//       'createdAt': createdAt.toIso8601String(),
+//       'updatedAt': updatedAt.toIso8601String(),
+//       'images': images,
+//       'tags': tags,
+//       'posterImage': posterImage.toJson(),
+//       'designData': designData.toJson(),
+//     };
+//   }
+// }
+
+
+
+
+
+
 class TrendingPoster {
   final String id;
   final String name;
@@ -19,7 +100,7 @@ class TrendingPoster {
   final String size;
   final bool inStock;
   final bool isTrending;
-  final DateTime festivalDate;
+  final DateTime? festivalDate;   // ← nullable, it's absent in some responses
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<String> images;
@@ -36,7 +117,7 @@ class TrendingPoster {
     required this.size,
     required this.inStock,
     required this.isTrending,
-    required this.festivalDate,
+    this.festivalDate,             // ← optional
     required this.createdAt,
     required this.updatedAt,
     required this.images,
@@ -55,34 +136,17 @@ class TrendingPoster {
       size: json['size'] ?? '',
       inStock: json['inStock'] ?? false,
       isTrending: json['isTrending'] ?? false,
-      festivalDate: DateTime.parse(json['festivalDate']),
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      // ✅ safe parse — field may be absent
+      festivalDate: json['festivalDate'] != null
+          ? DateTime.tryParse(json['festivalDate'])
+          : null,
+      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
       images: List<String>.from(json['images'] ?? []),
       tags: List<String>.from(json['tags'] ?? []),
-      posterImage: PosterImage.fromJson(json['posterImage']),
-      designData: DesignData.fromJson(json['designData']),
+      posterImage: PosterImage.fromJson(json['posterImage'] ?? {}),
+      designData: DesignData.fromJson(json['designData'] ?? {}),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-      'categoryName': categoryName,
-      'title': title,
-      'description': description,
-      'size': size,
-      'inStock': inStock,
-      'isTrending': isTrending,
-      'festivalDate': festivalDate.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-      'images': images,
-      'tags': tags,
-      'posterImage': posterImage.toJson(),
-      'designData': designData.toJson(),
-    };
   }
 }
 

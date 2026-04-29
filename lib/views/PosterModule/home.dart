@@ -485,63 +485,117 @@ Future<void> _saveSubscriptionModalShownTime() async {
   // INIT HELPERS
   // ══════════════════════════════════════════════════════════════════════════
 
+  // Future<void> _initializeAllData() async {
+  //   if (!mounted || !_hasNetwork) return;
+  //   final selectedDate = context.read<DateTimeProvider>().selectedDate;
+
+  //   // Set all loading states to true
+  //   setState(() {
+  //     _isStoriesLoading = true;
+  //     _isFestivalLoading = true;
+  //     _isWeeklyLoading = true;
+  //     _isReelsLoading = true;
+  //   });
+
+  //   // Fetch celebration config through provider
+  //   final celebrationProvider = Provider.of<CelebrationProvider>(
+  //     context,
+  //     listen: false,
+  //   );
+  //   await celebrationProvider.fetchCelebrationConfig();
+
+  //   await Provider.of<TrendingPosterProvider>(context, listen: false)
+  //   .fetchTrendingPosters(userId!);
+
+  //   final adminAmountProvider = Provider.of<AdminAmountProvider>(
+  //     context,
+  //     listen: false,
+  //   );
+  //   adminAmountProvider.fetchAdminAmounts();
+
+  //   await Future.wait([
+  //     _loadUserId().catchError((e) => debugPrint('loadUserId: $e')),
+  //     _loadSectionPreferences(), // Add this
+  //     _fetchWishes(), // Add this
+  //     _fetchFestivalPosters(
+  //       selectedDate,
+  //     ).catchError((e) => debugPrint('festivalPosters: $e')),
+  //     _fetchnewposters().catchError((e) => debugPrint('fetchPosters: $e')),
+  //     _initializeProviders().catchError((e) => debugPrint('providers: $e')),
+  //     _fetchWeeklyPosters().catchError((e) => debugPrint('weeklyPosters: $e')),
+  //     // _fetchBanners().catchError((e) => debugPrint('banners: $e')),
+  //     _initializeUser().catchError((e) => debugPrint('initializeUser: $e')),
+
+  //     _fetchReels().catchError((e) => debugPrint('reels: $e')),
+  //   ]);
+
+  //   if (!mounted) return;
+
+  //   // Set all loading states to false AFTER all data is loaded
+  //   setState(() {
+  //     _isStoriesLoading = false;
+  //     _isFestivalLoading = false;
+  //     _isWeeklyLoading = false;
+  //     _isReelsLoading = false;
+  //     _isInitialLoad = false;
+  //   });
+
+  //   _startBannerAutoScroll();
+  // }
+
+
+
+
   Future<void> _initializeAllData() async {
-    if (!mounted || !_hasNetwork) return;
-    final selectedDate = context.read<DateTimeProvider>().selectedDate;
+  if (!mounted || !_hasNetwork) return;
+  final selectedDate = context.read<DateTimeProvider>().selectedDate;
 
-    // Set all loading states to true
-    setState(() {
-      _isStoriesLoading = true;
-      _isFestivalLoading = true;
-      _isWeeklyLoading = true;
-      _isReelsLoading = true;
-    });
+  setState(() {
+    _isStoriesLoading = true;
+    _isFestivalLoading = true;
+    _isWeeklyLoading = true;
+    _isReelsLoading = true;
+  });
 
-    // Fetch celebration config through provider
-    final celebrationProvider = Provider.of<CelebrationProvider>(
-      context,
-      listen: false,
-    );
-    await celebrationProvider.fetchCelebrationConfig();
+  final celebrationProvider = Provider.of<CelebrationProvider>(context, listen: false);
+  await celebrationProvider.fetchCelebrationConfig();
 
-    await Provider.of<TrendingPosterProvider>(context, listen: false)
-    .fetchTrendingPosters(userId!);
+  final adminAmountProvider = Provider.of<AdminAmountProvider>(context, listen: false);
+  adminAmountProvider.fetchAdminAmounts();
 
-    final adminAmountProvider = Provider.of<AdminAmountProvider>(
-      context,
-      listen: false,
-    );
-    adminAmountProvider.fetchAdminAmounts();
+  // Load userId FIRST before anything that needs it
+  await _loadUserId();
+  await _loadUserData();
 
-    await Future.wait([
-      _loadUserId().catchError((e) => debugPrint('loadUserId: $e')),
-      _loadSectionPreferences(), // Add this
-      _fetchWishes(), // Add this
-      _fetchFestivalPosters(
-        selectedDate,
-      ).catchError((e) => debugPrint('festivalPosters: $e')),
-      _fetchnewposters().catchError((e) => debugPrint('fetchPosters: $e')),
-      _initializeProviders().catchError((e) => debugPrint('providers: $e')),
-      _fetchWeeklyPosters().catchError((e) => debugPrint('weeklyPosters: $e')),
-      // _fetchBanners().catchError((e) => debugPrint('banners: $e')),
-      _initializeUser().catchError((e) => debugPrint('initializeUser: $e')),
+  // Now userId is guaranteed to be set
+  await Future.wait([
+    _loadSectionPreferences(),
+    _fetchWishes(),
+    _fetchFestivalPosters(selectedDate).catchError((e) => debugPrint('festivalPosters: $e')),
+    _fetchnewposters().catchError((e) => debugPrint('fetchPosters: $e')),
+    _initializeProviders().catchError((e) => debugPrint('providers: $e')),
+    _fetchWeeklyPosters().catchError((e) => debugPrint('weeklyPosters: $e')),
+    _initializeUser().catchError((e) => debugPrint('initializeUser: $e')),
+    _fetchReels().catchError((e) => debugPrint('reels: $e')),
 
-      _fetchReels().catchError((e) => debugPrint('reels: $e')),
-    ]);
+    // ✅ userId is now non-null here
+    if (userId != null)
+      Provider.of<TrendingPosterProvider>(context, listen: false)
+          .fetchTrendingPosters(userId!),
+  ]);
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    // Set all loading states to false AFTER all data is loaded
-    setState(() {
-      _isStoriesLoading = false;
-      _isFestivalLoading = false;
-      _isWeeklyLoading = false;
-      _isReelsLoading = false;
-      _isInitialLoad = false;
-    });
+  setState(() {
+    _isStoriesLoading = false;
+    _isFestivalLoading = false;
+    _isWeeklyLoading = false;
+    _isReelsLoading = false;
+    _isInitialLoad = false;
+  });
 
-    _startBannerAutoScroll();
-  }
+  _startBannerAutoScroll();
+}
 
   Future<void> _initializeProviders() async {
     if (!mounted) return;
