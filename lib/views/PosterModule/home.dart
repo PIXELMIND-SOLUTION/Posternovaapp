@@ -32,6 +32,7 @@ import 'package:posternova/views/hot/hot_screen.dart';
 import 'package:posternova/views/notifications/notification_screen.dart';
 import 'package:posternova/views/reels/exo_video_player.dart';
 import 'package:posternova/views/stories/story_widget_screen.dart';
+import 'package:posternova/widgets/common_modal.dart';
 import 'package:posternova/widgets/home/active_time_widget.dart';
 import 'package:posternova/widgets/home/celebration.dart';
 import 'package:posternova/widgets/home/auto_video_player.dart';
@@ -2332,77 +2333,177 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // Update _buildSmallPosterCard to accept FestivalPoster:
+  // Widget _buildSmallPosterCard(FestivalPoster poster, int index) {
+  //   return GestureDetector(
+  //     onTap: () {
+  //       if (!_requireNetwork()) return;
+  //       final bgImageUrl =
+  //           poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) =>
+  //               PosterEditorScreen(posterAsset: bgImageUrl, itemid: poster.id),
+  //         ),
+  //       );
+  //     },
+  //     child: Container(
+  //       width: 110,
+  //       margin: const EdgeInsets.only(right: 10),
+  //       decoration: BoxDecoration(
+  //         color: _sectionBg,
+  //         borderRadius: BorderRadius.circular(10),
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: Colors.black.withOpacity(0.08),
+  //             blurRadius: 6,
+  //             offset: const Offset(0, 3),
+  //           ),
+  //         ],
+  //       ),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Expanded(
+  //             child: ClipRRect(
+  //               borderRadius: const BorderRadius.vertical(
+  //                 top: Radius.circular(10),
+  //               ),
+  //               child: Image.network(
+  //                 poster.imageUrl,
+  //                 width: double.infinity,
+  //                 fit: BoxFit.cover,
+  //                 errorBuilder: (_, __, ___) =>
+  //                     Container(color: const Color(0xFFF3F4F6)),
+  //                 loadingBuilder: (context, child, progress) {
+  //                   if (progress == null) return child;
+  //                   return const SkeletonBox(
+  //                     width: 110,
+  //                     height: 100,
+  //                     borderRadius: 0,
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //           ),
+  //           Padding(
+  //             padding: const EdgeInsets.all(7),
+  //             child: Text(
+  //               poster.categoryName,
+  //               style: TextStyle(
+  //                 fontSize: 10,
+  //                 fontWeight: FontWeight.w600,
+  //                 color: _primaryText,
+  //               ),
+  //               maxLines: 2,
+  //               overflow: TextOverflow.ellipsis,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+
+
   Widget _buildSmallPosterCard(FestivalPoster poster, int index) {
-    return GestureDetector(
-      onTap: () {
-        if (!_requireNetwork()) return;
-        final bgImageUrl =
-            poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                PosterEditorScreen(posterAsset: bgImageUrl, itemid: poster.id),
+  return Consumer<MyPlanProvider>(
+    builder: (context, myPlanProvider, _) {
+      return GestureDetector(
+        onTap: () {
+          if (!_requireNetwork()) return;
+          if (myPlanProvider.isPurchase == true) {
+            final bgImageUrl =
+                poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PosterEditorScreen(
+                  posterAsset: bgImageUrl,
+                  itemid: poster.id,
+                ),
+              ),
+            );
+          } else {
+            CommonModal.showWarning(
+              context: context,
+              title: "Premium Category",
+              message:
+                  "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+              primaryButtonText: "Upgrade Now",
+              secondaryButtonText: "Cancel",
+              onPrimaryPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubscriptionPlansPage(),
+                  ),
+                );
+              },
+              onSecondaryPressed: () => Navigator.of(context).pop(),
+            );
+          }
+        },
+        child: Container(
+          width: 110,
+          margin: const EdgeInsets.only(right: 10),
+          decoration: BoxDecoration(
+            color: _sectionBg,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        );
-      },
-      child: Container(
-        width: 110,
-        margin: const EdgeInsets.only(right: 10),
-        decoration: BoxDecoration(
-          color: _sectionBg,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(10),
-                ),
-                child: Image.network(
-                  poster.imageUrl,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: const Color(0xFFF3F4F6)),
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const SkeletonBox(
-                      width: 110,
-                      height: 100,
-                      borderRadius: 0,
-                    );
-                  },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(10),
+                  ),
+                  child: Image.network(
+                    poster.imageUrl,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: const Color(0xFFF3F4F6)),
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return const SkeletonBox(
+                        width: 110,
+                        height: 100,
+                        borderRadius: 0,
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(7),
-              child: Text(
-                poster.categoryName,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: _primaryText,
+              Padding(
+                padding: const EdgeInsets.all(7),
+                child: Text(
+                  poster.categoryName,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: _primaryText,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
   // ══════════════════════════════════════════════════════════════════════════
   // WEEKLY TEMPLATES
   // ══════════════════════════════════════════════════════════════════════════
@@ -2543,26 +2644,112 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // Update _buildWeeklyPosterCard to accept WeeklyTemplate:
-  Widget _buildWeeklyPosterCard(WeeklyTemplate poster, int index) {
-    return Consumer<MyPlanProvider>(
-      builder: (context, myplanprovider, _) {
-        return GestureDetector(
-          onTap: () {
-            if (!_requireNetwork()) return;
-            // if (myplanprovider.isPurchase) {
-            //   final bgImageUrl =
-            //       poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
-            //   Navigator.push(
-            //     context,
-            //     MaterialPageRoute(
-            //       builder: (_) => PosterEditorScreen(posterAsset: bgImageUrl),
-            //     ),
-            //   );
-            // } else {
-            //   _showPremiumDialog();
-            // }
+  // Widget _buildWeeklyPosterCard(WeeklyTemplate poster, int index) {
+  //   return Consumer<MyPlanProvider>(
+  //     builder: (context, myplanprovider, _) {
+  //       return GestureDetector(
+  //         onTap: () {
+  //           if (!_requireNetwork()) return;
+  //           // if (myplanprovider.isPurchase) {
+  //           //   final bgImageUrl =
+  //           //       poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
+  //           //   Navigator.push(
+  //           //     context,
+  //           //     MaterialPageRoute(
+  //           //       builder: (_) => PosterEditorScreen(posterAsset: bgImageUrl),
+  //           //     ),
+  //           //   );
+  //           // } else {
+  //           //   _showPremiumDialog();
+  //           // }
 
-            // if (myplanprovider.isPurchase) {
+  //           // if (myplanprovider.isPurchase) {
+  //           final bgImageUrl =
+  //               poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
+  //           Navigator.push(
+  //             context,
+  //             MaterialPageRoute(
+  //               builder: (_) => PosterEditorScreen(
+  //                 posterAsset: bgImageUrl,
+  //                 itemid: poster.id,
+  //               ),
+  //             ),
+  //           );
+  //           // } else {
+  //           //   _showPremiumDialog();
+  //           // }
+  //         },
+  //         child: Container(
+  //           width: 110,
+  //           margin: const EdgeInsets.only(right: 10),
+  //           decoration: BoxDecoration(
+  //             color: _sectionBg,
+  //             borderRadius: BorderRadius.circular(10),
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: Colors.black.withOpacity(0.08),
+  //                 blurRadius: 6,
+  //                 offset: const Offset(0, 3),
+  //               ),
+  //             ],
+  //           ),
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Expanded(
+  //                 child: ClipRRect(
+  //                   borderRadius: const BorderRadius.vertical(
+  //                     top: Radius.circular(10),
+  //                   ),
+  //                   child: Image.network(
+  //                     poster.imageUrl,
+  //                     width: double.infinity,
+  //                     fit: BoxFit.cover,
+  //                     errorBuilder: (_, __, ___) =>
+  //                         Container(color: const Color(0xFFF3F4F6)),
+  //                     loadingBuilder: (context, child, progress) {
+  //                       if (progress == null) return child;
+  //                       return const SkeletonBox(
+  //                         width: 110,
+  //                         height: 100,
+  //                         borderRadius: 0,
+  //                       );
+  //                     },
+  //                   ),
+  //                 ),
+  //               ),
+  //               Padding(
+  //                 padding: const EdgeInsets.all(6),
+  //                 child: Text(
+  //                   poster.categoryName.isNotEmpty
+  //                       ? poster.categoryName
+  //                       : (poster.name ?? 'Poster'),
+  //                   style: TextStyle(
+  //                     fontSize: 10,
+  //                     fontWeight: FontWeight.w600,
+  //                     color: _primaryText,
+  //                   ),
+  //                   maxLines: 1,
+  //                   overflow: TextOverflow.ellipsis,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+
+
+  Widget _buildWeeklyPosterCard(WeeklyTemplate poster, int index) {
+  return Consumer<MyPlanProvider>(
+    builder: (context, myplanprovider, _) {
+      return GestureDetector(
+        onTap: () {
+          if (!_requireNetwork()) return;
+          if (myplanprovider.isPurchase == true) {
             final bgImageUrl =
                 poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
             Navigator.push(
@@ -2574,71 +2761,87 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             );
-            // } else {
-            //   _showPremiumDialog();
-            // }
-          },
-          child: Container(
-            width: 110,
-            margin: const EdgeInsets.only(right: 10),
-            decoration: BoxDecoration(
-              color: _sectionBg,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(10),
-                    ),
-                    child: Image.network(
-                      poster.imageUrl,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: const Color(0xFFF3F4F6)),
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return const SkeletonBox(
-                          width: 110,
-                          height: 100,
-                          borderRadius: 0,
-                        );
-                      },
-                    ),
+          } else {
+            CommonModal.showWarning(
+              context: context,
+              title: "Premium Category",
+              message:
+                  "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+              primaryButtonText: "Upgrade Now",
+              secondaryButtonText: "Cancel",
+              onPrimaryPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubscriptionPlansPage(),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: Text(
-                    poster.categoryName.isNotEmpty
-                        ? poster.categoryName
-                        : (poster.name ?? 'Poster'),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: _primaryText,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
+                );
+              },
+              onSecondaryPressed: () => Navigator.of(context).pop(),
+            );
+          }
+        },
+        child: Container(
+          width: 110,
+          margin: const EdgeInsets.only(right: 10),
+          decoration: BoxDecoration(
+            color: _sectionBg,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        );
-      },
-    );
-  }
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(10),
+                  ),
+                  child: Image.network(
+                    poster.imageUrl,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: const Color(0xFFF3F4F6)),
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return const SkeletonBox(
+                        width: 110,
+                        height: 100,
+                        borderRadius: 0,
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(6),
+                child: Text(
+                  poster.categoryName.isNotEmpty
+                      ? poster.categoryName
+                      : (poster.name ?? 'Poster'),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: _primaryText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   // ══════════════════════════════════════════════════════════════════════════
   // HOT TOPICS / REELS
@@ -2741,99 +2944,220 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  // Widget _buildTrendingPosterCard(TrendingPoster poster) {
+  //   return GestureDetector(
+  //     onTap: () {
+  //       if (!_requireNetwork()) return;
+  //       final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
+  //           ? poster.designData.bgImage.url
+  //           : poster.posterImage.url;
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) =>
+  //               PosterEditorScreen(posterAsset: bgImageUrl, itemid: poster.id),
+  //         ),
+  //       );
+  //     },
+  //     child: Container(
+  //       width: 120,
+  //       margin: const EdgeInsets.only(right: 10),
+  //       decoration: BoxDecoration(
+  //         color: _sectionBg,
+  //         borderRadius: BorderRadius.circular(12),
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: Colors.black.withOpacity(0.10),
+  //             blurRadius: 6,
+  //             offset: const Offset(0, 3),
+  //           ),
+  //         ],
+  //       ),
+  //       child: ClipRRect(
+  //         borderRadius: BorderRadius.circular(12),
+  //         child: Stack(
+  //           fit: StackFit.expand,
+  //           children: [
+  //             Image.network(
+  //               poster.posterImage.url,
+  //               fit: BoxFit.cover,
+  //               errorBuilder: (_, __, ___) => Container(
+  //                 color: const Color(0xFFF3F4F6),
+  //                 child: const Center(
+  //                   child: Icon(
+  //                     Icons.image_outlined,
+  //                     color: Colors.grey,
+  //                     size: 32,
+  //                   ),
+  //                 ),
+  //               ),
+  //               loadingBuilder: (_, child, progress) {
+  //                 if (progress == null) return child;
+  //                 return const SkeletonBox(
+  //                   width: 120,
+  //                   height: 180,
+  //                   borderRadius: 0,
+  //                 );
+  //               },
+  //             ),
+  //             // Gradient overlay at bottom
+  //             Positioned(
+  //               bottom: 0,
+  //               left: 0,
+  //               right: 0,
+  //               child: Container(
+  //                 padding: const EdgeInsets.all(8),
+  //                 decoration: BoxDecoration(
+  //                   gradient: LinearGradient(
+  //                     colors: [
+  //                       Colors.transparent,
+  //                       Colors.black.withOpacity(0.65),
+  //                     ],
+  //                     begin: Alignment.topCenter,
+  //                     end: Alignment.bottomCenter,
+  //                   ),
+  //                 ),
+  //                 child: Text(
+  //                   poster.title.isNotEmpty
+  //                       ? poster.title
+  //                       : poster.categoryName,
+  //                   style: const TextStyle(
+  //                     color: Colors.white,
+  //                     fontSize: 11,
+  //                     fontWeight: FontWeight.w600,
+  //                   ),
+  //                   maxLines: 2,
+  //                   overflow: TextOverflow.ellipsis,
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+
+
   Widget _buildTrendingPosterCard(TrendingPoster poster) {
-    return GestureDetector(
-      onTap: () {
-        if (!_requireNetwork()) return;
-        final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
-            ? poster.designData.bgImage.url
-            : poster.posterImage.url;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                PosterEditorScreen(posterAsset: bgImageUrl, itemid: poster.id),
-          ),
-        );
-      },
-      child: Container(
-        width: 120,
-        margin: const EdgeInsets.only(right: 10),
-        decoration: BoxDecoration(
-          color: _sectionBg,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.10),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.network(
-                poster.posterImage.url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: const Color(0xFFF3F4F6),
-                  child: const Center(
-                    child: Icon(
-                      Icons.image_outlined,
-                      color: Colors.grey,
-                      size: 32,
-                    ),
-                  ),
+  return Consumer<MyPlanProvider>(
+    builder: (context, myPlanProvider, _) {
+      return GestureDetector(
+        onTap: () {
+          if (!_requireNetwork()) return;
+          if (myPlanProvider.isPurchase == true) {
+            final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
+                ? poster.designData.bgImage.url
+                : poster.posterImage.url;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PosterEditorScreen(
+                  posterAsset: bgImageUrl,
+                  itemid: poster.id,
                 ),
-                loadingBuilder: (_, child, progress) {
-                  if (progress == null) return child;
-                  return const SkeletonBox(
-                    width: 120,
-                    height: 180,
-                    borderRadius: 0,
-                  );
-                },
               ),
-              // Gradient overlay at bottom
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.65),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
+            );
+          } else {
+            CommonModal.showWarning(
+              context: context,
+              title: "Premium Category",
+              message:
+                  "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+              primaryButtonText: "Upgrade Now",
+              secondaryButtonText: "Cancel",
+              onPrimaryPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubscriptionPlansPage(),
                   ),
-                  child: Text(
-                    poster.title.isNotEmpty
-                        ? poster.title
-                        : poster.categoryName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+                );
+              },
+              onSecondaryPressed: () => Navigator.of(context).pop(),
+            );
+          }
+        },
+        child: Container(
+          width: 120,
+          margin: const EdgeInsets.only(right: 10),
+          decoration: BoxDecoration(
+            color: _sectionBg,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.network(
+                  poster.posterImage.url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: const Color(0xFFF3F4F6),
+                    child: const Center(
+                      child: Icon(
+                        Icons.image_outlined,
+                        color: Colors.grey,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                  loadingBuilder: (_, child, progress) {
+                    if (progress == null) return child;
+                    return const SkeletonBox(
+                      width: 120,
+                      height: 180,
+                      borderRadius: 0,
+                    );
+                  },
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.65),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                    child: Text(
+                      poster.title.isNotEmpty
+                          ? poster.title
+                          : poster.categoryName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
   // Widget _buildHotTopicsSection() {
   //   return Consumer<HotTopicsProvider>(
@@ -3223,15 +3547,115 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  // Widget _buildCategoryPosterCard(CategoryModel poster) {
+  //   const double w = 110;
+  //   const double h = 130;
+  //   return Consumer<MyPlanProvider>(
+  //     builder: (context, myPlanProvider, _) {
+  //       return GestureDetector(
+  //         onTap: () {
+  //           if(myPlanProvider.isPurchase==true){
+              
+  //           }
+  //           if (!_requireNetwork()) return;
+  //           // if (myPlanProvider.isPurchase) {
+  //           final bgImageUrl = poster.images[0] ?? '';
+  //           Navigator.push(
+  //             context,
+  //             MaterialPageRoute(
+  //               builder: (_) => PosterEditorScreen(
+  //                 posterAsset: bgImageUrl,
+  //                 itemid: poster.id,
+  //               ),
+  //             ),
+  //           );
+  //           // } else {
+  //           //   _showPremiumDialog();
+  //           // }
+  //         },
+  //         child: Container(
+  //           width: w,
+  //           height: h,
+  //           decoration: BoxDecoration(
+  //             color: _sectionBg,
+  //             borderRadius: BorderRadius.circular(16),
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: Colors.black.withOpacity(0.06),
+  //                 blurRadius: 12,
+  //                 offset: const Offset(0, 4),
+  //               ),
+  //             ],
+  //           ),
+  //           child: ClipRRect(
+  //             borderRadius: BorderRadius.circular(16),
+  //             child: poster.images.isNotEmpty
+  //                 ? Image.network(
+  //                     poster.images[0],
+  //                     fit: BoxFit.cover,
+  //                     width: w,
+  //                     height: h,
+  //                     loadingBuilder: (_, child, progress) {
+  //                       if (progress == null) return child;
+  //                       return const SkeletonBox(
+  //                         width: w,
+  //                         height: h,
+  //                         borderRadius: 0,
+  //                       );
+  //                     },
+  //                     errorBuilder: (_, __, ___) => Container(
+  //                       decoration: BoxDecoration(
+  //                         gradient: LinearGradient(
+  //                           colors: [
+  //                             const Color(0xFF4F46E5).withOpacity(0.1),
+  //                             const Color(0xFF7C3AED).withOpacity(0.1),
+  //                           ],
+  //                         ),
+  //                       ),
+  //                       child: const Center(
+  //                         child: Icon(
+  //                           Icons.image_outlined,
+  //                           size: 36,
+  //                           color: Color(0xFF9CA3AF),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   )
+  //                 : Container(
+  //                     decoration: BoxDecoration(
+  //                       gradient: LinearGradient(
+  //                         colors: [
+  //                           const Color(0xFF4F46E5).withOpacity(0.1),
+  //                           const Color(0xFF7C3AED).withOpacity(0.1),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                     child: const Center(
+  //                       child: Icon(
+  //                         Icons.image_outlined,
+  //                         size: 36,
+  //                         color: Color(0xFF9CA3AF),
+  //                       ),
+  //                     ),
+  //                   ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+
+
   Widget _buildCategoryPosterCard(CategoryModel poster) {
-    const double w = 110;
-    const double h = 130;
-    return Consumer<MyPlanProvider>(
-      builder: (context, myPlanProvider, _) {
-        return GestureDetector(
-          onTap: () {
-            if (!_requireNetwork()) return;
-            // if (myPlanProvider.isPurchase) {
+  const double w = 110;
+  const double h = 130;
+  return Consumer<MyPlanProvider>(
+    builder: (context, myPlanProvider, _) {
+      return GestureDetector(
+        onTap: () {
+          if (!_requireNetwork()) return;
+          if (myPlanProvider.isPurchase == true) {
             final bgImageUrl = poster.images[0] ?? '';
             Navigator.push(
               context,
@@ -3242,59 +3666,57 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             );
-            // } else {
-            //   _showPremiumDialog();
-            // }
-          },
-          child: Container(
-            width: w,
-            height: h,
-            decoration: BoxDecoration(
-              color: _sectionBg,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: poster.images.isNotEmpty
-                  ? Image.network(
-                      poster.images[0],
-                      fit: BoxFit.cover,
-                      width: w,
-                      height: h,
-                      loadingBuilder: (_, child, progress) {
-                        if (progress == null) return child;
-                        return const SkeletonBox(
-                          width: w,
-                          height: h,
-                          borderRadius: 0,
-                        );
-                      },
-                      errorBuilder: (_, __, ___) => Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF4F46E5).withOpacity(0.1),
-                              const Color(0xFF7C3AED).withOpacity(0.1),
-                            ],
-                          ),
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.image_outlined,
-                            size: 36,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                        ),
-                      ),
-                    )
-                  : Container(
+          } else {
+            CommonModal.showWarning(
+              context: context,
+              title: "Premium Category",
+              message:
+                  "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+              primaryButtonText: "Upgrade Now",
+              secondaryButtonText: "Cancel",
+              onPrimaryPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubscriptionPlansPage(),
+                  ),
+                );
+              },
+              onSecondaryPressed: () => Navigator.of(context).pop(),
+            );
+          }
+        },
+        child: Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+            color: _sectionBg,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: poster.images.isNotEmpty
+                ? Image.network(
+                    poster.images[0],
+                    fit: BoxFit.cover,
+                    width: w,
+                    height: h,
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return const SkeletonBox(
+                        width: w,
+                        height: h,
+                        borderRadius: 0,
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -3311,12 +3733,30 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     ),
-            ),
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF4F46E5).withOpacity(0.1),
+                          const Color(0xFF7C3AED).withOpacity(0.1),
+                        ],
+                      ),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.image_outlined,
+                        size: 36,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   String _capitalizeFirst(String text) {
     if (text.isEmpty) return '';
