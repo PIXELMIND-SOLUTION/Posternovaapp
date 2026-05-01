@@ -69,7 +69,7 @@ class WeeklyTemplatesProvider extends ChangeNotifier {
     try {
       print('🌐 Fetching weekly posters from API for user: $userId');
       final response = await http.get(
-        Uri.parse('http://82.29.162.67:4061/api/poster/weeklyposters/$userId'),
+        Uri.parse('http://31.97.228.17:4061/api/poster/weeklyposters/$userId'),
       );
 
       print('📡 Weekly posters API Status: ${response.statusCode}');

@@ -64,22 +64,27 @@ class _HomeScreenState extends State<HomeScreen>
   static const String _KEY_REFER_MODAL_SHOWN = 'refer_modal_last_shown';
   static const int MODAL_COOLDOWN_HOURS = 24;
 
-  static const String _KEY_SUBSCRIPTION_MODAL_SHOWN = 'subscription_modal_last_shown';
-
-
+  static const String _KEY_SUBSCRIPTION_MODAL_SHOWN =
+      'subscription_modal_last_shown';
 
   Future<bool> _shouldShowSubscriptionModal() async {
-  final prefs = await SharedPreferences.getInstance();
-  final lastShownTimestamp = prefs.getInt(_KEY_SUBSCRIPTION_MODAL_SHOWN);
-  if (lastShownTimestamp == null) return true;
-  final lastShownDate = DateTime.fromMillisecondsSinceEpoch(lastShownTimestamp);
-  return DateTime.now().difference(lastShownDate).inHours >= MODAL_COOLDOWN_HOURS;
-}
+    final prefs = await SharedPreferences.getInstance();
+    final lastShownTimestamp = prefs.getInt(_KEY_SUBSCRIPTION_MODAL_SHOWN);
+    if (lastShownTimestamp == null) return true;
+    final lastShownDate = DateTime.fromMillisecondsSinceEpoch(
+      lastShownTimestamp,
+    );
+    return DateTime.now().difference(lastShownDate).inHours >=
+        MODAL_COOLDOWN_HOURS;
+  }
 
-Future<void> _saveSubscriptionModalShownTime() async {   
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setInt(_KEY_SUBSCRIPTION_MODAL_SHOWN, DateTime.now().millisecondsSinceEpoch);
-}
+  Future<void> _saveSubscriptionModalShownTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+      _KEY_SUBSCRIPTION_MODAL_SHOWN,
+      DateTime.now().millisecondsSinceEpoch,
+    );
+  }
 
   // ── User ───────────────────────────────────────────────────────────────────
   String? currentUserId;
@@ -166,72 +171,56 @@ Future<void> _saveSubscriptionModalShownTime() async {
   List<String> _customerCelebrationsList = [];
   bool _isLoadingCelebrations = false;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   Future<void> _showExitConfirmationDialog() async {
-  final shouldExit = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      title: const Row(
-        children: [
-          Icon(Icons.exit_to_app_rounded, color: Color(0xFFFFC107)),
-          SizedBox(width: 8),
-          Text(
-            'Exit App',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.exit_to_app_rounded, color: Color(0xFFFFC107)),
+            SizedBox(width: 8),
+            Text(
+              'Exit App',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to exit the app?',
+          style: TextStyle(fontSize: 14, color: Colors.black54),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFC107),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Exit',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
-      content: const Text(
-        'Are you sure you want to exit the app?',
-        style: TextStyle(fontSize: 14, color: Colors.black54),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFFFC107),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text(
-            'Exit',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-      ],
-    ),
-  );
+    );
 
-  if (shouldExit == true && context.mounted) {
-    SystemNavigator.pop(); // closes the app
+    if (shouldExit == true && context.mounted) {
+      SystemNavigator.pop(); // closes the app
+    }
   }
-}
 
   // ══════════════════════════════════════════════════════════════════════════
   // LIFECYCLE
@@ -269,27 +258,48 @@ Future<void> _saveSubscriptionModalShownTime() async {
     await prefs.remove(_KEY_REFER_MODAL_SHOWN);
   }
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _bannerPageController = PageController();
+  //   _listenConnectivity();
+  //   _checkNetwork().then((_) {
+  //     _loadUserData();
+  //     _loadUserId();
+  //     // if (!_hasLoadedOnce) {
+  //     Future.microtask(() async => await _initializeAllData());
+  //     // _hasLoadedOnce = true;
+  //     // } else {
+  //     //   setState(() {
+  //     //     _isBannerLoading = false;
+  //     //     _isWeeklyLoading = false;
+  //     //     _isFestivalLoading = false;
+  //     //     _isReelsLoading = false;
+  //     //     _isStoriesLoading = false;
+  //     //     _isInitialLoad = false;
+  //     //   });
+  //     // }
+  //   });
+  // }
+
+  // ============================================================
+  // OPTIMIZED HOME SCREEN - Replace these methods in home_screen.dart
+  // ============================================================
+  // Only the methods that changed are included below.
+  // Everything else in your HomeScreen stays the same.
+  // ============================================================
+
+  // ── STEP 1: Replace initState ────────────────────────────────
+
   @override
   void initState() {
     super.initState();
     _bannerPageController = PageController();
     _listenConnectivity();
     _checkNetwork().then((_) {
-      _loadUserData();
-      _loadUserId();
-      // if (!_hasLoadedOnce) {
-      Future.microtask(() async => await _initializeAllData());
-      // _hasLoadedOnce = true;
-      // } else {
-      //   setState(() {
-      //     _isBannerLoading = false;
-      //     _isWeeklyLoading = false;
-      //     _isFestivalLoading = false;
-      //     _isReelsLoading = false;
-      //     _isStoriesLoading = false;
-      //     _isInitialLoad = false;
-      //   });
-      // }
+      if (_hasNetwork) {
+        Future.microtask(() => _initializeAllData());
+      }
     });
   }
 
@@ -543,103 +553,393 @@ Future<void> _saveSubscriptionModalShownTime() async {
   //   _startBannerAutoScroll();
   // }
 
+  //   Future<void> _initializeAllData() async {
+  //   if (!mounted || !_hasNetwork) return;
+  //   final selectedDate = context.read<DateTimeProvider>().selectedDate;
 
+  //   setState(() {
+  //     _isStoriesLoading = true;
+  //     _isFestivalLoading = true;
+  //     _isWeeklyLoading = true;
+  //     _isReelsLoading = true;
+  //   });
 
+  //   final celebrationProvider = Provider.of<CelebrationProvider>(context, listen: false);
+  //   await celebrationProvider.fetchCelebrationConfig();
+
+  //   final adminAmountProvider = Provider.of<AdminAmountProvider>(context, listen: false);
+  //   adminAmountProvider.fetchAdminAmounts();
+
+  //   // Load userId FIRST before anything that needs it
+  //   await _loadUserId();
+  //   await _loadUserData();
+
+  //   // Now userId is guaranteed to be set
+  //   await Future.wait([
+  //     _loadSectionPreferences(),
+  //     _fetchWishes(),
+  //     _fetchFestivalPosters(selectedDate).catchError((e) => debugPrint('festivalPosters: $e')),
+  //     _fetchnewposters().catchError((e) => debugPrint('fetchPosters: $e')),
+  //     _initializeProviders().catchError((e) => debugPrint('providers: $e')),
+  //     _fetchWeeklyPosters().catchError((e) => debugPrint('weeklyPosters: $e')),
+  //     _initializeUser().catchError((e) => debugPrint('initializeUser: $e')),
+  //     _fetchReels().catchError((e) => debugPrint('reels: $e')),
+
+  //     // ✅ userId is now non-null here
+  //     if (userId != null)
+  //       Provider.of<TrendingPosterProvider>(context, listen: false)
+  //           .fetchTrendingPosters(userId!),
+  //   ]);
+
+  //   if (!mounted) return;
+
+  //   setState(() {
+  //     _isStoriesLoading = false;
+  //     _isFestivalLoading = false;
+  //     _isWeeklyLoading = false;
+  //     _isReelsLoading = false;
+  //     _isInitialLoad = false;
+  //   });
+
+  //   _startBannerAutoScroll();
+  // }
+
+  // ── STEP 2: Replace _initializeAllData ──────────────────────
 
   Future<void> _initializeAllData() async {
-  if (!mounted || !_hasNetwork) return;
-  final selectedDate = context.read<DateTimeProvider>().selectedDate;
+    if (!mounted || !_hasNetwork) return;
 
-  setState(() {
-    _isStoriesLoading = true;
-    _isFestivalLoading = true;
-    _isWeeklyLoading = true;
-    _isReelsLoading = true;
-  });
+    setState(() {
+      _isBannerLoading = true;
+      _isStoriesLoading = true;
+      _isFestivalLoading = true;
+      _isWeeklyLoading = true;
+      _isReelsLoading = true;
+    });
 
-  final celebrationProvider = Provider.of<CelebrationProvider>(context, listen: false);
-  await celebrationProvider.fetchCelebrationConfig();
-
-  final adminAmountProvider = Provider.of<AdminAmountProvider>(context, listen: false);
-  adminAmountProvider.fetchAdminAmounts();
-
-  // Load userId FIRST before anything that needs it
-  await _loadUserId();
-  await _loadUserData();
-
-  // Now userId is guaranteed to be set
-  await Future.wait([
-    _loadSectionPreferences(),
-    _fetchWishes(),
-    _fetchFestivalPosters(selectedDate).catchError((e) => debugPrint('festivalPosters: $e')),
-    _fetchnewposters().catchError((e) => debugPrint('fetchPosters: $e')),
-    _initializeProviders().catchError((e) => debugPrint('providers: $e')),
-    _fetchWeeklyPosters().catchError((e) => debugPrint('weeklyPosters: $e')),
-    _initializeUser().catchError((e) => debugPrint('initializeUser: $e')),
-    _fetchReels().catchError((e) => debugPrint('reels: $e')),
-
-    // ✅ userId is now non-null here
-    if (userId != null)
-      Provider.of<TrendingPosterProvider>(context, listen: false)
-          .fetchTrendingPosters(userId!),
-  ]);
-
-  if (!mounted) return;
-
-  setState(() {
-    _isStoriesLoading = false;
-    _isFestivalLoading = false;
-    _isWeeklyLoading = false;
-    _isReelsLoading = false;
-    _isInitialLoad = false;
-  });
-
-  _startBannerAutoScroll();
-}
-
-  Future<void> _initializeProviders() async {
-    if (!mounted) return;
-    // final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
-    final posterProvider = Provider.of<PosterProvider>(context, listen: false);
-
-    // Don't set _isStoriesLoading here anymore
-    await Future.wait([
-      // myPlanProvider.fetchMyPlan(userId.toString()).catchError((_) => null),
-      posterProvider.fetchPosters().catchError((_) => null),
+    // ── Phase 1: Things that have NO dependencies ──────────────
+    // Run all of these truly in parallel - none depend on each other
+    final results = await Future.wait([
+      _resolveUserData(), // single getUserData() call
+      Provider.of<CelebrationProvider>(
+        context,
+        listen: false,
+      ).fetchCelebrationConfig(),
+      Provider.of<AdminAmountProvider>(
+        context,
+        listen: false,
+      ).fetchAdminAmounts().catchError((_) {}),
+      Provider.of<BannerProvider>(context, listen: false)
+          .fetchBanners() // ← was MISSING, banner fix
+          .catchError((_) => false),
     ]);
 
     if (!mounted) return;
-  }
 
-  Future<void> _initializeUser() async {
-    final userData = await AuthPreferences.getUserData();
-    if (userData != null && userData.user.id != null) {
-      final storyProvider = Provider.of<StoryProvider>(context, listen: false);
-      final myPlanProvider = Provider.of<MyPlanProvider>(
+    // Apply user data returned from Phase 1
+    final userData = results[0] as _UserData?;
+    if (userData != null) {
+      setState(() {
+        userId = userData.id;
+        username = userData.name;
+        userImage = userData.image;
+        currentUserId = userData.id;
+      });
+      // Fire profile fetch in background - don't await
+      _fetchUserProfileBackground(userData.id);
+      fetchCustomers();
+
+      // Set up story provider user context (no await)
+      Provider.of<StoryProvider>(context, listen: false).setCurrentUser(
+        userId: userData.id ?? '',
+        userImage: userData.image,
+        username: userData.name ?? '',
+      );
+
+      // Set up language provider
+      final lp = Provider.of<LanguageProvider>(context, listen: false);
+      lp.setUserId(userData.id ?? '');
+    }
+
+    // ── Phase 2: Things that NEED userId ──────────────────────
+    // All fire at the same time now that userId is guaranteed
+    final selectedDate = Provider.of<DateTimeProvider>(
+      context,
+      listen: false,
+    ).selectedDate;
+
+    final uid = userId; // capture for closures
+
+    await Future.wait([
+      _fetchFestivalPosters(selectedDate).catchError((e) {
+        debugPrint('festivalPosters: $e');
+      }),
+      _fetchWeeklyPostersIfNeeded(uid).catchError((e) {
+        debugPrint('weeklyPosters: $e');
+      }),
+      _fetchTrendingPostersIfNeeded(uid).catchError((e) {
+        debugPrint('trendingPosters: $e');
+      }),
+      _fetchReelsIfNeeded(uid).catchError((e) {
+        debugPrint('reels: $e');
+      }),
+      Provider.of<PosterProvider>(
         context,
         listen: false,
-      );
+      ).fetchPosters().catchError((e) {
+        debugPrint('posters: $e');
+      }),
+      Provider.of<CanvaPosterProvider>(
+        context,
+        listen: false,
+      ).fetchPosters().catchError((e) {
+        debugPrint('canvaPosters: $e');
+      }),
+      _loadSectionPreferences(),
+      if (uid != null)
+        _fetchWishesFor(uid).catchError((e) {
+          debugPrint('wishes: $e');
+        }),
+    ]);
 
-      await myPlanProvider
-          .fetchMyPlan(userId.toString())
-          .catchError((_) => null);
-      _showInitialModals();
+    if (!mounted) return;
 
-      storyProvider.setCurrentUser(
-        userId: userData.user.id,
-        userImage: userData.user.profileImage,
-        username: userData.user.name ?? '',
-      );
+    setState(() {
+      _isBannerLoading = false;
+      _isStoriesLoading = false;
+      _isFestivalLoading = false;
+      _isWeeklyLoading = false;
+      _isReelsLoading = false;
+      _isInitialLoad = false;
+    });
 
-      // Wait for stories to actually load
-      await storyProvider.fetchStories();
+    _startBannerAutoScroll();
 
-      // Stories are now loaded, we can update loading state
-      if (mounted) {
-        setState(() => _isStoriesLoading = false);
-      }
+    // ── Phase 3: Non-blocking background tasks ─────────────────
+    // These run AFTER the screen is visible and painted
+    if (uid != null) {
+      unawaited(_fetchMyPlanAndModals(uid));
+      unawaited(_fetchStoriesBackground());
     }
   }
+
+  // ── STEP 3: New helper — resolves user data in one read ──────
+
+  /// Single AuthPreferences read that returns everything needed.
+  /// Returns null if not logged in.
+  Future<_UserData?> _resolveUserData() async {
+    try {
+      final userData = await AuthPreferences.getUserData();
+      if (userData == null) return null;
+      return _UserData(
+        id: userData.user.id,
+        name: userData.user.name,
+        image: userData.user.profileImage,
+      );
+    } catch (e) {
+      debugPrint('resolveUserData: $e');
+      return null;
+    }
+  }
+
+  // ── STEP 4: New helper — background profile fetch ────────────
+
+  /// Fire-and-forget: updates username/userImage once the profile API responds.
+  Future<void> _fetchUserProfileBackground(String? uid) async {
+    if (uid == null) return;
+    try {
+      final response = await http.get(
+        Uri.parse('http://31.97.228.17:4061/api/users/get-profile/$uid'),
+      );
+      if (response.statusCode == 200 && mounted) {
+        final data = json.decode(response.body);
+        setState(() {
+          username = data['name'] ?? username ?? 'User';
+          userImage = data['profileImage'] ?? userImage;
+        });
+      }
+    } catch (e) {
+      debugPrint('fetchUserProfileBackground: $e');
+    }
+  }
+
+  // ── STEP 5: New helper — wishes with explicit uid ────────────
+
+  Future<void> _fetchWishesFor(String uid) async {
+    setState(() => _isLoadingWishes = true);
+    try {
+      final response = await http.get(
+        Uri.parse('http://31.97.228.17:4061/api/users/wishes/$uid'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            _wishesList = data['wishes'] != null
+                ? List<String>.from(data['wishes'])
+                : [];
+            birthdayData = Map<String, dynamic>.from(data);
+            anniversaryData = Map<String, dynamic>.from(data);
+            _isLoadingWishes = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingWishes = false);
+      }
+    } catch (e) {
+      debugPrint('fetchWishes: $e');
+      if (mounted) setState(() => _isLoadingWishes = false);
+    }
+  }
+
+  // ── STEP 6: New helper — weekly with null-safe guard ─────────
+
+  Future<void> _fetchWeeklyPostersIfNeeded(String? uid) async {
+    if (uid == null) return;
+    final weeklyProvider = Provider.of<WeeklyTemplatesProvider>(
+      context,
+      listen: false,
+    );
+    await weeklyProvider.fetchWeeklyPosters(uid);
+  }
+
+  // ── STEP 7: New helper — trending with null-safe guard ───────
+
+  Future<void> _fetchTrendingPostersIfNeeded(String? uid) async {
+    if (uid == null) return;
+    await Provider.of<TrendingPosterProvider>(
+      context,
+      listen: false,
+    ).fetchTrendingPosters(uid);
+  }
+
+  // ── STEP 8: New helper — reels with null-safe guard ──────────
+
+  Future<void> _fetchReelsIfNeeded(String? uid) async {
+    if (uid == null) return;
+    final hotTopicsProvider = Provider.of<HotTopicsProvider>(
+      context,
+      listen: false,
+    );
+    await hotTopicsProvider.fetchHotTopicReels(userId: uid);
+  }
+
+  // ── STEP 9: Background — plan + modals (non-blocking) ────────
+
+  /// Runs after screen is visible. Fetches plan then shows modals.
+  Future<void> _fetchMyPlanAndModals(String uid) async {
+    try {
+      await Provider.of<MyPlanProvider>(
+        context,
+        listen: false,
+      ).fetchMyPlan(uid);
+      if (mounted) _showInitialModals();
+    } catch (e) {
+      debugPrint('fetchMyPlanAndModals: $e');
+    }
+  }
+
+  // ── STEP 10: Background — stories (non-blocking) ─────────────
+
+  /// Runs after screen is visible. Stories don't block the main UI.
+  Future<void> _fetchStoriesBackground() async {
+    try {
+      final storyProvider = Provider.of<StoryProvider>(context, listen: false);
+      await storyProvider.fetchStories();
+      if (mounted) setState(() => _isStoriesLoading = false);
+    } catch (e) {
+      debugPrint('fetchStoriesBackground: $e');
+      if (mounted) setState(() => _isStoriesLoading = false);
+    }
+  }
+
+  // ── STEP 11: Updated _initializeProviders (simplified) ───────
+  // This is now a no-op shell; logic moved into _initializeAllData.
+  // Keep the method to avoid breaking other call sites, but it's empty.
+
+  Future<void> _initializeProviders() async {
+    // Logic moved to _initializeAllData Phase 2
+  }
+
+  // ── STEP 12: Updated _initializeUser (simplified) ────────────
+  // Keep for backward compat but gutted - logic is now in _initializeAllData.
+
+  Future<void> _initializeUser() async {
+    // Logic moved to _initializeAllData
+  }
+
+  // ── STEP 13: Updated _loadUserId (simplified) ────────────────
+  // Only called from old initState flow. Now _resolveUserData handles this.
+  // Keep as thin wrapper so nothing else breaks.
+
+  Future<void> _loadUserId() async {
+    final data = await _resolveUserData();
+    if (data != null && mounted) {
+      setState(() {
+        username = data.name;
+        currentUserId = data.id;
+      });
+    }
+  }
+
+  // ── STEP 14: Updated _loadUserData (simplified) ──────────────
+
+  Future<void> _loadUserData() async {
+    final data = await _resolveUserData();
+    if (data != null && mounted) {
+      setState(() {
+        userId = data.id;
+        username = data.name;
+        userImage = data.image;
+      });
+      _fetchUserProfileBackground(data.id);
+      fetchCustomers();
+    }
+  }
+
+  // Future<void> _initializeProviders() async {
+  //   if (!mounted) return;
+  //   // final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
+  //   final posterProvider = Provider.of<PosterProvider>(context, listen: false);
+
+  //   // Don't set _isStoriesLoading here anymore
+  //   await Future.wait([
+  //     // myPlanProvider.fetchMyPlan(userId.toString()).catchError((_) => null),
+  //     posterProvider.fetchPosters().catchError((_) => null),
+  //   ]);
+
+  //   if (!mounted) return;
+  // }
+
+  // Future<void> _initializeUser() async {
+  //   final userData = await AuthPreferences.getUserData();
+  //   if (userData != null && userData.user.id != null) {
+  //     final storyProvider = Provider.of<StoryProvider>(context, listen: false);
+  //     final myPlanProvider = Provider.of<MyPlanProvider>(
+  //       context,
+  //       listen: false,
+  //     );
+
+  //     await myPlanProvider
+  //         .fetchMyPlan(userId.toString())
+  //         .catchError((_) => null);
+  //     _showInitialModals();
+
+  //     storyProvider.setCurrentUser(
+  //       userId: userData.user.id,
+  //       userImage: userData.user.profileImage,
+  //       username: userData.user.name ?? '',
+  //     );
+
+  //     // Wait for stories to actually load
+  //     await storyProvider.fetchStories();
+
+  //     // Stories are now loaded, we can update loading state
+  //     if (mounted) {
+  //       setState(() => _isStoriesLoading = false);
+  //     }
+  //   }
+  // }
 
   // void _showInitialModals() {
   //   if (!mounted) return;
@@ -690,36 +990,34 @@ Future<void> _saveSubscriptionModalShownTime() async {
   //   }
   // }
 
-
-
   void _showInitialModals() async {
-  if (!mounted) return;
+    if (!mounted) return;
 
-  final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
-  if (!myPlanProvider.isPurchase) {
-    final shouldShowSub = await _shouldShowSubscriptionModal();
-    if (shouldShowSub) {
-      await _saveSubscriptionModalShownTime(); // save BEFORE showing
+    final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
+    if (!myPlanProvider.isPurchase) {
+      final shouldShowSub = await _shouldShowSubscriptionModal();
+      if (shouldShowSub) {
+        await _saveSubscriptionModalShownTime(); // save BEFORE showing
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted)
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => SubscriptionPlansPage()),
+            );
+        });
+      }
+    }
+
+    final shouldShow = await _shouldShowReferModal();
+    if (shouldShow && !_hasShownReferAndEarnModal) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted)
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => SubscriptionPlansPage()),
-          );
+        if (mounted) {
+          showReferAndEarnModal(context);
+          _hasShownReferAndEarnModal = true;
+        }
       });
     }
   }
-
-  final shouldShow = await _shouldShowReferModal();
-  if (shouldShow && !_hasShownReferAndEarnModal) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        showReferAndEarnModal(context);
-        _hasShownReferAndEarnModal = true;
-      }
-    });
-  }
-}
 
   Future<void> _fetchBanners({bool forceRefresh = false}) async {
     final bannerProvider = Provider.of<BannerProvider>(context, listen: false);
@@ -782,48 +1080,48 @@ Future<void> _saveSubscriptionModalShownTime() async {
     }
   }
 
-  Future<void> _loadUserId() async {
-    if (!mounted) return;
-    try {
-      final userData = await AuthPreferences.getUserData();
-      if (!mounted) return;
-      if (userData != null) {
-        setState(() {
-          username = userData.user.name;
-          currentUserId = userData.user.id;
-        });
-        final response = await http.get(
-          Uri.parse(
-            'http://31.97.228.17:4061/api/users/wishes/$currentUserId',
-          ),
-        );
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          if (mounted)
-            setState(() {
-              birthdayData = Map<String, dynamic>.from(data);
-              anniversaryData = Map<String, dynamic>.from(data);
-            });
-        }
-      }
-    } catch (e) {
-      debugPrint('loadUserId: $e');
-    }
-  }
+  // Future<void> _loadUserId() async {
+  //   if (!mounted) return;
+  //   try {
+  //     final userData = await AuthPreferences.getUserData();
+  //     if (!mounted) return;
+  //     if (userData != null) {
+  //       setState(() {
+  //         username = userData.user.name;
+  //         currentUserId = userData.user.id;
+  //       });
+  //       final response = await http.get(
+  //         Uri.parse(
+  //           'http://31.97.228.17:4061/api/users/wishes/$currentUserId',
+  //         ),
+  //       );
+  //       if (response.statusCode == 200) {
+  //         final data = jsonDecode(response.body);
+  //         if (mounted)
+  //           setState(() {
+  //             birthdayData = Map<String, dynamic>.from(data);
+  //             anniversaryData = Map<String, dynamic>.from(data);
+  //           });
+  //       }
+  //     }
+  //   } catch (e) {
+  //     debugPrint('loadUserId: $e');
+  //   }
+  // }
 
-  Future<void> _loadUserData() async {
-    final userData = await AuthPreferences.getUserData();
-    if (userData != null && userData.user != null) {
-      if (mounted)
-        setState(() {
-          userId = userData.user.id;
-          username = userData.user.name;
-          userImage = userData.user.profileImage;
-        });
-      _fetchUserProfile(userData.user.id);
-      fetchCustomers();
-    }
-  }
+  // Future<void> _loadUserData() async {
+  //   final userData = await AuthPreferences.getUserData();
+  //   if (userData != null && userData.user != null) {
+  //     if (mounted)
+  //       setState(() {
+  //         userId = userData.user.id;
+  //         username = userData.user.name;
+  //         userImage = userData.user.profileImage;
+  //       });
+  //     _fetchUserProfile(userData.user.id);
+  //     fetchCustomers();
+  //   }
+  // }
 
   Future<void> _fetchUserProfile(String? uid) async {
     if (uid == null) return;
@@ -982,76 +1280,108 @@ Future<void> _saveSubscriptionModalShownTime() async {
   //   );
   // }
 
-
-
-
-
   @override
-Widget build(BuildContext context) {
-  super.build(context);
+  Widget build(BuildContext context) {
+    super.build(context);
 
-  Widget body = _hasTheme
-      ? Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: _celebrationConfig!.gradientColors!,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: _buildScrollContent(),
-        )
-      : _buildScrollContent();
-
-  return PopScope(                          // ← ADD THIS
-    canPop: false,                         
-    onPopInvokedWithResult: (didPop, _) {   
-      if (didPop) return;
-      _showExitConfirmationDialog();
-    },
-    child: Scaffold(                        
-      appBar: _buildAppBar(),
-      body: Stack(
-        children: [
-          body,
-          if (!_hasNetwork)
-            Positioned.fill(
-              child: IgnorePointer(
-                ignoring: false,
-                child: Container(color: Colors.black.withOpacity(0.01)),
+    Widget body = _hasTheme
+        ? Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: _celebrationConfig!.gradientColors!,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-        ],
+            child: _buildScrollContent(),
+          )
+        : _buildScrollContent();
+
+    return PopScope(
+      // ← ADD THIS
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _showExitConfirmationDialog();
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: Stack(
+          children: [
+            body,
+            if (!_hasNetwork)
+              Positioned.fill(
+                child: IgnorePointer(
+                  ignoring: false,
+                  child: Container(color: Colors.black.withOpacity(0.01)),
+                ),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildScrollContent() {
     return Consumer<CelebrationProvider>(
       builder: (context, celebrationProvider, _) {
         return RefreshIndicator(
+          // onRefresh: () async {
+          //   if (!_requireNetwork()) return;
+          //   await Future.wait([
+          //     _fetchWishes(),
+          //     _fetchCustomerCelebrations(),
+          //     Provider.of<FestivalPostersProvider>(
+          //       context,
+          //       listen: false,
+          //     ).refresh(),
+          //     _fetchnewposters(),
+          //     Provider.of<WeeklyTemplatesProvider>(
+          //       context,
+          //       listen: false,
+          //     ).refresh(userId!),
+          //     Provider.of<BannerProvider>(context, listen: false).refresh(),
+          //     Provider.of<HotTopicsProvider>(
+          //       context,
+          //       listen: false,
+          //     ).refreshWithUserId(userId!),
+          //     // Refresh celebration data
+          //     celebrationProvider.fetchCelebrationConfig(forceRefresh: true),
+          //   ]);
+          // },
           onRefresh: () async {
             if (!_requireNetwork()) return;
+            final uid = userId;
             await Future.wait([
-              _fetchWishes(),
+              if (uid != null) _fetchWishesFor(uid),
               _fetchCustomerCelebrations(),
               Provider.of<FestivalPostersProvider>(
                 context,
                 listen: false,
               ).refresh(),
-              _fetchnewposters(),
+              Provider.of<CanvaPosterProvider>(
+                context,
+                listen: false,
+              ).fetchPosters(),
               Provider.of<WeeklyTemplatesProvider>(
                 context,
                 listen: false,
-              ).refresh(userId!),
+              ).refresh(uid ?? ''),
               Provider.of<BannerProvider>(context, listen: false).refresh(),
-              Provider.of<HotTopicsProvider>(
+              if (uid != null)
+                Provider.of<HotTopicsProvider>(
+                  context,
+                  listen: false,
+                ).refreshWithUserId(uid),
+              if (uid != null)
+                Provider.of<TrendingPosterProvider>(
+                  context,
+                  listen: false,
+                ).refreshPosters(uid),
+              Provider.of<CelebrationProvider>(
                 context,
                 listen: false,
-              ).refreshWithUserId(userId!),
-              // Refresh celebration data
-              celebrationProvider.fetchCelebrationConfig(forceRefresh: true),
+              ).fetchCelebrationConfig(forceRefresh: true),
             ]);
           },
           color: _accent,
@@ -2314,187 +2644,196 @@ Widget build(BuildContext context) {
   // HOT TOPICS / REELS
   // ══════════════════════════════════════════════════════════════════════════
 
-
-
   // ══════════════════════════════════════════════════════════════════════════
-// TRENDING POSTERS (replaces Hot Topics/Reels)
-// ══════════════════════════════════════════════════════════════════════════
+  // TRENDING POSTERS (replaces Hot Topics/Reels)
+  // ══════════════════════════════════════════════════════════════════════════
 
-Widget _buildHotTopicsSection() {
-  return Consumer<TrendingPosterProvider>(
-    builder: (context, trendingProvider, _) {
-      return Container(
-        padding: const EdgeInsets.only(top: 12, bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Trending Posters',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      if (!_requireNetwork()) return;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => DetailsScreen(category: 'Trending'),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'View All',
+  Widget _buildHotTopicsSection() {
+    return Consumer<TrendingPosterProvider>(
+      builder: (context, trendingProvider, _) {
+        return Container(
+          padding: const EdgeInsets.only(top: 12, bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 2,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Trending Posters',
                       style: TextStyle(
-                        color: Color(0xFFFFC107),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
-                  ),
-                ],
+                    GestureDetector(
+                      onTap: () {
+                        if (!_requireNetwork()) return;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DetailsScreen(category: 'Trending'),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'View All',
+                        style: TextStyle(
+                          color: Color(0xFFFFC107),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 180,
-              child: _buildTrendingPostersContent(trendingProvider),
-            ),
-          ],
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 180,
+                child: _buildTrendingPostersContent(trendingProvider),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTrendingPostersContent(TrendingPosterProvider provider) {
+    if (provider.isLoading) {
+      return ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: 5,
+        itemBuilder: (_, __) => Container(
+          width: 120,
+          margin: const EdgeInsets.only(right: 10),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const SkeletonBox(width: 120, height: 180, borderRadius: 12),
         ),
       );
-    },
-  );
-}
+    }
 
-Widget _buildTrendingPostersContent(TrendingPosterProvider provider) {
-  if (provider.isLoading) {
+    if (provider.posters.isEmpty) {
+      return const Center(
+        child: Text(
+          'No trending posters available',
+          style: TextStyle(color: Colors.grey, fontSize: 13),
+        ),
+      );
+    }
+
     return ListView.builder(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      itemCount: 5,
-      itemBuilder: (_, __) => Container(
+      itemCount: provider.posters.length,
+      itemBuilder: (_, i) => _buildTrendingPosterCard(provider.posters[i]),
+    );
+  }
+
+  Widget _buildTrendingPosterCard(TrendingPoster poster) {
+    return GestureDetector(
+      onTap: () {
+        if (!_requireNetwork()) return;
+        final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
+            ? poster.designData.bgImage.url
+            : poster.posterImage.url;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                PosterEditorScreen(posterAsset: bgImageUrl, itemid: poster.id),
+          ),
+        );
+      },
+      child: Container(
         width: 120,
         margin: const EdgeInsets.only(right: 10),
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
+          color: _sectionBg,
           borderRadius: BorderRadius.circular(12),
-        ),
-        child: const SkeletonBox(width: 120, height: 180, borderRadius: 12),
-      ),
-    );
-  }
-
-  if (provider.posters.isEmpty) {
-    return const Center(
-      child: Text(
-        'No trending posters available',
-        style: TextStyle(color: Colors.grey, fontSize: 13),
-      ),
-    );
-  }
-
-  return ListView.builder(
-    scrollDirection: Axis.horizontal,
-    padding: const EdgeInsets.symmetric(horizontal: 12),
-    itemCount: provider.posters.length,
-    itemBuilder: (_, i) => _buildTrendingPosterCard(provider.posters[i]),
-  );
-}
-
-Widget _buildTrendingPosterCard(TrendingPoster poster) {
-  return GestureDetector(
-    onTap: () {
-      if (!_requireNetwork()) return;
-      final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
-          ? poster.designData.bgImage.url
-          : poster.posterImage.url;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PosterEditorScreen(
-            posterAsset: bgImageUrl,
-            itemid: poster.id,
-          ),
-        ),
-      );
-    },
-    child: Container(
-      width: 120,
-      margin: const EdgeInsets.only(right: 10),
-      decoration: BoxDecoration(
-        color: _sectionBg,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              poster.posterImage.url,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: const Color(0xFFF3F4F6),
-                child: const Center(
-                  child: Icon(Icons.image_outlined, color: Colors.grey, size: 32),
-                ),
-              ),
-              loadingBuilder: (_, child, progress) {
-                if (progress == null) return child;
-                return const SkeletonBox(width: 120, height: 180, borderRadius: 0);
-              },
-            ),
-            // Gradient overlay at bottom
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.65),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-                child: Text(
-                  poster.title.isNotEmpty ? poster.title : poster.categoryName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.10),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.network(
+                poster.posterImage.url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: const Color(0xFFF3F4F6),
+                  child: const Center(
+                    child: Icon(
+                      Icons.image_outlined,
+                      color: Colors.grey,
+                      size: 32,
+                    ),
+                  ),
+                ),
+                loadingBuilder: (_, child, progress) {
+                  if (progress == null) return child;
+                  return const SkeletonBox(
+                    width: 120,
+                    height: 180,
+                    borderRadius: 0,
+                  );
+                },
+              ),
+              // Gradient overlay at bottom
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.65),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                  child: Text(
+                    poster.title.isNotEmpty
+                        ? poster.title
+                        : poster.categoryName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // Widget _buildHotTopicsSection() {
   //   return Consumer<HotTopicsProvider>(
@@ -3676,4 +4015,16 @@ Widget _buildTrendingPosterCard(TrendingPoster poster) {
       ),
     );
   }
+}
+
+// ============================================================
+// PRIVATE DATA CLASS — Add this OUTSIDE the State class,
+// at the bottom of the file (before the last closing brace)
+// ============================================================
+
+class _UserData {
+  final String? id;
+  final String? name;
+  final String? image;
+  const _UserData({this.id, this.name, this.image});
 }

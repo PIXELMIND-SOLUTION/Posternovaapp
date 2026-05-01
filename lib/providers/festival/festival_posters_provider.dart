@@ -83,7 +83,7 @@ class FestivalPostersProvider extends ChangeNotifier {
       print('🌐 Making API request for date: $formattedDate');
 
       final response = await http.post(
-        Uri.parse('http://31.97.206.144:4061/api/poster/festival'),
+        Uri.parse('http://31.97.228.17:4061/api/poster/festival'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'festivalDate': formattedDate}),
       );
