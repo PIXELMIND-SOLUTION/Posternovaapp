@@ -2093,41 +2093,84 @@ class _CategoryScreenState extends State<CategoryScreen>
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
+  // @override
+  // void initState() {
+  //   super.initState();
+
+  //   _speech = stt.SpeechToText();
+  //   _animationController = AnimationController(
+  //     duration: const Duration(milliseconds: 600),
+  //     vsync: this,
+  //   );
+  //   _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+  //     CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+  //   );
+
+  //   _scrollController.addListener(() {
+  //     if (!mounted) return;
+  //     if (_scrollController.offset > 10 && !_showElevation) {
+  //       setState(() => _showElevation = true);
+  //     } else if (_scrollController.offset <= 10 && _showElevation) {
+  //       setState(() => _showElevation = false);
+  //     }
+  //   });
+
+  //   Future.microtask(() {
+  //     if (!mounted) return;
+  //     final posterProvider = Provider.of<PosterProvider>(
+  //       context,
+  //       listen: false,
+  //     );
+
+  //     Provider.of<PosterProvider>(context, listen: false).fetchPosters();
+  //     _animationController.forward();
+  //     _loadRecentSearches();
+  //     _extractAvailableLanguages(posterProvider.posters);
+  //   });
+  // }
+
+
+
   @override
-  void initState() {
-    super.initState();
+void initState() {
+  super.initState();
 
-    _speech = stt.SpeechToText();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+  _speech = stt.SpeechToText();
+  _animationController = AnimationController(
+    duration: const Duration(milliseconds: 600),
+    vsync: this,
+  );
+  _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+  );
 
-    _scrollController.addListener(() {
-      if (!mounted) return;
-      if (_scrollController.offset > 10 && !_showElevation) {
-        setState(() => _showElevation = true);
-      } else if (_scrollController.offset <= 10 && _showElevation) {
-        setState(() => _showElevation = false);
-      }
-    });
+  _scrollController.addListener(() {
+    if (!mounted) return;
+    final shouldShow = _scrollController.offset > 10;
+    if (shouldShow != _showElevation) {
+      setState(() => _showElevation = shouldShow);
+    }
+  });
 
-    Future.microtask(() {
-      if (!mounted) return;
-      final posterProvider = Provider.of<PosterProvider>(
-        context,
-        listen: false,
-      );
+  // ✅ Single deferred call — no double fetch
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!mounted) return;
+    final posterProvider = Provider.of<PosterProvider>(context, listen: false);
 
-      Provider.of<PosterProvider>(context, listen: false).fetchPosters();
-      _animationController.forward();
-      _loadRecentSearches();
+    // Only fetch if not already loaded
+    if (posterProvider.posters.isEmpty && !posterProvider.isLoading) {
+      posterProvider.fetchPosters().then((_) {
+        if (!mounted) return;
+        _extractAvailableLanguages(posterProvider.posters);
+      });
+    } else {
       _extractAvailableLanguages(posterProvider.posters);
-    });
-  }
+    }
+
+    _animationController.forward();
+    _loadRecentSearches();
+  });
+}
 
   void _extractAvailableLanguages(List<CategoryModel> posters) {
     final Set<String> languages = {};

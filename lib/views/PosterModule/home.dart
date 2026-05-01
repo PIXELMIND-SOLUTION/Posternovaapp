@@ -1004,12 +1004,12 @@ Widget build(BuildContext context) {
       : _buildScrollContent();
 
   return PopScope(                          // ← ADD THIS
-    canPop: false,                          // ← prevent instant close
-    onPopInvokedWithResult: (didPop, _) {   // ← intercept back press
+    canPop: false,                         
+    onPopInvokedWithResult: (didPop, _) {   
       if (didPop) return;
       _showExitConfirmationDialog();
     },
-    child: Scaffold(                        // ← Scaffold becomes child
+    child: Scaffold(                        
       appBar: _buildAppBar(),
       body: Stack(
         children: [
