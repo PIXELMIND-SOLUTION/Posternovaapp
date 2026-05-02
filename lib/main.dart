@@ -114,7 +114,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReelProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => HotTopicsProvider()),
-        ChangeNotifierProvider(create: (_) => GoogleProvider()), // Add this
+        ChangeNotifierProvider(create: (_) => GoogleProvider()),
         ChangeNotifierProvider(
           create: (_) => WeeklyTemplatesProvider(),
         ), // Add this

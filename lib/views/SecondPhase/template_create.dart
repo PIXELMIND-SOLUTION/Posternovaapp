@@ -13301,7 +13301,6 @@ class _TemplateCreateState extends State<TemplateCreate>
       );
     }
 
-    // Use the same Google Fonts list from your logo editor
     final fontCategories = _getFontCategories();
 
     return Container(
