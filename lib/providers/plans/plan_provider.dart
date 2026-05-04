@@ -1645,7 +1645,7 @@ import 'package:posternova/helper/phone_pe_helper.dart';
 /// - PhonePePaymentResponse.fromJson
 class PlanProvider extends ChangeNotifier {
   // === configuration ===
-  final String _baseUrl = 'http://31.97.206.144:4061';
+  final String _baseUrl = 'http://31.97.228.17:4061';
 
   // === loading / error states ===
   bool _isLoading = false;
