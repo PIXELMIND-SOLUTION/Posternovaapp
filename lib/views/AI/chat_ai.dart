@@ -2514,19 +2514,179 @@ Future<bool> _onWillPop() async {
   }
 
   // ─── Chat ─────────────────────────────────────────────────────────────────────
-  Future<void> _sendChatMessage(String userMessage) async {
-    setState(() {
-      _messages.add({'role': 'user', 'text': userMessage, 'type': 'text'});
-      _isLoading = true;
-      _messageController.clear();
-    });
-    _scrollToBottom();
+  // Future<void> _sendChatMessage(String userMessage) async {
+  //   setState(() {
+  //     _messages.add({'role': 'user', 'text': userMessage, 'type': 'text'});
+  //     _isLoading = true;
+  //     _messageController.clear();
+  //   });
+  //   _scrollToBottom();
 
-    try {
-      final now = DateTime.now();
-      final today =
-          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+  //   try {
+  //     final now = DateTime.now();
+  //     final today =
+  //         "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
+  //     final List<Map<String, dynamic>> contents = [
+  //       {
+  //         "role": "user",
+  //         "parts": [
+  //           {
+  //             "text":
+  //                 "You are Chicha AI. Today's date is $today. If the user asks about the current date/time, always answer using this date. Acknowledge this with OK.",
+  //           },
+  //         ],
+  //       },
+  //       {
+  //         "role": "model",
+  //         "parts": [
+  //           {"text": "OK"},
+  //         ],
+  //       },
+  //       ..._messages.where((msg) => msg['type'] == 'text').map((msg) {
+  //         return {
+  //           "role": msg['role'] == 'user' ? 'user' : 'model',
+  //           "parts": [
+  //             {"text": msg['text'] ?? ''},
+  //           ],
+  //         };
+  //       }),
+  //     ];
+
+  //     final response = await _postWithRetry(
+  //       Uri.parse(
+  //         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$_geminiKey',
+  //       ),
+  //       {"Content-Type": "application/json"},
+  //       jsonEncode({
+  //         "contents": contents,
+  //         "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1000},
+  //       }),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final data = jsonDecode(response.body);
+  //       final botReply =
+  //           data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+  //       setState(() {
+  //         _messages.add({'role': 'bot', 'text': botReply, 'type': 'text'});
+  //       });
+  //     } else {
+  //       debugPrint('Gemini Chat Error: ${response.statusCode} - ${response.body}');
+  //       setState(() {
+  //         _messages.add({
+  //           'role': 'bot',
+  //           'text':
+  //               'Sorry, I encountered an error (${response.statusCode}). Please try again.',
+  //           'type': 'text',
+  //         });
+  //       });
+  //     }
+  //   } catch (e) {
+  //     debugPrint('Error sending message: $e');
+  //     setState(() {
+  //       _messages.add({
+  //         'role': 'bot',
+  //         'text': 'Connection issue. Please check your internet and try again.',
+  //         'type': 'text',
+  //       });
+  //     });
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _isLoading = false);
+  //       _scrollToBottom();
+  //     }
+  //   }
+  // }
+
+
+Future<void> _sendChatMessage(String userMessage) async {
+  setState(() {
+    _messages.add({'role': 'user', 'text': userMessage, 'type': 'text'});
+    _isLoading = true;
+    _messageController.clear();
+  });
+  _scrollToBottom();
+
+  try {
+    final now = DateTime.now();
+    final today =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+    // ── Detect if user is asking for an image ─────────────────────────────
+    final imageKeywords = [
+      'generate image', 'create image', 'show image', 'draw',
+      'show me a', 'generate a', 'create a', 'make an image',
+      'picture of', 'photo of', 'image of', 'illustration of',
+      'make a picture', 'generate me', 'create me',
+    ];
+    final isImageRequest = imageKeywords.any(
+      (kw) => userMessage.toLowerCase().contains(kw),
+    );
+
+    if (isImageRequest) {
+      // ── IMAGE GENERATION via Pollinations AI (Free, no API key) ─────────
+      setState(() {
+        _messages.add({
+          'role': 'bot',
+          'text': 'Generating image...',
+          'type': 'loading',
+        });
+      });
+      _scrollToBottom();
+
+      try {
+        final encodedPrompt = Uri.encodeComponent(userMessage);
+        final imageUrl =
+            'https://image.pollinations.ai/prompt/$encodedPrompt?width=512&height=512&nologo=true&enhance=true';
+
+        debugPrint('[IMAGE] Fetching from Pollinations: $imageUrl');
+
+        final res = await http.get(Uri.parse(imageUrl)).timeout(
+          const Duration(seconds: 30),
+        );
+
+        debugPrint('[IMAGE] Status: ${res.statusCode}');
+        debugPrint('[IMAGE] Content-Type: ${res.headers['content-type']}');
+
+        setState(() {
+          if (_messages.isNotEmpty && _messages.last['type'] == 'loading') {
+            _messages.removeLast();
+          }
+
+          if (res.statusCode == 200 &&
+              res.headers['content-type']?.contains('image') == true) {
+            // ✅ Success — show image with download/share buttons
+            _messages.add({
+              'role': 'bot',
+              'type': 'image',
+              'image': res.bodyBytes,
+            });
+          } else {
+            _messages.add({
+              'role': 'bot',
+              'text':
+                  'Sorry, could not generate the image. Please try again with a different description.',
+              'type': 'text',
+            });
+          }
+        });
+      } catch (e) {
+        debugPrint('[IMAGE] Error: $e');
+        setState(() {
+          if (_messages.isNotEmpty && _messages.last['type'] == 'loading') {
+            _messages.removeLast();
+          }
+          _messages.add({
+            'role': 'bot',
+            'text':
+                'Image generation timed out. Please check your internet and try again.',
+            'type': 'text',
+          });
+        });
+      }
+    } else {
+      // ── NORMAL CHAT WITH WEB SEARCH ──────────────────────────────────────
       final List<Map<String, dynamic>> contents = [
         {
           "role": "user",
@@ -2560,19 +2720,46 @@ Future<bool> _onWillPop() async {
         {"Content-Type": "application/json"},
         jsonEncode({
           "contents": contents,
-          "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1000},
+          "tools": [
+            {"google_search": {}} // ← Real-time web search
+          ],
+          "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 1000,
+          },
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final botReply =
-            data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+        final parts =
+            data['candidates']?[0]?['content']?['parts'] as List<dynamic>?;
+
+        String botReply = '';
+        if (parts != null) {
+          for (final part in parts) {
+            if (part['text'] != null) {
+              botReply += part['text'];
+            }
+          }
+        }
+
+        if (botReply.isEmpty) {
+          botReply =
+              'Sorry, I could not generate a response. Please try again.';
+        }
+
         setState(() {
-          _messages.add({'role': 'bot', 'text': botReply, 'type': 'text'});
+          _messages.add({
+            'role': 'bot',
+            'text': botReply,
+            'type': 'text',
+          });
         });
       } else {
-        debugPrint('Gemini Chat Error: ${response.statusCode} - ${response.body}');
+        debugPrint(
+          'Gemini Chat Error: ${response.statusCode} - ${response.body}',
+        );
         setState(() {
           _messages.add({
             'role': 'bot',
@@ -2582,22 +2769,26 @@ Future<bool> _onWillPop() async {
           });
         });
       }
-    } catch (e) {
-      debugPrint('Error sending message: $e');
-      setState(() {
-        _messages.add({
-          'role': 'bot',
-          'text': 'Connection issue. Please check your internet and try again.',
-          'type': 'text',
-        });
-      });
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _scrollToBottom();
+    }
+  } catch (e) {
+    debugPrint('Error sending message: $e');
+    setState(() {
+      if (_messages.isNotEmpty && _messages.last['type'] == 'loading') {
+        _messages.removeLast();
       }
+      _messages.add({
+        'role': 'bot',
+        'text': 'Connection issue. Please check your internet and try again.',
+        'type': 'text',
+      });
+    });
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
+      _scrollToBottom();
     }
   }
+}
 
   // ─── Poster generation ────────────────────────────────────────────────────────
   Future<void> _generatePosterWithAI(String userPrompt) async {

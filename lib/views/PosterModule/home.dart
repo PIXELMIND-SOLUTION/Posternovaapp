@@ -2854,6 +2854,11 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildHotTopicsSection() {
     return Consumer<TrendingPosterProvider>(
       builder: (context, trendingProvider, _) {
+
+            final categoryName = trendingProvider.posters.isNotEmpty
+          ? trendingProvider.posters.first.categoryName
+          : 'Trending';
+
         return Container(
           padding: const EdgeInsets.only(top: 12, bottom: 12),
           child: Column(
@@ -2881,7 +2886,7 @@ class _HomeScreenState extends State<HomeScreen>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => DetailsScreen(category: 'Trending'),
+                            builder: (_) => DetailsScreen(category: categoryName),
                           ),
                         );
                       },
@@ -2931,7 +2936,7 @@ class _HomeScreenState extends State<HomeScreen>
       return const Center(
         child: Text(
           'No trending posters available',
-          style: TextStyle(color: Colors.grey, fontSize: 13),
+          style: TextStyle(color: Color.fromARGB(255, 0, 0, 0), fontSize: 13),
         ),
       );
     }
