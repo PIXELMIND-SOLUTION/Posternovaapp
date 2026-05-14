@@ -1689,7 +1689,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     const SizedBox(width: 6),
-                    const ActiveTimeWidget(),
+                    // const ActiveTimeWidget(),
                     const SizedBox(width: 6),
                     Stack(
                       clipBehavior: Clip.none,
@@ -2851,68 +2851,142 @@ class _HomeScreenState extends State<HomeScreen>
   // TRENDING POSTERS (replaces Hot Topics/Reels)
   // ══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildHotTopicsSection() {
-    return Consumer<TrendingPosterProvider>(
-      builder: (context, trendingProvider, _) {
+  // Widget _buildHotTopicsSection() {
+  //   return Consumer<TrendingPosterProvider>(
+  //     builder: (context, trendingProvider, _) {
 
-            final categoryName = trendingProvider.posters.isNotEmpty
+  //           final categoryName = trendingProvider.posters.isNotEmpty
+  //         ? trendingProvider.posters.first.categoryName
+  //         : 'Trending';
+
+  //       return Container(
+  //         padding: const EdgeInsets.only(top: 12, bottom: 12),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Padding(
+  //               padding: const EdgeInsets.symmetric(
+  //                 horizontal: 16,
+  //                 vertical: 2,
+  //               ),
+  //               child: Row(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                 children: [
+  //                   const Text(
+  //                     'Trending Posters',
+  //                     style: TextStyle(
+  //                       fontSize: 17,
+  //                       fontWeight: FontWeight.bold,
+  //                       color: Colors.black87,
+  //                     ),
+  //                   ),
+  //                   GestureDetector(
+  //                     onTap: () {
+  //                       if (!_requireNetwork()) return;
+  //                       Navigator.push(
+  //                         context,
+  //                         MaterialPageRoute(
+  //                           builder: (_) => DetailsScreen(category: categoryName),
+  //                         ),
+  //                       );
+  //                     },
+  //                     child: const Text(
+  //                       'View All',
+  //                       style: TextStyle(
+  //                         color: Color(0xFFFFC107),
+  //                         fontSize: 13,
+  //                         fontWeight: FontWeight.w600,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             const SizedBox(height: 10),
+  //             SizedBox(
+  //               height: 180,
+  //               child: _buildTrendingPostersContent(trendingProvider),
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+
+
+
+
+  Widget _buildHotTopicsSection() {
+  return Consumer<TrendingPosterProvider>(
+    builder: (context, trendingProvider, _) {
+      // Don't show the section if:
+      // 1. Still loading and no data yet, OR
+      // 2. Posters list is empty (no trending posters available)
+      if ((trendingProvider.isLoading && !trendingProvider.hasData) ||
+          trendingProvider.posters.isEmpty) {
+        return const SizedBox.shrink(); // Hide the section completely
+      }
+
+      final categoryName = trendingProvider.posters.isNotEmpty
           ? trendingProvider.posters.first.categoryName
           : 'Trending';
 
-        return Container(
-          padding: const EdgeInsets.only(top: 12, bottom: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 2,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Trending Posters',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+      return Container(
+        padding: const EdgeInsets.only(top: 12, bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 2,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Trending Posters',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        if (!_requireNetwork()) return;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DetailsScreen(category: categoryName),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'View All',
-                        style: TextStyle(
-                          color: Color(0xFFFFC107),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      if (!_requireNetwork()) return;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DetailsScreen(category: categoryName),
                         ),
+                      );
+                    },
+                    child: const Text(
+                      'View All',
+                      style: TextStyle(
+                        color: Color(0xFFFFC107),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 180,
-                child: _buildTrendingPostersContent(trendingProvider),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 180,
+              child: _buildTrendingPostersContent(trendingProvider),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildTrendingPostersContent(TrendingPosterProvider provider) {
     if (provider.isLoading) {

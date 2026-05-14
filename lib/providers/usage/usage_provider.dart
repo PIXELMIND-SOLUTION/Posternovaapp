@@ -266,7 +266,7 @@ class UsageProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _checkTodayStatusFromServer() async {
     try {
       final url = Uri.parse(
-        "http://31.97.206.144:4061/api/users/gettodayswalletrewaqrd/$_userId", // 👈 dynamic
+        "http://31.97.228.17:4061/api/users/gettodayswalletrewaqrd/$_userId", // 👈 dynamic
       );
 
       final response = await http.get(url);

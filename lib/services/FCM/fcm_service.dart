@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../firebase_options.dart';
 import 'local_notification_service.dart';
 
@@ -22,9 +23,26 @@ class FCMService {
     _messaging = FirebaseMessaging.instance;
 
     /// 🔔 Request permission (IMPORTANT for iOS)
+    // if (Platform.isIOS) {
+    //   NotificationSettings settings =
+    //       await _messaging.requestPermission(
+    //     alert: true,
+    //     badge: true,
+    //     sound: true,
+    //     announcement: false,
+    //     carPlay: false,
+    //     criticalAlert: false,
+    //     provisional: false,
+    //   );
+
+    //   if (settings.authorizationStatus ==
+    //       AuthorizationStatus.denied) {
+    //     print('❌ User denied notification permission');
+    //   }
+    // }
+
     if (Platform.isIOS) {
-      NotificationSettings settings =
-          await _messaging.requestPermission(
+      final settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -33,10 +51,16 @@ class FCMService {
         criticalAlert: false,
         provisional: false,
       );
-
-      if (settings.authorizationStatus ==
-          AuthorizationStatus.denied) {
-        print('❌ User denied notification permission');
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        print('❌ iOS notification permission denied');
+      }
+    } else if (Platform.isAndroid) {
+      final status = await Permission.notification.request();
+      if (status.isDenied) {
+        print('❌ Android notification permission denied');
+      } else if (status.isPermanentlyDenied) {
+        print('❌ Permanently denied — open settings');
+        await openAppSettings(); 
       }
     }
 
@@ -54,9 +78,7 @@ class FCMService {
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
     /// 📲 Notification tap
-    FirebaseMessaging.onMessageOpenedApp.listen(
-      _handleMessageOpenedApp,
-    );
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
 
     _initialized = true;
   }
@@ -73,8 +95,7 @@ class FCMService {
   }
 
   /// 🔔 Foreground notification handler
-  Future<void> _handleForegroundMessage(
-      RemoteMessage message) async {
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
     print('📩 Foreground message: ${message.data}');
 
     if (message.notification != null) {
