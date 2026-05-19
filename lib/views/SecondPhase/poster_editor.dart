@@ -3999,12 +3999,19 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   }
   // }
 
+
+
+
+  ////////////////////////  New code for reducing the time of exporting audio//////////////
+
   void _startDownload() async {
     print("gggggggggggggggggggggggg${_planProvider?.isPurchase}");
     // if (!_planProvider!.isPurchase) {
     //   _showPremiumModal();
     //   return;
     // }
+    print("Starting download/export...");
+
     setState(() {
       _isDownloading = true;
       _downloadProgress = 0;
@@ -4013,8 +4020,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     try {
       if (_isAnimated) {
         setState(() => _downloadProgress = 0.05);
-
-        // ── tempDir at top ──
         final tempDir = await getTemporaryDirectory();
 
         final framesDir = Directory(
@@ -4022,9 +4027,8 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         );
         await framesDir.create(recursive: true);
 
-        // ── Get audio duration first ──
+        // Get audio duration
         int videoDurationSec = 3;
-
         if (_selectedAudio != null && _selectedAudio != 'No Audio') {
           try {
             Duration? duration;
@@ -4042,9 +4046,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
               await probe.setSourceDeviceFile(userTrack.filePath);
               duration = await probe.getDuration();
               await probe.dispose();
-              print('User audio duration: ${duration?.inSeconds} seconds');
             } else {
-              // Check admin audio track
               final adminTrack = _adminAudioTracks.firstWhere(
                 (track) => track.title == _selectedAudio,
                 orElse: () => AdminAudioTrack(
@@ -4056,79 +4058,36 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
               );
 
               if (adminTrack.audioUrl.isNotEmpty) {
-                // Download temporarily to get duration
-                print(
-                  'Downloading admin audio for duration check: ${adminTrack.title}',
-                );
                 final response = await http.get(Uri.parse(adminTrack.audioUrl));
                 if (response.statusCode == 200) {
                   final tempAudioProbe = File(
                     '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
                   );
                   await tempAudioProbe.writeAsBytes(response.bodyBytes);
-
                   final probe = AudioPlayer();
                   await probe.setSourceDeviceFile(tempAudioProbe.path);
                   duration = await probe.getDuration();
                   await probe.dispose();
-
-                  // Clean up temp file
-                  try {
-                    await tempAudioProbe.delete();
-                  } catch (e) {}
-
-                  print('Admin audio duration: ${duration?.inSeconds} seconds');
-                }
-              } else {
-                // Static audio assets
-                const Map<String, String> audioAssets = {
-                  'Upbeat Pop':
-                      'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
-                  'Calm Acoustic':
-                      'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
-                  'Corporate':
-                      'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
-                  'Cinematic':
-                      'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
-                  'Electronic':
-                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-                  'Jazz Lounge':
-                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-                };
-
-                final String? assetPath = audioAssets[_selectedAudio];
-                if (assetPath != null) {
-                  final ByteData audioData = await rootBundle.load(assetPath);
-                  final File tempAudioProbe = File(
-                    '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
-                  );
-                  await tempAudioProbe.writeAsBytes(
-                    audioData.buffer.asUint8List(),
-                  );
-
-                  final probe = AudioPlayer();
-                  await probe.setSourceDeviceFile(tempAudioProbe.path);
-                  duration = await probe.getDuration();
-                  await probe.dispose();
-
-                  // Clean up temp file
-                  try {
-                    await tempAudioProbe.delete();
-                  } catch (e) {}
+                  await tempAudioProbe.delete();
                 }
               }
             }
 
             if (duration != null && duration.inSeconds > 0) {
               videoDurationSec = duration.inSeconds;
-              print('Using audio duration: $videoDurationSec seconds');
+              // Cap at 15 seconds to avoid long exports
+              if (videoDurationSec > 15) {
+                videoDurationSec = 15;
+                print("Capping video duration to 15 seconds for faster export");
+              }
             }
           } catch (e) {
             print('Could not get audio duration: $e');
           }
         }
 
-        const int fps = 30;
+        // OPTIMIZATION 1: Reduce FPS from 30 to 20
+        const int fps = 20;
         final int totalFrames = videoDurationSec * fps;
         final int animationDurationMs = videoDurationSec * 1000;
 
@@ -4140,10 +4099,10 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
         final int frameDelayMs = animationDurationMs ~/ totalFrames;
 
+        // OPTIMIZATION 2: Generate frames at lower resolution first
         for (int i = 0; i < totalFrames; i++) {
           final DateTime frameStartTime = DateTime.now();
-          final double progress =
-              (i % fps) / fps; // loops animation every second
+          final double progress = (i % fps) / fps;
 
           double animValue;
           switch (_selectedAnimation) {
@@ -4159,21 +4118,27 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             default:
               animValue = (sin(progress * pi) * 0.5) + 0.5;
           }
+
           _animController.value = animValue;
           _brandAnimController.value = progress;
           setState(() {});
+
+          // OPTIMIZATION 3: Reduced wait time
           await WidgetsBinding.instance.endOfFrame;
-          await Future.delayed(const Duration(milliseconds: 5));
+          await Future.delayed(const Duration(milliseconds: 2));
 
           final RenderRepaintBoundary? boundary =
               _posterKey.currentContext?.findRenderObject()
                   as RenderRepaintBoundary?;
           if (boundary == null) throw Exception('Poster context not found');
-          final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+
+          // OPTIMIZATION 4: Lower pixel ratio from 2.0 to 1.2 for video
+          final ui.Image image = await boundary.toImage(pixelRatio: 1.2);
           final ByteData? byteData = await image.toByteData(
             format: ui.ImageByteFormat.png,
           );
           if (byteData == null) throw Exception('Frame $i encoding failed');
+
           final File frameFile = File(
             '${framesDir.path}/frame_${i.toString().padLeft(4, '0')}.png',
           );
@@ -4186,6 +4151,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           if (remainingDelay > 0) {
             await Future.delayed(Duration(milliseconds: remainingDelay));
           }
+
           setState(() => _downloadProgress = 0.05 + (i / totalFrames) * 0.55);
         }
 
@@ -4194,7 +4160,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
         if (_selectedAudio != null && _selectedAudio != 'No Audio') {
           try {
-            // First, check if it's a user-uploaded audio
             final userTrack = _userAudioTracks.firstWhere(
               (track) => track.name == _selectedAudio,
               orElse: () =>
@@ -4203,16 +4168,13 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
             if (userTrack.filePath.isNotEmpty &&
                 await File(userTrack.filePath).exists()) {
-              // This is a user-uploaded audio file - copy it to temp directory
               final File sourceFile = File(userTrack.filePath);
               final File tempAudioFile = File(
                 '${tempDir.path}/temp_user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
               );
               await sourceFile.copy(tempAudioFile.path);
               audioFilePath = tempAudioFile.path;
-              print('Using user audio file: ${userTrack.name}');
             } else {
-              // Check if it's an admin audio track
               final adminTrack = _adminAudioTracks.firstWhere(
                 (track) => track.title == _selectedAudio,
                 orElse: () => AdminAudioTrack(
@@ -4224,8 +4186,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
               );
 
               if (adminTrack.audioUrl.isNotEmpty) {
-                // Download admin audio file
-                print('Downloading admin audio for video: ${adminTrack.title}');
                 final response = await http.get(Uri.parse(adminTrack.audioUrl));
                 if (response.statusCode == 200) {
                   final File tempAudioFile = File(
@@ -4233,42 +4193,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                   );
                   await tempAudioFile.writeAsBytes(response.bodyBytes);
                   audioFilePath = tempAudioFile.path;
-                  print(
-                    'Admin audio downloaded successfully: ${adminTrack.title}',
-                  );
-                } else {
-                  print(
-                    'Failed to download admin audio: ${response.statusCode}',
-                  );
-                }
-              } else {
-                // Check static audio assets
-                const Map<String, String> audioAssets = {
-                  'Upbeat Pop':
-                      'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
-                  'Calm Acoustic':
-                      'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
-                  'Corporate':
-                      'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
-                  'Cinematic':
-                      'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
-                  'Electronic':
-                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-                  'Jazz Lounge':
-                      'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
-                };
-
-                final String? assetPath = audioAssets[_selectedAudio];
-                if (assetPath != null) {
-                  final ByteData audioData = await rootBundle.load(assetPath);
-                  final File tempAudioFile = File(
-                    '${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
-                  );
-                  await tempAudioFile.writeAsBytes(
-                    audioData.buffer.asUint8List(),
-                  );
-                  audioFilePath = tempAudioFile.path;
-                  print('Using static audio file: $_selectedAudio');
                 }
               }
             }
@@ -4279,32 +4203,42 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
         final String outputPath =
             '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.mp4';
-        String ffmpegCommand;
 
+        // OPTIMIZATION 5: Use faster FFmpeg presets
+        String ffmpegCommand;
         if (audioFilePath != null && await File(audioFilePath).exists()) {
           ffmpegCommand =
-              '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+              '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
               '-i "$audioFilePath" '
               '-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest '
-              '-crf 23 -preset fast '
+              '-crf 28 -preset ultrafast ' // CRF 28 is lower quality but MUCH faster, ultrafast preset
               '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
               '"$outputPath"';
         } else {
           ffmpegCommand =
-              '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+              '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
               '-c:v libx264 -pix_fmt yuv420p '
-              '-crf 23 -preset fast '
+              '-crf 28 -preset ultrafast ' // Faster encoding settings
               '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
               '"$outputPath"';
         }
 
         setState(() => _downloadProgress = 0.65);
+        print("Running FFmpeg command...");
         final ffmpegSession = await FFmpegKit.execute(ffmpegCommand);
         final ReturnCode? returnCode = await ffmpegSession.getReturnCode();
         setState(() => _downloadProgress = 0.88);
 
         if (!ReturnCode.isSuccess(returnCode)) {
+          final logs = await ffmpegSession.getAllLogsAsString();
+          print("FFmpeg failed: $logs");
           throw Exception('FFmpeg failed to create video');
+        }
+
+        // Check if video file exists and has content
+        final videoFile = File(outputPath);
+        if (!await videoFile.exists() || await videoFile.length() == 0) {
+          throw Exception('Generated video file is empty');
         }
 
         final bool hasAccess = await Gal.hasAccess();
@@ -4312,6 +4246,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         await Gal.putVideo(outputPath, album: 'Poster Editor');
         setState(() => _downloadProgress = 1.0);
 
+        // Clean up
         try {
           await framesDir.delete(recursive: true);
           if (audioFilePath != null) {
@@ -4343,20 +4278,20 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           );
         }
       } else {
-        // ── Static image download ──
+        // Static image download - keep as is but add optimization
         setState(() => _downloadProgress = 0.2);
         await Future.delayed(const Duration(milliseconds: 300));
 
         final RenderRepaintBoundary? boundary =
             _posterKey.currentContext?.findRenderObject()
                 as RenderRepaintBoundary?;
-        if (boundary == null)
-          throw Exception('Poster not found. Please try again.');
+        if (boundary == null) throw Exception('Poster not found.');
 
         setState(() => _downloadProgress = 0.4);
         await Future.delayed(const Duration(milliseconds: 100));
 
-        final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+        // For images, we can keep higher quality since it's just one frame
+        final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
         setState(() => _downloadProgress = 0.65);
         final ByteData? byteData = await image.toByteData(
           format: ui.ImageByteFormat.png,
@@ -4395,7 +4330,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         setState(() => _isDownloading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Download failed: ${e.toString()}'),
+            content: Text('Export failed: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
@@ -4403,6 +4338,416 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
       }
     }
   }
+
+
+
+
+  ////// This is the used code previously for exporting the audio/////////////
+
+  // void _startDownload() async {
+  //   print("gggggggggggggggggggggggg${_planProvider?.isPurchase}");
+  //   // if (!_planProvider!.isPurchase) {
+  //   //   _showPremiumModal();
+  //   //   return;
+  //   // }
+  //   setState(() {
+  //     _isDownloading = true;
+  //     _downloadProgress = 0;
+  //   });
+
+  //   try {
+  //     if (_isAnimated) {
+  //       setState(() => _downloadProgress = 0.05);
+
+  //       // ── tempDir at top ──
+  //       final tempDir = await getTemporaryDirectory();
+
+  //       final framesDir = Directory(
+  //         '${tempDir.path}/poster_frames_${DateTime.now().millisecondsSinceEpoch}',
+  //       );
+  //       await framesDir.create(recursive: true);
+
+  //       // ── Get audio duration first ──
+  //       int videoDurationSec = 3;
+
+  //       if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //         try {
+  //           Duration? duration;
+
+  //           // Check user uploaded audio
+  //           final userTrack = _userAudioTracks.firstWhere(
+  //             (track) => track.name == _selectedAudio,
+  //             orElse: () =>
+  //                 UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //           );
+
+  //           if (userTrack.filePath.isNotEmpty &&
+  //               await File(userTrack.filePath).exists()) {
+  //             final probe = AudioPlayer();
+  //             await probe.setSourceDeviceFile(userTrack.filePath);
+  //             duration = await probe.getDuration();
+  //             await probe.dispose();
+  //             print('User audio duration: ${duration?.inSeconds} seconds');
+  //           } else {
+  //             // Check admin audio track
+  //             final adminTrack = _adminAudioTracks.firstWhere(
+  //               (track) => track.title == _selectedAudio,
+  //               orElse: () => AdminAudioTrack(
+  //                 id: '',
+  //                 title: '',
+  //                 artist: '',
+  //                 audioUrl: '',
+  //               ),
+  //             );
+
+  //             if (adminTrack.audioUrl.isNotEmpty) {
+  //               // Download temporarily to get duration
+  //               print(
+  //                 'Downloading admin audio for duration check: ${adminTrack.title}',
+  //               );
+  //               final response = await http.get(Uri.parse(adminTrack.audioUrl));
+  //               if (response.statusCode == 200) {
+  //                 final tempAudioProbe = File(
+  //                   '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //                 );
+  //                 await tempAudioProbe.writeAsBytes(response.bodyBytes);
+
+  //                 final probe = AudioPlayer();
+  //                 await probe.setSourceDeviceFile(tempAudioProbe.path);
+  //                 duration = await probe.getDuration();
+  //                 await probe.dispose();
+
+  //                 // Clean up temp file
+  //                 try {
+  //                   await tempAudioProbe.delete();
+  //                 } catch (e) {}
+
+  //                 print('Admin audio duration: ${duration?.inSeconds} seconds');
+  //               }
+  //             } else {
+  //               // Static audio assets
+  //               const Map<String, String> audioAssets = {
+  //                 'Upbeat Pop':
+  //                     'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+  //                 'Calm Acoustic':
+  //                     'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+  //                 'Corporate':
+  //                     'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+  //                 'Cinematic':
+  //                     'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+  //                 'Electronic':
+  //                     'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //                 'Jazz Lounge':
+  //                     'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //               };
+
+  //               final String? assetPath = audioAssets[_selectedAudio];
+  //               if (assetPath != null) {
+  //                 final ByteData audioData = await rootBundle.load(assetPath);
+  //                 final File tempAudioProbe = File(
+  //                   '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //                 );
+  //                 await tempAudioProbe.writeAsBytes(
+  //                   audioData.buffer.asUint8List(),
+  //                 );
+
+  //                 final probe = AudioPlayer();
+  //                 await probe.setSourceDeviceFile(tempAudioProbe.path);
+  //                 duration = await probe.getDuration();
+  //                 await probe.dispose();
+
+  //                 // Clean up temp file
+  //                 try {
+  //                   await tempAudioProbe.delete();
+  //                 } catch (e) {}
+  //               }
+  //             }
+  //           }
+
+  //           if (duration != null && duration.inSeconds > 0) {
+  //             videoDurationSec = duration.inSeconds;
+  //             print('Using audio duration: $videoDurationSec seconds');
+  //           }
+  //         } catch (e) {
+  //           print('Could not get audio duration: $e');
+  //         }
+  //       }
+
+  //       const int fps = 30;
+  //       final int totalFrames = videoDurationSec * fps;
+  //       final int animationDurationMs = videoDurationSec * 1000;
+
+  //       final bool wasAnimating = _animController.isAnimating;
+  //       if (wasAnimating) {
+  //         _animController.stop();
+  //         _brandAnimController.stop();
+  //       }
+
+  //       final int frameDelayMs = animationDurationMs ~/ totalFrames;
+
+  //       for (int i = 0; i < totalFrames; i++) {
+  //         final DateTime frameStartTime = DateTime.now();
+  //         final double progress =
+  //             (i % fps) / fps; // loops animation every second
+
+  //         double animValue;
+  //         switch (_selectedAnimation) {
+  //           case AnimationType.none:
+  //             animValue = 1.0;
+  //             break;
+  //           case AnimationType.rotate:
+  //           case AnimationType.flipIn:
+  //           case AnimationType.wobble:
+  //           case AnimationType.rollin:
+  //             animValue = progress;
+  //             break;
+  //           default:
+  //             animValue = (sin(progress * pi) * 0.5) + 0.5;
+  //         }
+  //         _animController.value = animValue;
+  //         _brandAnimController.value = progress;
+  //         setState(() {});
+  //         await WidgetsBinding.instance.endOfFrame;
+  //         await Future.delayed(const Duration(milliseconds: 5));
+
+  //         final RenderRepaintBoundary? boundary =
+  //             _posterKey.currentContext?.findRenderObject()
+  //                 as RenderRepaintBoundary?;
+  //         if (boundary == null) throw Exception('Poster context not found');
+  //         final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+  //         final ByteData? byteData = await image.toByteData(
+  //           format: ui.ImageByteFormat.png,
+  //         );
+  //         if (byteData == null) throw Exception('Frame $i encoding failed');
+  //         final File frameFile = File(
+  //           '${framesDir.path}/frame_${i.toString().padLeft(4, '0')}.png',
+  //         );
+  //         await frameFile.writeAsBytes(byteData.buffer.asUint8List());
+
+  //         final int elapsedMs = DateTime.now()
+  //             .difference(frameStartTime)
+  //             .inMilliseconds;
+  //         final int remainingDelay = frameDelayMs - elapsedMs;
+  //         if (remainingDelay > 0) {
+  //           await Future.delayed(Duration(milliseconds: remainingDelay));
+  //         }
+  //         setState(() => _downloadProgress = 0.05 + (i / totalFrames) * 0.55);
+  //       }
+
+  //       setState(() => _downloadProgress = 0.62);
+  //       String? audioFilePath;
+
+  //       if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //         try {
+  //           // First, check if it's a user-uploaded audio
+  //           final userTrack = _userAudioTracks.firstWhere(
+  //             (track) => track.name == _selectedAudio,
+  //             orElse: () =>
+  //                 UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //           );
+
+  //           if (userTrack.filePath.isNotEmpty &&
+  //               await File(userTrack.filePath).exists()) {
+  //             // This is a user-uploaded audio file - copy it to temp directory
+  //             final File sourceFile = File(userTrack.filePath);
+  //             final File tempAudioFile = File(
+  //               '${tempDir.path}/temp_user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //             );
+  //             await sourceFile.copy(tempAudioFile.path);
+  //             audioFilePath = tempAudioFile.path;
+  //             print('Using user audio file: ${userTrack.name}');
+  //           } else {
+  //             // Check if it's an admin audio track
+  //             final adminTrack = _adminAudioTracks.firstWhere(
+  //               (track) => track.title == _selectedAudio,
+  //               orElse: () => AdminAudioTrack(
+  //                 id: '',
+  //                 title: '',
+  //                 artist: '',
+  //                 audioUrl: '',
+  //               ),
+  //             );
+
+  //             if (adminTrack.audioUrl.isNotEmpty) {
+  //               // Download admin audio file
+  //               print('Downloading admin audio for video: ${adminTrack.title}');
+  //               final response = await http.get(Uri.parse(adminTrack.audioUrl));
+  //               if (response.statusCode == 200) {
+  //                 final File tempAudioFile = File(
+  //                   '${tempDir.path}/temp_admin_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //                 );
+  //                 await tempAudioFile.writeAsBytes(response.bodyBytes);
+  //                 audioFilePath = tempAudioFile.path;
+  //                 print(
+  //                   'Admin audio downloaded successfully: ${adminTrack.title}',
+  //                 );
+  //               } else {
+  //                 print(
+  //                   'Failed to download admin audio: ${response.statusCode}',
+  //                 );
+  //               }
+  //             } else {
+  //               // Check static audio assets
+  //               const Map<String, String> audioAssets = {
+  //                 'Upbeat Pop':
+  //                     'assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3',
+  //                 'Calm Acoustic':
+  //                     'assets/audio/Bharosa Karlo Tum Sath Nibhaunga - Lofi _ Slowed Reverb.mp3',
+  //                 'Corporate':
+  //                     'assets/audio/Jana Mere Sawalo Ka Manzar Tu - Lofi _ Slowed Reverb.mp3',
+  //                 'Cinematic':
+  //                     'assets/audio/Mere Ganpati Deva - Lofi _ Slowed Reverb.mp3',
+  //                 'Electronic':
+  //                     'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //                 'Jazz Lounge':
+  //                     'assets/audio/O Mere Mahiya Jina Sohna - Lofi _ Slowed Reverb.mp3',
+  //               };
+
+  //               final String? assetPath = audioAssets[_selectedAudio];
+  //               if (assetPath != null) {
+  //                 final ByteData audioData = await rootBundle.load(assetPath);
+  //                 final File tempAudioFile = File(
+  //                   '${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //                 );
+  //                 await tempAudioFile.writeAsBytes(
+  //                   audioData.buffer.asUint8List(),
+  //                 );
+  //                 audioFilePath = tempAudioFile.path;
+  //                 print('Using static audio file: $_selectedAudio');
+  //               }
+  //             }
+  //           }
+  //         } catch (e) {
+  //           print('Error loading audio for video: $e');
+  //         }
+  //       }
+
+  //       final String outputPath =
+  //           '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.mp4';
+  //       String ffmpegCommand;
+
+  //       if (audioFilePath != null && await File(audioFilePath).exists()) {
+  //         ffmpegCommand =
+  //             '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+  //             '-i "$audioFilePath" '
+  //             '-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest '
+  //             '-crf 23 -preset fast '
+  //             '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //             '"$outputPath"';
+  //       } else {
+  //         ffmpegCommand =
+  //             '-y -framerate $fps -i ${framesDir.path}/frame_%04d.png '
+  //             '-c:v libx264 -pix_fmt yuv420p '
+  //             '-crf 23 -preset fast '
+  //             '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //             '"$outputPath"';
+  //       }
+
+  //       setState(() => _downloadProgress = 0.65);
+  //       final ffmpegSession = await FFmpegKit.execute(ffmpegCommand);
+  //       final ReturnCode? returnCode = await ffmpegSession.getReturnCode();
+  //       setState(() => _downloadProgress = 0.88);
+
+  //       if (!ReturnCode.isSuccess(returnCode)) {
+  //         throw Exception('FFmpeg failed to create video');
+  //       }
+
+  //       final bool hasAccess = await Gal.hasAccess();
+  //       if (!hasAccess) await Gal.requestAccess();
+  //       await Gal.putVideo(outputPath, album: 'Poster Editor');
+  //       setState(() => _downloadProgress = 1.0);
+
+  //       try {
+  //         await framesDir.delete(recursive: true);
+  //         if (audioFilePath != null) {
+  //           final audioFile = File(audioFilePath);
+  //           if (await audioFile.exists()) {
+  //             await audioFile.delete();
+  //           }
+  //         }
+  //       } catch (e) {}
+
+  //       if (wasAnimating && mounted) {
+  //         _animController.repeat(reverse: true);
+  //         _brandAnimController.repeat();
+  //       }
+
+  //       await Future.delayed(const Duration(milliseconds: 400));
+  //       if (mounted) {
+  //         setState(() => _isDownloading = false);
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text(
+  //               audioFilePath != null
+  //                   ? '✅ Video with audio saved to gallery!'
+  //                   : '✅ Video saved to gallery!',
+  //             ),
+  //             backgroundColor: const Color(0xFF2E7D32),
+  //             duration: const Duration(seconds: 3),
+  //           ),
+  //         );
+  //       }
+  //     } else {
+  //       // ── Static image download ──
+  //       setState(() => _downloadProgress = 0.2);
+  //       await Future.delayed(const Duration(milliseconds: 300));
+
+  //       final RenderRepaintBoundary? boundary =
+  //           _posterKey.currentContext?.findRenderObject()
+  //               as RenderRepaintBoundary?;
+  //       if (boundary == null)
+  //         throw Exception('Poster not found. Please try again.');
+
+  //       setState(() => _downloadProgress = 0.4);
+  //       await Future.delayed(const Duration(milliseconds: 100));
+
+  //       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+  //       setState(() => _downloadProgress = 0.65);
+  //       final ByteData? byteData = await image.toByteData(
+  //         format: ui.ImageByteFormat.png,
+  //       );
+  //       if (byteData == null) throw Exception('Failed to encode image');
+  //       setState(() => _downloadProgress = 0.8);
+
+  //       final Uint8List pngBytes = byteData.buffer.asUint8List();
+  //       final Directory tempDir = await getTemporaryDirectory();
+  //       final String fileName =
+  //           'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+  //       final File file = File('${tempDir.path}/$fileName');
+  //       await file.writeAsBytes(pngBytes);
+  //       setState(() => _downloadProgress = 0.92);
+
+  //       final bool hasAccess = await Gal.hasAccess();
+  //       if (!hasAccess) await Gal.requestAccess();
+  //       await Gal.putImage(file.path, album: 'Poster Editor');
+  //       setState(() => _downloadProgress = 1.0);
+
+  //       await Future.delayed(const Duration(milliseconds: 400));
+  //       if (mounted) {
+  //         setState(() => _isDownloading = false);
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //             content: Text('✅ Image saved to gallery!'),
+  //             backgroundColor: Color(0xFF2E7D32),
+  //             duration: Duration(seconds: 3),
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   } catch (e, stackTrace) {
+  //     print('Download error: $e\n$stackTrace');
+  //     if (mounted) {
+  //       setState(() => _isDownloading = false);
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Download failed: ${e.toString()}'),
+  //           backgroundColor: Colors.red,
+  //           duration: const Duration(seconds: 4),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
   // ──────────────────────────────────────────
   //  BUILD
