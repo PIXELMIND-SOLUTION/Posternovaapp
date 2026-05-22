@@ -2742,6 +2742,7 @@ import 'package:posternova/views/PosterModule/home.dart';
 import 'package:posternova/views/category/special_category.dart';
 import 'package:posternova/views/chat/customer_list.dart';
 import 'package:posternova/views/customer/customer_screen.dart';
+import 'package:posternova/views/onlinepunchang/online_punchang_screen.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:upgrader/upgrader.dart';
@@ -2783,7 +2784,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   final List<Widget> _screens = [
     const HomeScreen(),
     const SpecialCategory(),
-    const AiScreen(),
+    // const AiScreen(),
+    const OnlinePunchangScreen(),
     const CustomerScreen(),
   ];
 
@@ -3027,7 +3029,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     _NavItem(
       icon: Icons.auto_awesome_outlined,
       activeIcon: Icons.auto_awesome,
-      label: 'Chicha',
+      label: 'Punchang',
       index: 2,
     ),
     _NavItem(

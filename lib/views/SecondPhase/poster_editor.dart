@@ -577,6 +577,10 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
 
 
+  
+
+
+
   final Map<String, TextStyle> _googleFontCache = {};
 
 
@@ -4316,53 +4320,128 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             ),
           );
         }
-      } else {
-        // Static image download - keep as is but add optimization
-        setState(() => _downloadProgress = 0.2);
-        await Future.delayed(const Duration(milliseconds: 300));
+      } 
+      // else {
+      //   // Static image download - keep as is but add optimization
+      //   setState(() => _downloadProgress = 0.2);
+      //   await Future.delayed(const Duration(milliseconds: 300));
 
-        final RenderRepaintBoundary? boundary =
-            _posterKey.currentContext?.findRenderObject()
-                as RenderRepaintBoundary?;
-        if (boundary == null) throw Exception('Poster not found.');
+      //   final RenderRepaintBoundary? boundary =
+      //       _posterKey.currentContext?.findRenderObject()
+      //           as RenderRepaintBoundary?;
+      //   if (boundary == null) throw Exception('Poster not found.');
 
-        setState(() => _downloadProgress = 0.4);
-        await Future.delayed(const Duration(milliseconds: 100));
+      //   setState(() => _downloadProgress = 0.4);
+      //   await Future.delayed(const Duration(milliseconds: 100));
 
-        // For images, we can keep higher quality since it's just one frame
-        final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
-        setState(() => _downloadProgress = 0.65);
-        final ByteData? byteData = await image.toByteData(
-          format: ui.ImageByteFormat.png,
-        );
-        if (byteData == null) throw Exception('Failed to encode image');
-        setState(() => _downloadProgress = 0.8);
+      //   // For images, we can keep higher quality since it's just one frame
+      //   final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+      //   setState(() => _downloadProgress = 0.65);
+      //   final ByteData? byteData = await image.toByteData(
+      //     format: ui.ImageByteFormat.png,
+      //   );
+      //   if (byteData == null) throw Exception('Failed to encode image');
+      //   setState(() => _downloadProgress = 0.8);
 
-        final Uint8List pngBytes = byteData.buffer.asUint8List();
-        final Directory tempDir = await getTemporaryDirectory();
-        final String fileName =
-            'poster_${DateTime.now().millisecondsSinceEpoch}.png';
-        final File file = File('${tempDir.path}/$fileName');
-        await file.writeAsBytes(pngBytes);
-        setState(() => _downloadProgress = 0.92);
+      //   final Uint8List pngBytes = byteData.buffer.asUint8List();
+      //   final Directory tempDir = await getTemporaryDirectory();
+      //   final String fileName =
+      //       'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+      //   final File file = File('${tempDir.path}/$fileName');
+      //   await file.writeAsBytes(pngBytes);
+      //   setState(() => _downloadProgress = 0.92);
 
-        final bool hasAccess = await Gal.hasAccess();
-        if (!hasAccess) await Gal.requestAccess();
-        await Gal.putImage(file.path, album: 'Poster Editor');
-        setState(() => _downloadProgress = 1.0);
+      //   final bool hasAccess = await Gal.hasAccess();
+      //   if (!hasAccess) await Gal.requestAccess();
+      //   await Gal.putImage(file.path, album: 'Poster Editor');
+      //   setState(() => _downloadProgress = 1.0);
 
-        await Future.delayed(const Duration(milliseconds: 400));
-        if (mounted) {
-          setState(() => _isDownloading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Image saved to gallery!'),
-              backgroundColor: Color(0xFF2E7D32),
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      }
+      //   await Future.delayed(const Duration(milliseconds: 400));
+      //   if (mounted) {
+      //     setState(() => _isDownloading = false);
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       const SnackBar(
+      //         content: Text('✅ Image saved to gallery!'),
+      //         backgroundColor: Color(0xFF2E7D32),
+      //         duration: Duration(seconds: 3),
+      //       ),
+      //     );
+      //   }
+      // }
+      
+
+      else {
+  // ── Static image download ──
+  setState(() => _downloadProgress = 0.2);
+  await Future.delayed(const Duration(milliseconds: 300));
+
+  final RenderRepaintBoundary? boundary =
+      _posterKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+  if (boundary == null) throw Exception('Poster not found.');
+
+  setState(() => _downloadProgress = 0.4);
+  await Future.delayed(const Duration(milliseconds: 100));
+
+  // ✅ FIX: Use higher pixel ratio for better quality
+  // 3.0 for good quality, 4.0 for HD quality
+  final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+  
+  setState(() => _downloadProgress = 0.65);
+  final ByteData? byteData = await image.toByteData(
+    format: ui.ImageByteFormat.png,
+  );
+  if (byteData == null) throw Exception('Failed to encode image');
+  setState(() => _downloadProgress = 0.8);
+
+  final Uint8List pngBytes = byteData.buffer.asUint8List();
+  
+  // Optional: Compress the image if needed for file size
+  // Using image package to compress while maintaining quality
+  img.Image? decodedImage = img.decodeImage(pngBytes);
+  if (decodedImage != null) {
+    // Compress with 95% quality (good balance between quality and size)
+    final compressedBytes = img.encodeJpg(decodedImage, quality: 95);
+    final Directory tempDir = await getTemporaryDirectory();
+    final String fileName =
+        'poster_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final File file = File('${tempDir.path}/$fileName');
+    await file.writeAsBytes(compressedBytes);
+    
+    final bool hasAccess = await Gal.hasAccess();
+    if (!hasAccess) await Gal.requestAccess();
+    await Gal.putImage(file.path, album: 'Poster Editor');
+    setState(() => _downloadProgress = 1.0);
+  } else {
+    // Fallback to PNG if compression fails
+    final Directory tempDir = await getTemporaryDirectory();
+    final String fileName =
+        'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+    final File file = File('${tempDir.path}/$fileName');
+    await file.writeAsBytes(pngBytes);
+    
+    final bool hasAccess = await Gal.hasAccess();
+    if (!hasAccess) await Gal.requestAccess();
+    await Gal.putImage(file.path, album: 'Poster Editor');
+    setState(() => _downloadProgress = 1.0);
+  }
+
+  await Future.delayed(const Duration(milliseconds: 400));
+  if (mounted) {
+    setState(() => _isDownloading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ Image saved to gallery!'),
+        backgroundColor: Color(0xFF2E7D32),
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+}
+
+
+
+
     } catch (e, stackTrace) {
       print('Download error: $e\n$stackTrace');
       if (mounted) {

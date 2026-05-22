@@ -3088,13 +3088,13 @@ class _TemplateCreateState extends State<TemplateCreate>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.add_photo_alternate_outlined,
-                size: 48,
-                color: isDarkMode
-                    ? Colors.white.withOpacity(0.3)
-                    : Colors.black.withOpacity(0.2),
-              ),
+              // Icon(
+              //   Icons.add_photo_alternate_outlined,
+              //   size: 48,
+              //   color: isDarkMode
+              //       ? Colors.white.withOpacity(0.3)
+              //       : Colors.black.withOpacity(0.2),
+              // ),
               const SizedBox(height: 10),
             ],
           ),
