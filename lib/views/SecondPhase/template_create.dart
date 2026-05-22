@@ -13784,49 +13784,52 @@ class _TemplateCreateState extends State<TemplateCreate>
                     ),
                   ),
                 ),
+
+                 ///// This part is hided////////
+
                 // Overlay brand items in layers
-                ..._overlayBrandItems.map(
-                  (e) => ListTile(
-                    leading: Icon(
-                      e.type == BrandElementType.logo
-                          ? Icons.image
-                          : e.type == BrandElementType.name
-                          ? Icons.badge
-                          : e.type == BrandElementType.phone
-                          ? Icons.phone_android
-                          : Icons.pin_drop,
-                      color: Colors.purple,
-                    ),
-                    title: Text(
-                      'Canvas: ${e.type.name[0].toUpperCase()}${e.type.name.substring(1)}',
-                    ),
-                    subtitle: Text(
-                      e.isVisible ? 'Visible on canvas' : 'Hidden',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: e.isVisible ? Colors.green : Colors.red,
-                      ),
-                    ),
-                    trailing: IconButton(
-                      icon: Icon(
-                        e.isVisible ? Icons.visibility : Icons.visibility_off,
-                        size: 18,
-                        color: e.isVisible ? Colors.purple : Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          final i = _overlayBrandItems.indexWhere(
-                            (x) => x.id == e.id,
-                          );
-                          if (i != -1)
-                            _overlayBrandItems[i] = _overlayBrandItems[i]
-                                .copyWith(isVisible: !e.isVisible);
-                        });
-                        setSheet(() {});
-                      },
-                    ),
-                  ),
-                ),
+                // ..._overlayBrandItems.map(
+                //   (e) => ListTile(
+                //     leading: Icon(
+                //       e.type == BrandElementType.logo
+                //           ? Icons.image
+                //           : e.type == BrandElementType.name
+                //           ? Icons.badge
+                //           : e.type == BrandElementType.phone
+                //           ? Icons.phone_android
+                //           : Icons.pin_drop,
+                //       color: Colors.purple,
+                //     ),
+                //     title: Text(
+                //       'Canvas: ${e.type.name[0].toUpperCase()}${e.type.name.substring(1)}',
+                //     ),
+                //     subtitle: Text(
+                //       e.isVisible ? 'Visible on canvas' : 'Hidden',
+                //       style: TextStyle(
+                //         fontSize: 11,
+                //         color: e.isVisible ? Colors.green : Colors.red,
+                //       ),
+                //     ),
+                //     trailing: IconButton(
+                //       icon: Icon(
+                //         e.isVisible ? Icons.visibility : Icons.visibility_off,
+                //         size: 18,
+                //         color: e.isVisible ? Colors.purple : Colors.grey,
+                //       ),
+                //       onPressed: () {
+                //         setState(() {
+                //           final i = _overlayBrandItems.indexWhere(
+                //             (x) => x.id == e.id,
+                //           );
+                //           if (i != -1)
+                //             _overlayBrandItems[i] = _overlayBrandItems[i]
+                //                 .copyWith(isVisible: !e.isVisible);
+                //         });
+                //         setSheet(() {});
+                //       },
+                //     ),
+                //   ),
+                // ),
                 ..._texts.map(
                   (t) => ListTile(
                     leading: const Icon(Icons.text_fields, color: Colors.teal),

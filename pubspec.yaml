@@ -2,7 +2,7 @@ name: posternova
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.10+72
+version: 1.0.10+73
 # version: 1.0.24+31
 
 
@@ -83,7 +83,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/editezylogo.png"
+  image_path: "assets/mainlogo.jpeg"
 
 
   
@@ -95,6 +95,7 @@ flutter:
     - assets\appstore.png
     - assets\correctlog.png
     - assets\editezylogo.png
+    - assets\mainlogo.jpeg
     - assets\latestapplogo.jpeg
     - assets\largelogo.png
     - assets\latestlogo.png

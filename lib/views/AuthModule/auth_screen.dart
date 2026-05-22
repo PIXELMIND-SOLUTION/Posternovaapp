@@ -1981,7 +1981,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                      child: ClipRRect(
                       borderRadius: BorderRadius.circular(22),
                       child: Image.asset(
-                        'assets/editezylogo.png',
+                        'assets/mainlogo.jpeg',
                         fit: BoxFit.cover,
                       ),
                     ),

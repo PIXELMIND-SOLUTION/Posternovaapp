@@ -575,6 +575,45 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   bool _isLoadingAudios = false;
   String? _audioLoadError;
 
+
+
+  final Map<String, TextStyle> _googleFontCache = {};
+
+
+
+    TextStyle _getCachedGoogleFont(OverlayTextItem item) {
+  final cacheKey = '${item.fontFamily}_${item.fontSize}_${item.color.value}_${item.isBold}_${item.isItalic}_${item.isUnderline}';
+  
+  if (_googleFontCache.containsKey(cacheKey)) {
+    return _googleFontCache[cacheKey]!;
+  }
+  
+  TextStyle style = TextStyle(
+    fontSize: item.fontSize,
+    color: item.color,
+    fontWeight: item.isBold ? FontWeight.bold : FontWeight.normal,
+    fontStyle: item.isItalic ? FontStyle.italic : FontStyle.normal,
+    decoration: item.isUnderline ? TextDecoration.underline : TextDecoration.none,
+  );
+  
+  try {
+    final fontEntry = kGoogleFonts.firstWhere(
+      (e) => e.name == item.fontFamily,
+      orElse: () => kGoogleFonts.first,
+    );
+    style = fontEntry.font(textStyle: style);
+  } catch (_) {
+    // Use default style
+  }
+  
+  _googleFontCache[cacheKey] = style;
+  return style;
+}
+
+
+
+
+
   Future<void> _fetchAdminAudios() async {
     setState(() {
       _isLoadingAudios = true;
@@ -9938,158 +9977,214 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   );
   // }
 
+
+
+
   Widget _buildTextWidget(OverlayTextItem item) {
-    final isSelected = _selectedTextId == item.id;
+  final isSelected = _selectedTextId == item.id;
+  
+  // Cache the text style
+  final textStyle = _getCachedGoogleFont(item).copyWith(
+    shadows: item.hasShadow
+        ? const [Shadow(color: Colors.black38, offset: Offset(2, 2), blurRadius: 4)]
+        : null,
+  );
+  
+  return Positioned(
+    left: item.position.dx,
+    top: item.position.dy,
+    child: _DraggableTextWidget(
+      key: ValueKey(item.id), // Important: Use key to help Flutter with updates
+      item: item,
+      isSelected: isSelected,
+      textStyle: textStyle,
+      onPositionChanged: (newPosition) {
+        setState(() {
+          final idx = _texts.indexWhere((t) => t.id == item.id);
+          if (idx != -1) {
+            _texts[idx] = _texts[idx].copyWith(position: newPosition);
+          }
+        });
+      },
+      onTap: () {
+        setState(() {
+          _selectedTextId = item.id;
+          _selectedBrandItemId = null;
+        });
+        _openTextEditor(item);
+      },
+      onDelete: () {
+        setState(() {
+          _texts.removeWhere((t) => t.id == item.id);
+          if (_selectedTextId == item.id) {
+            _selectedTextId = null;
+          }
+        });
+      },
+      onResize: (newSize) {
+        setState(() {
+          final idx = _texts.indexWhere((t) => t.id == item.id);
+          if (idx != -1) {
+            _texts[idx] = _texts[idx].copyWith(fontSize: newSize);
+          }
+        });
+      },
+    ),
+  );
+}
 
-    // Get Google Font style
-    TextStyle getGoogleFont() {
-      try {
-        final fontEntry = kGoogleFonts.firstWhere(
-          (e) => e.name == item.fontFamily,
-        );
-        return fontEntry.font(
-          textStyle: TextStyle(
-            fontSize: item.fontSize,
-            color: item.color,
-            fontWeight: item.isBold ? FontWeight.bold : FontWeight.normal,
-            fontStyle: item.isItalic ? FontStyle.italic : FontStyle.normal,
-            decoration: item.isUnderline
-                ? TextDecoration.underline
-                : TextDecoration.none,
-          ),
-        );
-      } catch (_) {
-        return TextStyle(
-          fontSize: item.fontSize,
-          color: item.color,
-          fontWeight: item.isBold ? FontWeight.bold : FontWeight.normal,
-          fontStyle: item.isItalic ? FontStyle.italic : FontStyle.normal,
-          decoration: item.isUnderline
-              ? TextDecoration.underline
-              : TextDecoration.none,
-        );
-      }
-    }
+  // Widget _buildTextWidget(OverlayTextItem item) {
+  //   final isSelected = _selectedTextId == item.id;
 
-    return Positioned(
-      left: item.position.dx,
-      top: item.position.dy,
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedTextId = item.id;
-            _selectedBrandItemId = null;
-          });
-          _openTextEditor(item);
-        },
-        onPanUpdate: (d) {
-          setState(() {
-            final idx = _texts.indexWhere((t) => t.id == item.id);
-            if (idx != -1)
-              _texts[idx] = _texts[idx].copyWith(
-                position: item.position + Offset(d.delta.dx, d.delta.dy),
-              );
-          });
-        },
-        onLongPress: () {
-          _showDeleteConfirmationDialog(item);
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              decoration: isSelected
-                  ? BoxDecoration(
-                      border: Border.all(color: Colors.blueAccent, width: 1.5),
-                      color: Colors.blue.withOpacity(0.05),
-                    )
-                  : null,
-              padding: const EdgeInsets.all(4),
-              child: Container(
-                decoration: item.hasBorder
-                    ? BoxDecoration(
-                        border: Border.all(color: item.color, width: 1),
-                        color: item.backgroundColor == Colors.transparent
-                            ? null
-                            : item.backgroundColor,
-                      )
-                    : null,
-                color:
-                    !item.hasBorder &&
-                        item.backgroundColor != Colors.transparent
-                    ? item.backgroundColor
-                    : null,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Transform.rotate(
-                  angle: item.rotation,
-                  child: Text(
-                    item.text,
-                    textAlign: item.align,
-                    style: getGoogleFont().copyWith(
-                      shadows: item.hasShadow
-                          ? [
-                              const Shadow(
-                                color: Colors.black38,
-                                offset: Offset(2, 2),
-                                blurRadius: 4,
-                              ),
-                            ]
-                          : null,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            if (isSelected)
-              Positioned(
-                right: -6,
-                bottom: -6,
-                child: GestureDetector(
-                  onPanStart: (d) {
-                    _resizingTextId = item.id;
-                    _resizeStartOffset = d.globalPosition;
-                    _resizeStartFontSize = item.fontSize;
-                  },
-                  onPanUpdate: (d) {
-                    if (_resizingTextId != item.id) return;
-                    final delta =
-                        (d.globalPosition.dx -
-                            _resizeStartOffset.dx +
-                            d.globalPosition.dy -
-                            _resizeStartOffset.dy) /
-                        2;
-                    final newSize = (_resizeStartFontSize + delta).clamp(
-                      8.0,
-                      96.0,
-                    );
-                    setState(() {
-                      final idx = _texts.indexWhere((t) => t.id == item.id);
-                      if (idx != -1)
-                        _texts[idx] = _texts[idx].copyWith(fontSize: newSize);
-                    });
-                  },
-                  onPanEnd: (_) => _resizingTextId = null,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.blueAccent,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                    child: const Icon(
-                      Icons.open_in_full,
-                      size: 11,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+  //   // Get Google Font style
+  //   TextStyle getGoogleFont() {
+  //     try {
+  //       final fontEntry = kGoogleFonts.firstWhere(
+  //         (e) => e.name == item.fontFamily,
+  //       );
+  //       return fontEntry.font(
+  //         textStyle: TextStyle(
+  //           fontSize: item.fontSize,
+  //           color: item.color,
+  //           fontWeight: item.isBold ? FontWeight.bold : FontWeight.normal,
+  //           fontStyle: item.isItalic ? FontStyle.italic : FontStyle.normal,
+  //           decoration: item.isUnderline
+  //               ? TextDecoration.underline
+  //               : TextDecoration.none,
+  //         ),
+  //       );
+  //     } catch (_) {
+  //       return TextStyle(
+  //         fontSize: item.fontSize,
+  //         color: item.color,
+  //         fontWeight: item.isBold ? FontWeight.bold : FontWeight.normal,
+  //         fontStyle: item.isItalic ? FontStyle.italic : FontStyle.normal,
+  //         decoration: item.isUnderline
+  //             ? TextDecoration.underline
+  //             : TextDecoration.none,
+  //       );
+  //     }
+  //   }
+
+  //   return Positioned(
+  //     left: item.position.dx,
+  //     top: item.position.dy,
+  //     child: GestureDetector(
+  //       onTap: () {
+  //         setState(() {
+  //           _selectedTextId = item.id;
+  //           _selectedBrandItemId = null;
+  //         });
+  //         _openTextEditor(item);
+  //       },
+  //       onPanUpdate: (d) {
+  //         setState(() {
+  //           final idx = _texts.indexWhere((t) => t.id == item.id);
+  //           if (idx != -1)
+  //             _texts[idx] = _texts[idx].copyWith(
+  //               position: item.position + Offset(d.delta.dx, d.delta.dy),
+  //             );
+  //         });
+  //       },
+  //       onLongPress: () {
+  //         _showDeleteConfirmationDialog(item);
+  //       },
+  //       child: Stack(
+  //         clipBehavior: Clip.none,
+  //         children: [
+  //           Container(
+  //             decoration: isSelected
+  //                 ? BoxDecoration(
+  //                     border: Border.all(color: Colors.blueAccent, width: 1.5),
+  //                     color: Colors.blue.withOpacity(0.05),
+  //                   )
+  //                 : null,
+  //             padding: const EdgeInsets.all(4),
+  //             child: Container(
+  //               decoration: item.hasBorder
+  //                   ? BoxDecoration(
+  //                       border: Border.all(color: item.color, width: 1),
+  //                       color: item.backgroundColor == Colors.transparent
+  //                           ? null
+  //                           : item.backgroundColor,
+  //                     )
+  //                   : null,
+  //               color:
+  //                   !item.hasBorder &&
+  //                       item.backgroundColor != Colors.transparent
+  //                   ? item.backgroundColor
+  //                   : null,
+  //               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+  //               child: Transform.rotate(
+  //                 angle: item.rotation,
+  //                 child: Text(
+  //                   item.text,
+  //                   textAlign: item.align,
+  //                   style: getGoogleFont().copyWith(
+  //                     shadows: item.hasShadow
+  //                         ? [
+  //                             const Shadow(
+  //                               color: Colors.black38,
+  //                               offset: Offset(2, 2),
+  //                               blurRadius: 4,
+  //                             ),
+  //                           ]
+  //                         : null,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //           if (isSelected)
+  //             Positioned(
+  //               right: -6,
+  //               bottom: -6,
+  //               child: GestureDetector(
+  //                 onPanStart: (d) {
+  //                   _resizingTextId = item.id;
+  //                   _resizeStartOffset = d.globalPosition;
+  //                   _resizeStartFontSize = item.fontSize;
+  //                 },
+  //                 onPanUpdate: (d) {
+  //                   if (_resizingTextId != item.id) return;
+  //                   final delta =
+  //                       (d.globalPosition.dx -
+  //                           _resizeStartOffset.dx +
+  //                           d.globalPosition.dy -
+  //                           _resizeStartOffset.dy) /
+  //                       2;
+  //                   final newSize = (_resizeStartFontSize + delta).clamp(
+  //                     8.0,
+  //                     96.0,
+  //                   );
+  //                   setState(() {
+  //                     final idx = _texts.indexWhere((t) => t.id == item.id);
+  //                     if (idx != -1)
+  //                       _texts[idx] = _texts[idx].copyWith(fontSize: newSize);
+  //                   });
+  //                 },
+  //                 onPanEnd: (_) => _resizingTextId = null,
+  //                 child: Container(
+  //                   width: 20,
+  //                   height: 20,
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.blueAccent,
+  //                     shape: BoxShape.circle,
+  //                     border: Border.all(color: Colors.white, width: 1.5),
+  //                   ),
+  //                   child: const Icon(
+  //                     Icons.open_in_full,
+  //                     size: 11,
+  //                     color: Colors.white,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildFontsPanel() {
     final isDarkMode = _isDarkMode;
@@ -11486,235 +11581,233 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     );
   }
 
+
+
+
   void _showColorPicker(OverlayTextItem sel) {
-    final isDarkMode = _isDarkMode;
+  final isDarkMode = _isDarkMode;
+  Color tempColor = sel.color;
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) {
-        Color tempColor = sel.color;
-
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            return Container(
-              decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) {
+      return StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
               ),
-              padding: const EdgeInsets.all(20),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? Colors.grey[700]
+                        : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Title
+                Row(
                   children: [
-                    // Drag handle
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDarkMode
-                            ? Colors.grey[700]
-                            : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                    Icon(
+                      Icons.color_lens,
+                      size: 24,
+                      color: const Color(0xFFF5C518),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Title
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.color_lens,
-                          size: 24,
-                          color: const Color(0xFFF5C518),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Choose Text Color',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isDarkMode ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Color picker - Reduced height to prevent overflow
-                    SizedBox(
-                      height:
-                          MediaQuery.of(ctx).size.height *
-                          0.35, // Responsive height
-                      child: ColorPicker(
-                        pickerColor: tempColor,
-                        onColorChanged: (color) {
-                          setSheetState(() {
-                            tempColor = color;
-                          });
-                        },
-                        showLabel: false,
-                        pickerAreaHeightPercent: 0.7,
-                        enableAlpha: false,
-                        displayThumbColor: true,
-                        paletteType: PaletteType.hsv,
-                        portraitOnly: true,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Color preview with RGB
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: tempColor,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDarkMode
-                              ? Colors.white24
-                              : Colors.grey.shade300,
-                          width: 2,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Choose Text Color',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.black87,
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Selected Color',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: tempColor.computeLuminance() > 0.5
-                                  ? Colors.black87
-                                  : Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: tempColor.computeLuminance() > 0.5
-                                  ? Colors.black54
-                                  : Colors.white70,
-                            ),
-                          ),
-                          Text(
-                            '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: tempColor.computeLuminance() > 0.5
-                                  ? Colors.black54
-                                  : Colors.white70,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: isDarkMode
-                                  ? Colors.white70
-                                  : Colors.black87,
-                              side: BorderSide(
-                                color: isDarkMode
-                                    ? Colors.white38
-                                    : Colors.grey.shade400,
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: const Text('Cancel'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                final i = _texts.indexWhere(
-                                  (t) => t.id == sel.id,
-                                );
-                                if (i != -1) {
-                                  _texts[i] = _texts[i].copyWith(
-                                    color: tempColor,
-                                  );
-                                }
-                              });
-                              Navigator.pop(ctx);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF5C518),
-                              foregroundColor: Colors.black87,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: const Text(
-                              'Apply',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8), // Extra bottom padding
                   ],
                 ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+                const SizedBox(height: 20),
 
-  // void _showBgColorPicker(OverlayTextItem sel) {
+                // Color picker - FIX: Use Flexible with constraints instead of fixed height
+                Flexible(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(ctx).size.height * 0.4,
+                      minHeight: 200,
+                    ),
+                    child: ColorPicker(
+                      pickerColor: tempColor,
+                      onColorChanged: (color) {
+                        setSheetState(() {
+                          tempColor = color;
+                        });
+                      },
+                      showLabel: false,
+                      pickerAreaHeightPercent: 0.8,
+                      enableAlpha: false,
+                      displayThumbColor: true,
+                      paletteType: PaletteType.hsv,
+                      portraitOnly: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Color preview with RGB
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: tempColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDarkMode
+                          ? Colors.white24
+                          : Colors.grey.shade300,
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Selected Color',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: tempColor.computeLuminance() > 0.5
+                              ? Colors.black87
+                              : Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: tempColor.computeLuminance() > 0.5
+                              ? Colors.black54
+                              : Colors.white70,
+                        ),
+                      ),
+                      Text(
+                        '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: tempColor.computeLuminance() > 0.5
+                              ? Colors.black54
+                              : Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDarkMode
+                              ? Colors.white70
+                              : Colors.black87,
+                          side: BorderSide(
+                            color: isDarkMode
+                                ? Colors.white38
+                                : Colors.grey.shade400,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            final i = _texts.indexWhere(
+                              (t) => t.id == sel.id,
+                            );
+                            if (i != -1) {
+                              _texts[i] = _texts[i].copyWith(
+                                color: tempColor,
+                              );
+                            }
+                          });
+                          Navigator.pop(ctx);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF5C518),
+                          foregroundColor: Colors.black87,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Apply',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+  // void _showColorPicker(OverlayTextItem sel) {
   //   final isDarkMode = _isDarkMode;
-  //   Color tempColor = sel.backgroundColor == Colors.transparent
-  //       ? Colors.white
-  //       : sel.backgroundColor;
-
-  //   double hue = 0.0;
-  //   double saturation = 1.0;
-  //   double brightness = 1.0;
 
   //   showModalBottomSheet(
   //     context: context,
   //     isScrollControlled: true,
   //     backgroundColor: Colors.transparent,
-  //     builder: (_) => StatefulBuilder(
-  //       builder: (ctx, setSheetState) {
-  //         return Container(
-  //           height: MediaQuery.of(ctx).size.height * 0.65,
-  //           decoration: BoxDecoration(
-  //             color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-  //             borderRadius: const BorderRadius.vertical(
-  //               top: Radius.circular(20),
+  //     builder: (_) {
+  //       Color tempColor = sel.color;
+
+  //       return StatefulBuilder(
+  //         builder: (ctx, setSheetState) {
+  //           return Container(
+  //             decoration: BoxDecoration(
+  //               color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //               borderRadius: const BorderRadius.vertical(
+  //                 top: Radius.circular(16),
+  //               ),
   //             ),
-  //           ),
-  //           child: Column(
-  //             children: [
-  //               // Drag handle
-  //               Padding(
-  //                 padding: const EdgeInsets.only(top: 12),
-  //                 child: Center(
-  //                   child: Container(
+  //             padding: const EdgeInsets.all(20),
+  //             child: SingleChildScrollView(
+  //               child: Column(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 children: [
+  //                   // Drag handle
+  //                   Container(
   //                     width: 40,
   //                     height: 4,
   //                     decoration: BoxDecoration(
@@ -11724,852 +11817,170 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //                       borderRadius: BorderRadius.circular(2),
   //                     ),
   //                   ),
-  //                 ),
-  //               ),
+  //                   const SizedBox(height: 20),
 
-  //               // Title
-  //               Padding(
-  //                 padding: const EdgeInsets.symmetric(
-  //                   horizontal: 20,
-  //                   vertical: 16,
-  //                 ),
-  //                 child: Row(
-  //                   children: [
-  //                     Icon(
-  //                       Icons.format_color_fill,
-  //                       size: 24,
-  //                       color: const Color(0xFFF5C518),
-  //                     ),
-  //                     const SizedBox(width: 10),
-  //                     Expanded(
-  //                       child: Text(
-  //                         'Choose Background Color',
-  //                         style: TextStyle(
-  //                           fontSize: 18,
-  //                           fontWeight: FontWeight.bold,
-  //                           color: isDarkMode ? Colors.white : Colors.black87,
+  //                   // Title
+  //                   Row(
+  //                     children: [
+  //                       Icon(
+  //                         Icons.color_lens,
+  //                         size: 24,
+  //                         color: const Color(0xFFF5C518),
+  //                       ),
+  //                       const SizedBox(width: 10),
+  //                       Expanded(
+  //                         child: Text(
+  //                           'Choose Text Color',
+  //                           style: TextStyle(
+  //                             fontSize: 18,
+  //                             fontWeight: FontWeight.bold,
+  //                             color: isDarkMode ? Colors.white : Colors.black87,
+  //                           ),
   //                         ),
   //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
+  //                     ],
+  //                   ),
+  //                   const SizedBox(height: 20),
 
-  //               Expanded(
-  //                 child: SingleChildScrollView(
-  //                   padding: const EdgeInsets.symmetric(horizontal: 20),
-  //                   child: Column(
+  //                   // Color picker - Reduced height to prevent overflow
+  //                   SizedBox(
+  //                     height:
+  //                         MediaQuery.of(ctx).size.height *
+  //                         0.35, // Responsive height
+  //                     child: ColorPicker(
+  //                       pickerColor: tempColor,
+  //                       onColorChanged: (color) {
+  //                         setSheetState(() {
+  //                           tempColor = color;
+  //                         });
+  //                       },
+  //                       showLabel: false,
+  //                       pickerAreaHeightPercent: 0.7,
+  //                       enableAlpha: false,
+  //                       displayThumbColor: true,
+  //                       paletteType: PaletteType.hsv,
+  //                       portraitOnly: true,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 16),
+
+  //                   // Color preview with RGB
+  //                   Container(
+  //                     width: double.infinity,
+  //                     padding: const EdgeInsets.all(12),
+  //                     decoration: BoxDecoration(
+  //                       color: tempColor,
+  //                       borderRadius: BorderRadius.circular(12),
+  //                       border: Border.all(
+  //                         color: isDarkMode
+  //                             ? Colors.white24
+  //                             : Colors.grey.shade300,
+  //                         width: 2,
+  //                       ),
+  //                     ),
+  //                     child: Column(
+  //                       children: [
+  //                         Text(
+  //                           'Selected Color',
+  //                           style: TextStyle(
+  //                             fontSize: 14,
+  //                             fontWeight: FontWeight.w500,
+  //                             color: tempColor.computeLuminance() > 0.5
+  //                                 ? Colors.black87
+  //                                 : Colors.white,
+  //                           ),
+  //                         ),
+  //                         const SizedBox(height: 4),
+  //                         Text(
+  //                           'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
+  //                           style: TextStyle(
+  //                             fontSize: 12,
+  //                             color: tempColor.computeLuminance() > 0.5
+  //                                 ? Colors.black54
+  //                                 : Colors.white70,
+  //                           ),
+  //                         ),
+  //                         Text(
+  //                           '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+  //                           style: TextStyle(
+  //                             fontSize: 11,
+  //                             color: tempColor.computeLuminance() > 0.5
+  //                                 ? Colors.black54
+  //                                 : Colors.white70,
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 20),
+
+  //                   // Buttons
+  //                   Row(
   //                     children: [
-  //                       // None/Transparent button
-  //                       GestureDetector(
-  //                         onTap: () {
-  //                           setState(() {
-  //                             final i = _texts.indexWhere(
-  //                               (t) => t.id == sel.id,
-  //                             );
-  //                             if (i != -1) {
-  //                               _texts[i] = _texts[i].copyWith(
-  //                                 backgroundColor: Colors.transparent,
+  //                       Expanded(
+  //                         child: OutlinedButton(
+  //                           onPressed: () => Navigator.pop(ctx),
+  //                           style: OutlinedButton.styleFrom(
+  //                             foregroundColor: isDarkMode
+  //                                 ? Colors.white70
+  //                                 : Colors.black87,
+  //                             side: BorderSide(
+  //                               color: isDarkMode
+  //                                   ? Colors.white38
+  //                                   : Colors.grey.shade400,
+  //                             ),
+  //                             padding: const EdgeInsets.symmetric(vertical: 12),
+  //                             shape: RoundedRectangleBorder(
+  //                               borderRadius: BorderRadius.circular(10),
+  //                             ),
+  //                           ),
+  //                           child: const Text('Cancel'),
+  //                         ),
+  //                       ),
+  //                       const SizedBox(width: 12),
+  //                       Expanded(
+  //                         child: ElevatedButton(
+  //                           onPressed: () {
+  //                             setState(() {
+  //                               final i = _texts.indexWhere(
+  //                                 (t) => t.id == sel.id,
   //                               );
-  //                             }
-  //                           });
-  //                           Navigator.pop(ctx);
-  //                         },
-  //                         child: Container(
-  //                           width: double.infinity,
-  //                           padding: const EdgeInsets.symmetric(vertical: 14),
-  //                           decoration: BoxDecoration(
-  //                             color: isDarkMode
-  //                                 ? const Color(0xFF0F172A)
-  //                                 : Colors.grey.shade100,
-  //                             borderRadius: BorderRadius.circular(12),
-  //                             border: Border.all(
-  //                               color: isDarkMode
-  //                                   ? Colors.white24
-  //                                   : Colors.grey.shade300,
-  //                               width: 1,
-  //                             ),
-  //                           ),
-  //                           child: Row(
-  //                             mainAxisAlignment: MainAxisAlignment.center,
-  //                             children: [
-  //                               Icon(
-  //                                 Icons.clear,
-  //                                 size: 20,
-  //                                 color: isDarkMode
-  //                                     ? Colors.white70
-  //                                     : Colors.black54,
-  //                               ),
-  //                               const SizedBox(width: 8),
-  //                               Text(
-  //                                 'None (Transparent)',
-  //                                 style: TextStyle(
-  //                                   fontSize: 14,
-  //                                   fontWeight: FontWeight.w500,
-  //                                   color: isDarkMode
-  //                                       ? Colors.white70
-  //                                       : Colors.black54,
-  //                                 ),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 20),
-
-  //                       // Divider with OR
-  //                       Row(
-  //                         children: [
-  //                           Expanded(
-  //                             child: Divider(
-  //                               color: isDarkMode
-  //                                   ? Colors.white24
-  //                                   : Colors.grey.shade300,
-  //                               thickness: 1,
-  //                             ),
-  //                           ),
-  //                           Padding(
-  //                             padding: const EdgeInsets.symmetric(
-  //                               horizontal: 12,
-  //                             ),
-  //                             child: Text(
-  //                               'OR',
-  //                               style: TextStyle(
-  //                                 fontSize: 12,
-  //                                 fontWeight: FontWeight.w500,
-  //                                 color: isDarkMode
-  //                                     ? Colors.white54
-  //                                     : Colors.black45,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                           Expanded(
-  //                             child: Divider(
-  //                               color: isDarkMode
-  //                                   ? Colors.white24
-  //                                   : Colors.grey.shade300,
-  //                               thickness: 1,
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(height: 20),
-
-  //                       // Color Preview
-  //                       Container(
-  //                         width: double.infinity,
-  //                         padding: const EdgeInsets.all(16),
-  //                         decoration: BoxDecoration(
-  //                           color: tempColor,
-  //                           borderRadius: BorderRadius.circular(12),
-  //                           border: Border.all(
-  //                             color: isDarkMode
-  //                                 ? Colors.white24
-  //                                 : Colors.grey.shade300,
-  //                             width: 2,
-  //                           ),
-  //                         ),
-  //                         child: Column(
-  //                           children: [
-  //                             Text(
-  //                               'Selected Color',
-  //                               style: TextStyle(
-  //                                 fontSize: 14,
-  //                                 fontWeight: FontWeight.w500,
-  //                                 color: tempColor.computeLuminance() > 0.5
-  //                                     ? Colors.black87
-  //                                     : Colors.white,
-  //                               ),
-  //                             ),
-  //                             const SizedBox(height: 6),
-  //                             Text(
-  //                               'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
-  //                               style: TextStyle(
-  //                                 fontSize: 12,
-  //                                 fontWeight: FontWeight.w400,
-  //                                 color: tempColor.computeLuminance() > 0.5
-  //                                     ? Colors.black54
-  //                                     : Colors.white70,
-  //                               ),
-  //                             ),
-  //                             Text(
-  //                               '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
-  //                               style: TextStyle(
-  //                                 fontSize: 11,
-  //                                 fontWeight: FontWeight.w400,
-  //                                 color: tempColor.computeLuminance() > 0.5
-  //                                     ? Colors.black54
-  //                                     : Colors.white70,
-  //                               ),
-  //                             ),
-  //                           ],
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 24),
-
-  //                       // Hue Picker (Gradient bar)
-  //                       Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           Text(
-  //                             'Hue',
-  //                             style: TextStyle(
-  //                               fontSize: 13,
-  //                               fontWeight: FontWeight.w500,
-  //                               color: isDarkMode
-  //                                   ? Colors.white70
-  //                                   : Colors.black87,
-  //                             ),
-  //                           ),
-  //                           const SizedBox(height: 8),
-  //                           GestureDetector(
-  //                             onPanUpdate: (details) {
-  //                               final box =
-  //                                   ctx.findRenderObject() as RenderBox?;
-  //                               if (box == null) return;
-  //                               final position = details.localPosition;
-  //                               final width =
-  //                                   MediaQuery.of(ctx).size.width - 40;
-  //                               final newHue =
-  //                                   (position.dx / width).clamp(0.0, 1.0) * 360;
-  //                               hue = newHue;
-  //                               tempColor = HSVColor.fromAHSV(
-  //                                 1.0,
-  //                                 hue,
-  //                                 saturation,
-  //                                 brightness,
-  //                               ).toColor();
-  //                               setSheetState(() {});
-  //                             },
-  //                             child: Container(
-  //                               height: 44,
-  //                               width: double.infinity,
-  //                               decoration: BoxDecoration(
-  //                                 gradient: const LinearGradient(
-  //                                   begin: Alignment.centerLeft,
-  //                                   end: Alignment.centerRight,
-  //                                   colors: [
-  //                                     Color(0xFFFF0000), // Red
-  //                                     Color(0xFFFFA500), // Orange
-  //                                     Color(0xFFFFFF00), // Yellow
-  //                                     Color(0xFF00FF00), // Green
-  //                                     Color(0xFF00FFFF), // Cyan
-  //                                     Color(0xFF0000FF), // Blue
-  //                                     Color(0xFFFF00FF), // Magenta
-  //                                     Color(0xFFFF0000), // Red
-  //                                   ],
-  //                                 ),
-  //                                 borderRadius: BorderRadius.circular(10),
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(height: 16),
-
-  //                       // Saturation Slider
-  //                       Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           Text(
-  //                             'Saturation',
-  //                             style: TextStyle(
-  //                               fontSize: 13,
-  //                               fontWeight: FontWeight.w500,
-  //                               color: isDarkMode
-  //                                   ? Colors.white70
-  //                                   : Colors.black87,
-  //                             ),
-  //                           ),
-  //                           const SizedBox(height: 8),
-  //                           Slider(
-  //                             value: saturation,
-  //                             onChanged: (value) {
-  //                               saturation = value;
-  //                               tempColor = HSVColor.fromAHSV(
-  //                                 1.0,
-  //                                 hue,
-  //                                 saturation,
-  //                                 brightness,
-  //                               ).toColor();
-  //                               setSheetState(() {});
-  //                             },
-  //                             activeColor: const Color(0xFFF5C518),
-  //                             inactiveColor: isDarkMode
-  //                                 ? Colors.grey[700]
-  //                                 : Colors.grey[300],
-  //                             min: 0,
-  //                             max: 1,
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(height: 8),
-
-  //                       // Brightness Slider
-  //                       Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           Text(
-  //                             'Brightness',
-  //                             style: TextStyle(
-  //                               fontSize: 13,
-  //                               fontWeight: FontWeight.w500,
-  //                               color: isDarkMode
-  //                                   ? Colors.white70
-  //                                   : Colors.black87,
-  //                             ),
-  //                           ),
-  //                           const SizedBox(height: 8),
-  //                           Slider(
-  //                             value: brightness,
-  //                             onChanged: (value) {
-  //                               brightness = value;
-  //                               tempColor = HSVColor.fromAHSV(
-  //                                 1.0,
-  //                                 hue,
-  //                                 saturation,
-  //                                 brightness,
-  //                               ).toColor();
-  //                               setSheetState(() {});
-  //                             },
-  //                             activeColor: const Color(0xFFF5C518),
-  //                             inactiveColor: isDarkMode
-  //                                 ? Colors.grey[700]
-  //                                 : Colors.grey[300],
-  //                             min: 0,
-  //                             max: 1,
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(height: 24),
-
-  //                       // Action Buttons
-  //                       Row(
-  //                         children: [
-  //                           Expanded(
-  //                             child: OutlinedButton(
-  //                               onPressed: () => Navigator.pop(ctx),
-  //                               style: OutlinedButton.styleFrom(
-  //                                 foregroundColor: isDarkMode
-  //                                     ? Colors.white70
-  //                                     : Colors.black87,
-  //                                 side: BorderSide(
-  //                                   color: isDarkMode
-  //                                       ? Colors.white38
-  //                                       : Colors.grey.shade400,
-  //                                 ),
-  //                                 padding: const EdgeInsets.symmetric(
-  //                                   vertical: 14,
-  //                                 ),
-  //                                 shape: RoundedRectangleBorder(
-  //                                   borderRadius: BorderRadius.circular(10),
-  //                                 ),
-  //                               ),
-  //                               child: const Text('Cancel'),
-  //                             ),
-  //                           ),
-  //                           const SizedBox(width: 12),
-  //                           Expanded(
-  //                             child: ElevatedButton(
-  //                               onPressed: () {
-  //                                 setState(() {
-  //                                   final i = _texts.indexWhere(
-  //                                     (t) => t.id == sel.id,
-  //                                   );
-  //                                   if (i != -1) {
-  //                                     _texts[i] = _texts[i].copyWith(
-  //                                       backgroundColor: tempColor,
-  //                                     );
-  //                                   }
-  //                                 });
-  //                                 Navigator.pop(ctx);
-  //                               },
-  //                               style: ElevatedButton.styleFrom(
-  //                                 backgroundColor: const Color(0xFFF5C518),
-  //                                 foregroundColor: Colors.black87,
-  //                                 padding: const EdgeInsets.symmetric(
-  //                                   vertical: 14,
-  //                                 ),
-  //                                 shape: RoundedRectangleBorder(
-  //                                   borderRadius: BorderRadius.circular(10),
-  //                                 ),
-  //                               ),
-  //                               child: const Text(
-  //                                 'Apply',
-  //                                 style: TextStyle(fontWeight: FontWeight.bold),
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(height: 20),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         );
-  //       },
-  //     ),
-  //   );
-  // }
-
-  //   void _showBgColorPicker(OverlayTextItem sel) {
-  //   final isDarkMode = _isDarkMode;
-  //   Color tempColor = sel.backgroundColor == Colors.transparent
-  //       ? Colors.white
-  //       : sel.backgroundColor;
-
-  //   double hue = 0.0;
-  //   double saturation = 1.0;
-  //   double brightness = 1.0;
-
-  //   // Quick color swatches — same as in _showColorPicker
-  //   final List<Color> quickColors = [
-  //     Colors.transparent,
-  //     Colors.white,
-  //     Colors.black,
-  //     Colors.red,
-  //     Colors.orange,
-  //     Colors.yellow,
-  //     Colors.green,
-  //     Colors.teal,
-  //     Colors.blue,
-  //     Colors.purple,
-  //     Colors.pink,
-  //     const Color(0xFFD4AF37),
-  //     Colors.brown,
-  //     Colors.grey,
-  //   ];
-
-  //   showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     backgroundColor: Colors.transparent,
-  //     builder: (_) => StatefulBuilder(
-  //       builder: (ctx, setSheetState) {
-  //         return Container(
-  //           height: MediaQuery.of(ctx).size.height * 0.75,
-  //           decoration: BoxDecoration(
-  //             color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-  //             borderRadius: const BorderRadius.vertical(
-  //               top: Radius.circular(20),
-  //             ),
-  //           ),
-  //           child: Column(
-  //             children: [
-  //               // Drag handle
-  //               Padding(
-  //                 padding: const EdgeInsets.only(top: 12),
-  //                 child: Center(
-  //                   child: Container(
-  //                     width: 40,
-  //                     height: 4,
-  //                     decoration: BoxDecoration(
-  //                       color: isDarkMode
-  //                           ? Colors.grey[700]
-  //                           : Colors.grey.shade300,
-  //                       borderRadius: BorderRadius.circular(2),
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-
-  //               // Title
-  //               Padding(
-  //                 padding: const EdgeInsets.symmetric(
-  //                   horizontal: 20,
-  //                   vertical: 16,
-  //                 ),
-  //                 child: Row(
-  //                   children: [
-  //                     Icon(
-  //                       Icons.format_color_fill,
-  //                       size: 24,
-  //                       color: const Color(0xFFF5C518),
-  //                     ),
-  //                     const SizedBox(width: 10),
-  //                     Expanded(
-  //                       child: Text(
-  //                         'Choose Background Color',
-  //                         style: TextStyle(
-  //                           fontSize: 18,
-  //                           fontWeight: FontWeight.bold,
-  //                           color: isDarkMode ? Colors.white : Colors.black87,
-  //                         ),
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-
-  //               Expanded(
-  //                 child: SingleChildScrollView(
-  //                   padding: const EdgeInsets.symmetric(horizontal: 20),
-  //                   child: Column(
-  //                     crossAxisAlignment: CrossAxisAlignment.start,
-  //                     children: [
-
-  //                       // ── QUICK COLOR SWATCHES ROW ──
-  //                       Text(
-  //                         'Quick colors',
-  //                         style: TextStyle(
-  //                           fontSize: 13,
-  //                           fontWeight: FontWeight.w600,
-  //                           color: isDarkMode ? Colors.white70 : Colors.black87,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 10),
-  //                       SizedBox(
-  //                         height: 44,
-  //                         child: ListView.separated(
-  //                           scrollDirection: Axis.horizontal,
-  //                           itemCount: quickColors.length,
-  //                           separatorBuilder: (_, __) =>
-  //                               const SizedBox(width: 10),
-  //                           itemBuilder: (_, i) {
-  //                             final c = quickColors[i];
-  //                             final isTransparent = c == Colors.transparent;
-  //                             final isSelected = isTransparent
-  //                                 ? tempColor == Colors.white &&
-  //                                     sel.backgroundColor == Colors.transparent
-  //                                 : tempColor == c;
-  //                             return GestureDetector(
-  //                               onTap: () {
-  //                                 if (isTransparent) {
-  //                                   // Apply transparent immediately
-  //                                   setState(() {
-  //                                     final idx = _texts.indexWhere(
-  //                                       (t) => t.id == sel.id,
-  //                                     );
-  //                                     if (idx != -1) {
-  //                                       _texts[idx] = _texts[idx].copyWith(
-  //                                         backgroundColor: Colors.transparent,
-  //                                       );
-  //                                     }
-  //                                   });
-  //                                   Navigator.pop(ctx);
-  //                                 } else {
-  //                                   setSheetState(() {
-  //                                     tempColor = c;
-  //                                     // Sync sliders to match chosen color
-  //                                     final hsv = HSVColor.fromColor(c);
-  //                                     hue = hsv.hue;
-  //                                     saturation = hsv.saturation;
-  //                                     brightness = hsv.value;
-  //                                   });
-  //                                 }
-  //                               },
-  //                               child: Container(
-  //                                 width: 36,
-  //                                 height: 36,
-  //                                 decoration: BoxDecoration(
-  //                                   color: isTransparent
-  //                                       ? Colors.white
-  //                                       : c,
-  //                                   shape: BoxShape.circle,
-  //                                   border: Border.all(
-  //                                     color: isSelected
-  //                                         ? const Color(0xFFF5C518)
-  //                                         : (isDarkMode
-  //                                               ? Colors.grey[600]!
-  //                                               : Colors.grey.shade400),
-  //                                     width: isSelected ? 3 : 1.5,
-  //                                   ),
-  //                                 ),
-  //                                 child: isTransparent
-  //                                     ? Center(
-  //                                         child: Text(
-  //                                           '∅',
-  //                                           style: TextStyle(
-  //                                             fontSize: 16,
-  //                                             color: isDarkMode
-  //                                                 ? Colors.white54
-  //                                                 : Colors.black45,
-  //                                           ),
-  //                                         ),
-  //                                       )
-  //                                     : null,
-  //                               ),
-  //                             );
+  //                               if (i != -1) {
+  //                                 _texts[i] = _texts[i].copyWith(
+  //                                   color: tempColor,
+  //                                 );
+  //                               }
+  //                             });
+  //                             Navigator.pop(ctx);
   //                           },
-  //                         ),
-  //                       ),
-
-  //                       const SizedBox(height: 20),
-
-  //                       // Divider with OR
-  //                       Row(
-  //                         children: [
-  //                           Expanded(
-  //                             child: Divider(
-  //                               color: isDarkMode
-  //                                   ? Colors.white24
-  //                                   : Colors.grey.shade300,
-  //                               thickness: 1,
+  //                           style: ElevatedButton.styleFrom(
+  //                             backgroundColor: const Color(0xFFF5C518),
+  //                             foregroundColor: Colors.black87,
+  //                             padding: const EdgeInsets.symmetric(vertical: 12),
+  //                             shape: RoundedRectangleBorder(
+  //                               borderRadius: BorderRadius.circular(10),
   //                             ),
   //                           ),
-  //                           Padding(
-  //                             padding: const EdgeInsets.symmetric(
-  //                               horizontal: 12,
-  //                             ),
-  //                             child: Text(
-  //                               'OR CUSTOM',
-  //                               style: TextStyle(
-  //                                 fontSize: 11,
-  //                                 fontWeight: FontWeight.w600,
-  //                                 letterSpacing: 0.5,
-  //                                 color: isDarkMode
-  //                                     ? Colors.white54
-  //                                     : Colors.black45,
-  //                               ),
-  //                             ),
-  //                           ),
-  //                           Expanded(
-  //                             child: Divider(
-  //                               color: isDarkMode
-  //                                   ? Colors.white24
-  //                                   : Colors.grey.shade300,
-  //                               thickness: 1,
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(height: 20),
-
-  //                       // Color Preview
-  //                       Container(
-  //                         width: double.infinity,
-  //                         padding: const EdgeInsets.all(16),
-  //                         decoration: BoxDecoration(
-  //                           color: tempColor,
-  //                           borderRadius: BorderRadius.circular(12),
-  //                           border: Border.all(
-  //                             color: isDarkMode
-  //                                 ? Colors.white24
-  //                                 : Colors.grey.shade300,
-  //                             width: 2,
-  //                           ),
-  //                         ),
-  //                         child: Column(
-  //                           children: [
-  //                             Text(
-  //                               'Selected Color',
-  //                               style: TextStyle(
-  //                                 fontSize: 14,
-  //                                 fontWeight: FontWeight.w500,
-  //                                 color: tempColor.computeLuminance() > 0.5
-  //                                     ? Colors.black87
-  //                                     : Colors.white,
-  //                               ),
-  //                             ),
-  //                             const SizedBox(height: 6),
-  //                             Text(
-  //                               'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
-  //                               style: TextStyle(
-  //                                 fontSize: 12,
-  //                                 color: tempColor.computeLuminance() > 0.5
-  //                                     ? Colors.black54
-  //                                     : Colors.white70,
-  //                               ),
-  //                             ),
-  //                             Text(
-  //                               '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
-  //                               style: TextStyle(
-  //                                 fontSize: 11,
-  //                                 color: tempColor.computeLuminance() > 0.5
-  //                                     ? Colors.black54
-  //                                     : Colors.white70,
-  //                               ),
-  //                             ),
-  //                           ],
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 24),
-
-  //                       // Hue Picker
-  //                       Text(
-  //                         'Hue',
-  //                         style: TextStyle(
-  //                           fontSize: 13,
-  //                           fontWeight: FontWeight.w500,
-  //                           color: isDarkMode ? Colors.white70 : Colors.black87,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 8),
-  //                       GestureDetector(
-  //                         onPanUpdate: (details) {
-  //                           final width =
-  //                               MediaQuery.of(ctx).size.width - 40;
-  //                           final newHue =
-  //                               (details.localPosition.dx / width)
-  //                                   .clamp(0.0, 1.0) *
-  //                               360;
-  //                           hue = newHue;
-  //                           tempColor = HSVColor.fromAHSV(
-  //                             1.0,
-  //                             hue,
-  //                             saturation,
-  //                             brightness,
-  //                           ).toColor();
-  //                           setSheetState(() {});
-  //                         },
-  //                         child: Container(
-  //                           height: 44,
-  //                           width: double.infinity,
-  //                           decoration: BoxDecoration(
-  //                             gradient: const LinearGradient(
-  //                               colors: [
-  //                                 Color(0xFFFF0000),
-  //                                 Color(0xFFFFA500),
-  //                                 Color(0xFFFFFF00),
-  //                                 Color(0xFF00FF00),
-  //                                 Color(0xFF00FFFF),
-  //                                 Color(0xFF0000FF),
-  //                                 Color(0xFFFF00FF),
-  //                                 Color(0xFFFF0000),
-  //                               ],
-  //                             ),
-  //                             borderRadius: BorderRadius.circular(10),
+  //                           child: const Text(
+  //                             'Apply',
+  //                             style: TextStyle(fontWeight: FontWeight.bold),
   //                           ),
   //                         ),
   //                       ),
-  //                       const SizedBox(height: 16),
-
-  //                       // Saturation Slider
-  //                       Text(
-  //                         'Saturation',
-  //                         style: TextStyle(
-  //                           fontSize: 13,
-  //                           fontWeight: FontWeight.w500,
-  //                           color: isDarkMode ? Colors.white70 : Colors.black87,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 8),
-  //                       Slider(
-  //                         value: saturation,
-  //                         onChanged: (value) {
-  //                           saturation = value;
-  //                           tempColor = HSVColor.fromAHSV(
-  //                             1.0,
-  //                             hue,
-  //                             saturation,
-  //                             brightness,
-  //                           ).toColor();
-  //                           setSheetState(() {});
-  //                         },
-  //                         activeColor: const Color(0xFFF5C518),
-  //                         inactiveColor: isDarkMode
-  //                             ? Colors.grey[700]
-  //                             : Colors.grey[300],
-  //                         min: 0,
-  //                         max: 1,
-  //                       ),
-  //                       const SizedBox(height: 8),
-
-  //                       // Brightness Slider
-  //                       Text(
-  //                         'Brightness',
-  //                         style: TextStyle(
-  //                           fontSize: 13,
-  //                           fontWeight: FontWeight.w500,
-  //                           color: isDarkMode ? Colors.white70 : Colors.black87,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 8),
-  //                       Slider(
-  //                         value: brightness,
-  //                         onChanged: (value) {
-  //                           brightness = value;
-  //                           tempColor = HSVColor.fromAHSV(
-  //                             1.0,
-  //                             hue,
-  //                             saturation,
-  //                             brightness,
-  //                           ).toColor();
-  //                           setSheetState(() {});
-  //                         },
-  //                         activeColor: const Color(0xFFF5C518),
-  //                         inactiveColor: isDarkMode
-  //                             ? Colors.grey[700]
-  //                             : Colors.grey[300],
-  //                         min: 0,
-  //                         max: 1,
-  //                       ),
-  //                       const SizedBox(height: 24),
-
-  //                       // Action Buttons
-  //                       Row(
-  //                         children: [
-  //                           Expanded(
-  //                             child: OutlinedButton(
-  //                               onPressed: () => Navigator.pop(ctx),
-  //                               style: OutlinedButton.styleFrom(
-  //                                 foregroundColor: isDarkMode
-  //                                     ? Colors.white70
-  //                                     : Colors.black87,
-  //                                 side: BorderSide(
-  //                                   color: isDarkMode
-  //                                       ? Colors.white38
-  //                                       : Colors.grey.shade400,
-  //                                 ),
-  //                                 padding: const EdgeInsets.symmetric(
-  //                                   vertical: 14,
-  //                                 ),
-  //                                 shape: RoundedRectangleBorder(
-  //                                   borderRadius: BorderRadius.circular(10),
-  //                                 ),
-  //                               ),
-  //                               child: const Text('Cancel'),
-  //                             ),
-  //                           ),
-  //                           const SizedBox(width: 12),
-  //                           Expanded(
-  //                             child: ElevatedButton(
-  //                               onPressed: () {
-  //                                 setState(() {
-  //                                   final idx = _texts.indexWhere(
-  //                                     (t) => t.id == sel.id,
-  //                                   );
-  //                                   if (idx != -1) {
-  //                                     _texts[idx] = _texts[idx].copyWith(
-  //                                       backgroundColor: tempColor,
-  //                                     );
-  //                                   }
-  //                                 });
-  //                                 Navigator.pop(ctx);
-  //                               },
-  //                               style: ElevatedButton.styleFrom(
-  //                                 backgroundColor: const Color(0xFFF5C518),
-  //                                 foregroundColor: Colors.black87,
-  //                                 padding: const EdgeInsets.symmetric(
-  //                                   vertical: 14,
-  //                                 ),
-  //                                 shape: RoundedRectangleBorder(
-  //                                   borderRadius: BorderRadius.circular(10),
-  //                                 ),
-  //                               ),
-  //                               child: const Text(
-  //                                 'Apply',
-  //                                 style: TextStyle(fontWeight: FontWeight.bold),
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                       const SizedBox(height: 20),
   //                     ],
   //                   ),
-  //                 ),
+  //                   const SizedBox(height: 8), // Extra bottom padding
+  //                 ],
   //               ),
-  //             ],
-  //           ),
-  //         );
-  //       },
-  //     ),
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
   //   );
   // }
+
+
 
   void _showBgColorPicker(OverlayTextItem sel) {
     final isDarkMode = _isDarkMode;
@@ -16119,60 +15530,64 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                   ),
                 ),
 
-                // Divider
-                Divider(
-                  height: 1,
-                  color: isDarkMode ? Colors.grey[800] : Colors.grey.shade200,
-                ),
 
-                // Overlay brand items in layers
-                ..._overlayBrandItems.map(
-                  (e) => ListTile(
-                    leading: Icon(
-                      e.type == BrandElementType.logo
-                          ? Icons.image
-                          : e.type == BrandElementType.name
-                          ? Icons.badge
-                          : e.type == BrandElementType.phone
-                          ? Icons.phone_android
-                          : Icons.pin_drop,
-                      color: Colors.purple,
-                    ),
-                    title: Text(
-                      'Canvas: ${e.type.name[0].toUpperCase()}${e.type.name.substring(1)}',
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black87,
-                      ),
-                    ),
-                    subtitle: Text(
-                      e.isVisible ? 'Visible on canvas' : 'Hidden',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: e.isVisible ? Colors.green : Colors.red,
-                      ),
-                    ),
-                    trailing: IconButton(
-                      icon: Icon(
-                        e.isVisible ? Icons.visibility : Icons.visibility_off,
-                        size: 18,
-                        color: e.isVisible
-                            ? Colors.purple
-                            : (isDarkMode ? Colors.grey[600] : Colors.grey),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          final i = _overlayBrandItems.indexWhere(
-                            (x) => x.id == e.id,
-                          );
-                          if (i != -1)
-                            _overlayBrandItems[i] = _overlayBrandItems[i]
-                                .copyWith(isVisible: !e.isVisible);
-                        });
-                        setSheet(() {});
-                      },
-                    ),
-                  ),
-                ),
+
+                ///////////// This part is hidden///
+
+                // Divider
+                // Divider(
+                //   height: 1,
+                //   color: isDarkMode ? Colors.grey[800] : Colors.grey.shade200,
+                // ),
+
+                // // Overlay brand items in layers
+                // ..._overlayBrandItems.map(
+                //   (e) => ListTile(
+                //     leading: Icon(
+                //       e.type == BrandElementType.logo
+                //           ? Icons.image
+                //           : e.type == BrandElementType.name
+                //           ? Icons.badge
+                //           : e.type == BrandElementType.phone
+                //           ? Icons.phone_android
+                //           : Icons.pin_drop,
+                //       color: Colors.purple,
+                //     ),
+                //     title: Text(
+                //       'Canvas: ${e.type.name[0].toUpperCase()}${e.type.name.substring(1)}',
+                //       style: TextStyle(
+                //         color: isDarkMode ? Colors.white : Colors.black87,
+                //       ),
+                //     ),
+                //     subtitle: Text(
+                //       e.isVisible ? 'Visible on canvas' : 'Hidden',
+                //       style: TextStyle(
+                //         fontSize: 11,
+                //         color: e.isVisible ? Colors.green : Colors.red,
+                //       ),
+                //     ),
+                //     trailing: IconButton(
+                //       icon: Icon(
+                //         e.isVisible ? Icons.visibility : Icons.visibility_off,
+                //         size: 18,
+                //         color: e.isVisible
+                //             ? Colors.purple
+                //             : (isDarkMode ? Colors.grey[600] : Colors.grey),
+                //       ),
+                //       onPressed: () {
+                //         setState(() {
+                //           final i = _overlayBrandItems.indexWhere(
+                //             (x) => x.id == e.id,
+                //           );
+                //           if (i != -1)
+                //             _overlayBrandItems[i] = _overlayBrandItems[i]
+                //                 .copyWith(isVisible: !e.isVisible);
+                //         });
+                //         setSheet(() {});
+                //       },
+                //     ),
+                //   ),
+                // ),
 
                 // Divider
                 Divider(
@@ -16857,6 +16272,219 @@ class AdminAudioTrack {
       title: json['title'] ?? 'Unknown',
       artist: json['artist'] ?? '',
       audioUrl: json['audioUrl'] ?? '',
+    );
+  }
+}
+
+
+////// Newly added class for add text movement/////////////
+
+class _DraggableTextWidget extends StatefulWidget {
+  final OverlayTextItem item;
+  final bool isSelected;
+  final TextStyle textStyle;
+  final ValueChanged<Offset> onPositionChanged;
+  final VoidCallback onTap;
+  final VoidCallback onDelete;
+  final ValueChanged<double> onResize;
+
+  const _DraggableTextWidget({
+    Key? key,
+    required this.item,
+    required this.isSelected,
+    required this.textStyle,
+    required this.onPositionChanged,
+    required this.onTap,
+    required this.onDelete,
+    required this.onResize,
+  }) : super(key: key);
+
+  @override
+  State<_DraggableTextWidget> createState() => _DraggableTextWidgetState();
+}
+
+class _DraggableTextWidgetState extends State<_DraggableTextWidget> {
+  Offset? _resizeStartOffset;
+  double? _resizeStartFontSize;
+  String? _resizingTextId;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onPanUpdate: (d) {
+        widget.onPositionChanged(widget.item.position + d.delta);
+      },
+      onLongPress: () {
+        _showDeleteConfirmationDialog();
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            decoration: widget.isSelected
+                ? BoxDecoration(
+                    border: Border.all(color: Colors.blueAccent, width: 1.5),
+                    color: Colors.blue.withOpacity(0.05),
+                  )
+                : null,
+            padding: const EdgeInsets.all(4),
+            child: Container(
+              decoration: widget.item.hasBorder
+                  ? BoxDecoration(
+                      border: Border.all(color: widget.item.color, width: 1),
+                      color: widget.item.backgroundColor == Colors.transparent
+                          ? null
+                          : widget.item.backgroundColor,
+                    )
+                  : null,
+              color: !widget.item.hasBorder &&
+                      widget.item.backgroundColor != Colors.transparent
+                  ? widget.item.backgroundColor
+                  : null,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Transform.rotate(
+                angle: widget.item.rotation,
+                child: Text(
+                  widget.item.text,
+                  textAlign: widget.item.align,
+                  style: widget.textStyle,
+                ),
+              ),
+            ),
+          ),
+          if (widget.isSelected)
+            Positioned(
+              right: -6,
+              bottom: -6,
+              child: GestureDetector(
+                onPanStart: (d) {
+                  _resizingTextId = widget.item.id;
+                  _resizeStartOffset = d.globalPosition;
+                  _resizeStartFontSize = widget.item.fontSize;
+                },
+                onPanUpdate: (d) {
+                  if (_resizingTextId != widget.item.id) return;
+                  final delta = (d.globalPosition.dx - _resizeStartOffset!.dx +
+                          d.globalPosition.dy - _resizeStartOffset!.dy) /
+                      2;
+                  final newSize = (_resizeStartFontSize! + delta).clamp(
+                    8.0,
+                    96.0,
+                  );
+                  widget.onResize(newSize);
+                },
+                onPanEnd: (_) => _resizingTextId = null,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: const Icon(
+                    Icons.open_in_full,
+                    size: 11,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 48,
+                    color: Colors.red,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Delete Text',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Are you sure you want to delete this text?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          widget.onDelete();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

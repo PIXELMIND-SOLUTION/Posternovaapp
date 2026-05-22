@@ -554,6 +554,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       );
       final response = await http.get(url);
 
+      print(
+        'Response status code for my payment history ${response.statusCode}',
+      );
+
+      print(
+        'Response bodyyyyyyyyyyyyyyyy for my payment history ${response.body}',
+      );
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
 

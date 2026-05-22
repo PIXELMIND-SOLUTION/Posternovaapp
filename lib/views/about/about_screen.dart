@@ -399,7 +399,7 @@ class AboutScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: const BoxDecoration(),
-                    child: Image.asset('assets/editezylogo.png', width: 100),
+                    child: Image.asset('assets/mainlogo.jpeg', width: 100),
                   ),
                   const SizedBox(height: 16),
                   const Text(
