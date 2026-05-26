@@ -150,6 +150,10 @@ class _WalletScreenState extends State<WalletScreen> {
         Uri.parse('http://31.97.228.17:4061/api/users/wallet/$userId'),
       );
 
+      print('Response status code for get user wallet ${response.statusCode}');
+            print('Response bodyyyyyyyyyyy for get user wallet ${response.body}');
+
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {

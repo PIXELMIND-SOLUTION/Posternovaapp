@@ -1011,20 +1011,53 @@ class _TemplateCreateState extends State<TemplateCreate>
     }
   }
 
+  // void _addText() {
+  //   final item = OverlayTextItem(
+  //     id: DateTime.now().millisecondsSinceEpoch.toString(),
+  //     text: 'Tap to edit',
+  //     position: Offset(60, 200 + _texts.length * 40.0),
+  //     fontSize: 22,
+  //     color: Colors.white,
+  //   );
+  //   setState(() {
+  //     _texts.add(item);
+  //     _selectedTextId = item.id;
+  //   });
+  //   _openTextEditor(item);
+  // }
+
+
+
   void _addText() {
-    final item = OverlayTextItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: 'Tap to edit',
-      position: Offset(60, 200 + _texts.length * 40.0),
-      fontSize: 22,
-      color: Colors.white,
-    );
-    setState(() {
-      _texts.add(item);
-      _selectedTextId = item.id;
-    });
-    _openTextEditor(item);
-  }
+  // Calculate position to avoid overlapping
+  double yPosition = 50 + (_texts.length % 10) * 45; // Cycle positions
+  double xPosition = 20 + ((_texts.length ~/ 10) % 3) * 150; // Spread horizontally
+  
+  final item = OverlayTextItem(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    // text: 'Text ${_texts.length + 1}',
+        text: '',
+
+    position: Offset(xPosition, yPosition),
+    fontSize: 22,
+    color: Colors.white,
+  );
+  
+  setState(() {
+    _texts.add(item);
+    _selectedTextId = item.id;
+  });
+  
+  // Show success message
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('Text added! Total: ${_texts.length}'),
+      duration: const Duration(seconds: 1),
+    ),
+  );
+  
+  _openTextEditor(item);
+}
 
   // Future<void> _playAudio(String? trackName) async {
   //   try {
@@ -8316,6 +8349,36 @@ class _TemplateCreateState extends State<TemplateCreate>
   //   );
   // }
 
+
+
+
+
+  void _openAudioSelectionScreen() {
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => AudioSelectionScreen(
+        adminAudioTracks: _adminAudioTracks,
+        userAudioTracks: _userAudioTracks,
+        selectedAudio: _selectedAudio,
+        isLoadingAudios: _isLoadingAudios,
+        audioLoadError: _audioLoadError,
+        onAudioSelected: (trackName) async {
+          setState(() => _activeTab = BottomTab.frames);
+          await _playAudio(trackName);
+        },
+        onAudioRemoved: () async {
+          setState(() => _activeTab = BottomTab.frames);
+          await _playAudio(null);
+        },
+        onPickUserAudio: _pickUserAudio,
+        onDeleteUserAudio: _showDeleteAudioConfirmation,
+        onRetryFetch: _fetchAdminAudios,
+      ),
+    ),
+  );
+}
+
   Widget _buildTextWidget(OverlayTextItem item) {
     final isSelected = _selectedTextId == item.id;
 
@@ -13228,7 +13291,15 @@ class _TemplateCreateState extends State<TemplateCreate>
           children: tabs
               .map(
                 (t) => GestureDetector(
-                  onTap: () => setState(() => _activeTab = t.tab),
+
+                  onTap: () {
+  if (t.tab == BottomTab.audio) {
+    _openAudioSelectionScreen();
+  } else {
+    setState(() => _activeTab = t.tab);
+  }
+},
+                  // onTap: () => setState(() => _activeTab = t.tab),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(
@@ -14668,4 +14739,609 @@ class _EffectData {
   final IconData icon;
   final String label;
   _EffectData(this.type, this.icon, this.label);
+}
+
+
+
+
+// ─────────────────────────────────────────────
+//  AUDIO SELECTION SCREEN
+// ─────────────────────────────────────────────
+
+class AudioSelectionScreen extends StatefulWidget {
+  final List<AdminAudioTrack> adminAudioTracks;
+  final List<UserAudioTrack> userAudioTracks;
+  final String? selectedAudio;
+  final bool isLoadingAudios;
+  final String? audioLoadError;
+  final Future<void> Function(String trackName) onAudioSelected;
+  final Future<void> Function() onAudioRemoved;
+  final VoidCallback onPickUserAudio;
+  final void Function(UserAudioTrack) onDeleteUserAudio;
+  final VoidCallback onRetryFetch;
+
+  const AudioSelectionScreen({
+    Key? key,
+    required this.adminAudioTracks,
+    required this.userAudioTracks,
+    required this.selectedAudio,
+    required this.isLoadingAudios,
+    required this.audioLoadError,
+    required this.onAudioSelected,
+    required this.onAudioRemoved,
+    required this.onPickUserAudio,
+    required this.onDeleteUserAudio,
+    required this.onRetryFetch,
+  }) : super(key: key);
+
+  @override
+  State<AudioSelectionScreen> createState() => _AudioSelectionScreenState();
+}
+
+class _AudioSelectionScreenState extends State<AudioSelectionScreen> {
+  String? _previewAudio; // track tapped but not confirmed yet
+  String? _confirmedAudio;
+
+  @override
+  void initState() {
+    super.initState();
+    _confirmedAudio = widget.selectedAudio;
+  }
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  void _onTrackTap(String trackName) {
+    setState(() => _previewAudio = trackName);
+    _showConfirmDialog(trackName);
+  }
+
+  void _showConfirmDialog(String trackName) {
+    final isDark = _isDark;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5C518).withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.music_note_rounded,
+                  size: 36,
+                  color: Color(0xFFF5C518),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Add Audio?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add "$trackName" to your poster?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white54 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        setState(() => _previewAudio = null);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        side: BorderSide(
+                          color: isDark
+                              ? Colors.white24
+                              : Colors.grey.shade300,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'No',
+                        style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx); // close dialog
+                        setState(() {
+                          _confirmedAudio = trackName;
+                          _previewAudio = null;
+                        });
+                        // call parent callback then pop back to editor
+                        await widget.onAudioSelected(trackName);
+                        if (mounted) Navigator.pop(context); // back to editor
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF5C518),
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Yes, Add',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = _isDark;
+    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F5);
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final textPrimary = isDark ? Colors.white : Colors.black87;
+    final textSecondary = isDark ? Colors.white54 : Colors.black45;
+
+    return Scaffold(
+      backgroundColor: bg,
+      appBar: AppBar(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Choose Audio',
+          style: TextStyle(
+            color: textPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        actions: [
+          // Remove audio button
+          if (_confirmedAudio != null)
+            TextButton.icon(
+              onPressed: () async {
+                await widget.onAudioRemoved();
+                if (mounted) Navigator.pop(context);
+              },
+              icon: const Icon(Icons.volume_off, color: Colors.red, size: 18),
+              label: const Text(
+                'Remove',
+                style: TextStyle(color: Colors.red, fontSize: 13),
+              ),
+            ),
+        ],
+      ),
+      body: widget.isLoadingAudios
+          ? const Center(child: CircularProgressIndicator())
+          : CustomScrollView(
+              slivers: [
+                // ── Currently selected banner ──
+                if (_confirmedAudio != null)
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5C518).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFF5C518),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.music_note,
+                            color: Color(0xFFF5C518),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Currently selected',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                                Text(
+                                  _confirmedAudio!,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: textPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.check_circle,
+                            color: Color(0xFFF5C518),
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // ── Upload section ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                    child: Text(
+                      'Upload Your Audio',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textSecondary,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GestureDetector(
+                      onTap: widget.onPickUserAudio,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFF5C518),
+                            width: 1.5,
+                            style: BorderStyle.solid,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5C518).withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.upload_file,
+                                color: Color(0xFFF5C518),
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Upload from device',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Max 30 seconds • MP3, M4A, WAV',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ── User uploaded tracks ──
+                if (widget.userAudioTracks.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                      child: Text(
+                        'Your Uploads',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textSecondary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) {
+                        final track = widget.userAudioTracks[i];
+                        final isSelected = _confirmedAudio == track.name;
+                        return _AudioTrackTile(
+                          title: track.name,
+                          subtitle: '${track.durationInSeconds}s • Your upload',
+                          icon: Icons.phone_android,
+                          iconColor: Colors.purple,
+                          isSelected: isSelected,
+                          cardBg: cardBg,
+                          textPrimary: textPrimary,
+                          textSecondary: textSecondary,
+                          onTap: () => _onTrackTap(track.name),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                            onPressed: () =>
+                                widget.onDeleteUserAudio(track),
+                          ),
+                        );
+                      },
+                      childCount: widget.userAudioTracks.length,
+                    ),
+                  ),
+                ],
+
+                // ── Admin/library tracks ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Music Library',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: textSecondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5C518).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${widget.adminAudioTracks.length}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFFF5C518),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                widget.audioLoadError != null
+                    ? SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            children: [
+                              Icon(Icons.wifi_off, size: 48, color: textSecondary),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Could not load music library',
+                                style: TextStyle(color: textSecondary),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: widget.onRetryFetch,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF5C518),
+                                  foregroundColor: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : widget.adminAudioTracks.isEmpty
+                        ? SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Center(
+                                child: Text(
+                                  'No tracks available',
+                                  style: TextStyle(color: textSecondary),
+                                ),
+                              ),
+                            ),
+                          )
+                        : SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (_, i) {
+                                final track = widget.adminAudioTracks[i];
+                                final isSelected =
+                                    _confirmedAudio == track.title;
+                                return _AudioTrackTile(
+                                  title: track.title,
+                                  subtitle: track.artist.isNotEmpty
+                                      ? track.artist
+                                      : 'Music Library',
+                                  icon: Icons.music_note,
+                                  iconColor: Colors.blueAccent,
+                                  isSelected: isSelected,
+                                  cardBg: cardBg,
+                                  textPrimary: textPrimary,
+                                  textSecondary: textSecondary,
+                                  onTap: () => _onTrackTap(track.title),
+                                );
+                              },
+                              childCount: widget.adminAudioTracks.length,
+                            ),
+                          ),
+
+                // Bottom padding
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
+            ),
+    );
+  }
+}
+
+// ─── Reusable audio tile ───────────────────────
+
+class _AudioTrackTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final bool isSelected;
+  final Color cardBg;
+  final Color textPrimary;
+  final Color textSecondary;
+  final VoidCallback onTap;
+  final Widget? trailing;
+
+  const _AudioTrackTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.iconColor,
+    required this.isSelected,
+    required this.cardBg,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.onTap,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFF5C518).withOpacity(0.12)
+              : cardBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFF5C518)
+                : Colors.transparent,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
+                      color: textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 11, color: textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (trailing != null) trailing!,
+            if (isSelected && trailing == null)
+              const Icon(
+                Icons.check_circle,
+                color: Color(0xFFF5C518),
+                size: 22,
+              ),
+            if (!isSelected && trailing == null)
+              Icon(
+                Icons.play_circle_outline,
+                color: textSecondary,
+                size: 22,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

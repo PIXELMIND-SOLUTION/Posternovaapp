@@ -174,32 +174,73 @@ class _SplashScreenState extends State<SplashScreen>
 
   /// Called once on init. Waits for the splash animations to feel complete,
   /// then checks login state. If logged in, navigates away immediately.
+  // Future<void> _autoCheckLogin() async {
+  //   // Give animations time to play (matches the dot-timer + button reveal)
+  //   await Future.delayed(const Duration(milliseconds: 1600));
+  //   if (!mounted) return;
+
+  //   try {
+  //     final isLoggedIn = await AuthPreferences.isLoggedIn();
+  //     final userData = await AuthPreferences.getUserData();
+
+  //     if (!mounted) return;
+
+  //     if (isLoggedIn && userData != null) {
+  //       // User is already authenticated → skip splash entirely
+  //       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  //       await authProvider.initialize();
+  //       if (!mounted) return;
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+  //       );
+  //     }
+  //     // else: not logged in → stay on screen, wait for button tap
+  //   } catch (_) {
+  //     // On any error just stay on the splash screen
+  //   }
+  // }
+
+
+
+
+////// This is the new code for auto navigate without that button///
+
   Future<void> _autoCheckLogin() async {
-    // Give animations time to play (matches the dot-timer + button reveal)
-    await Future.delayed(const Duration(milliseconds: 1600));
+  await Future.delayed(const Duration(milliseconds: 2000)); // splash display time
+  if (!mounted) return;
+
+  try {
+    final isLoggedIn = await AuthPreferences.isLoggedIn();
+    final userData = await AuthPreferences.getUserData();
+
     if (!mounted) return;
 
-    try {
-      final isLoggedIn = await AuthPreferences.isLoggedIn();
-      final userData = await AuthPreferences.getUserData();
-
+    if (isLoggedIn && userData != null) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.initialize();
       if (!mounted) return;
-
-      if (isLoggedIn && userData != null) {
-        // User is already authenticated → skip splash entirely
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        await authProvider.initialize();
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => MainNavigationScreen()),
-        );
-      }
-      // else: not logged in → stay on screen, wait for button tap
-    } catch (_) {
-      // On any error just stay on the splash screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => MainNavigationScreen()),
+      );
+    } else {
+      // ← Auto-navigate to AuthScreen instead of waiting for button tap
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+    }
+  } catch (_) {
+    // On error, still go to AuthScreen
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
     }
   }
+}
 
   /// Called when the user taps "Agree to terms & Continue".
   /// Shows the Truecaller-style verification bottom sheet.
@@ -494,52 +535,52 @@ class _SplashScreenState extends State<SplashScreen>
                     // const SizedBox(height: 28),
 
                     // "Agree to terms & Continue" button
-                    ScaleTransition(
-                      scale: _buttonScale,
-                      child: FadeTransition(
-                        opacity: _buttonFade,
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              gradient: const LinearGradient(
-                                colors: [_tealDark, _tealLight],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _tealDark.withOpacity(0.4),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _showVerificationBottomSheet,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: const Text(
-                                'Agree to terms & Continue',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: 0.4,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // ScaleTransition(
+                    //   scale: _buttonScale,
+                    //   child: FadeTransition(
+                    //     opacity: _buttonFade,
+                    //     child: SizedBox(
+                    //       width: double.infinity,
+                    //       height: 56,
+                    //       child: DecoratedBox(
+                    //         decoration: BoxDecoration(
+                    //           borderRadius: BorderRadius.circular(16),
+                    //           gradient: const LinearGradient(
+                    //             colors: [_tealDark, _tealLight],
+                    //             begin: Alignment.centerLeft,
+                    //             end: Alignment.centerRight,
+                    //           ),
+                    //           boxShadow: [
+                    //             BoxShadow(
+                    //               color: _tealDark.withOpacity(0.4),
+                    //               blurRadius: 18,
+                    //               offset: const Offset(0, 6),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //         child: ElevatedButton(
+                    //           onPressed: _showVerificationBottomSheet,
+                    //           style: ElevatedButton.styleFrom(
+                    //             backgroundColor: Colors.transparent,
+                    //             shadowColor: Colors.transparent,
+                    //             shape: RoundedRectangleBorder(
+                    //               borderRadius: BorderRadius.circular(16),
+                    //             ),
+                    //           ),
+                    //           child: const Text(
+                    //             'Agree to terms & Continue',
+                    //             style: TextStyle(
+                    //               fontSize: 16,
+                    //               fontWeight: FontWeight.w700,
+                    //               color: Colors.white,
+                    //               letterSpacing: 0.4,
+                    //             ),
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
 
                     const SizedBox(height: 18),
 

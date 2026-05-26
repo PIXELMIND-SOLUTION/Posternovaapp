@@ -730,9 +730,11 @@
 //   }
 // }
 
-
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:posternova/providers/chat/chat_provider.dart';
+import 'package:posternova/providers/plans/my_plan_provider.dart';
+import 'package:posternova/views/AI/chat_ai.dart';
 import 'package:posternova/views/NavBar/navbar_screen.dart';
 import 'package:posternova/views/backgroundremover/background_remover.dart';
 import 'package:posternova/views/business/business_card_screen.dart';
@@ -743,6 +745,9 @@ import 'package:posternova/views/logo/logo_category.dart';
 import 'package:posternova/views/onlinepunchang/online_punchang_screen.dart';
 import 'package:posternova/views/textremover/textremover.dart';
 import 'package:posternova/views/whatsppstickers/stickers_screen.dart';
+import 'package:posternova/widgets/common_modal.dart';
+import 'package:posternova/widgets/premium_widget.dart';
+import 'package:provider/provider.dart';
 
 class CategoryItem {
   final String title;
@@ -804,30 +809,39 @@ class _SpecialCategoryState extends State<SpecialCategory>
       gradient: [const Color(0xFF8B5CF6), const Color(0xFFEC4899)],
       destination: const CreatePost(),
     ),
-    // CategoryItem(
-    //   title: 'Logo Maker',
-    //   subtitle: 'Create your brand logo',
-    //   icon: Icons.workspace_premium_rounded,
-    //   emoji: '🏷️',
-    //   gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
-    //   destination: const LogoCategory(),
-    // ),
-    // CategoryItem(
-    //   title: 'BG Remover',
-    //   subtitle: 'AI-powered editing',
-    //   icon: Icons.auto_fix_high,
-    //   emoji: '✨',
-    //   gradient: [const Color(0xFF7C3AED), const Color(0xFF4F46E5)],
-    //   destination: const BackgroundRemoverScreen(),
-    // ),
-    // CategoryItem(
-    //   title: 'Text Remover',
-    //   subtitle: 'Remove text from images',
-    //   icon: Icons.text_format,
-    //   emoji: '🔤',
-    //   gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
-    //   destination: const WebViewScreen(),
-    // ),
+    CategoryItem(
+      title: 'Logo Maker',
+      subtitle: 'Create your brand logo',
+      icon: Icons.workspace_premium_rounded,
+      emoji: '🏷️',
+      gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
+      destination: const LogoCategory(),
+    ),
+    CategoryItem(
+      title: 'BG Remover',
+      subtitle: 'AI-powered editing',
+      icon: Icons.auto_fix_high,
+      emoji: '✨',
+      gradient: [const Color(0xFF7C3AED), const Color(0xFF4F46E5)],
+      destination: const BackgroundRemoverScreen(),
+    ),
+    CategoryItem(
+      title: 'Text Remover',
+      subtitle: 'Remove text from images',
+      icon: Icons.text_format,
+      emoji: '🔤',
+      gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
+      destination: const WebViewScreen(),
+    ),
+
+    CategoryItem(
+      title: 'Chicha AI',
+      subtitle: 'AI-powered visual magic',
+      icon: Icons.auto_awesome,
+      emoji: '✨',
+      gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
+      destination: const AiScreen(),
+    ),
     // CategoryItem(
     //   title: 'Stickers',
     //   subtitle: 'Fun stickers & graphics',
@@ -884,176 +898,167 @@ class _SpecialCategoryState extends State<SpecialCategory>
     super.dispose();
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-   Future<bool> _onWillPop() async {
+  Future<bool> _onWillPop() async {
     return await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF1A1A24),
-                  const Color(0xFF0A0A0F),
-                ],
-              ),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 30,
-                  spreadRadius: 5,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFEC4899).withOpacity(0.3),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [const Color(0xFF1A1A24), const Color(0xFF0A0A0F)],
                   ),
-                  child: const Icon(
-                    Icons.exit_to_app_rounded,
-                    color: Colors.white,
-                    size: 32,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.1),
+                    width: 1.5,
                   ),
-                ),
-                const SizedBox(height: 20),
-                
-                // Title
-                const Text(
-                  'Exit App?',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
-                // Message
-                Text(
-                  'Are you sure you want to exit the app?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                
-                // Buttons
-                Row(
-                  children: [
-                    // Cancel button
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop(false);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Text(
-                            'Cancel',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    
-                    // Exit button
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop(true);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFEC4899).withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Text(
-                            'Exit',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-        );
-      },
-    ) ?? false;
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Icon
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFEC4899).withOpacity(0.3),
+                            blurRadius: 12,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.exit_to_app_rounded,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Title
+                    const Text(
+                      'Exit App?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Message
+                    Text(
+                      'Are you sure you want to exit the app?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Buttons
+                    Row(
+                      children: [
+                        // Cancel button
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pop(false);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Text(
+                                'Cancel',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+
+                        // Exit button
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pop(true);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF7C3AED),
+                                    Color(0xFFEC4899),
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFFEC4899,
+                                    ).withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: const Text(
+                                'Exit',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ) ??
+        false;
   }
 
   @override
@@ -1077,47 +1082,47 @@ class _SpecialCategoryState extends State<SpecialCategory>
             //     background: _buildHeader(),
             //   ),
             // ),
-      
-      
             SliverAppBar(
-        expandedHeight: 240,
-        pinned: true,
-        stretch: true,
-        backgroundColor: const Color(0xFF0A0A0F),
-        elevation: 0,
-        leading: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: GestureDetector(
-      onTap: () {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const MainNavigationScreen()), // Replace with your Navbar widget
-          (route) => false,
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.08),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.15),
-            width: 1.2,
-          ),
-        ),
-        child: const Icon(
-          Icons.arrow_back_ios_new_rounded,
-          color: Colors.white,
-          size: 18,
-        ),
-      ),
-        ),
-      ),
-        flexibleSpace: FlexibleSpaceBar(
-      stretchModes: const [StretchMode.zoomBackground],
-      background: _buildHeader(),
-        ),
-      ),
-      
+              expandedHeight: 240,
+              pinned: true,
+              stretch: true,
+              backgroundColor: const Color(0xFF0A0A0F),
+              elevation: 0,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MainNavigationScreen(),
+                      ), // Replace with your Navbar widget
+                      (route) => false,
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.08),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.15),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+              flexibleSpace: FlexibleSpaceBar(
+                stretchModes: const [StretchMode.zoomBackground],
+                background: _buildHeader(),
+              ),
+            ),
+
             // ── Section Label ─────────────────────────────────────────────
             SliverToBoxAdapter(
               child: FadeTransition(
@@ -1153,7 +1158,7 @@ class _SpecialCategoryState extends State<SpecialCategory>
                 ),
               ),
             ),
-      
+
             // ── Grid ─────────────────────────────────────────────────────
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
@@ -1174,7 +1179,7 @@ class _SpecialCategoryState extends State<SpecialCategory>
                 ),
               ),
             ),
-      
+
             // Extra bottom padding to ensure last items are visible
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
           ],
@@ -1462,33 +1467,83 @@ class _AnimatedCardState extends State<_AnimatedCard>
         onTapDown: _onTapDown,
         onTapUp: _onTapUp,
         onTapCancel: _onTapCancel,
+
         onTap: () {
-          Navigator.push(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (_, animation, __) => item.destination,
-              transitionsBuilder: (_, animation, __, child) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position:
-                        Tween<Offset>(
-                          begin: const Offset(0, 0.06),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeOutCubic,
-                          ),
-                        ),
-                    child: child,
-                  ),
-                );
-              },
-              transitionDuration: const Duration(milliseconds: 380),
+  // Check plan before navigating
+  final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
+  
+  if (myPlanProvider.isPurchase == true) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, animation, __) => item.destination,
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.06),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                ),
+              ),
+              child: child,
             ),
           );
         },
+        transitionDuration: const Duration(milliseconds: 380),
+      ),
+    );
+  } else {
+    CommonModal.showWarning(
+      context: context,
+      title: "Premium Feature",
+      message:
+          "This feature is available for premium users only. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+      primaryButtonText: "Upgrade Now",
+      secondaryButtonText: "Cancel",
+      onPrimaryPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SubscriptionPlansPage(),
+          ),
+        );
+      },
+      onSecondaryPressed: () => Navigator.of(context).pop(),
+    );
+  }
+},
+        // onTap: () {
+        //   Navigator.push(
+        //     context,
+        //     PageRouteBuilder(
+        //       pageBuilder: (_, animation, __) => item.destination,
+        //       transitionsBuilder: (_, animation, __, child) {
+        //         return FadeTransition(
+        //           opacity: animation,
+        //           child: SlideTransition(
+        //             position:
+        //                 Tween<Offset>(
+        //                   begin: const Offset(0, 0.06),
+        //                   end: Offset.zero,
+        //                 ).animate(
+        //                   CurvedAnimation(
+        //                     parent: animation,
+        //                     curve: Curves.easeOutCubic,
+        //                   ),
+        //                 ),
+        //             child: child,
+        //           ),
+        //         );
+        //       },
+        //       transitionDuration: const Duration(milliseconds: 380),
+        //     ),
+        //   );
+        // },
         child: _CardContent(item: item, isPressed: _isPressed),
       ),
     );

@@ -118,17 +118,13 @@ class _HomeScreenState extends State<HomeScreen>
   List<dynamic> canvaposter = [];
   List<dynamic> bannerList = [];
 
-  // ── Celebration ────────────────────────────────────────────────────────────
   bool _celebrationVideoReady = false;
 
-  // ── App defaults (used when no celebration theme) ──────────────────────────
   static const Color _defaultPrimaryText = Color(0xFF1A1A1A);
   static const Color _defaultSecondaryText = Colors.grey;
   static const Color _defaultSectionBg = Colors.white;
   static const Color _defaultAccent = Color(0xFFFFC107);
 
-  // ── Resolved theme getters ─────────────────────────────────────────────────
-  // Update the getters to use provider:
   Color get _primaryText =>
       Provider.of<CelebrationProvider>(context, listen: false).primaryTextColor;
   Color get _secondaryText => Provider.of<CelebrationProvider>(
@@ -223,11 +219,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // LIFECYCLE
-  // ══════════════════════════════════════════════════════════════════════════
-
-  // Add these methods
   Future<bool> _shouldShowReferModal() async {
     final prefs = await SharedPreferences.getInstance();
     final lastShownTimestamp = prefs.getInt(_KEY_REFER_MODAL_SHOWN);
@@ -297,11 +288,14 @@ class _HomeScreenState extends State<HomeScreen>
     super.initState();
     _bannerPageController = PageController();
     _listenConnectivity();
-    _checkNetwork().then((_) {
-      if (_hasNetwork) {
-        Future.microtask(() => _initializeAllData());
-      }
-    });
+
+    _checkNetwork();
+    _initializeAllData();
+    // _checkNetwork().then((_) {
+    //   if (_hasNetwork) {
+    //     Future.microtask(() => _initializeAllData());
+    //   }
+    // });
   }
 
   @override
@@ -607,8 +601,135 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── STEP 2: Replace _initializeAllData ──────────────────────
 
+  //   Future<void> _initializeAllData() async {
+  //     if (!mounted || !_hasNetwork) return;
+
+  // final festivalProvider = Provider.of<FestivalPostersProvider>(context, listen: false);
+  //     setState(() {
+  //       _isBannerLoading = true;
+  //       _isStoriesLoading = true;
+
+  //       _isFestivalLoading = !festivalProvider.hasData;
+  //       // _isFestivalLoading = true;
+  //       _isWeeklyLoading = true;
+  //       _isReelsLoading = true;
+  //     });
+
+  //     // ── Phase 1: Things that have NO dependencies ──────────────
+  //     // Run all of these truly in parallel - none depend on each other
+  //     final results = await Future.wait([
+  //       _resolveUserData(), // single getUserData() call
+  //       Provider.of<CelebrationProvider>(
+  //         context,
+  //         listen: false,
+  //       ).fetchCelebrationConfig(),
+  //       Provider.of<AdminAmountProvider>(
+  //         context,
+  //         listen: false,
+  //       ).fetchAdminAmounts().catchError((_) {}),
+  //       Provider.of<BannerProvider>(context, listen: false)
+  //           .fetchBanners() // ← was MISSING, banner fix
+  //           .catchError((_) => false),
+
+  // ///////////////////// Newly Added to show them////
+  //           _fetchFestivalPosters(
+  //     Provider.of<DateTimeProvider>(context, listen: false).selectedDate,
+  //   ).catchError((_) {}),
+  //     ]);
+
+  //     if (!mounted) return;
+
+  //     // Apply user data returned from Phase 1
+  //     final userData = results[0] as _UserData?;
+  //     if (userData != null) {
+  //       setState(() {
+  //         userId = userData.id;
+  //         username = userData.name;
+  //         userImage = userData.image;
+  //         currentUserId = userData.id;
+  //       });
+  //       // Fire profile fetch in background - don't await
+  //       _fetchUserProfileBackground(userData.id);
+  //       fetchCustomers();
+
+  //       // Set up story provider user context (no await)
+  //       Provider.of<StoryProvider>(context, listen: false).setCurrentUser(
+  //         userId: userData.id ?? '',
+  //         userImage: userData.image,
+  //         username: userData.name ?? '',
+  //       );
+
+  //       // Set up language provider
+  //       final lp = Provider.of<LanguageProvider>(context, listen: false);
+  //       lp.setUserId(userData.id ?? '');
+  //     }
+
+  //     // ── Phase 2: Things that NEED userId ──────────────────────
+  //     // All fire at the same time now that userId is guaranteed
+  //     final selectedDate = Provider.of<DateTimeProvider>(
+  //       context,
+  //       listen: false,
+  //     ).selectedDate;
+
+  //     final uid = userId; // capture for closures
+
+  //     await Future.wait([
+  //       _fetchFestivalPosters(selectedDate).catchError((e) {
+  //         debugPrint('festivalPosters: $e');
+  //       }),
+  //       _fetchWeeklyPostersIfNeeded(uid).catchError((e) {
+  //         debugPrint('weeklyPosters: $e');
+  //       }),
+  //       _fetchTrendingPostersIfNeeded(uid).catchError((e) {
+  //         debugPrint('trendingPosters: $e');
+  //       }),
+  //       _fetchReelsIfNeeded(uid).catchError((e) {
+  //         debugPrint('reels: $e');
+  //       }),
+  //       Provider.of<PosterProvider>(
+  //         context,
+  //         listen: false,
+  //       ).fetchPosters().catchError((e) {
+  //         debugPrint('posters: $e');
+  //       }),
+  //       Provider.of<CanvaPosterProvider>(
+  //         context,
+  //         listen: false,
+  //       ).fetchPosters().catchError((e) {
+  //         debugPrint('canvaPosters: $e');
+  //       }),
+  //       _loadSectionPreferences(),
+  //       if (uid != null)
+  //         _fetchWishesFor(uid).catchError((e) {
+  //           debugPrint('wishes: $e');
+  //         }),
+  //     ]);
+
+  //     if (!mounted) return;
+
+  //     setState(() {
+  //       _isBannerLoading = false;
+  //       _isStoriesLoading = false;
+  //       _isFestivalLoading = false;
+  //       _isWeeklyLoading = false;
+  //       _isReelsLoading = false;
+  //       _isInitialLoad = false;
+  //     });
+
+  //     // _startBannerAutoScroll();
+
+  //     // ── Phase 3: Non-blocking background tasks ─────────────────
+  //     // These run AFTER the screen is visible and painted
+  //     if (uid != null) {
+  //       unawaited(_fetchMyPlanAndModals(uid));
+  //       unawaited(_fetchStoriesBackground());
+  //     }
+  //   }
+
+  /////Newly added for loading the data//////////
+
   Future<void> _initializeAllData() async {
-    if (!mounted || !_hasNetwork) return;
+    if (!mounted) return;
 
     setState(() {
       _isBannerLoading = true;
@@ -618,26 +739,25 @@ class _HomeScreenState extends State<HomeScreen>
       _isReelsLoading = true;
     });
 
-    // ── Phase 1: Things that have NO dependencies ──────────────
-    // Run all of these truly in parallel - none depend on each other
+    // Phase 1: ONLY things with zero dependencies — run fast
     final results = await Future.wait([
-      _resolveUserData(), // single getUserData() call
+      _resolveUserData(),
       Provider.of<CelebrationProvider>(
         context,
         listen: false,
-      ).fetchCelebrationConfig(),
+      ).fetchCelebrationConfig().catchError((_) => null),
+      Provider.of<BannerProvider>(
+        context,
+        listen: false,
+      ).fetchBanners().catchError((_) => false),
       Provider.of<AdminAmountProvider>(
         context,
         listen: false,
       ).fetchAdminAmounts().catchError((_) {}),
-      Provider.of<BannerProvider>(context, listen: false)
-          .fetchBanners() // ← was MISSING, banner fix
-          .catchError((_) => false),
     ]);
 
     if (!mounted) return;
 
-    // Apply user data returned from Phase 1
     final userData = results[0] as _UserData?;
     if (userData != null) {
       setState(() {
@@ -646,30 +766,28 @@ class _HomeScreenState extends State<HomeScreen>
         userImage = userData.image;
         currentUserId = userData.id;
       });
-      // Fire profile fetch in background - don't await
-      _fetchUserProfileBackground(userData.id);
-      fetchCustomers();
 
-      // Set up story provider user context (no await)
+      // Fire-and-forget — don't block Phase 2
+      unawaited(_fetchUserProfileBackground(userData.id));
+      unawaited(fetchCustomers());
+
       Provider.of<StoryProvider>(context, listen: false).setCurrentUser(
         userId: userData.id ?? '',
         userImage: userData.image,
         username: userData.name ?? '',
       );
 
-      // Set up language provider
-      final lp = Provider.of<LanguageProvider>(context, listen: false);
-      lp.setUserId(userData.id ?? '');
+      Provider.of<LanguageProvider>(
+        context,
+        listen: false,
+      ).setUserId(userData.id ?? '');
     }
 
-    // ── Phase 2: Things that NEED userId ──────────────────────
-    // All fire at the same time now that userId is guaranteed
+    final uid = userId;
     final selectedDate = Provider.of<DateTimeProvider>(
       context,
       listen: false,
     ).selectedDate;
-
-    final uid = userId; // capture for closures
 
     await Future.wait([
       _fetchFestivalPosters(selectedDate).catchError((e) {
@@ -680,9 +798,6 @@ class _HomeScreenState extends State<HomeScreen>
       }),
       _fetchTrendingPostersIfNeeded(uid).catchError((e) {
         debugPrint('trendingPosters: $e');
-      }),
-      _fetchReelsIfNeeded(uid).catchError((e) {
-        debugPrint('reels: $e');
       }),
       Provider.of<PosterProvider>(
         context,
@@ -706,28 +821,23 @@ class _HomeScreenState extends State<HomeScreen>
     if (!mounted) return;
 
     setState(() {
-      _isBannerLoading = false;
-      _isStoriesLoading = false;
+      // _isBannerLoading = false;
       _isFestivalLoading = false;
       _isWeeklyLoading = false;
       _isReelsLoading = false;
       _isInitialLoad = false;
     });
 
-    _startBannerAutoScroll();
+    // _startBannerAutoScroll();
 
-    // ── Phase 3: Non-blocking background tasks ─────────────────
-    // These run AFTER the screen is visible and painted
+    // Phase 3: Non-blocking — runs after screen is painted
     if (uid != null) {
       unawaited(_fetchMyPlanAndModals(uid));
       unawaited(_fetchStoriesBackground());
+      unawaited(_fetchReelsIfNeeded(uid));
     }
   }
 
-  // ── STEP 3: New helper — resolves user data in one read ──────
-
-  /// Single AuthPreferences read that returns everything needed.
-  /// Returns null if not logged in.
   Future<_UserData?> _resolveUserData() async {
     try {
       final userData = await AuthPreferences.getUserData();
@@ -1169,6 +1279,43 @@ class _HomeScreenState extends State<HomeScreen>
   String _formatDate(DateTime d) =>
       "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
 
+  // Future<void> _fetchFestivalPosters(
+  //   DateTime date, {
+  //   bool forceRefresh = false,
+  // }) async {
+  //   final festivalProvider = Provider.of<FestivalPostersProvider>(
+  //     context,
+  //     listen: false,
+  //   );
+
+  //   print('🎯 _fetchFestivalPosters called for date: ${_formatDate(date)}');
+
+  //   // Check if we have cached data for this date
+  //   if (!forceRefresh && festivalProvider.hasCachedDataForDate(date)) {
+  //     print('Using cached festival posters for date: ${_formatDate(date)}');
+  //     // Even with cache, make sure we update the UI
+  //     if (mounted) {
+  //       setState(() {
+  //         _isFestivalLoading = false;
+  //       });
+  //     }
+  //     return;
+  //   }
+
+  //   print(
+  //     '🌐 Fetching festival posters from API for date: ${_formatDate(date)}',
+  //   );
+  //   await festivalProvider.fetchFestivalPosters(
+  //     date,
+  //     forceRefresh: forceRefresh,
+  //   );
+  //   print(
+  //     '✅ Festival posters fetched, count: ${festivalProvider.festivalPosters.length}',
+  //   );
+  // }
+
+  /////////////// Newly added festival posterfunction previpous one is the mainly using////////////
+
   Future<void> _fetchFestivalPosters(
     DateTime date, {
     bool forceRefresh = false,
@@ -1178,30 +1325,20 @@ class _HomeScreenState extends State<HomeScreen>
       listen: false,
     );
 
-    print('🎯 _fetchFestivalPosters called for date: ${_formatDate(date)}');
-
-    // Check if we have cached data for this date
     if (!forceRefresh && festivalProvider.hasCachedDataForDate(date)) {
-      print('Using cached festival posters for date: ${_formatDate(date)}');
-      // Even with cache, make sure we update the UI
-      if (mounted) {
-        setState(() {
-          _isFestivalLoading = false;
-        });
+      // FIX: Only call setState if still loading — avoids unnecessary rebuild
+      if (_isFestivalLoading && mounted) {
+        setState(() => _isFestivalLoading = false);
       }
       return;
     }
 
-    print(
-      '🌐 Fetching festival posters from API for date: ${_formatDate(date)}',
-    );
     await festivalProvider.fetchFestivalPosters(
       date,
       forceRefresh: forceRefresh,
     );
-    print(
-      '✅ Festival posters fetched, count: ${festivalProvider.festivalPosters.length}',
-    );
+
+    if (mounted) setState(() => _isFestivalLoading = false);
   }
 
   Future<void> _fetchnewposters() async {
@@ -2405,105 +2542,103 @@ class _HomeScreenState extends State<HomeScreen>
   //   );
   // }
 
-
-
   Widget _buildSmallPosterCard(FestivalPoster poster, int index) {
-  return Consumer<MyPlanProvider>(
-    builder: (context, myPlanProvider, _) {
-      return GestureDetector(
-        onTap: () {
-          if (!_requireNetwork()) return;
-          if (myPlanProvider.isPurchase == true) {
-            final bgImageUrl =
-                poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => PosterEditorScreen(
-                  posterAsset: bgImageUrl,
-                  itemid: poster.id,
-                ),
-              ),
-            );
-          } else {
-            CommonModal.showWarning(
-              context: context,
-              title: "Premium Category",
-              message:
-                  "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
-              primaryButtonText: "Upgrade Now",
-              secondaryButtonText: "Cancel",
-              onPrimaryPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SubscriptionPlansPage(),
+    return Consumer<MyPlanProvider>(
+      builder: (context, myPlanProvider, _) {
+        return GestureDetector(
+          onTap: () {
+            if (!_requireNetwork()) return;
+            if (myPlanProvider.isPurchase == true) {
+              final bgImageUrl =
+                  poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PosterEditorScreen(
+                    posterAsset: bgImageUrl,
+                    itemid: poster.id,
                   ),
-                );
-              },
-              onSecondaryPressed: () => Navigator.of(context).pop(),
-            );
-          }
-        },
-        child: Container(
-          width: 110,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            color: _sectionBg,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
+                ),
+              );
+            } else {
+              CommonModal.showWarning(
+                context: context,
+                title: "Premium Category",
+                message:
+                    "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+                primaryButtonText: "Upgrade Now",
+                secondaryButtonText: "Cancel",
+                onPrimaryPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SubscriptionPlansPage(),
+                    ),
+                  );
+                },
+                onSecondaryPressed: () => Navigator.of(context).pop(),
+              );
+            }
+          },
+          child: Container(
+            width: 110,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              color: _sectionBg,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(10),
+                    ),
+                    child: Image.network(
+                      poster.imageUrl,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          Container(color: const Color(0xFFF3F4F6)),
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const SkeletonBox(
+                          width: 110,
+                          height: 100,
+                          borderRadius: 0,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(7),
+                  child: Text(
+                    poster.categoryName,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _primaryText,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(10),
-                  ),
-                  child: Image.network(
-                    poster.imageUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: const Color(0xFFF3F4F6)),
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return const SkeletonBox(
-                        width: 110,
-                        height: 100,
-                        borderRadius: 0,
-                      );
-                    },
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(7),
-                child: Text(
-                  poster.categoryName,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: _primaryText,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
   // ══════════════════════════════════════════════════════════════════════════
   // WEEKLY TEMPLATES
   // ══════════════════════════════════════════════════════════════════════════
@@ -2741,107 +2876,105 @@ class _HomeScreenState extends State<HomeScreen>
   //   );
   // }
 
-
-
   Widget _buildWeeklyPosterCard(WeeklyTemplate poster, int index) {
-  return Consumer<MyPlanProvider>(
-    builder: (context, myplanprovider, _) {
-      return GestureDetector(
-        onTap: () {
-          if (!_requireNetwork()) return;
-          if (myplanprovider.isPurchase == true) {
-            final bgImageUrl =
-                poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => PosterEditorScreen(
-                  posterAsset: bgImageUrl,
-                  itemid: poster.id,
-                ),
-              ),
-            );
-          } else {
-            CommonModal.showWarning(
-              context: context,
-              title: "Premium Category",
-              message:
-                  "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
-              primaryButtonText: "Upgrade Now",
-              secondaryButtonText: "Cancel",
-              onPrimaryPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SubscriptionPlansPage(),
+    return Consumer<MyPlanProvider>(
+      builder: (context, myplanprovider, _) {
+        return GestureDetector(
+          onTap: () {
+            if (!_requireNetwork()) return;
+            if (myplanprovider.isPurchase == true) {
+              final bgImageUrl =
+                  poster.designData?['bgImage']?['url'] ?? poster.imageUrl;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PosterEditorScreen(
+                    posterAsset: bgImageUrl,
+                    itemid: poster.id,
                   ),
-                );
-              },
-              onSecondaryPressed: () => Navigator.of(context).pop(),
-            );
-          }
-        },
-        child: Container(
-          width: 110,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            color: _sectionBg,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
+                ),
+              );
+            } else {
+              CommonModal.showWarning(
+                context: context,
+                title: "Premium Category",
+                message:
+                    "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+                primaryButtonText: "Upgrade Now",
+                secondaryButtonText: "Cancel",
+                onPrimaryPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SubscriptionPlansPage(),
+                    ),
+                  );
+                },
+                onSecondaryPressed: () => Navigator.of(context).pop(),
+              );
+            }
+          },
+          child: Container(
+            width: 110,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              color: _sectionBg,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(10),
+                    ),
+                    child: Image.network(
+                      poster.imageUrl,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          Container(color: const Color(0xFFF3F4F6)),
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const SkeletonBox(
+                          width: 110,
+                          height: 100,
+                          borderRadius: 0,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Text(
+                    poster.categoryName.isNotEmpty
+                        ? poster.categoryName
+                        : (poster.name ?? 'Poster'),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _primaryText,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(10),
-                  ),
-                  child: Image.network(
-                    poster.imageUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: const Color(0xFFF3F4F6)),
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return const SkeletonBox(
-                        width: 110,
-                        height: 100,
-                        borderRadius: 0,
-                      );
-                    },
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(6),
-                child: Text(
-                  poster.categoryName.isNotEmpty
-                      ? poster.categoryName
-                      : (poster.name ?? 'Poster'),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: _primaryText,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // HOT TOPICS / REELS
@@ -2914,79 +3047,76 @@ class _HomeScreenState extends State<HomeScreen>
   //   );
   // }
 
-
-
-
-
   Widget _buildHotTopicsSection() {
-  return Consumer<TrendingPosterProvider>(
-    builder: (context, trendingProvider, _) {
-      // Don't show the section if:
-      // 1. Still loading and no data yet, OR
-      // 2. Posters list is empty (no trending posters available)
-      if ((trendingProvider.isLoading && !trendingProvider.hasData) ||
-          trendingProvider.posters.isEmpty) {
-        return const SizedBox.shrink(); // Hide the section completely
-      }
+    return Consumer<TrendingPosterProvider>(
+      builder: (context, trendingProvider, _) {
+        // Don't show the section if:
+        // 1. Still loading and no data yet, OR
+        // 2. Posters list is empty (no trending posters available)
+        if ((trendingProvider.isLoading && !trendingProvider.hasData) ||
+            trendingProvider.posters.isEmpty) {
+          return const SizedBox.shrink(); // Hide the section completely
+        }
 
-      final categoryName = trendingProvider.posters.isNotEmpty
-          ? trendingProvider.posters.first.categoryName
-          : 'Trending';
+        final categoryName = trendingProvider.posters.isNotEmpty
+            ? trendingProvider.posters.first.categoryName
+            : 'Trending';
 
-      return Container(
-        padding: const EdgeInsets.only(top: 12, bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 2,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Trending Posters',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      if (!_requireNetwork()) return;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => DetailsScreen(category: categoryName),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'View All',
+        return Container(
+          padding: const EdgeInsets.only(top: 12, bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 2,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Trending Posters',
                       style: TextStyle(
-                        color: Color(0xFFFFC107),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
-                  ),
-                ],
+                    GestureDetector(
+                      onTap: () {
+                        if (!_requireNetwork()) return;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                DetailsScreen(category: categoryName),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'View All',
+                        style: TextStyle(
+                          color: Color(0xFFFFC107),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 180,
-              child: _buildTrendingPostersContent(trendingProvider),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 180,
+                child: _buildTrendingPostersContent(trendingProvider),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildTrendingPostersContent(TrendingPosterProvider provider) {
     if (provider.isLoading) {
@@ -3117,126 +3247,124 @@ class _HomeScreenState extends State<HomeScreen>
   //   );
   // }
 
-
-
   Widget _buildTrendingPosterCard(TrendingPoster poster) {
-  return Consumer<MyPlanProvider>(
-    builder: (context, myPlanProvider, _) {
-      return GestureDetector(
-        onTap: () {
-          if (!_requireNetwork()) return;
-          if (myPlanProvider.isPurchase == true) {
-            final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
-                ? poster.designData.bgImage.url
-                : poster.posterImage.url;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => PosterEditorScreen(
-                  posterAsset: bgImageUrl,
-                  itemid: poster.id,
+    return Consumer<MyPlanProvider>(
+      builder: (context, myPlanProvider, _) {
+        return GestureDetector(
+          onTap: () {
+            if (!_requireNetwork()) return;
+            if (myPlanProvider.isPurchase == true) {
+              final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
+                  ? poster.designData.bgImage.url
+                  : poster.posterImage.url;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PosterEditorScreen(
+                    posterAsset: bgImageUrl,
+                    itemid: poster.id,
+                  ),
                 ),
-              ),
-            );
-          } else {
-            CommonModal.showWarning(
-              context: context,
-              title: "Premium Category",
-              message:
-                  "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
-              primaryButtonText: "Upgrade Now",
-              secondaryButtonText: "Cancel",
-              onPrimaryPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SubscriptionPlansPage(),
-                  ),
-                );
-              },
-              onSecondaryPressed: () => Navigator.of(context).pop(),
-            );
-          }
-        },
-        child: Container(
-          width: 120,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            color: _sectionBg,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.10),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network(
-                  poster.posterImage.url,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: const Color(0xFFF3F4F6),
-                    child: const Center(
-                      child: Icon(
-                        Icons.image_outlined,
-                        color: Colors.grey,
-                        size: 32,
-                      ),
+              );
+            } else {
+              CommonModal.showWarning(
+                context: context,
+                title: "Premium Category",
+                message:
+                    "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+                primaryButtonText: "Upgrade Now",
+                secondaryButtonText: "Cancel",
+                onPrimaryPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SubscriptionPlansPage(),
                     ),
-                  ),
-                  loadingBuilder: (_, child, progress) {
-                    if (progress == null) return child;
-                    return const SkeletonBox(
-                      width: 120,
-                      height: 180,
-                      borderRadius: 0,
-                    );
-                  },
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.65),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                    child: Text(
-                      poster.title.isNotEmpty
-                          ? poster.title
-                          : poster.categoryName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                  );
+                },
+                onSecondaryPressed: () => Navigator.of(context).pop(),
+              );
+            }
+          },
+          child: Container(
+            width: 120,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              color: _sectionBg,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.10),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    poster.posterImage.url,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: const Center(
+                        child: Icon(
+                          Icons.image_outlined,
+                          color: Colors.grey,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return const SkeletonBox(
+                        width: 120,
+                        height: 180,
+                        borderRadius: 0,
+                      );
+                    },
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.65),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                      child: Text(
+                        poster.title.isNotEmpty
+                            ? poster.title
+                            : poster.categoryName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   // Widget _buildHotTopicsSection() {
   //   return Consumer<HotTopicsProvider>(
@@ -3634,7 +3762,7 @@ class _HomeScreenState extends State<HomeScreen>
   //       return GestureDetector(
   //         onTap: () {
   //           if(myPlanProvider.isPurchase==true){
-              
+
   //           }
   //           if (!_requireNetwork()) return;
   //           // if (myPlanProvider.isPurchase) {
@@ -3724,78 +3852,94 @@ class _HomeScreenState extends State<HomeScreen>
   //   );
   // }
 
-
-
   Widget _buildCategoryPosterCard(CategoryModel poster) {
-  const double w = 110;
-  const double h = 130;
-  return Consumer<MyPlanProvider>(
-    builder: (context, myPlanProvider, _) {
-      return GestureDetector(
-        onTap: () {
-          if (!_requireNetwork()) return;
-          if (myPlanProvider.isPurchase == true) {
-            final bgImageUrl = poster.images[0] ?? '';
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => PosterEditorScreen(
-                  posterAsset: bgImageUrl,
-                  itemid: poster.id,
-                ),
-              ),
-            );
-          } else {
-            CommonModal.showWarning(
-              context: context,
-              title: "Premium Category",
-              message:
-                  "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
-              primaryButtonText: "Upgrade Now",
-              secondaryButtonText: "Cancel",
-              onPrimaryPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SubscriptionPlansPage(),
+    const double w = 110;
+    const double h = 130;
+    return Consumer<MyPlanProvider>(
+      builder: (context, myPlanProvider, _) {
+        return GestureDetector(
+          onTap: () {
+            if (!_requireNetwork()) return;
+            if (myPlanProvider.isPurchase == true) {
+              final bgImageUrl = poster.images[0] ?? '';
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PosterEditorScreen(
+                    posterAsset: bgImageUrl,
+                    itemid: poster.id,
                   ),
-                );
-              },
-              onSecondaryPressed: () => Navigator.of(context).pop(),
-            );
-          }
-        },
-        child: Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-            color: _sectionBg,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: poster.images.isNotEmpty
-                ? Image.network(
-                    poster.images[0],
-                    fit: BoxFit.cover,
-                    width: w,
-                    height: h,
-                    loadingBuilder: (_, child, progress) {
-                      if (progress == null) return child;
-                      return const SkeletonBox(
-                        width: w,
-                        height: h,
-                        borderRadius: 0,
-                      );
-                    },
-                    errorBuilder: (_, __, ___) => Container(
+                ),
+              );
+            } else {
+              CommonModal.showWarning(
+                context: context,
+                title: "Premium Category",
+                message:
+                    "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+                primaryButtonText: "Upgrade Now",
+                secondaryButtonText: "Cancel",
+                onPrimaryPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SubscriptionPlansPage(),
+                    ),
+                  );
+                },
+                onSecondaryPressed: () => Navigator.of(context).pop(),
+              );
+            }
+          },
+          child: Container(
+            width: w,
+            height: h,
+            decoration: BoxDecoration(
+              color: _sectionBg,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: poster.images.isNotEmpty
+                  ? Image.network(
+                      poster.images[0],
+                      fit: BoxFit.cover,
+                      width: w,
+                      height: h,
+                      loadingBuilder: (_, child, progress) {
+                        if (progress == null) return child;
+                        return const SkeletonBox(
+                          width: w,
+                          height: h,
+                          borderRadius: 0,
+                        );
+                      },
+                      errorBuilder: (_, __, ___) => Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF4F46E5).withOpacity(0.1),
+                              const Color(0xFF7C3AED).withOpacity(0.1),
+                            ],
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_outlined,
+                            size: 36,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -3812,30 +3956,12 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     ),
-                  )
-                : Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF4F46E5).withOpacity(0.1),
-                          const Color(0xFF7C3AED).withOpacity(0.1),
-                        ],
-                      ),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.image_outlined,
-                        size: 36,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ),
-                  ),
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   String _capitalizeFirst(String text) {
     if (text.isEmpty) return '';

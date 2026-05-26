@@ -2425,7 +2425,7 @@
 //   // ── PRO Badge ──────────────────────────────────────────────────────────────
 //   Widget _buildProBadge() {
 //     return GestureDetector(
-//       behavior: HitTestBehavior.opaque, 
+//       behavior: HitTestBehavior.opaque,
 //       onTap: () {
 //         Navigator.push(
 //           context,
@@ -2677,8 +2677,6 @@
 //   //   );
 //   // }
 
-
-
 //   @override
 // Widget build(BuildContext context) {
 //   return UpgradeAlert(
@@ -2717,25 +2715,431 @@
 // }
 // }
 
+// import 'dart:convert';
+// import 'dart:math' as math;
+// import 'package:flutter/material.dart';
+// import 'package:http/http.dart' as http;
+// import 'package:posternova/helper/storage_helper.dart';
+// import 'package:posternova/showplans/show_pan_screen.dart';
+// import 'package:posternova/views/AI/chat_ai.dart';
+// import 'package:posternova/views/PosterModule/home.dart';
+// import 'package:posternova/views/category/special_category.dart';
+// import 'package:posternova/views/chat/customer_list.dart';
+// import 'package:posternova/views/customer/customer_screen.dart';
+// import 'package:posternova/views/onlinepunchang/online_punchang_screen.dart';
+// import 'package:posternova/views/reels/reels_screen.dart';
+// import 'package:posternova/widgets/language_widget.dart';
+// import 'package:provider/provider.dart';
+// import 'package:upgrader/upgrader.dart';
 
+// // ─────────────────────────────────────────────
+// //  Nav Item Model
+// // ─────────────────────────────────────────────
+// class _NavItem {
+//   final IconData icon;
+//   final IconData activeIcon;
+//   final String label;
+//   final int index;
 
+//   const _NavItem({
+//     required this.icon,
+//     required this.activeIcon,
+//     required this.label,
+//     required this.index,
+//   });
+// }
 
+// // ─────────────────────────────────────────────
+// //  Main Navigation Screen
+// // ─────────────────────────────────────────────
+// class MainNavigationScreen extends StatefulWidget {
+//   const MainNavigationScreen({Key? key}) : super(key: key);
 
+//   @override
+//   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+// }
 
+// class _MainNavigationScreenState extends State<MainNavigationScreen>
+//     with TickerProviderStateMixin {
+//   int _currentIndex = 0;
 
+//   late AnimationController _proJiggleController;
+//   late Animation<double> _proJiggleAnimation;
 
+//   final List<Widget> _screens = [
+//     const HomeScreen(),
+//     const SpecialCategory(),
+//     const ReelsScreen(),
+//     // const AiScreen(),
+//     const OnlinePunchangScreen(),
+//     const CustomerScreen(),
+//   ];
 
+//   @override
+//   void initState() {
+//     super.initState();
+//     _setupProAnimation();
+//   }
 
+//   void _setupProAnimation() {
+//     _proJiggleController = AnimationController(
+//       vsync: this,
+//       duration: const Duration(milliseconds: 450),
+//     );
 
+//     _proJiggleAnimation =
+//         TweenSequence<double>([
+//           TweenSequenceItem(tween: Tween(begin: 0.0, end: -0.18), weight: 1),
+//           TweenSequenceItem(tween: Tween(begin: -0.18, end: 0.18), weight: 2),
+//           TweenSequenceItem(tween: Tween(begin: 0.18, end: -0.12), weight: 2),
+//           TweenSequenceItem(tween: Tween(begin: -0.12, end: 0.12), weight: 2),
+//           TweenSequenceItem(tween: Tween(begin: 0.12, end: 0.0), weight: 1),
+//         ]).animate(
+//           CurvedAnimation(
+//             parent: _proJiggleController,
+//             curve: Curves.easeInOut,
+//           ),
+//         );
 
+//     Future.delayed(const Duration(seconds: 2), _startJiggleLoop);
+//   }
 
+//   void _startJiggleLoop() {
+//     if (!mounted) return;
+//     _proJiggleController.forward(from: 0).then((_) {
+//       Future.delayed(const Duration(seconds: 3), _startJiggleLoop);
+//     });
+//   }
 
+//   @override
+//   void dispose() {
+//     _proJiggleController.dispose();
+//     super.dispose();
+//   }
+
+//   // ── PRO Badge ──────────────────────────────────────────────────────────────
+//   Widget _buildProBadge() {
+//     return GestureDetector(
+//       behavior: HitTestBehavior.opaque,
+//       onTap: () {
+//         Navigator.push(
+//           context,
+//           MaterialPageRoute(builder: (context) => const ShowPlanScreen()),
+//         );
+//       },
+//       child: AnimatedBuilder(
+//         animation: _proJiggleAnimation,
+//         builder: (context, child) =>
+//             Transform.rotate(angle: _proJiggleAnimation.value, child: child),
+//         child: Container(
+//           width: 48,
+//           height: 48,
+//           decoration: BoxDecoration(
+//             shape: BoxShape.circle,
+//             gradient: const RadialGradient(
+//               colors: [Color(0xFFFFE566), Color(0xFFFFA000), Color(0xFFE65100)],
+//               center: Alignment.topLeft,
+//               radius: 1.5,
+//             ),
+//             border: Border.all(color: const Color(0xFF6A0DAD), width: 3),
+//             boxShadow: [
+//               BoxShadow(
+//                 color: const Color(0xFFFF6F00).withOpacity(0.55),
+//                 blurRadius: 10,
+//                 spreadRadius: 1,
+//               ),
+//             ],
+//           ),
+//           child: const Column(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               Icon(Icons.workspace_premium, color: Colors.white, size: 20),
+//               SizedBox(height: 1),
+//               Text(
+//                 'PRO',
+//                 style: TextStyle(
+//                   color: Colors.white,
+//                   fontSize: 10,
+//                   fontWeight: FontWeight.w900,
+//                   letterSpacing: 1.2,
+//                   height: 1.0,
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+//   // ── Normal Bottom Nav Bar ──────────────────────────────────────────────────
+//   // Widget _buildBottomNavBar(String langCode) {
+//   //   const navBgColor = Color(0xFF1C1C2E);
+
+//   //   final items = [
+//   //     _NavItem(
+//   //       icon: Icons.home_outlined,
+//   //       activeIcon: Icons.home,
+//   //       label: LocalizationService.translate('home', langCode),
+//   //       index: 0,
+//   //     ),
+//   //     _NavItem(
+//   //       icon: Icons.grid_view_outlined,
+//   //       activeIcon: Icons.grid_view,
+//   //       label: LocalizationService.translate('category', langCode),
+//   //       index: 1,
+//   //     ),
+//   //     _NavItem(
+//   //       icon: Icons.auto_awesome_outlined,
+//   //       activeIcon: Icons.auto_awesome,
+//   //       label: 'Chicha',
+//   //       index: 2,
+//   //     ),
+//   //     _NavItem(
+//   //       icon: Icons.people_outline,
+//   //       activeIcon: Icons.people,
+//   //       label: 'Contacts',
+//   //       index: 3,
+//   //     ),
+//   //   ];
+
+//   //   return Container(
+//   //     decoration: BoxDecoration(
+//   //       color: navBgColor,
+//   //       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+//   //       boxShadow: [
+//   //         BoxShadow(
+//   //           color: Colors.black.withOpacity(0.4),
+//   //           blurRadius: 12,
+//   //           offset: const Offset(0, -4),
+//   //         ),
+//   //       ],
+//   //     ),
+//   //     child: SafeArea(
+//   //       top: false,
+//   //       child: Padding(
+//   //         padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
+//   //         child: Row(
+//   //           mainAxisAlignment: MainAxisAlignment.spaceAround,
+//   //           children: items.map((item) {
+//   //             final isActive = _currentIndex == item.index;
+
+//   //             return Expanded(
+//   //               child: GestureDetector(
+//   //                 onTap: () => setState(() => _currentIndex = item.index),
+//   //                 behavior: HitTestBehavior.opaque,
+//   //                 child: AnimatedContainer(
+//   //                   duration: const Duration(milliseconds: 200),
+//   //                   curve: Curves.easeInOut,
+//   //                   padding: const EdgeInsets.symmetric(
+//   //                     horizontal: 12,
+//   //                     vertical: 6,
+//   //                   ),
+//   //                   decoration: BoxDecoration(
+//   //                     color: isActive
+//   //                         ? const Color(0xFF448AFF).withOpacity(0.12)
+//   //                         : Colors.transparent,
+//   //                     borderRadius: BorderRadius.circular(14),
+//   //                   ),
+//   //                   child: Column(
+//   //                     mainAxisSize: MainAxisSize.min,
+//   //                     children: [
+//   //                       AnimatedSwitcher(
+//   //                         duration: const Duration(milliseconds: 200),
+//   //                         child: Icon(
+//   //                           isActive ? item.activeIcon : item.icon,
+//   //                           key: ValueKey(isActive),
+//   //                           color: isActive
+//   //                               ? const Color(0xFF448AFF)
+//   //                               : Colors.grey.shade500,
+//   //                           size: 26,
+//   //                         ),
+//   //                       ),
+//   //                       const SizedBox(height: 4),
+//   //                       Text(
+//   //                         item.label,
+//   //                         style: TextStyle(
+//   //                           fontSize: 11,
+//   //                           color: isActive
+//   //                               ? const Color(0xFF448AFF)
+//   //                               : Colors.grey.shade500,
+//   //                           fontWeight: isActive
+//   //                               ? FontWeight.w700
+//   //                               : FontWeight.w400,
+//   //                         ),
+//   //                         maxLines: 1,
+//   //                         overflow: TextOverflow.ellipsis,
+//   //                       ),
+//   //                       // ── Active indicator dot ──
+//   //                       const SizedBox(height: 4),
+//   //                       AnimatedContainer(
+//   //                         duration: const Duration(milliseconds: 200),
+//   //                         width: isActive ? 6 : 0,
+//   //                         height: isActive ? 6 : 0,
+//   //                         decoration: const BoxDecoration(
+//   //                           shape: BoxShape.circle,
+//   //                           color: Color(0xFF448AFF),
+//   //                         ),
+//   //                       ),
+//   //                     ],
+//   //                   ),
+//   //                 ),
+//   //               ),
+//   //             );
+//   //           }).toList(),
+//   //         ),
+//   //       ),
+//   //     ),
+//   //   );
+//   // }
+
+//   Widget _buildBottomNavBar(String langCode) {
+//   const navBgColor = Color(0xFF1C1C2E);
+
+//   final items = [
+//     _NavItem(
+//       icon: Icons.home_outlined,
+//       activeIcon: Icons.home,
+//       label: LocalizationService.translate('home', langCode),
+//       index: 0,
+//     ),
+//     _NavItem(
+//       icon: Icons.grid_view_outlined,
+//       activeIcon: Icons.grid_view,
+//       label: LocalizationService.translate('category', langCode),
+//       index: 1,
+//     ),
+//     _NavItem(
+//       icon: Icons.auto_awesome_outlined,
+//       activeIcon: Icons.auto_awesome,
+//       label: 'Punchang',
+//       index: 2,
+//     ),
+//     _NavItem(
+//       icon: Icons.people_outline,
+//       activeIcon: Icons.people,
+//       label: 'Contacts',
+//       index: 3,
+//     ),
+//   ];
+
+//   return Container(
+//     decoration: BoxDecoration(
+//       color: navBgColor,
+//       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+//       boxShadow: [
+//         BoxShadow(
+//           color: Colors.black.withOpacity(0.3),
+//           blurRadius: 8,
+//           offset: const Offset(0, -2),
+//         ),
+//       ],
+//     ),
+//     child: SafeArea(
+//       top: false,
+//       child: Padding(
+//         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), // 🔽 reduced
+//         child: Row(
+//           children: items.map((item) {
+//             final isActive = _currentIndex == item.index;
+
+//             return Expanded(
+//               child: GestureDetector(
+//                 onTap: () => setState(() => _currentIndex = item.index),
+//                 behavior: HitTestBehavior.opaque,
+//                 child: Column(
+//                   mainAxisSize: MainAxisSize.min,
+//                   children: [
+//                     Icon(
+//                       isActive ? item.activeIcon : item.icon,
+//                       color: isActive
+//                           ? const Color(0xFF448AFF)
+//                           : Colors.grey.shade500,
+//                       size: 22, // 🔽 reduced
+//                     ),
+//                     const SizedBox(height: 2), // 🔽 reduced
+//                     Text(
+//                       item.label,
+//                       style: TextStyle(
+//                         fontSize: 10, // 🔽 reduced
+//                         color: isActive
+//                             ? const Color(0xFF448AFF)
+//                             : Colors.grey.shade500,
+//                         fontWeight: isActive
+//                             ? FontWeight.w600
+//                             : FontWeight.w400,
+//                       ),
+//                       maxLines: 1,
+//                       overflow: TextOverflow.ellipsis,
+//                     ),
+//                     const SizedBox(height: 2), // 🔽 reduced
+//                     AnimatedContainer(
+//                       duration: const Duration(milliseconds: 200),
+//                       width: isActive ? 5 : 0,
+//                       height: isActive ? 5 : 0,
+//                       decoration: const BoxDecoration(
+//                         shape: BoxShape.circle,
+//                         color: Color(0xFF448AFF),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             );
+//           }).toList(),
+//         ),
+//       ),
+//     ),
+//   );
+// }
+
+//   // ── Build ──────────────────────────────────────────────────────────────────
+//   @override
+//   Widget build(BuildContext context) {
+//     return UpgradeAlert(
+//       upgrader: Upgrader(durationUntilAlertAgain: const Duration(days: 1)),
+//       dialogStyle: UpgradeDialogStyle.material,
+//       showLater: true,
+//       showIgnore: false,
+//       child: Scaffold(
+//         extendBody: true,
+//         body: Stack(
+//           children: [
+//             // ── Main screen content ──
+//             _screens[_currentIndex],
+
+//             // ── PRO badge overlay ──
+//             Consumer<LanguageProvider>(
+//               builder: (context, languageProvider, child) {
+//                 // if (_currentIndex == 3) return const SizedBox.shrink();
+
+//                 if (_currentIndex != 0) return const SizedBox.shrink();
+//                 return Positioned(
+//                   right: 4,
+//                   bottom: 80 + MediaQuery.of(context).padding.bottom,
+//                   child: _buildProBadge(),
+//                 );
+//               },
+//             ),
+//           ],
+//         ),
+//         bottomNavigationBar: Consumer<LanguageProvider>(
+//           builder: (context, languageProvider, child) {
+//             final langCode = languageProvider.locale.languageCode;
+//             return _buildBottomNavBar(langCode);
+//           },
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:posternova/helper/storage_helper.dart';
+import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/showplans/show_pan_screen.dart';
 import 'package:posternova/views/AI/chat_ai.dart';
 import 'package:posternova/views/PosterModule/home.dart';
@@ -2743,7 +3147,10 @@ import 'package:posternova/views/category/special_category.dart';
 import 'package:posternova/views/chat/customer_list.dart';
 import 'package:posternova/views/customer/customer_screen.dart';
 import 'package:posternova/views/onlinepunchang/online_punchang_screen.dart';
+import 'package:posternova/views/reels/reels_screen.dart';
+import 'package:posternova/widgets/common_modal.dart';
 import 'package:posternova/widgets/language_widget.dart';
+import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:upgrader/upgrader.dart';
 
@@ -2782,11 +3189,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   late Animation<double> _proJiggleAnimation;
 
   final List<Widget> _screens = [
-    const HomeScreen(),
-    const SpecialCategory(),
-    // const AiScreen(),
-    const OnlinePunchangScreen(),
-    const CustomerScreen(),
+    const HomeScreen(), // index 0 - Home
+    const SpecialCategory(), // index 1 - Category
+    const ReelsScreen(), // index 2 - Reels
+    const OnlinePunchangScreen(), // index 3 - Punchang
+    const CustomerScreen(), // index 4 - Contacts
   ];
 
   @override
@@ -2886,229 +3293,144 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     );
   }
 
-  // ── Normal Bottom Nav Bar ──────────────────────────────────────────────────
-  // Widget _buildBottomNavBar(String langCode) {
-  //   const navBgColor = Color(0xFF1C1C2E);
-
-  //   final items = [
-  //     _NavItem(
-  //       icon: Icons.home_outlined,
-  //       activeIcon: Icons.home,
-  //       label: LocalizationService.translate('home', langCode),
-  //       index: 0,
-  //     ),
-  //     _NavItem(
-  //       icon: Icons.grid_view_outlined,
-  //       activeIcon: Icons.grid_view,
-  //       label: LocalizationService.translate('category', langCode),
-  //       index: 1,
-  //     ),
-  //     _NavItem(
-  //       icon: Icons.auto_awesome_outlined,
-  //       activeIcon: Icons.auto_awesome,
-  //       label: 'Chicha',
-  //       index: 2,
-  //     ),
-  //     _NavItem(
-  //       icon: Icons.people_outline,
-  //       activeIcon: Icons.people,
-  //       label: 'Contacts',
-  //       index: 3,
-  //     ),
-  //   ];
-
-  //   return Container(
-  //     decoration: BoxDecoration(
-  //       color: navBgColor,
-  //       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-  //       boxShadow: [
-  //         BoxShadow(
-  //           color: Colors.black.withOpacity(0.4),
-  //           blurRadius: 12,
-  //           offset: const Offset(0, -4),
-  //         ),
-  //       ],
-  //     ),
-  //     child: SafeArea(
-  //       top: false,
-  //       child: Padding(
-  //         padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
-  //         child: Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceAround,
-  //           children: items.map((item) {
-  //             final isActive = _currentIndex == item.index;
-
-  //             return Expanded(
-  //               child: GestureDetector(
-  //                 onTap: () => setState(() => _currentIndex = item.index),
-  //                 behavior: HitTestBehavior.opaque,
-  //                 child: AnimatedContainer(
-  //                   duration: const Duration(milliseconds: 200),
-  //                   curve: Curves.easeInOut,
-  //                   padding: const EdgeInsets.symmetric(
-  //                     horizontal: 12,
-  //                     vertical: 6,
-  //                   ),
-  //                   decoration: BoxDecoration(
-  //                     color: isActive
-  //                         ? const Color(0xFF448AFF).withOpacity(0.12)
-  //                         : Colors.transparent,
-  //                     borderRadius: BorderRadius.circular(14),
-  //                   ),
-  //                   child: Column(
-  //                     mainAxisSize: MainAxisSize.min,
-  //                     children: [
-  //                       AnimatedSwitcher(
-  //                         duration: const Duration(milliseconds: 200),
-  //                         child: Icon(
-  //                           isActive ? item.activeIcon : item.icon,
-  //                           key: ValueKey(isActive),
-  //                           color: isActive
-  //                               ? const Color(0xFF448AFF)
-  //                               : Colors.grey.shade500,
-  //                           size: 26,
-  //                         ),
-  //                       ),
-  //                       const SizedBox(height: 4),
-  //                       Text(
-  //                         item.label,
-  //                         style: TextStyle(
-  //                           fontSize: 11,
-  //                           color: isActive
-  //                               ? const Color(0xFF448AFF)
-  //                               : Colors.grey.shade500,
-  //                           fontWeight: isActive
-  //                               ? FontWeight.w700
-  //                               : FontWeight.w400,
-  //                         ),
-  //                         maxLines: 1,
-  //                         overflow: TextOverflow.ellipsis,
-  //                       ),
-  //                       // ── Active indicator dot ──
-  //                       const SizedBox(height: 4),
-  //                       AnimatedContainer(
-  //                         duration: const Duration(milliseconds: 200),
-  //                         width: isActive ? 6 : 0,
-  //                         height: isActive ? 6 : 0,
-  //                         decoration: const BoxDecoration(
-  //                           shape: BoxShape.circle,
-  //                           color: Color(0xFF448AFF),
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ),
-  //             );
-  //           }).toList(),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-
-
-
+  // ── Bottom Nav Bar ─────────────────────────────────────────────────────────
   Widget _buildBottomNavBar(String langCode) {
-  const navBgColor = Color(0xFF1C1C2E);
+    const navBgColor = Color(0xFF1C1C2E);
 
-  final items = [
-    _NavItem(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-      label: LocalizationService.translate('home', langCode),
-      index: 0,
-    ),
-    _NavItem(
-      icon: Icons.grid_view_outlined,
-      activeIcon: Icons.grid_view,
-      label: LocalizationService.translate('category', langCode),
-      index: 1,
-    ),
-    _NavItem(
-      icon: Icons.auto_awesome_outlined,
-      activeIcon: Icons.auto_awesome,
-      label: 'Punchang',
-      index: 2,
-    ),
-    _NavItem(
-      icon: Icons.people_outline,
-      activeIcon: Icons.people,
-      label: 'Contacts',
-      index: 3,
-    ),
-  ];
+    final items = [
+      _NavItem(
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home,
+        label: LocalizationService.translate('home', langCode),
+        index: 0,
+      ),
+      _NavItem(
+        icon: Icons.grid_view_outlined,
+        activeIcon: Icons.grid_view,
+        label: LocalizationService.translate('category', langCode),
+        index: 1,
+      ),
+      _NavItem(
+        icon: Icons.play_circle_outline, // ← Reels icon (inactive)
+        activeIcon: Icons.play_circle_filled, // ← Reels icon (active)
+        label: 'Reels',
+        index: 2,
+      ),
+      _NavItem(
+        icon: Icons.auto_awesome_outlined,
+        activeIcon: Icons.auto_awesome,
+        label: 'Punchang',
+        index: 3,
+      ),
+      _NavItem(
+        icon: Icons.people_outline,
+        activeIcon: Icons.people,
+        label: 'Contacts',
+        index: 4,
+      ),
+    ];
 
-  return Container(
-    decoration: BoxDecoration(
-      color: navBgColor,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.3),
-          blurRadius: 8,
-          offset: const Offset(0, -2),
-        ),
-      ],
-    ),
-    child: SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6), // 🔽 reduced
-        child: Row(
-          children: items.map((item) {
-            final isActive = _currentIndex == item.index;
+    return Container(
+      decoration: BoxDecoration(
+        color: navBgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          child: Row(
+            children: items.map((item) {
+              final isActive = _currentIndex == item.index;
 
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => setState(() => _currentIndex = item.index),
-                behavior: HitTestBehavior.opaque,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isActive ? item.activeIcon : item.icon,
-                      color: isActive
-                          ? const Color(0xFF448AFF)
-                          : Colors.grey.shade500,
-                      size: 22, // 🔽 reduced
-                    ),
-                    const SizedBox(height: 2), // 🔽 reduced
-                    Text(
-                      item.label,
-                      style: TextStyle(
-                        fontSize: 10, // 🔽 reduced
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (item.index == 2 || item.index == 3) {
+                      final myPlanProvider = Provider.of<MyPlanProvider>(
+                        context,
+                        listen: false,
+                      );
+                      if (myPlanProvider.isPurchase == true) {
+                        setState(() => _currentIndex = item.index);
+                      } else {
+                        CommonModal.showWarning(
+                          context: context,
+                          title: "Premium Feature",
+                          message:
+                              "This feature is available for premium users only. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+                          primaryButtonText: "Upgrade Now",
+                          secondaryButtonText: "Cancel",
+                          onPrimaryPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SubscriptionPlansPage(),
+                              ),
+                            );
+                          },
+                          onSecondaryPressed: () => Navigator.of(context).pop(),
+                        );
+                      }
+                    } else {
+                      setState(() => _currentIndex = item.index);
+                    }
+                  },
+
+                  // onTap: () => setState(() => _currentIndex = item.index),
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isActive ? item.activeIcon : item.icon,
                         color: isActive
                             ? const Color(0xFF448AFF)
                             : Colors.grey.shade500,
-                        fontWeight: isActive
-                            ? FontWeight.w600
-                            : FontWeight.w400,
+                        size: 22,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2), // 🔽 reduced
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: isActive ? 5 : 0,
-                      height: isActive ? 5 : 0,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFF448AFF),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isActive
+                              ? const Color(0xFF448AFF)
+                              : Colors.grey.shade500,
+                          fontWeight: isActive
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: isActive ? 5 : 0,
+                        height: isActive ? 5 : 0,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF448AFF),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
@@ -3125,11 +3447,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             // ── Main screen content ──
             _screens[_currentIndex],
 
-            // ── PRO badge overlay ──
+            // ── PRO badge overlay (only on Home tab) ──
             Consumer<LanguageProvider>(
               builder: (context, languageProvider, child) {
-                // if (_currentIndex == 3) return const SizedBox.shrink();
-
                 if (_currentIndex != 0) return const SizedBox.shrink();
                 return Positioned(
                   right: 4,

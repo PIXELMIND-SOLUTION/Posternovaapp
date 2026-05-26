@@ -575,48 +575,41 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   bool _isLoadingAudios = false;
   String? _audioLoadError;
 
-
-
-  
-
-
+  bool _isSelectingAudio = false;
 
   final Map<String, TextStyle> _googleFontCache = {};
 
+  TextStyle _getCachedGoogleFont(OverlayTextItem item) {
+    final cacheKey =
+        '${item.fontFamily}_${item.fontSize}_${item.color.value}_${item.isBold}_${item.isItalic}_${item.isUnderline}';
 
+    if (_googleFontCache.containsKey(cacheKey)) {
+      return _googleFontCache[cacheKey]!;
+    }
 
-    TextStyle _getCachedGoogleFont(OverlayTextItem item) {
-  final cacheKey = '${item.fontFamily}_${item.fontSize}_${item.color.value}_${item.isBold}_${item.isItalic}_${item.isUnderline}';
-  
-  if (_googleFontCache.containsKey(cacheKey)) {
-    return _googleFontCache[cacheKey]!;
-  }
-  
-  TextStyle style = TextStyle(
-    fontSize: item.fontSize,
-    color: item.color,
-    fontWeight: item.isBold ? FontWeight.bold : FontWeight.normal,
-    fontStyle: item.isItalic ? FontStyle.italic : FontStyle.normal,
-    decoration: item.isUnderline ? TextDecoration.underline : TextDecoration.none,
-  );
-  
-  try {
-    final fontEntry = kGoogleFonts.firstWhere(
-      (e) => e.name == item.fontFamily,
-      orElse: () => kGoogleFonts.first,
+    TextStyle style = TextStyle(
+      fontSize: item.fontSize,
+      color: item.color,
+      fontWeight: item.isBold ? FontWeight.bold : FontWeight.normal,
+      fontStyle: item.isItalic ? FontStyle.italic : FontStyle.normal,
+      decoration: item.isUnderline
+          ? TextDecoration.underline
+          : TextDecoration.none,
     );
-    style = fontEntry.font(textStyle: style);
-  } catch (_) {
-    // Use default style
+
+    try {
+      final fontEntry = kGoogleFonts.firstWhere(
+        (e) => e.name == item.fontFamily,
+        orElse: () => kGoogleFonts.first,
+      );
+      style = fontEntry.font(textStyle: style);
+    } catch (_) {
+      // Use default style
+    }
+
+    _googleFontCache[cacheKey] = style;
+    return style;
   }
-  
-  _googleFontCache[cacheKey] = style;
-  return style;
-}
-
-
-
-
 
   Future<void> _fetchAdminAudios() async {
     setState(() {
@@ -2403,9 +2396,323 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   }
   // }
 
+  // Future<void> _pickUserAudio() async {
+  //   try {
+  //     // Pick audio file
+  //     FilePickerResult? result = await FilePicker.pickFiles(
+  //       type: FileType.audio,
+  //       allowMultiple: false,
+  //     );
+
+  //     if (result == null) return;
+
+  //     String filePath = result.files.single.path!;
+  //     String fileName = result.files.single.name;
+
+  //     // Show loading indicator
+  //     showDialog(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (context) => const Center(child: CircularProgressIndicator()),
+  //     );
+
+  //     try {
+  //       // Get audio duration using a more reliable method
+  //       final tempPlayer = AudioPlayer();
+  //       await tempPlayer.setSourceDeviceFile(filePath);
+
+  //       // Wait for duration to be available
+  //       Duration? duration;
+  //       int attempts = 0;
+  //       while (duration == null && attempts < 10) {
+  //         duration = await tempPlayer.getDuration();
+  //         if (duration == null) {
+  //           await Future.delayed(const Duration(milliseconds: 100));
+  //           attempts++;
+  //         }
+  //       }
+
+  //       await tempPlayer.dispose();
+
+  //       // Check if duration was successfully retrieved
+  //       if (duration == null) {
+  //         Navigator.pop(context); // Close loading dialog
+  //         _showErrorSnackBar(
+  //           'Could not read audio duration. Please try another file.',
+  //         );
+  //         return;
+  //       }
+
+  //       print('Audio duration: ${duration.inSeconds} seconds');
+
+  //       // Check if duration exceeds 30 seconds
+  //       if (duration.inSeconds > 30) {
+  //         Navigator.pop(context); // Close loading dialog
+  //         _showErrorSnackBar(
+  //           '❌ Audio too long!\n'
+  //           'Maximum 30 seconds allowed.\n'
+  //           'Selected: ${duration.inSeconds} seconds\n'
+  //           'Please select a shorter audio file.',
+  //         );
+  //         return;
+  //       }
+
+  //       // Check if duration is too short (optional, minimum 1 second)
+  //       if (duration.inSeconds < 1) {
+  //         Navigator.pop(context);
+  //         _showErrorSnackBar(
+  //           'Audio is too short! Please select a longer audio file (minimum 1 second).',
+  //         );
+  //         return;
+  //       }
+
+  //       // Copy to app directory for persistence
+  //       final tempDir = await getTemporaryDirectory();
+  //       final savedPath =
+  //           '${tempDir.path}/user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3';
+  //       final File sourceFile = File(filePath);
+  //       await sourceFile.copy(savedPath);
+
+  //       // Add to user audio tracks list
+  //       final userTrack = UserAudioTrack(
+  //         name: fileName
+  //             .replaceAll('.mp3', '')
+  //             .replaceAll('.m4a', '')
+  //             .replaceAll('.wav', ''),
+  //         filePath: savedPath,
+  //         durationInSeconds: duration.inSeconds,
+  //       );
+
+  //       // Close loading dialog
+  //       Navigator.pop(context);
+
+  //       setState(() {
+  //         _userAudioTracks.add(userTrack);
+  //         _selectedUserAudioPath = savedPath;
+  //         _selectedAudio = userTrack.name;
+  //       });
+
+  //       // Play the selected audio
+  //       await _playUserAudio(savedPath, userTrack.name);
+
+  //       _showSuccessSnackBar(
+  //         '✅ Audio added!\n'
+  //         'Duration: ${duration.inSeconds} seconds',
+  //       );
+  //     } catch (e) {
+  //       Navigator.pop(context); // Close loading dialog on error
+  //       print('Error processing audio: $e');
+  //       _showErrorSnackBar('Failed to process audio: ${e.toString()}');
+  //     }
+  //   } catch (e) {
+  //     print('Error picking audio: $e');
+  //     _showErrorSnackBar('Failed to pick audio: ${e.toString()}');
+  //   }
+  // }
+
+  // Future<void> _pickUserAudio() async {
+  //   try {
+  //     FilePickerResult? result = await FilePicker.pickFiles(
+  //       type: FileType.audio,
+  //       allowMultiple: false,
+  //     );
+
+  //     if (result == null) return;
+
+  //     String filePath = result.files.single.path!;
+  //     String fileName = result.files.single.name;
+
+  //     showDialog(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (context) => const Center(child: CircularProgressIndicator()),
+  //     );
+
+  //     try {
+  //       final tempPlayer = AudioPlayer();
+  //       await tempPlayer.setSourceDeviceFile(filePath);
+
+  //       Duration? duration;
+  //       int attempts = 0;
+  //       while (duration == null && attempts < 10) {
+  //         duration = await tempPlayer.getDuration();
+  //         if (duration == null) {
+  //           await Future.delayed(const Duration(milliseconds: 100));
+  //           attempts++;
+  //         }
+  //       }
+
+  //       await tempPlayer.dispose();
+
+  //       if (duration == null) {
+  //         Navigator.pop(context);
+  //         _showErrorSnackBar(
+  //           'Could not read audio duration. Please try another file.',
+  //         );
+  //         return;
+  //       }
+
+  //       if (duration.inSeconds > 30) {
+  //         Navigator.pop(context);
+  //         _showErrorSnackBar(
+  //           '❌ Audio too long!\n'
+  //           'Maximum 30 seconds allowed.\n'
+  //           'Selected: ${duration.inSeconds} seconds\n'
+  //           'Please select a shorter audio file.',
+  //         );
+  //         return;
+  //       }
+
+  //       if (duration.inSeconds < 1) {
+  //         Navigator.pop(context);
+  //         _showErrorSnackBar(
+  //           'Audio is too short! Please select a longer audio file (minimum 1 second).',
+  //         );
+  //         return;
+  //       }
+
+  //       final tempDir = await getTemporaryDirectory();
+  //       final savedPath =
+  //           '${tempDir.path}/user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3';
+  //       final File sourceFile = File(filePath);
+  //       await sourceFile.copy(savedPath);
+
+  //       final userTrack = UserAudioTrack(
+  //         name: fileName
+  //             .replaceAll('.mp3', '')
+  //             .replaceAll('.m4a', '')
+  //             .replaceAll('.wav', ''),
+  //         filePath: savedPath,
+  //         durationInSeconds: duration.inSeconds,
+  //       );
+
+  //       // Close loading dialog
+  //       Navigator.pop(context);
+
+  //       setState(() => _isSelectingAudio = true);
+
+  //       // Show confirmation dialog
+  //       final bool? confirmed = await showDialog<bool>(
+  //         context: context,
+  //         barrierDismissible: false,
+  //         builder: (ctx) => Dialog(
+  //           shape: RoundedRectangleBorder(
+  //             borderRadius: BorderRadius.circular(20),
+  //           ),
+  //           child: Padding(
+  //             padding: const EdgeInsets.all(24),
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 Container(
+  //                   padding: const EdgeInsets.all(14),
+  //                   decoration: BoxDecoration(
+  //                     color: const Color(0xFFF5C518).withOpacity(0.15),
+  //                     shape: BoxShape.circle,
+  //                   ),
+  //                   child: const Icon(
+  //                     Icons.music_note_rounded,
+  //                     size: 36,
+  //                     color: Color(0xFFF5C518),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 16),
+  //                 const Text(
+  //                   'Add Audio?',
+  //                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  //                 ),
+  //                 const SizedBox(height: 8),
+  //                 Text(
+  //                   'Add "${userTrack.name}" to your poster?\nDuration: ${duration!.inSeconds} seconds',
+  //                   textAlign: TextAlign.center,
+  //                   style: const TextStyle(fontSize: 14, color: Colors.black54),
+  //                 ),
+  //                 const SizedBox(height: 24),
+  //                 Row(
+  //                   children: [
+  //                     Expanded(
+  //                       child: OutlinedButton(
+  //                         onPressed: () => Navigator.pop(ctx, false),
+  //                         style: OutlinedButton.styleFrom(
+  //                           padding: const EdgeInsets.symmetric(vertical: 13),
+  //                           side: BorderSide(color: Colors.grey.shade300),
+  //                           shape: RoundedRectangleBorder(
+  //                             borderRadius: BorderRadius.circular(12),
+  //                           ),
+  //                         ),
+  //                         child: const Text(
+  //                           'No',
+  //                           style: TextStyle(color: Colors.black54),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 12),
+  //                     Expanded(
+  //                       child: ElevatedButton(
+  //                         onPressed: () => Navigator.pop(ctx, true),
+  //                         style: ElevatedButton.styleFrom(
+  //                           backgroundColor: const Color(0xFFF5C518),
+  //                           foregroundColor: Colors.black87,
+  //                           padding: const EdgeInsets.symmetric(vertical: 13),
+  //                           elevation: 0,
+  //                           shape: RoundedRectangleBorder(
+  //                             borderRadius: BorderRadius.circular(12),
+  //                           ),
+  //                         ),
+  //                         child: const Text(
+  //                           'Yes, Add',
+  //                           style: TextStyle(fontWeight: FontWeight.w600),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       );
+
+  //       setState(() => _isSelectingAudio = false);
+
+  //       // User tapped No — delete the copied file and return
+  //       if (confirmed != true) {
+  //         try {
+  //           final File savedFile = File(savedPath);
+  //           if (await savedFile.exists()) {
+  //             await savedFile.delete();
+  //           }
+  //         } catch (e) {
+  //           print('Error deleting cancelled audio file: $e');
+  //         }
+  //         return;
+  //       }
+
+  //       // User tapped Yes — add the track and play it
+  //       setState(() {
+  //         _userAudioTracks.add(userTrack);
+  //         _selectedUserAudioPath = savedPath;
+  //         _selectedAudio = userTrack.name;
+  //       });
+
+  //       await _playUserAudio(savedPath, userTrack.name);
+
+  //       _showSuccessSnackBar(
+  //         '✅ Audio added!\nDuration: ${duration.inSeconds} seconds',
+  //       );
+  //     } catch (e) {
+  //       Navigator.pop(context);
+  //       print('Error processing audio: $e');
+  //       _showErrorSnackBar('Failed to process audio: ${e.toString()}');
+  //     }
+  //   } catch (e) {
+  //     print('Error picking audio: $e');
+  //     _showErrorSnackBar('Failed to pick audio: ${e.toString()}');
+  //   }
+  // }
+
   Future<void> _pickUserAudio() async {
     try {
-      // Pick audio file
       FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.audio,
         allowMultiple: false,
@@ -2416,7 +2723,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
       String filePath = result.files.single.path!;
       String fileName = result.files.single.name;
 
-      // Show loading indicator
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -2424,11 +2730,9 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
       );
 
       try {
-        // Get audio duration using a more reliable method
         final tempPlayer = AudioPlayer();
         await tempPlayer.setSourceDeviceFile(filePath);
 
-        // Wait for duration to be available
         Duration? duration;
         int attempts = 0;
         while (duration == null && attempts < 10) {
@@ -2441,46 +2745,29 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
         await tempPlayer.dispose();
 
-        // Check if duration was successfully retrieved
         if (duration == null) {
-          Navigator.pop(context); // Close loading dialog
-          _showErrorSnackBar(
-            'Could not read audio duration. Please try another file.',
-          );
+          Navigator.pop(context);
+          _showErrorSnackBar('Could not read audio duration.');
           return;
         }
 
-        print('Audio duration: ${duration.inSeconds} seconds');
-
-        // Check if duration exceeds 30 seconds
         if (duration.inSeconds > 30) {
-          Navigator.pop(context); // Close loading dialog
-          _showErrorSnackBar(
-            '❌ Audio too long!\n'
-            'Maximum 30 seconds allowed.\n'
-            'Selected: ${duration.inSeconds} seconds\n'
-            'Please select a shorter audio file.',
-          );
+          Navigator.pop(context);
+          _showErrorSnackBar('Audio too long! Max 30 seconds allowed.');
           return;
         }
 
-        // Check if duration is too short (optional, minimum 1 second)
         if (duration.inSeconds < 1) {
           Navigator.pop(context);
-          _showErrorSnackBar(
-            'Audio is too short! Please select a longer audio file (minimum 1 second).',
-          );
+          _showErrorSnackBar('Audio too short! Minimum 1 second.');
           return;
         }
 
-        // Copy to app directory for persistence
         final tempDir = await getTemporaryDirectory();
         final savedPath =
             '${tempDir.path}/user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3';
-        final File sourceFile = File(filePath);
-        await sourceFile.copy(savedPath);
+        await File(filePath).copy(savedPath);
 
-        // Add to user audio tracks list
         final userTrack = UserAudioTrack(
           name: fileName
               .replaceAll('.mp3', '')
@@ -2490,29 +2777,20 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           durationInSeconds: duration.inSeconds,
         );
 
-        // Close loading dialog
-        Navigator.pop(context);
+        Navigator.pop(context); // close loading
 
+        // ✅ Directly add and play — no confirmation dialog here
+        // AudioSelectionScreen will show confirmation
         setState(() {
           _userAudioTracks.add(userTrack);
-          _selectedUserAudioPath = savedPath;
-          _selectedAudio = userTrack.name;
         });
 
-        // Play the selected audio
-        await _playUserAudio(savedPath, userTrack.name);
-
-        _showSuccessSnackBar(
-          '✅ Audio added!\n'
-          'Duration: ${duration.inSeconds} seconds',
-        );
+        _showSuccessSnackBar('✅ Audio added! ${duration.inSeconds}s');
       } catch (e) {
-        Navigator.pop(context); // Close loading dialog on error
-        print('Error processing audio: $e');
+        Navigator.pop(context);
         _showErrorSnackBar('Failed to process audio: ${e.toString()}');
       }
     } catch (e) {
-      print('Error picking audio: $e');
       _showErrorSnackBar('Failed to pick audio: ${e.toString()}');
     }
   }
@@ -2740,6 +3018,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
   @override
   void dispose() {
+    _audioPlayer.stop(); /////////////// Newly Addeddd/////////////
     _audioPlayer.dispose();
     _animController.dispose();
     _brandAnimController.dispose();
@@ -2826,28 +3105,433 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   }
   // }
 
+  // Future<void> _playAudio(String? trackName) async {
+  //   try {
+  //     await _audioPlayer.stop();
+  //     await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+
+  //     if (trackName == null || trackName == 'No Audio') {
+  //       setState(() {
+  //         _isAudioPlaying = false;
+  //         _selectedAudio = null;
+  //         _selectedUserAudioPath = null;
+  //       });
+  //       return;
+  //     }
+
+  //     // Check if it's a user uploaded audio
+  //     final userTrack = _userAudioTracks.firstWhere(
+  //       (track) => track.name == trackName,
+  //       orElse: () =>
+  //           UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //     );
+
+  //     // Check if it's an admin audio track
+  //     final adminTrack = _adminAudioTracks.firstWhere(
+  //       (track) => track.title == trackName,
+  //       orElse: () =>
+  //           AdminAudioTrack(id: '', title: '', artist: '', audioUrl: ''),
+  //     );
+
+  //     if (adminTrack.audioUrl.isNotEmpty) {
+  //       await _audioPlayer.play(UrlSource(adminTrack.audioUrl), volume: 1.0);
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = null;
+  //       });
+  //       _audioPlayer.onPlayerComplete.listen((event) {
+  //         if (mounted) setState(() => _isAudioPlaying = false);
+  //       });
+  //       return;
+  //     }
+
+  //     if (userTrack.filePath.isNotEmpty &&
+  //         await File(userTrack.filePath).exists()) {
+  //       // Play user uploaded audio
+  //       await _audioPlayer.play(
+  //         DeviceFileSource(userTrack.filePath),
+  //         volume: 1.0,
+  //       );
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = userTrack.filePath;
+  //       });
+  //     } else {
+  //       // Play static asset audio
+  //       final selectedTrack = _audioTracks.firstWhere(
+  //         (track) => track.name == trackName,
+  //       );
+  //       await _audioPlayer.play(
+  //         AssetSource(selectedTrack.assetPath),
+  //         volume: 1.0,
+  //       );
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = null;
+  //       });
+  //     }
+
+  //     _audioPlayer.onPlayerComplete.listen((event) {
+  //       if (mounted) setState(() => _isAudioPlaying = false);
+  //     });
+  //   } catch (e) {
+  //     setState(() => _isAudioPlaying = false);
+  //     _showErrorSnackBar('Could not play audio: $e');
+  //   }
+  // }
+
+  //   Future<void> _playAudio(String? trackName) async {
+  //   if (trackName == null || trackName == 'No Audio') {
+  //     await _audioPlayer.stop();
+  //     setState(() {
+  //       _isAudioPlaying = false;
+  //       _selectedAudio = null;
+  //       _selectedUserAudioPath = null;
+  //     });
+  //     return;
+  //   }
+
+  //   // ── Show confirmation dialog before applying ──
+  //   final bool? confirmed = await showDialog<bool>(
+  //     context: context,
+  //     builder: (ctx) => Dialog(
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+  //       child: Padding(
+  //         padding: const EdgeInsets.all(24),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(14),
+  //               decoration: BoxDecoration(
+  //                 color: const Color(0xFFF5C518).withOpacity(0.15),
+  //                 shape: BoxShape.circle,
+  //               ),
+  //               child: const Icon(
+  //                 Icons.music_note_rounded,
+  //                 size: 36,
+  //                 color: Color(0xFFF5C518),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 16),
+  //             const Text(
+  //               'Add Audio?',
+  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  //             ),
+  //             const SizedBox(height: 8),
+  //             Text(
+  //               'Add "$trackName" to your poster?',
+  //               textAlign: TextAlign.center,
+  //               style: const TextStyle(fontSize: 14, color: Colors.black54),
+  //             ),
+  //             const SizedBox(height: 24),
+  //             Row(
+  //               children: [
+  //                 Expanded(
+  //                   child: OutlinedButton(
+  //                     onPressed: () => Navigator.pop(ctx, false),
+  //                     style: OutlinedButton.styleFrom(
+  //                       padding: const EdgeInsets.symmetric(vertical: 13),
+  //                       side: BorderSide(color: Colors.grey.shade300),
+  //                       shape: RoundedRectangleBorder(
+  //                         borderRadius: BorderRadius.circular(12),
+  //                       ),
+  //                     ),
+  //                     child: const Text(
+  //                       'No',
+  //                       style: TextStyle(color: Colors.black54),
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 12),
+  //                 Expanded(
+  //                   child: ElevatedButton(
+  //                     onPressed: () => Navigator.pop(ctx, true),
+  //                     style: ElevatedButton.styleFrom(
+  //                       backgroundColor: const Color(0xFFF5C518),
+  //                       foregroundColor: Colors.black87,
+  //                       padding: const EdgeInsets.symmetric(vertical: 13),
+  //                       elevation: 0,
+  //                       shape: RoundedRectangleBorder(
+  //                         borderRadius: BorderRadius.circular(12),
+  //                       ),
+  //                     ),
+  //                     child: const Text(
+  //                       'Yes, Add',
+  //                       style: TextStyle(fontWeight: FontWeight.w600),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+
+  //   if (confirmed != true) return; // User tapped No — do nothing
+
+  //   // ── User confirmed — apply and play the audio ──
+  //   try {
+  //     await _audioPlayer.stop();
+  //     await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+
+  //     final userTrack = _userAudioTracks.firstWhere(
+  //       (track) => track.name == trackName,
+  //       orElse: () =>
+  //           UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //     );
+
+  //     final adminTrack = _adminAudioTracks.firstWhere(
+  //       (track) => track.title == trackName,
+  //       orElse: () =>
+  //           AdminAudioTrack(id: '', title: '', artist: '', audioUrl: ''),
+  //     );
+
+  //     if (adminTrack.audioUrl.isNotEmpty) {
+  //       await _audioPlayer.play(UrlSource(adminTrack.audioUrl), volume: 1.0);
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = null;
+  //       });
+  //     } else if (userTrack.filePath.isNotEmpty &&
+  //         await File(userTrack.filePath).exists()) {
+  //       await _audioPlayer.play(DeviceFileSource(userTrack.filePath), volume: 1.0);
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = userTrack.filePath;
+  //       });
+  //     } else {
+  //       final selectedTrack = _audioTracks.firstWhere(
+  //         (track) => track.name == trackName,
+  //       );
+  //       await _audioPlayer.play(AssetSource(selectedTrack.assetPath), volume: 1.0);
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = null;
+  //       });
+  //     }
+
+  //     _audioPlayer.onPlayerComplete.listen((event) {
+  //       if (mounted) setState(() => _isAudioPlaying = false);
+  //     });
+  //   } catch (e) {
+  //     setState(() => _isAudioPlaying = false);
+  //     _showErrorSnackBar('Could not play audio: $e');
+  //   }
+  // }
+
+  // Future<void> _playAudio(String? trackName) async {
+  //   if (trackName == null || trackName == 'No Audio') {
+  //     await _audioPlayer.stop();
+  //     setState(() {
+  //       _isAudioPlaying = false;
+  //       _selectedAudio = null;
+  //       _selectedUserAudioPath = null;
+  //       _isSelectingAudio = false;
+  //     });
+  //     return;
+  //   }
+
+  //   // Hide poster background while user decides
+  //   setState(() => _isSelectingAudio = true);
+
+  //   final bool? confirmed = await showDialog<bool>(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (ctx) {
+  //       final isDark = Theme.of(ctx).brightness == Brightness.dark;
+  //       return Dialog(
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(20),
+  //         ),
+  //         backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+  //         child: Padding(
+  //           padding: const EdgeInsets.all(24),
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Container(
+  //                 padding: const EdgeInsets.all(14),
+  //                 decoration: BoxDecoration(
+  //                   color: const Color(0xFFF5C518).withOpacity(0.15),
+  //                   shape: BoxShape.circle,
+  //                 ),
+  //                 child: const Icon(
+  //                   Icons.music_note_rounded,
+  //                   size: 36,
+  //                   color: Color(0xFFF5C518),
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 16),
+  //               Text(
+  //                 'Add Audio?',
+  //                 style: TextStyle(
+  //                   fontSize: 18,
+  //                   fontWeight: FontWeight.bold,
+  //                   color: isDark ? Colors.white : Colors.black87,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 8),
+  //               Text(
+  //                 'Add "$trackName" to your poster?',
+  //                 textAlign: TextAlign.center,
+  //                 style: TextStyle(
+  //                   fontSize: 14,
+  //                   color: isDark ? Colors.white54 : Colors.black54,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 24),
+  //               Row(
+  //                 children: [
+  //                   Expanded(
+  //                     child: OutlinedButton(
+  //                       onPressed: () => Navigator.pop(ctx, false),
+  //                       style: OutlinedButton.styleFrom(
+  //                         padding: const EdgeInsets.symmetric(vertical: 13),
+  //                         side: BorderSide(
+  //                           color: isDark
+  //                               ? Colors.white24
+  //                               : Colors.grey.shade300,
+  //                         ),
+  //                         shape: RoundedRectangleBorder(
+  //                           borderRadius: BorderRadius.circular(12),
+  //                         ),
+  //                       ),
+  //                       child: Text(
+  //                         'No',
+  //                         style: TextStyle(
+  //                           color: isDark ? Colors.white54 : Colors.black54,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   const SizedBox(width: 12),
+  //                   Expanded(
+  //                     child: ElevatedButton(
+  //                       onPressed: () => Navigator.pop(ctx, true),
+  //                       style: ElevatedButton.styleFrom(
+  //                         backgroundColor: const Color(0xFFF5C518),
+  //                         foregroundColor: Colors.black87,
+  //                         padding: const EdgeInsets.symmetric(vertical: 13),
+  //                         elevation: 0,
+  //                         shape: RoundedRectangleBorder(
+  //                           borderRadius: BorderRadius.circular(12),
+  //                         ),
+  //                       ),
+  //                       child: const Text(
+  //                         'Yes, Add',
+  //                         style: TextStyle(fontWeight: FontWeight.w600),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+
+  //   // User tapped No — restore poster, change nothing
+  //   if (confirmed != true) {
+  //     setState(() => _isSelectingAudio = false);
+  //     return;
+  //   }
+
+  //   // User tapped Yes — restore poster then apply audio
+  //   setState(() => _isSelectingAudio = false);
+
+  //   try {
+  //     await _audioPlayer.stop();
+  //     await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+
+  //     final userTrack = _userAudioTracks.firstWhere(
+  //       (track) => track.name == trackName,
+  //       orElse: () =>
+  //           UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //     );
+
+  //     final adminTrack = _adminAudioTracks.firstWhere(
+  //       (track) => track.title == trackName,
+  //       orElse: () =>
+  //           AdminAudioTrack(id: '', title: '', artist: '', audioUrl: ''),
+  //     );
+
+  //     if (adminTrack.audioUrl.isNotEmpty) {
+  //       await _audioPlayer.play(UrlSource(adminTrack.audioUrl), volume: 1.0);
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = null;
+  //       });
+  //     } else if (userTrack.filePath.isNotEmpty &&
+  //         await File(userTrack.filePath).exists()) {
+  //       await _audioPlayer.play(
+  //         DeviceFileSource(userTrack.filePath),
+  //         volume: 1.0,
+  //       );
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = userTrack.filePath;
+  //       });
+  //     } else {
+  //       final selectedTrack = _audioTracks.firstWhere(
+  //         (track) => track.name == trackName,
+  //       );
+  //       await _audioPlayer.play(
+  //         AssetSource(selectedTrack.assetPath),
+  //         volume: 1.0,
+  //       );
+  //       setState(() {
+  //         _isAudioPlaying = true;
+  //         _selectedAudio = trackName;
+  //         _selectedUserAudioPath = null;
+  //       });
+  //     }
+
+  //     _audioPlayer.onPlayerComplete.listen((event) {
+  //       if (mounted) setState(() => _isAudioPlaying = false);
+  //     });
+  //   } catch (e) {
+  //     setState(() => _isAudioPlaying = false);
+  //     _showErrorSnackBar('Could not play audio: $e');
+  //   }
+  // }
+
   Future<void> _playAudio(String? trackName) async {
+    if (trackName == null || trackName == 'No Audio') {
+      await _audioPlayer.stop();
+      setState(() {
+        _isAudioPlaying = false;
+        _selectedAudio = null;
+        _selectedUserAudioPath = null;
+        _isSelectingAudio = false;
+      });
+      return;
+    }
+
+    // ✅ REMOVED confirmation dialog — AudioSelectionScreen handles it
+
     try {
       await _audioPlayer.stop();
       await _audioPlayer.setReleaseMode(ReleaseMode.stop);
 
-      if (trackName == null || trackName == 'No Audio') {
-        setState(() {
-          _isAudioPlaying = false;
-          _selectedAudio = null;
-          _selectedUserAudioPath = null;
-        });
-        return;
-      }
-
-      // Check if it's a user uploaded audio
       final userTrack = _userAudioTracks.firstWhere(
         (track) => track.name == trackName,
         orElse: () =>
             UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
       );
 
-      // Check if it's an admin audio track
       final adminTrack = _adminAudioTracks.firstWhere(
         (track) => track.title == trackName,
         orElse: () =>
@@ -2861,15 +3545,8 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           _selectedAudio = trackName;
           _selectedUserAudioPath = null;
         });
-        _audioPlayer.onPlayerComplete.listen((event) {
-          if (mounted) setState(() => _isAudioPlaying = false);
-        });
-        return;
-      }
-
-      if (userTrack.filePath.isNotEmpty &&
+      } else if (userTrack.filePath.isNotEmpty &&
           await File(userTrack.filePath).exists()) {
-        // Play user uploaded audio
         await _audioPlayer.play(
           DeviceFileSource(userTrack.filePath),
           volume: 1.0,
@@ -2880,7 +3557,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           _selectedUserAudioPath = userTrack.filePath;
         });
       } else {
-        // Play static asset audio
         final selectedTrack = _audioTracks.firstWhere(
           (track) => track.name == trackName,
         );
@@ -4042,10 +4718,452 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   }
   // }
 
-
-
-
   ////////////////////////  New code for reducing the time of exporting audio//////////////
+
+  //   void _startDownload() async {
+  //     print("gggggggggggggggggggggggg${_planProvider?.isPurchase}");
+  //     // if (!_planProvider!.isPurchase) {
+  //     //   _showPremiumModal();
+  //     //   return;
+  //     // }
+  //     print("Starting download/export...");
+
+  //     setState(() {
+  //       _isDownloading = true;
+  //       _downloadProgress = 0;
+  //     });
+
+  //     try {
+  //       if (_isAnimated) {
+  //         setState(() => _downloadProgress = 0.05);
+  //         final tempDir = await getTemporaryDirectory();
+
+  //         final framesDir = Directory(
+  //           '${tempDir.path}/poster_frames_${DateTime.now().millisecondsSinceEpoch}',
+  //         );
+  //         await framesDir.create(recursive: true);
+
+  //         // Get audio duration
+  //         int videoDurationSec = 3;
+  //         if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //           try {
+  //             Duration? duration;
+
+  //             // Check user uploaded audio
+  //             final userTrack = _userAudioTracks.firstWhere(
+  //               (track) => track.name == _selectedAudio,
+  //               orElse: () =>
+  //                   UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //             );
+
+  //             if (userTrack.filePath.isNotEmpty &&
+  //                 await File(userTrack.filePath).exists()) {
+  //               final probe = AudioPlayer();
+  //               await probe.setSourceDeviceFile(userTrack.filePath);
+  //               duration = await probe.getDuration();
+  //               await probe.dispose();
+  //             } else {
+  //               final adminTrack = _adminAudioTracks.firstWhere(
+  //                 (track) => track.title == _selectedAudio,
+  //                 orElse: () => AdminAudioTrack(
+  //                   id: '',
+  //                   title: '',
+  //                   artist: '',
+  //                   audioUrl: '',
+  //                 ),
+  //               );
+
+  //               if (adminTrack.audioUrl.isNotEmpty) {
+  //                 final response = await http.get(Uri.parse(adminTrack.audioUrl));
+  //                 if (response.statusCode == 200) {
+  //                   final tempAudioProbe = File(
+  //                     '${tempDir.path}/temp_audio_probe_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //                   );
+  //                   await tempAudioProbe.writeAsBytes(response.bodyBytes);
+  //                   final probe = AudioPlayer();
+  //                   await probe.setSourceDeviceFile(tempAudioProbe.path);
+  //                   duration = await probe.getDuration();
+  //                   await probe.dispose();
+  //                   await tempAudioProbe.delete();
+  //                 }
+  //               }
+  //             }
+
+  //             if (duration != null && duration.inSeconds > 0) {
+  //               videoDurationSec = duration.inSeconds;
+  //               // Cap at 15 seconds to avoid long exports
+  //               if (videoDurationSec > 15) {
+  //                 videoDurationSec = 15;
+  //                 print("Capping video duration to 15 seconds for faster export");
+  //               }
+  //             }
+  //           } catch (e) {
+  //             print('Could not get audio duration: $e');
+  //           }
+  //         }
+
+  //         // OPTIMIZATION 1: Reduce FPS from 30 to 20
+  //         const int fps = 20;
+  //         final int totalFrames = videoDurationSec * fps;
+  //         final int animationDurationMs = videoDurationSec * 1000;
+
+  //         final bool wasAnimating = _animController.isAnimating;
+  //         if (wasAnimating) {
+  //           _animController.stop();
+  //           _brandAnimController.stop();
+  //         }
+
+  //         final int frameDelayMs = animationDurationMs ~/ totalFrames;
+
+  //         // OPTIMIZATION 2: Generate frames at lower resolution first
+  //         for (int i = 0; i < totalFrames; i++) {
+  //           final DateTime frameStartTime = DateTime.now();
+  //           final double progress = (i % fps) / fps;
+
+  //           double animValue;
+  //           switch (_selectedAnimation) {
+  //             case AnimationType.none:
+  //               animValue = 1.0;
+  //               break;
+  //             case AnimationType.rotate:
+  //             case AnimationType.flipIn:
+  //             case AnimationType.wobble:
+  //             case AnimationType.rollin:
+  //               animValue = progress;
+  //               break;
+  //             default:
+  //               animValue = (sin(progress * pi) * 0.5) + 0.5;
+  //           }
+
+  //           _animController.value = animValue;
+  //           _brandAnimController.value = progress;
+  //           setState(() {});
+
+  //           // OPTIMIZATION 3: Reduced wait time
+  //           await WidgetsBinding.instance.endOfFrame;
+  //           await Future.delayed(const Duration(milliseconds: 2));
+
+  //           final RenderRepaintBoundary? boundary =
+  //               _posterKey.currentContext?.findRenderObject()
+  //                   as RenderRepaintBoundary?;
+  //           if (boundary == null) throw Exception('Poster context not found');
+
+  //           // OPTIMIZATION 4: Lower pixel ratio from 2.0 to 1.2 for video
+  //           final ui.Image image = await boundary.toImage(pixelRatio: 1.2);
+  //           final ByteData? byteData = await image.toByteData(
+  //             format: ui.ImageByteFormat.png,
+  //           );
+  //           if (byteData == null) throw Exception('Frame $i encoding failed');
+
+  //           final File frameFile = File(
+  //             '${framesDir.path}/frame_${i.toString().padLeft(4, '0')}.png',
+  //           );
+  //           await frameFile.writeAsBytes(byteData.buffer.asUint8List());
+
+  //           final int elapsedMs = DateTime.now()
+  //               .difference(frameStartTime)
+  //               .inMilliseconds;
+  //           final int remainingDelay = frameDelayMs - elapsedMs;
+  //           if (remainingDelay > 0) {
+  //             await Future.delayed(Duration(milliseconds: remainingDelay));
+  //           }
+
+  //           setState(() => _downloadProgress = 0.05 + (i / totalFrames) * 0.55);
+  //         }
+
+  //         setState(() => _downloadProgress = 0.62);
+  //         String? audioFilePath;
+
+  //         if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+  //           try {
+  //             final userTrack = _userAudioTracks.firstWhere(
+  //               (track) => track.name == _selectedAudio,
+  //               orElse: () =>
+  //                   UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+  //             );
+
+  //             if (userTrack.filePath.isNotEmpty &&
+  //                 await File(userTrack.filePath).exists()) {
+  //               final File sourceFile = File(userTrack.filePath);
+  //               final File tempAudioFile = File(
+  //                 '${tempDir.path}/temp_user_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //               );
+  //               await sourceFile.copy(tempAudioFile.path);
+  //               audioFilePath = tempAudioFile.path;
+  //             } else {
+  //               final adminTrack = _adminAudioTracks.firstWhere(
+  //                 (track) => track.title == _selectedAudio,
+  //                 orElse: () => AdminAudioTrack(
+  //                   id: '',
+  //                   title: '',
+  //                   artist: '',
+  //                   audioUrl: '',
+  //                 ),
+  //               );
+
+  //               if (adminTrack.audioUrl.isNotEmpty) {
+  //                 final response = await http.get(Uri.parse(adminTrack.audioUrl));
+  //                 if (response.statusCode == 200) {
+  //                   final File tempAudioFile = File(
+  //                     '${tempDir.path}/temp_admin_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+  //                   );
+  //                   await tempAudioFile.writeAsBytes(response.bodyBytes);
+  //                   audioFilePath = tempAudioFile.path;
+  //                 }
+  //               }
+  //             }
+  //           } catch (e) {
+  //             print('Error loading audio for video: $e');
+  //           }
+  //         }
+
+  //         final String outputPath =
+  //             '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.mp4';
+
+  //         // OPTIMIZATION 5: Use faster FFmpeg presets
+  //         String ffmpegCommand;
+  //         if (audioFilePath != null && await File(audioFilePath).exists()) {
+  //           ffmpegCommand =
+  //               '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
+  //               '-i "$audioFilePath" '
+  //               '-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest '
+  //               '-crf 28 -preset ultrafast ' // CRF 28 is lower quality but MUCH faster, ultrafast preset
+  //               '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //               '"$outputPath"';
+  //         } else {
+  //           ffmpegCommand =
+  //               '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
+  //               '-c:v libx264 -pix_fmt yuv420p '
+  //               '-crf 28 -preset ultrafast ' // Faster encoding settings
+  //               '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+  //               '"$outputPath"';
+  //         }
+
+  //         setState(() => _downloadProgress = 0.65);
+  //         print("Running FFmpeg command...");
+  //         final ffmpegSession = await FFmpegKit.execute(ffmpegCommand);
+  //         final ReturnCode? returnCode = await ffmpegSession.getReturnCode();
+  //         setState(() => _downloadProgress = 0.88);
+
+  //         if (!ReturnCode.isSuccess(returnCode)) {
+  //           final logs = await ffmpegSession.getAllLogsAsString();
+  //           print("FFmpeg failed: $logs");
+  //           throw Exception('FFmpeg failed to create video');
+  //         }
+
+  //         // Check if video file exists and has content
+  //         final videoFile = File(outputPath);
+  //         if (!await videoFile.exists() || await videoFile.length() == 0) {
+  //           throw Exception('Generated video file is empty');
+  //         }
+
+  //         final bool hasAccess = await Gal.hasAccess();
+  //         if (!hasAccess) await Gal.requestAccess();
+  //         await Gal.putVideo(outputPath, album: 'Poster Editor');
+  //         setState(() => _downloadProgress = 1.0);
+
+  //         // Clean up
+  //         try {
+  //           await framesDir.delete(recursive: true);
+  //           if (audioFilePath != null) {
+  //             final audioFile = File(audioFilePath);
+  //             if (await audioFile.exists()) {
+  //               await audioFile.delete();
+  //             }
+  //           }
+  //         } catch (e) {}
+
+  //         if (wasAnimating && mounted) {
+  //           _animController.repeat(reverse: true);
+  //           _brandAnimController.repeat();
+  //         }
+
+  //         await Future.delayed(const Duration(milliseconds: 400));
+  //         if (mounted) {
+  //           setState(() => _isDownloading = false);
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(
+  //               content: Text(
+  //                 audioFilePath != null
+  //                     ? '✅ Video with audio saved to gallery!'
+  //                     : '✅ Video saved to gallery!',
+  //               ),
+  //               backgroundColor: const Color(0xFF2E7D32),
+  //               duration: const Duration(seconds: 3),
+  //             ),
+  //           );
+  //         }
+  //       }
+  //       // else {
+  //       //   // Static image download - keep as is but add optimization
+  //       //   setState(() => _downloadProgress = 0.2);
+  //       //   await Future.delayed(const Duration(milliseconds: 300));
+  //       //   final RenderRepaintBoundary? boundary =
+  //       //       _posterKey.currentContext?.findRenderObject()
+  //       //           as RenderRepaintBoundary?;
+  //       //   if (boundary == null) throw Exception('Poster not found.');
+  //       //   setState(() => _downloadProgress = 0.4);
+  //       //   await Future.delayed(const Duration(milliseconds: 100));
+  //       //   // For images, we can keep higher quality since it's just one frame
+  //       //   final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+  //       //   setState(() => _downloadProgress = 0.65);
+  //       //   final ByteData? byteData = await image.toByteData(
+  //       //     format: ui.ImageByteFormat.png,
+  //       //   );
+  //       //   if (byteData == null) throw Exception('Failed to encode image');
+  //       //   setState(() => _downloadProgress = 0.8);
+  //       //   final Uint8List pngBytes = byteData.buffer.asUint8List();
+  //       //   final Directory tempDir = await getTemporaryDirectory();
+  //       //   final String fileName =
+  //       //       'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+  //       //   final File file = File('${tempDir.path}/$fileName');
+  //       //   await file.writeAsBytes(pngBytes);
+  //       //   setState(() => _downloadProgress = 0.92);
+  //       //   final bool hasAccess = await Gal.hasAccess();
+  //       //   if (!hasAccess) await Gal.requestAccess();
+  //       //   await Gal.putImage(file.path, album: 'Poster Editor');
+  //       //   setState(() => _downloadProgress = 1.0);
+  //       //   await Future.delayed(const Duration(milliseconds: 400));
+  //       //   if (mounted) {
+  //       //     setState(() => _isDownloading = false);
+  //       //     ScaffoldMessenger.of(context).showSnackBar(
+  //       //       const SnackBar(
+  //       //         content: Text('✅ Image saved to gallery!'),
+  //       //         backgroundColor: Color(0xFF2E7D32),
+  //       //         duration: Duration(seconds: 3),
+  //       //       ),
+  //       //     );
+  //       //   }
+  //       // }
+  //       // else {
+  //       //   // ── Static image download ──
+  //       //   setState(() => _downloadProgress = 0.2);
+  //       //   await Future.delayed(const Duration(milliseconds: 300));
+
+  //       //   final RenderRepaintBoundary? boundary =
+  //       //       _posterKey.currentContext?.findRenderObject()
+  //       //           as RenderRepaintBoundary?;
+  //       //   if (boundary == null) throw Exception('Poster not found.');
+
+  //       //   setState(() => _downloadProgress = 0.4);
+  //       //   await Future.delayed(const Duration(milliseconds: 100));
+
+  //       //   // ✅ FIX: Use higher pixel ratio for better quality
+  //       //   // 3.0 for good quality, 4.0 for HD quality
+  //       //   final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+
+  //       //   setState(() => _downloadProgress = 0.65);
+  //       //   final ByteData? byteData = await image.toByteData(
+  //       //     format: ui.ImageByteFormat.png,
+  //       //   );
+  //       //   if (byteData == null) throw Exception('Failed to encode image');
+  //       //   setState(() => _downloadProgress = 0.8);
+
+  //       //   final Uint8List pngBytes = byteData.buffer.asUint8List();
+
+  //       //   // Optional: Compress the image if needed for file size
+  //       //   // Using image package to compress while maintaining quality
+  //       //   img.Image? decodedImage = img.decodeImage(pngBytes);
+  //       //   if (decodedImage != null) {
+  //       //     // Compress with 95% quality (good balance between quality and size)
+  //       //     final compressedBytes = img.encodeJpg(decodedImage, quality: 95);
+  //       //     final Directory tempDir = await getTemporaryDirectory();
+  //       //     final String fileName =
+  //       //         'poster_${DateTime.now().millisecondsSinceEpoch}.jpg';
+  //       //     final File file = File('${tempDir.path}/$fileName');
+  //       //     await file.writeAsBytes(compressedBytes);
+
+  //       //     final bool hasAccess = await Gal.hasAccess();
+  //       //     if (!hasAccess) await Gal.requestAccess();
+  //       //     await Gal.putImage(file.path, album: 'Poster Editor');
+  //       //     setState(() => _downloadProgress = 1.0);
+  //       //   } else {
+  //       //     // Fallback to PNG if compression fails
+  //       //     final Directory tempDir = await getTemporaryDirectory();
+  //       //     final String fileName =
+  //       //         'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+  //       //     final File file = File('${tempDir.path}/$fileName');
+  //       //     await file.writeAsBytes(pngBytes);
+
+  //       //     final bool hasAccess = await Gal.hasAccess();
+  //       //     if (!hasAccess) await Gal.requestAccess();
+  //       //     await Gal.putImage(file.path, album: 'Poster Editor');
+  //       //     setState(() => _downloadProgress = 1.0);
+  //       //   }
+
+  //       //   await Future.delayed(const Duration(milliseconds: 400));
+  //       //   if (mounted) {
+  //       //     setState(() => _isDownloading = false);
+  //       //     ScaffoldMessenger.of(context).showSnackBar(
+  //       //       const SnackBar(
+  //       //         content: Text('✅ Image saved to gallery!'),
+  //       //         backgroundColor: Color(0xFF2E7D32),
+  //       //         duration: Duration(seconds: 3),
+  //       //       ),
+  //       //     );
+  //       //   }
+  //       // }
+
+  //      else {
+  //   setState(() => _downloadProgress = 0.2);
+  //   await Future.delayed(const Duration(milliseconds: 300));
+
+  //   final RenderRepaintBoundary? boundary =
+  //       _posterKey.currentContext?.findRenderObject()
+  //           as RenderRepaintBoundary?;
+  //   if (boundary == null) throw Exception('Poster not found.');
+
+  //   setState(() => _downloadProgress = 0.4);
+  //   await Future.delayed(const Duration(milliseconds: 100));
+
+  //   final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+  //   setState(() => _downloadProgress = 0.65);
+
+  //   final ByteData? byteData = await image.toByteData(
+  //     format: ui.ImageByteFormat.png,  // Keep as PNG, no JPEG conversion
+  //   );
+  //   if (byteData == null) throw Exception('Failed to encode image');
+  //   setState(() => _downloadProgress = 0.8);
+
+  //   final Uint8List pngBytes = byteData.buffer.asUint8List();
+  //   final Directory tempDir = await getTemporaryDirectory();
+  //   final String fileName = 'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+  //   final File file = File('${tempDir.path}/$fileName');
+  //   await file.writeAsBytes(pngBytes);
+  //   setState(() => _downloadProgress = 0.92);
+
+  //   final bool hasAccess = await Gal.hasAccess();
+  //   if (!hasAccess) await Gal.requestAccess();
+  //   await Gal.putImage(file.path, album: 'Poster Editor');
+  //   setState(() => _downloadProgress = 1.0);
+
+  //   await Future.delayed(const Duration(milliseconds: 400));
+  //   if (mounted) {
+  //     setState(() => _isDownloading = false);
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('✅ Image saved to gallery!'),
+  //         backgroundColor: Color(0xFF2E7D32),
+  //         duration: Duration(seconds: 3),
+  //       ),
+  //     );
+  //   }
+  // }
+
+  //     } catch (e, stackTrace) {
+  //       print('Download error: $e\n$stackTrace');
+  //       if (mounted) {
+  //         setState(() => _isDownloading = false);
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text('Export failed: ${e.toString()}'),
+  //             backgroundColor: Colors.red,
+  //             duration: const Duration(seconds: 4),
+  //           ),
+  //         );
+  //       }
+  //     }
+  //   }
 
   void _startDownload() async {
     print("gggggggggggggggggggggggg${_planProvider?.isPurchase}");
@@ -4142,7 +5260,10 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
         final int frameDelayMs = animationDurationMs ~/ totalFrames;
 
-        // OPTIMIZATION 2: Generate frames at lower resolution first
+        // FIX: Use higher pixel ratio for better quality
+        // Use 2.0 for video frames instead of 1.2
+        const double pixelRatio = 2.0;
+
         for (int i = 0; i < totalFrames; i++) {
           final DateTime frameStartTime = DateTime.now();
           final double progress = (i % fps) / fps;
@@ -4166,7 +5287,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           _brandAnimController.value = progress;
           setState(() {});
 
-          // OPTIMIZATION 3: Reduced wait time
           await WidgetsBinding.instance.endOfFrame;
           await Future.delayed(const Duration(milliseconds: 2));
 
@@ -4175,8 +5295,8 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                   as RenderRepaintBoundary?;
           if (boundary == null) throw Exception('Poster context not found');
 
-          // OPTIMIZATION 4: Lower pixel ratio from 2.0 to 1.2 for video
-          final ui.Image image = await boundary.toImage(pixelRatio: 1.2);
+          // FIX: Use higher pixel ratio for better quality
+          final ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
           final ByteData? byteData = await image.toByteData(
             format: ui.ImageByteFormat.png,
           );
@@ -4247,22 +5367,24 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         final String outputPath =
             '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.mp4';
 
-        // OPTIMIZATION 5: Use faster FFmpeg presets
+        // FIX: Use better quality FFmpeg settings
         String ffmpegCommand;
         if (audioFilePath != null && await File(audioFilePath).exists()) {
           ffmpegCommand =
               '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
               '-i "$audioFilePath" '
               '-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest '
-              '-crf 28 -preset ultrafast ' // CRF 28 is lower quality but MUCH faster, ultrafast preset
+              '-crf 18 -preset medium ' // Better quality: CRF 18 (lower = better), preset medium
               '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+              '-profile:v high -level 4.0 '
               '"$outputPath"';
         } else {
           ffmpegCommand =
               '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
               '-c:v libx264 -pix_fmt yuv420p '
-              '-crf 28 -preset ultrafast ' // Faster encoding settings
+              '-crf 18 -preset medium ' // Better quality settings
               '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+              '-profile:v high -level 4.0 '
               '"$outputPath"';
         }
 
@@ -4320,128 +5442,55 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             ),
           );
         }
-      } 
-      // else {
-      //   // Static image download - keep as is but add optimization
-      //   setState(() => _downloadProgress = 0.2);
-      //   await Future.delayed(const Duration(milliseconds: 300));
+      } else {
+        // ── Static image download with HIGH QUALITY ──
+        setState(() => _downloadProgress = 0.2);
+        await Future.delayed(const Duration(milliseconds: 300));
 
-      //   final RenderRepaintBoundary? boundary =
-      //       _posterKey.currentContext?.findRenderObject()
-      //           as RenderRepaintBoundary?;
-      //   if (boundary == null) throw Exception('Poster not found.');
+        final RenderRepaintBoundary? boundary =
+            _posterKey.currentContext?.findRenderObject()
+                as RenderRepaintBoundary?;
+        if (boundary == null) throw Exception('Poster not found.');
 
-      //   setState(() => _downloadProgress = 0.4);
-      //   await Future.delayed(const Duration(milliseconds: 100));
+        setState(() => _downloadProgress = 0.4);
+        await Future.delayed(const Duration(milliseconds: 100));
 
-      //   // For images, we can keep higher quality since it's just one frame
-      //   final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
-      //   setState(() => _downloadProgress = 0.65);
-      //   final ByteData? byteData = await image.toByteData(
-      //     format: ui.ImageByteFormat.png,
-      //   );
-      //   if (byteData == null) throw Exception('Failed to encode image');
-      //   setState(() => _downloadProgress = 0.8);
+        // FIX: Use higher pixel ratio for better quality static image
+        // 4.0 for HD quality, 5.0 for ultra HD
+        final ui.Image image = await boundary.toImage(pixelRatio: 4.0);
+        setState(() => _downloadProgress = 0.65);
 
-      //   final Uint8List pngBytes = byteData.buffer.asUint8List();
-      //   final Directory tempDir = await getTemporaryDirectory();
-      //   final String fileName =
-      //       'poster_${DateTime.now().millisecondsSinceEpoch}.png';
-      //   final File file = File('${tempDir.path}/$fileName');
-      //   await file.writeAsBytes(pngBytes);
-      //   setState(() => _downloadProgress = 0.92);
+        final ByteData? byteData = await image.toByteData(
+          format: ui.ImageByteFormat.png,
+        );
+        if (byteData == null) throw Exception('Failed to encode image');
+        setState(() => _downloadProgress = 0.8);
 
-      //   final bool hasAccess = await Gal.hasAccess();
-      //   if (!hasAccess) await Gal.requestAccess();
-      //   await Gal.putImage(file.path, album: 'Poster Editor');
-      //   setState(() => _downloadProgress = 1.0);
+        final Uint8List pngBytes = byteData.buffer.asUint8List();
+        final Directory tempDir = await getTemporaryDirectory();
+        final String fileName =
+            'poster_${DateTime.now().millisecondsSinceEpoch}.png';
+        final File file = File('${tempDir.path}/$fileName');
+        await file.writeAsBytes(pngBytes);
+        setState(() => _downloadProgress = 0.92);
 
-      //   await Future.delayed(const Duration(milliseconds: 400));
-      //   if (mounted) {
-      //     setState(() => _isDownloading = false);
-      //     ScaffoldMessenger.of(context).showSnackBar(
-      //       const SnackBar(
-      //         content: Text('✅ Image saved to gallery!'),
-      //         backgroundColor: Color(0xFF2E7D32),
-      //         duration: Duration(seconds: 3),
-      //       ),
-      //     );
-      //   }
-      // }
-      
+        final bool hasAccess = await Gal.hasAccess();
+        if (!hasAccess) await Gal.requestAccess();
+        await Gal.putImage(file.path, album: 'Poster Editor');
+        setState(() => _downloadProgress = 1.0);
 
-      else {
-  // ── Static image download ──
-  setState(() => _downloadProgress = 0.2);
-  await Future.delayed(const Duration(milliseconds: 300));
-
-  final RenderRepaintBoundary? boundary =
-      _posterKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
-  if (boundary == null) throw Exception('Poster not found.');
-
-  setState(() => _downloadProgress = 0.4);
-  await Future.delayed(const Duration(milliseconds: 100));
-
-  // ✅ FIX: Use higher pixel ratio for better quality
-  // 3.0 for good quality, 4.0 for HD quality
-  final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-  
-  setState(() => _downloadProgress = 0.65);
-  final ByteData? byteData = await image.toByteData(
-    format: ui.ImageByteFormat.png,
-  );
-  if (byteData == null) throw Exception('Failed to encode image');
-  setState(() => _downloadProgress = 0.8);
-
-  final Uint8List pngBytes = byteData.buffer.asUint8List();
-  
-  // Optional: Compress the image if needed for file size
-  // Using image package to compress while maintaining quality
-  img.Image? decodedImage = img.decodeImage(pngBytes);
-  if (decodedImage != null) {
-    // Compress with 95% quality (good balance between quality and size)
-    final compressedBytes = img.encodeJpg(decodedImage, quality: 95);
-    final Directory tempDir = await getTemporaryDirectory();
-    final String fileName =
-        'poster_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final File file = File('${tempDir.path}/$fileName');
-    await file.writeAsBytes(compressedBytes);
-    
-    final bool hasAccess = await Gal.hasAccess();
-    if (!hasAccess) await Gal.requestAccess();
-    await Gal.putImage(file.path, album: 'Poster Editor');
-    setState(() => _downloadProgress = 1.0);
-  } else {
-    // Fallback to PNG if compression fails
-    final Directory tempDir = await getTemporaryDirectory();
-    final String fileName =
-        'poster_${DateTime.now().millisecondsSinceEpoch}.png';
-    final File file = File('${tempDir.path}/$fileName');
-    await file.writeAsBytes(pngBytes);
-    
-    final bool hasAccess = await Gal.hasAccess();
-    if (!hasAccess) await Gal.requestAccess();
-    await Gal.putImage(file.path, album: 'Poster Editor');
-    setState(() => _downloadProgress = 1.0);
-  }
-
-  await Future.delayed(const Duration(milliseconds: 400));
-  if (mounted) {
-    setState(() => _isDownloading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✅ Image saved to gallery!'),
-        backgroundColor: Color(0xFF2E7D32),
-        duration: Duration(seconds: 3),
-      ),
-    );
-  }
-}
-
-
-
-
+        await Future.delayed(const Duration(milliseconds: 400));
+        if (mounted) {
+          setState(() => _isDownloading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Image saved to gallery!'),
+              backgroundColor: Color(0xFF2E7D32),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
     } catch (e, stackTrace) {
       print('Download error: $e\n$stackTrace');
       if (mounted) {
@@ -4456,9 +5505,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
       }
     }
   }
-
-
-
 
   ////// This is the used code previously for exporting the audio/////////////
 
@@ -5129,7 +6175,13 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                                     fit: BoxFit.cover,
                                   ),
                                 )
-                              : (_brandInfo.logoAsset.isNotEmpty
+                              : (_brandInfo.logoAsset.isNotEmpty &&
+                                        (_brandInfo.logoAsset.startsWith(
+                                              'http://',
+                                            ) ||
+                                            _brandInfo.logoAsset.startsWith(
+                                              'https://',
+                                            ))
                                     ? ClipOval(
                                         child: Image.network(
                                           _brandInfo.logoAsset,
@@ -5413,10 +6465,82 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   return base;
   // }
 
+  void _openAudioSelectionScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => AudioSelectionScreen(
+          adminAudioTracks: _adminAudioTracks,
+          userAudioTracks: _userAudioTracks,
+          selectedAudio: _selectedAudio,
+          isLoadingAudios: _isLoadingAudios,
+          audioLoadError: _audioLoadError,
+          onAudioSelected: (trackName) async {
+            // Switch to Frames tab after audio confirmed
+            setState(() => _activeTab = BottomTab.frames);
+            await _playAudio(trackName);
+          },
+          onAudioRemoved: () async {
+            setState(() => _activeTab = BottomTab.frames);
+            await _playAudio(null);
+          },
+          onPickUserAudio: _pickUserAudio,
+          onDeleteUserAudio: _showDeleteAudioConfirmation,
+          onRetryFetch: _fetchAdminAudios,
+        ),
+      ),
+    );
+  }
+
   Widget _buildPosterBackground() {
     final isDarkMode = _isDarkMode;
-    Widget img;
 
+    // While audio confirmation dialog is open — hide the poster image
+    if (_isSelectingAudio) {
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: isDarkMode ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5C518).withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.music_note_rounded,
+                  size: 48,
+                  color: Color(0xFFF5C518),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Selecting Audio...',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDarkMode ? Colors.white70 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Poster will appear after you confirm',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDarkMode ? Colors.white38 : Colors.black38,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget img;
     if (_uploadedImagePath != null) {
       img = Image.file(
         File(_uploadedImagePath!),
@@ -5444,7 +6568,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
       ],
     );
 
-    // Apply effects
     base = _applyEffect(base, _selectedEffect, _effectStrength);
 
     if (_selectedAnimation != AnimationType.none) {
@@ -5455,6 +6578,49 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     }
     return base;
   }
+
+  // Widget _buildPosterBackground() {
+  //   final isDarkMode = _isDarkMode;
+  //   Widget img;
+
+  //   if (_uploadedImagePath != null) {
+  //     img = Image.file(
+  //       File(_uploadedImagePath!),
+  //       fit: BoxFit.cover,
+  //       width: double.infinity,
+  //       height: double.infinity,
+  //     );
+  //   } else {
+  //     img = Image.network(
+  //       widget.posterAsset,
+  //       fit: BoxFit.fill,
+  //       width: double.infinity,
+  //       height: double.infinity,
+  //     );
+  //   }
+
+  //   Widget base = Stack(
+  //     children: [
+  //       Container(
+  //         width: double.infinity,
+  //         height: double.infinity,
+  //         color: isDarkMode ? const Color(0xFF1A1A1A) : _bgColor,
+  //       ),
+  //       img,
+  //     ],
+  //   );
+
+  //   // Apply effects
+  //   base = _applyEffect(base, _selectedEffect, _effectStrength);
+
+  //   if (_selectedAnimation != AnimationType.none) {
+  //     return AnimatedBuilder(
+  //       animation: _animValue,
+  //       builder: (_, __) => _applyAnimation(base),
+  //     );
+  //   }
+  //   return base;
+  // }
 
   Widget _applyAnimation(Widget child) {
     switch (_selectedAnimation) {
@@ -9715,6 +10881,60 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     );
   }
 
+  // Widget _logoWidget(Color bgColor, {double size = 52}) {
+  //   if (_uploadedLogoPath != null) {
+  //     return Container(
+  //       width: size,
+  //       height: size,
+  //       decoration: BoxDecoration(
+  //         shape: BoxShape.circle,
+  //         border: Border.all(color: Colors.white, width: 2),
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: Colors.black.withOpacity(0.25),
+  //             blurRadius: 6,
+  //             offset: const Offset(0, 2),
+  //           ),
+  //         ],
+  //       ),
+  //       child: ClipOval(
+  //         child: Image.file(
+  //           File(_uploadedLogoPath!),
+  //           fit: BoxFit.cover,
+  //           width: size,
+  //           height: size,
+  //         ),
+  //       ),
+  //     );
+  //   }
+  //   return Container(
+  //     width: size,
+  //     height: size,
+  //     decoration: BoxDecoration(
+  //       shape: BoxShape.circle,
+  //       color: bgColor,
+  //       border: Border.all(color: Colors.white, width: 2),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(0.25),
+  //           blurRadius: 6,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: const Center(
+  //       child: Text(
+  //         'LOGO',
+  //         style: TextStyle(
+  //           fontSize: 9,
+  //           fontWeight: FontWeight.bold,
+  //           color: Colors.white,
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _logoWidget(Color bgColor, {double size = 52}) {
     if (_uploadedLogoPath != null) {
       return Container(
@@ -9723,13 +10943,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.25),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: ClipOval(
           child: Image.file(
@@ -9741,6 +10954,34 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         ),
       );
     }
+
+    // ✅ Check if logoAsset is a valid network URL before loading
+    if (_brandInfo.logoAsset.isNotEmpty &&
+        (_brandInfo.logoAsset.startsWith('http://') ||
+            _brandInfo.logoAsset.startsWith('https://'))) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+        ),
+        child: ClipOval(
+          child: Image.network(
+            _brandInfo.logoAsset,
+            fit: BoxFit.cover,
+            width: size,
+            height: size,
+            errorBuilder: (_, __, ___) => _defaultLogoWidget(bgColor, size),
+          ),
+        ),
+      );
+    }
+
+    return _defaultLogoWidget(bgColor, size);
+  }
+
+  Widget _defaultLogoWidget(Color bgColor, double size) {
     return Container(
       width: size,
       height: size,
@@ -9748,13 +10989,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         shape: BoxShape.circle,
         color: bgColor,
         border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.25),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: const Center(
         child: Text(
@@ -10056,61 +11290,66 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   );
   // }
 
-
-
-
   Widget _buildTextWidget(OverlayTextItem item) {
-  final isSelected = _selectedTextId == item.id;
-  
-  // Cache the text style
-  final textStyle = _getCachedGoogleFont(item).copyWith(
-    shadows: item.hasShadow
-        ? const [Shadow(color: Colors.black38, offset: Offset(2, 2), blurRadius: 4)]
-        : null,
-  );
-  
-  return Positioned(
-    left: item.position.dx,
-    top: item.position.dy,
-    child: _DraggableTextWidget(
-      key: ValueKey(item.id), // Important: Use key to help Flutter with updates
-      item: item,
-      isSelected: isSelected,
-      textStyle: textStyle,
-      onPositionChanged: (newPosition) {
-        setState(() {
-          final idx = _texts.indexWhere((t) => t.id == item.id);
-          if (idx != -1) {
-            _texts[idx] = _texts[idx].copyWith(position: newPosition);
-          }
-        });
-      },
-      onTap: () {
-        setState(() {
-          _selectedTextId = item.id;
-          _selectedBrandItemId = null;
-        });
-        _openTextEditor(item);
-      },
-      onDelete: () {
-        setState(() {
-          _texts.removeWhere((t) => t.id == item.id);
-          if (_selectedTextId == item.id) {
-            _selectedTextId = null;
-          }
-        });
-      },
-      onResize: (newSize) {
-        setState(() {
-          final idx = _texts.indexWhere((t) => t.id == item.id);
-          if (idx != -1) {
-            _texts[idx] = _texts[idx].copyWith(fontSize: newSize);
-          }
-        });
-      },
-    ),
-  );
-}
+    final isSelected = _selectedTextId == item.id;
+
+    // Cache the text style
+    final textStyle = _getCachedGoogleFont(item).copyWith(
+      shadows: item.hasShadow
+          ? const [
+              Shadow(
+                color: Colors.black38,
+                offset: Offset(2, 2),
+                blurRadius: 4,
+              ),
+            ]
+          : null,
+    );
+
+    return Positioned(
+      left: item.position.dx,
+      top: item.position.dy,
+      child: _DraggableTextWidget(
+        key: ValueKey(
+          item.id,
+        ), // Important: Use key to help Flutter with updates
+        item: item,
+        isSelected: isSelected,
+        textStyle: textStyle,
+        onPositionChanged: (newPosition) {
+          setState(() {
+            final idx = _texts.indexWhere((t) => t.id == item.id);
+            if (idx != -1) {
+              _texts[idx] = _texts[idx].copyWith(position: newPosition);
+            }
+          });
+        },
+        onTap: () {
+          setState(() {
+            _selectedTextId = item.id;
+            _selectedBrandItemId = null;
+          });
+          _openTextEditor(item);
+        },
+        onDelete: () {
+          setState(() {
+            _texts.removeWhere((t) => t.id == item.id);
+            if (_selectedTextId == item.id) {
+              _selectedTextId = null;
+            }
+          });
+        },
+        onResize: (newSize) {
+          setState(() {
+            final idx = _texts.indexWhere((t) => t.id == item.id);
+            if (idx != -1) {
+              _texts[idx] = _texts[idx].copyWith(fontSize: newSize);
+            }
+          });
+        },
+      ),
+    );
+  }
 
   // Widget _buildTextWidget(OverlayTextItem item) {
   //   final isSelected = _selectedTextId == item.id;
@@ -11660,206 +12899,203 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     );
   }
 
-
-
-
   void _showColorPicker(OverlayTextItem sel) {
-  final isDarkMode = _isDarkMode;
-  Color tempColor = sel.color;
+    final isDarkMode = _isDarkMode;
+    Color tempColor = sel.color;
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) {
-      return StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return Container(
-            decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
               ),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Drag handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? Colors.grey[700]
-                        : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Title
-                Row(
-                  children: [
-                    Icon(
-                      Icons.color_lens,
-                      size: 24,
-                      color: const Color(0xFFF5C518),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Choose Text Color',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Color picker - FIX: Use Flexible with constraints instead of fixed height
-                Flexible(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(ctx).size.height * 0.4,
-                      minHeight: 200,
-                    ),
-                    child: ColorPicker(
-                      pickerColor: tempColor,
-                      onColorChanged: (color) {
-                        setSheetState(() {
-                          tempColor = color;
-                        });
-                      },
-                      showLabel: false,
-                      pickerAreaHeightPercent: 0.8,
-                      enableAlpha: false,
-                      displayThumbColor: true,
-                      paletteType: PaletteType.hsv,
-                      portraitOnly: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Color preview with RGB
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: tempColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
                       color: isDarkMode
-                          ? Colors.white24
+                          ? Colors.grey[700]
                           : Colors.grey.shade300,
-                      width: 2,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  child: Column(
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Row(
                     children: [
-                      Text(
-                        'Selected Color',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: tempColor.computeLuminance() > 0.5
-                              ? Colors.black87
-                              : Colors.white,
-                        ),
+                      Icon(
+                        Icons.color_lens,
+                        size: 24,
+                        color: const Color(0xFFF5C518),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: tempColor.computeLuminance() > 0.5
-                              ? Colors.black54
-                              : Colors.white70,
-                        ),
-                      ),
-                      Text(
-                        '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: tempColor.computeLuminance() > 0.5
-                              ? Colors.black54
-                              : Colors.white70,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Choose Text Color',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: isDarkMode
-                              ? Colors.white70
-                              : Colors.black87,
-                          side: BorderSide(
-                            color: isDarkMode
-                                ? Colors.white38
-                                : Colors.grey.shade400,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text('Cancel'),
+                  // Color picker - FIX: Use Flexible with constraints instead of fixed height
+                  Flexible(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(ctx).size.height * 0.4,
+                        minHeight: 200,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            final i = _texts.indexWhere(
-                              (t) => t.id == sel.id,
-                            );
-                            if (i != -1) {
-                              _texts[i] = _texts[i].copyWith(
-                                color: tempColor,
-                              );
-                            }
+                      child: ColorPicker(
+                        pickerColor: tempColor,
+                        onColorChanged: (color) {
+                          setSheetState(() {
+                            tempColor = color;
                           });
-                          Navigator.pop(ctx);
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF5C518),
-                          foregroundColor: Colors.black87,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Apply',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        showLabel: false,
+                        pickerAreaHeightPercent: 0.8,
+                        enableAlpha: false,
+                        displayThumbColor: true,
+                        paletteType: PaletteType.hsv,
+                        portraitOnly: true,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Color preview with RGB
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: tempColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDarkMode
+                            ? Colors.white24
+                            : Colors.grey.shade300,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Selected Color',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: tempColor.computeLuminance() > 0.5
+                                ? Colors.black87
+                                : Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'RGB(${tempColor.red}, ${tempColor.green}, ${tempColor.blue})',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: tempColor.computeLuminance() > 0.5
+                                ? Colors.black54
+                                : Colors.white70,
+                          ),
+                        ),
+                        Text(
+                          '#${tempColor.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: tempColor.computeLuminance() > 0.5
+                                ? Colors.black54
+                                : Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isDarkMode
+                                ? Colors.white70
+                                : Colors.black87,
+                            side: BorderSide(
+                              color: isDarkMode
+                                  ? Colors.white38
+                                  : Colors.grey.shade400,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              final i = _texts.indexWhere(
+                                (t) => t.id == sel.id,
+                              );
+                              if (i != -1) {
+                                _texts[i] = _texts[i].copyWith(
+                                  color: tempColor,
+                                );
+                              }
+                            });
+                            Navigator.pop(ctx);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF5C518),
+                            foregroundColor: Colors.black87,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            'Apply',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   // void _showColorPicker(OverlayTextItem sel) {
   //   final isDarkMode = _isDarkMode;
@@ -12058,8 +13294,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //     },
   //   );
   // }
-
-
 
   void _showBgColorPicker(OverlayTextItem sel) {
     final isDarkMode = _isDarkMode;
@@ -14715,7 +15949,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             ),
           ),
           SizedBox(
-            height: 100,
+            height: 60,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -15004,7 +16238,14 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           children: tabs
               .map(
                 (t) => GestureDetector(
-                  onTap: () => setState(() => _activeTab = t.tab),
+                  onTap: () {
+                    if (t.tab == BottomTab.audio) {
+                      _openAudioSelectionScreen();
+                    } else {
+                      setState(() => _activeTab = t.tab);
+                    }
+                  },
+                  // onTap: () => setState(() => _activeTab = t.tab),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(
@@ -15608,8 +16849,6 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                     ),
                   ),
                 ),
-
-
 
                 ///////////// This part is hidden///
 
@@ -16355,7 +17594,6 @@ class AdminAudioTrack {
   }
 }
 
-
 ////// Newly added class for add text movement/////////////
 
 class _DraggableTextWidget extends StatefulWidget {
@@ -16417,7 +17655,8 @@ class _DraggableTextWidgetState extends State<_DraggableTextWidget> {
                           : widget.item.backgroundColor,
                     )
                   : null,
-              color: !widget.item.hasBorder &&
+              color:
+                  !widget.item.hasBorder &&
                       widget.item.backgroundColor != Colors.transparent
                   ? widget.item.backgroundColor
                   : null,
@@ -16444,8 +17683,11 @@ class _DraggableTextWidgetState extends State<_DraggableTextWidget> {
                 },
                 onPanUpdate: (d) {
                   if (_resizingTextId != widget.item.id) return;
-                  final delta = (d.globalPosition.dx - _resizeStartOffset!.dx +
-                          d.globalPosition.dy - _resizeStartOffset!.dy) /
+                  final delta =
+                      (d.globalPosition.dx -
+                          _resizeStartOffset!.dx +
+                          d.globalPosition.dy -
+                          _resizeStartOffset!.dy) /
                       2;
                   final newSize = (_resizeStartFontSize! + delta).clamp(
                     8.0,
@@ -16564,6 +17806,598 @@ class _DraggableTextWidgetState extends State<_DraggableTextWidget> {
           ),
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+//  AUDIO SELECTION SCREEN
+// ─────────────────────────────────────────────
+
+class AudioSelectionScreen extends StatefulWidget {
+  final List<AdminAudioTrack> adminAudioTracks;
+  final List<UserAudioTrack> userAudioTracks;
+  final String? selectedAudio;
+  final bool isLoadingAudios;
+  final String? audioLoadError;
+  final Future<void> Function(String trackName) onAudioSelected;
+  final Future<void> Function() onAudioRemoved;
+  final VoidCallback onPickUserAudio;
+  final void Function(UserAudioTrack) onDeleteUserAudio;
+  final VoidCallback onRetryFetch;
+
+  const AudioSelectionScreen({
+    Key? key,
+    required this.adminAudioTracks,
+    required this.userAudioTracks,
+    required this.selectedAudio,
+    required this.isLoadingAudios,
+    required this.audioLoadError,
+    required this.onAudioSelected,
+    required this.onAudioRemoved,
+    required this.onPickUserAudio,
+    required this.onDeleteUserAudio,
+    required this.onRetryFetch,
+  }) : super(key: key);
+
+  @override
+  State<AudioSelectionScreen> createState() => _AudioSelectionScreenState();
+}
+
+class _AudioSelectionScreenState extends State<AudioSelectionScreen> {
+  String? _previewAudio; // track tapped but not confirmed yet
+  String? _confirmedAudio;
+
+  @override
+  void initState() {
+    super.initState();
+    _confirmedAudio = widget.selectedAudio;
+  }
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+
+  void _onTrackTap(String trackName) {
+    setState(() => _previewAudio = trackName);
+    _showConfirmDialog(trackName);
+  }
+
+  void _showConfirmDialog(String trackName) {
+    final isDark = _isDark;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5C518).withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.music_note_rounded,
+                  size: 36,
+                  color: Color(0xFFF5C518),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Add Audio?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add "$trackName" to your poster?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white54 : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        setState(() => _previewAudio = null);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        side: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'No',
+                        style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx); // close dialog
+                        setState(() {
+                          _confirmedAudio = trackName;
+                          _previewAudio = null;
+                        });
+                        // call parent callback then pop back to editor
+                        await widget.onAudioSelected(trackName);
+                        if (mounted) Navigator.pop(context); // back to editor
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF5C518),
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Yes, Add',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = _isDark;
+    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F5);
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final textPrimary = isDark ? Colors.white : Colors.black87;
+    final textSecondary = isDark ? Colors.white54 : Colors.black45;
+
+    return Scaffold(
+      backgroundColor: bg,
+      appBar: AppBar(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Choose Audio',
+          style: TextStyle(
+            color: textPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        actions: [
+          // Remove audio button
+          if (_confirmedAudio != null)
+            TextButton.icon(
+              onPressed: () async {
+                await widget.onAudioRemoved();
+                if (mounted) Navigator.pop(context);
+              },
+              icon: const Icon(Icons.volume_off, color: Colors.red, size: 18),
+              label: const Text(
+                'Remove',
+                style: TextStyle(color: Colors.red, fontSize: 13),
+              ),
+            ),
+        ],
+      ),
+      body: widget.isLoadingAudios
+          ? const Center(child: CircularProgressIndicator())
+          : CustomScrollView(
+              slivers: [
+                // ── Currently selected banner ──
+                if (_confirmedAudio != null)
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5C518).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFF5C518),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.music_note,
+                            color: Color(0xFFF5C518),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Currently selected',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                                Text(
+                                  _confirmedAudio!,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: textPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.check_circle,
+                            color: Color(0xFFF5C518),
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // ── Upload section ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                    child: Text(
+                      'Upload Your Audio',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textSecondary,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GestureDetector(
+                      onTap: widget.onPickUserAudio,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFF5C518),
+                            width: 1.5,
+                            style: BorderStyle.solid,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFFF5C518,
+                                ).withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.upload_file,
+                                color: Color(0xFFF5C518),
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Upload from device',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Max 30 seconds • MP3, M4A, WAV',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ── User uploaded tracks ──
+                if (widget.userAudioTracks.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                      child: Text(
+                        'Your Uploads',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textSecondary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((_, i) {
+                      final track = widget.userAudioTracks[i];
+                      final isSelected = _confirmedAudio == track.name;
+                      return _AudioTrackTile(
+                        title: track.name,
+                        subtitle: '${track.durationInSeconds}s • Your upload',
+                        icon: Icons.phone_android,
+                        iconColor: Colors.purple,
+                        isSelected: isSelected,
+                        cardBg: cardBg,
+                        textPrimary: textPrimary,
+                        textSecondary: textSecondary,
+                        onTap: () => _onTrackTap(track.name),
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                          onPressed: () => widget.onDeleteUserAudio(track),
+                        ),
+                      );
+                    }, childCount: widget.userAudioTracks.length),
+                  ),
+                ],
+
+                // ── Admin/library tracks ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Music Library',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: textSecondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5C518).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${widget.adminAudioTracks.length}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFFF5C518),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                widget.audioLoadError != null
+                    ? SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.wifi_off,
+                                size: 48,
+                                color: textSecondary,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Could not load music library',
+                                style: TextStyle(color: textSecondary),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: widget.onRetryFetch,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF5C518),
+                                  foregroundColor: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : widget.adminAudioTracks.isEmpty
+                    ? SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Center(
+                            child: Text(
+                              'No tracks available',
+                              style: TextStyle(color: textSecondary),
+                            ),
+                          ),
+                        ),
+                      )
+                    : SliverList(
+                        delegate: SliverChildBuilderDelegate((_, i) {
+                          final track = widget.adminAudioTracks[i];
+                          final isSelected = _confirmedAudio == track.title;
+                          return _AudioTrackTile(
+                            title: track.title,
+                            subtitle: track.artist.isNotEmpty
+                                ? track.artist
+                                : 'Music Library',
+                            icon: Icons.music_note,
+                            iconColor: Colors.blueAccent,
+                            isSelected: isSelected,
+                            cardBg: cardBg,
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary,
+                            onTap: () => _onTrackTap(track.title),
+                          );
+                        }, childCount: widget.adminAudioTracks.length),
+                      ),
+
+                // Bottom padding
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
+            ),
+    );
+  }
+}
+
+// ─── Reusable audio tile ───────────────────────
+
+class _AudioTrackTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final bool isSelected;
+  final Color cardBg;
+  final Color textPrimary;
+  final Color textSecondary;
+  final VoidCallback onTap;
+  final Widget? trailing;
+
+  const _AudioTrackTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.iconColor,
+    required this.isSelected,
+    required this.cardBg,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.onTap,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFF5C518).withOpacity(0.12)
+              : cardBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFF5C518) : Colors.transparent,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
+                      color: textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 11, color: textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (trailing != null) trailing!,
+            if (isSelected && trailing == null)
+              const Icon(
+                Icons.check_circle,
+                color: Color(0xFFF5C518),
+                size: 22,
+              ),
+            if (!isSelected && trailing == null)
+              Icon(Icons.play_circle_outline, color: textSecondary, size: 22),
+          ],
+        ),
+      ),
     );
   }
 }

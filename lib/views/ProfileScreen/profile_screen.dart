@@ -383,27 +383,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           builder: (context, myPlanProvider, child) {
                             return Column(
                               children: [
-                                _buildMenuItem(
-                                  icon: Icons.person,
-                                  title: 'profile',
-                                  onTap: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const EditProfile(),
-                                      ),
-                                    );
+                                // _buildMenuItem(
+                                //   icon: Icons.person,
+                                //   title: 'profile',
+                                //   onTap: () async {
+                                //     final result = await Navigator.push(
+                                //       context,
+                                //       MaterialPageRoute(
+                                //         builder: (context) =>
+                                //             const EditProfile(),
+                                //       ),
+                                //     );
 
-                                    // Refresh profile data if edit was successful
-                                    if (result == true) {
-                                      _refreshProfileAfterEdit();
-                                    }
-                                  },
-                                  isPremiumRequired: false,
-                                  isPurchased:
-                                      myPlanProvider.isPurchase ?? false,
-                                ),
+                                //     // Refresh profile data if edit was successful
+                                //     if (result == true) {
+                                //       _refreshProfileAfterEdit();
+                                //     }
+                                //   },
+                                //   isPremiumRequired: false,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
+
+
+
+                                _buildMenuItem(
+  icon: Icons.person,
+  title: 'profile',
+  onTap: () {
+    if (myPlanProvider.isPurchase == true) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const EditProfile()),
+      ).then((result) {
+        if (result == true) _refreshProfileAfterEdit();
+      });
+    } else {
+      _showPremiumRequiredDialog(context);
+    }
+  },
+  isPremiumRequired: true,
+  isPurchased: myPlanProvider.isPurchase ?? false,
+),
 
                                 _buildMenuItem(
                                   icon: Icons.policy,
@@ -439,68 +460,134 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   },
                                 ),
 
-                                _buildMenuItem(
-                                  icon: Icons.info_outline,
-                                  title: 'About Us',
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => AboutScreen(),
-                                      ),
-                                    );
-                                  },
-                                  isPremiumRequired: false,
-                                  isPurchased:
-                                      myPlanProvider.isPurchase ?? false,
-                                ),
+                                // _buildMenuItem(
+                                //   icon: Icons.info_outline,
+                                //   title: 'About Us',
+                                //   onTap: () {
+                                //     Navigator.push(
+                                //       context,
+                                //       MaterialPageRoute(
+                                //         builder: (context) => AboutScreen(),
+                                //       ),
+                                //     );
+                                //   },
+                                //   isPremiumRequired: false,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
+
 
                                 _buildMenuItem(
-                                  icon: Icons.wallet,
-                                  title: 'Wallet',
-                                  onTap: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const WalletScreen(),
-                                      ),
-                                    );
+  icon: Icons.info_outline,
+  title: 'About Us',
+  onTap: () {
+    if (myPlanProvider.isPurchase == true) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AboutScreen()),
+      );
+    } else {
+      _showPremiumRequiredDialog(context);
+    }
+  },
+  isPremiumRequired: true,
+  isPurchased: myPlanProvider.isPurchase ?? false,
+),
 
-                                    // Refresh profile data if edit was successful
-                                    if (result == true) {
-                                      _refreshProfileAfterEdit();
-                                    }
-                                  },
-                                  isPremiumRequired: false,
-                                  isPurchased:
-                                      myPlanProvider.isPurchase ?? false,
-                                ),
+                                // _buildMenuItem(
+                                //   icon: Icons.wallet,
+                                //   title: 'Wallet',
+                                //   onTap: () async {
+                                //     final result = await Navigator.push(
+                                //       context,
+                                //       MaterialPageRoute(
+                                //         builder: (context) =>
+                                //             const WalletScreen(),
+                                //       ),
+                                //     );
+
+                                //     // Refresh profile data if edit was successful
+                                //     if (result == true) {
+                                //       _refreshProfileAfterEdit();
+                                //     }
+                                //   },
+                                //   isPremiumRequired: false,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
+
 
                                 _buildMenuItem(
-                                  icon: Icons.wallet,
-                                  title: 'Payment History',
-                                  onTap: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => PaymentHistoryScreen(
-                                          userId:
-                                              '68d4ee631503cc1836dbc673', // Replace with actual user ID
-                                        ),
-                                      ),
-                                    );
+  icon: Icons.wallet,
+  title: 'Wallet',
+  onTap: () {
+    if (myPlanProvider.isPurchase == true) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const WalletScreen()),
+      ).then((result) {
+        if (result == true) _refreshProfileAfterEdit();
+      });
+    } else {
+      _showPremiumRequiredDialog(context);
+    }
+  },
+  isPremiumRequired: true,
+  isPurchased: myPlanProvider.isPurchase ?? false,
+),
 
-                                    // Refresh profile data if edit was successful
-                                    if (result == true) {
-                                      _refreshProfileAfterEdit();
-                                    }
-                                  },
-                                  isPremiumRequired: false,
-                                  isPurchased:
-                                      myPlanProvider.isPurchase ?? false,
-                                ),
 
+                                // _buildMenuItem(
+                                //   icon: Icons.wallet,
+                                //   title: 'Payment History',
+                                //   onTap: () async {
+                                //     if(myPlanProvider.isPurchase==true){
+
+                                //     }
+                                //     final result = await Navigator.push(
+                                //       context,
+                                //       MaterialPageRoute(
+                                //         builder: (context) => PaymentHistoryScreen(
+                                //           userId:
+                                //               user!.user.id, // Replace with actual user ID
+                                //         ),
+                                //       ),
+                                //     );
+
+                                //     // Refresh profile data if edit was successful
+                                //     if (result == true) {
+                                //       _refreshProfileAfterEdit();
+                                //     }
+                                //   },
+                                //   isPremiumRequired: false,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
+
+
+
+
+
+_buildMenuItem(
+  icon: Icons.wallet,
+  title: 'Payment History',
+  onTap: () {
+    if (myPlanProvider.isPurchase == true) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentHistoryScreen(userId: user!.user.id),
+        ),
+      ).then((result) {
+        if (result == true) _refreshProfileAfterEdit();
+      });
+    } else {
+      _showPremiumRequiredDialog(context);
+    }
+  },
+  isPremiumRequired: true,
+  isPurchased: myPlanProvider.isPurchase ?? false,
+),
                                 // _buildMenuItem(
                                 //   icon: Icons.request_page,
                                 //   title: 'invoice',
