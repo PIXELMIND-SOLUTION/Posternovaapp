@@ -432,7 +432,7 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFBF360C), Color(0xFFE64A19), Color(0xFFFF8F00)],
+          colors: [const Color.fromARGB(255, 48, 81, 217), const Color.fromARGB(255, 48, 81, 217), const Color.fromARGB(255, 48, 81, 217)],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),

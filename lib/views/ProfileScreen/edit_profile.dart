@@ -506,12 +506,12 @@ class _EditProfileState extends State<EditProfile> {
         ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: const Color(0xFFF5C518),
+        backgroundColor: const Color.fromARGB(255, 48, 81, 217),
         foregroundColor: Colors.black87,
       ),
       body: _isLoading
           ? Center(
-              child: CircularProgressIndicator(color: const Color(0xFFF5C518)),
+              child: CircularProgressIndicator(color: const Color.fromARGB(255, 48, 81, 217)),
             )
           : Consumer<AuthProvider>(
               builder: (context, authProvider, child) {
@@ -536,8 +536,8 @@ class _EditProfileState extends State<EditProfile> {
           colors: isDarkMode
               ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
               : [
-                  const Color(0xFFF5C518),
-                  const Color(0xFFF5C518).withOpacity(0.8),
+                  const Color.fromARGB(255, 48, 81, 217),
+                  const Color.fromARGB(255, 48, 81, 217),
                 ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -555,7 +555,7 @@ class _EditProfileState extends State<EditProfile> {
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isDarkMode
-                          ? const Color(0xFFF5C518)
+                          ? const Color.fromARGB(255, 48, 81, 217)
                           : Colors.white,
                       width: 4,
                     ),
@@ -586,7 +586,7 @@ class _EditProfileState extends State<EditProfile> {
                           )
                         : (isUploading
                               ? const CircularProgressIndicator(
-                                  color: Color(0xFFF5C518),
+                                  color: const Color.fromARGB(255, 48, 81, 217),
                                   strokeWidth: 3,
                                 )
                               : null),
@@ -613,8 +613,8 @@ class _EditProfileState extends State<EditProfile> {
                       child: Icon(
                         Icons.camera_alt,
                         color: isDarkMode
-                            ? const Color(0xFFF5C518)
-                            : const Color(0xFFF5C518),
+                            ? const Color.fromARGB(255, 48, 81, 217)
+                            : const Color.fromARGB(255, 48, 81, 217),
                         size: 20,
                       ),
                     ),
@@ -715,7 +715,7 @@ class _EditProfileState extends State<EditProfile> {
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _updateProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF5C518),
+                  backgroundColor: const Color.fromARGB(255, 48, 81, 217),
                   foregroundColor: Colors.black87,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -784,7 +784,7 @@ class _EditProfileState extends State<EditProfile> {
         labelStyle: TextStyle(
           color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
         ),
-        prefixIcon: Icon(icon, color: const Color(0xFFF5C518)),
+        prefixIcon: Icon(icon, color: const Color.fromARGB(255, 48, 81, 217)),
         suffixIcon: readOnly
             ? Icon(
                 Icons.lock,
@@ -842,8 +842,8 @@ class _EditProfileState extends State<EditProfile> {
         labelStyle: TextStyle(
           color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
         ),
-        prefixIcon: Icon(icon, color: const Color(0xFFF5C518)),
-        suffixIcon: const Icon(Icons.calendar_today, color: Color(0xFFF5C518)),
+        prefixIcon: Icon(icon, color: const Color.fromARGB(255, 48, 81, 217)),
+        suffixIcon: const Icon(Icons.calendar_today, color: const Color.fromARGB(255, 48, 81, 217)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
@@ -858,7 +858,7 @@ class _EditProfileState extends State<EditProfile> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFF5C518), width: 2),
+          borderSide: const BorderSide(color: const Color.fromARGB(255, 48, 81, 217), width: 2),
         ),
         filled: true,
         fillColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,

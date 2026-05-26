@@ -209,7 +209,7 @@ class _WalletScreenState extends State<WalletScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: const Color(0xFFF5C518)),
+            CircularProgressIndicator(color: const Color.fromARGB(255, 48, 81, 217)),
             const SizedBox(height: 16),
             Text(
               'Loading wallet balance...',
@@ -259,7 +259,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF5C518),
+                  backgroundColor: const Color.fromARGB(255, 48, 81, 217),
                   foregroundColor: Colors.black87,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -292,8 +292,8 @@ class _WalletScreenState extends State<WalletScreen> {
                 colors: isDarkMode
                     ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
                     : [
-                        const Color(0xFFF5C518),
-                        const Color(0xFFF5C518).withOpacity(0.7),
+                        const Color.fromARGB(255, 48, 81, 217),
+                        const Color.fromARGB(255, 48, 81, 217),
                       ],
               ),
               borderRadius: BorderRadius.circular(20),
@@ -316,14 +316,14 @@ class _WalletScreenState extends State<WalletScreen> {
                       Icons.account_balance_wallet,
                       size: 28,
                       color: isDarkMode
-                          ? const Color(0xFFF5C518)
-                          : Colors.black87,
+                          ? const Color.fromARGB(255, 48, 81, 217)
+                          : const Color.fromARGB(221, 255, 255, 255),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       "Your Balance",
                       style: TextStyle(
-                        color: isDarkMode ? Colors.white70 : Colors.black87,
+                        color: isDarkMode ? Colors.white70 : const Color.fromARGB(221, 255, 255, 255),
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
@@ -334,7 +334,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 Text(
                   "₹ $walletAmount",
                   style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black87,
+                    color: isDarkMode ? Colors.white : const Color.fromARGB(221, 255, 255, 255),
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
                   ),
@@ -354,7 +354,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     'Available Balance',
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      color: isDarkMode ? Colors.white70 : Colors.white,
                     ),
                   ),
                 ),
@@ -389,7 +389,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     Icon(
                       Icons.info_outline,
                       size: 24,
-                      color: const Color(0xFFF5C518),
+                      color: const Color.fromARGB(255, 48, 81, 217),
                     ),
                     const SizedBox(width: 12),
                     Text(
@@ -415,7 +415,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5C518).withOpacity(0.1),
+                    color: const Color.fromARGB(255, 48, 81, 217),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -423,7 +423,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       Icon(
                         Icons.lightbulb_outline,
                         size: 20,
-                        color: const Color(0xFFF5C518),
+                        color: const Color.fromARGB(255, 48, 81, 217),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -431,7 +431,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           "Add money to your wallet to unlock premium features",
                           style: TextStyle(
                             fontSize: 13,
-                            color: isDarkMode ? Colors.white70 : Colors.black87,
+                            color: isDarkMode ? Colors.white70 : const Color.fromARGB(221, 255, 255, 255),
                           ),
                         ),
                       ),

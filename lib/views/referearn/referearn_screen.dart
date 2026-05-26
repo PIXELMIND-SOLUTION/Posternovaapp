@@ -1111,7 +1111,7 @@ Don't miss out on this opportunity! 🚀
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
+                      backgroundColor: const Color.fromARGB(255, 19, 76, 175),
                       foregroundColor: Colors.black87,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -1145,7 +1145,7 @@ class _HeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFFF5C518);
+    final primaryColor = const Color.fromARGB(255, 48, 81, 217);
 
     return Container(
       height: 230,
@@ -1173,7 +1173,7 @@ class _HeaderCard extends StatelessWidget {
           AppText(
             'earn_now',
             style: TextStyle(
-              color: isDarkMode ? primaryColor : Colors.black87,
+              color: isDarkMode ? primaryColor : const Color.fromARGB(221, 255, 255, 255),
               fontWeight: FontWeight.w700,
               fontSize: 18,
             ),
@@ -1215,7 +1215,9 @@ class _HeaderCard extends StatelessWidget {
               child: AppText(
                 'redeem_now',
                 style: TextStyle(
-                  color: isDarkMode ? Colors.black87 : primaryColor,
+                  // color: isDarkMode ? Colors.black87 : primaryColor,
+                                    color: isDarkMode ? Colors.black87 : Colors.white,
+
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
@@ -1267,7 +1269,7 @@ class _StatTile extends StatelessWidget {
                 : Text(
                     value!,
                     style: TextStyle(
-                      color: isDarkMode ? Colors.white : Colors.black87,
+                      color: isDarkMode ? Colors.white : const Color.fromARGB(221, 255, 255, 255),
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1276,7 +1278,7 @@ class _StatTile extends StatelessWidget {
             AppText(
               labelKey,
               style: TextStyle(
-                color: isDarkMode ? Colors.white70 : Colors.black54,
+                color: isDarkMode ? Colors.white70 : const Color.fromARGB(179, 255, 255, 255),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -1304,7 +1306,7 @@ class _ReferralCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFFF5C518);
+    final primaryColor = const Color.fromARGB(255, 48, 81, 217);
 
     final bool disabled =
         isLoading ||
@@ -1413,7 +1415,7 @@ class _HowItWorks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFFF5C518);
+    final primaryColor = const Color.fromARGB(255, 48, 81, 217);
 
     final steps = [
       _HowItWorksItem(
@@ -1476,7 +1478,7 @@ class _HowItWorksItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFFF5C518);
+    final primaryColor = const Color.fromARGB(255, 48, 81, 217);
 
     return Row(
       children: [
@@ -1533,7 +1535,7 @@ class _ShareChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = const Color(0xFFF5C518);
+    final primaryColor = const Color.fromARGB(255, 48, 81, 217);
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),

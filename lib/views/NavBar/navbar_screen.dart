@@ -3189,11 +3189,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   late Animation<double> _proJiggleAnimation;
 
   final List<Widget> _screens = [
-    const HomeScreen(), // index 0 - Home
-    const SpecialCategory(), // index 1 - Category
-    const ReelsScreen(), // index 2 - Reels
-    const OnlinePunchangScreen(), // index 3 - Punchang
-    const CustomerScreen(), // index 4 - Contacts
+    const HomeScreen(), 
+    const SpecialCategory(), 
+    const ReelsScreen(), 
+    const OnlinePunchangScreen(), 
+    const CustomerScreen(),
   ];
 
   @override
