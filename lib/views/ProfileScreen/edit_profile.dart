@@ -502,7 +502,7 @@ class _EditProfileState extends State<EditProfile> {
       appBar: AppBar(
         title: const AppText(
           'edit_profile',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
         ),
         centerTitle: true,
         elevation: 0,
@@ -626,7 +626,7 @@ class _EditProfileState extends State<EditProfile> {
           AppText(
             isUploading ? 'Uploading...' : 'tap_change_photo',
             style: TextStyle(
-              color: isDarkMode ? Colors.white70 : Colors.black87,
+              color: isDarkMode ? Colors.white70 : const Color.fromARGB(221, 255, 255, 255),
               fontSize: 14,
             ),
           ),
