@@ -148,7 +148,6 @@ class _HomeScreenState extends State<HomeScreen>
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   bool _noNetworkSheetShown = false;
 
-  // ── Controllers ────────────────────────────────────────────────────────────
   final TextEditingController _searchController = TextEditingController();
   late PageController _bannerPageController;
   int _currentBannerPage = 0;
@@ -233,7 +232,6 @@ class _HomeScreenState extends State<HomeScreen>
     final currentDate = DateTime.now();
     final difference = currentDate.difference(lastShownDate);
 
-    // Return true if 24 hours have passed
     return difference.inHours >= MODAL_COOLDOWN_HOURS;
   }
 
@@ -739,7 +737,6 @@ class _HomeScreenState extends State<HomeScreen>
       _isReelsLoading = true;
     });
 
-    // Phase 1: ONLY things with zero dependencies — run fast
     final results = await Future.wait([
       _resolveUserData(),
       Provider.of<CelebrationProvider>(
@@ -767,7 +764,6 @@ class _HomeScreenState extends State<HomeScreen>
         currentUserId = userData.id;
       });
 
-      // Fire-and-forget — don't block Phase 2
       unawaited(_fetchUserProfileBackground(userData.id));
       unawaited(fetchCustomers());
 
@@ -830,7 +826,6 @@ class _HomeScreenState extends State<HomeScreen>
 
     // _startBannerAutoScroll();
 
-    // Phase 3: Non-blocking — runs after screen is painted
     if (uid != null) {
       unawaited(_fetchMyPlanAndModals(uid));
       unawaited(_fetchStoriesBackground());
@@ -853,9 +848,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // ── STEP 4: New helper — background profile fetch ────────────
 
-  /// Fire-and-forget: updates username/userImage once the profile API responds.
   Future<void> _fetchUserProfileBackground(String? uid) async {
     if (uid == null) return;
     try {
@@ -874,7 +867,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // ── STEP 5: New helper — wishes with explicit uid ────────────
 
   Future<void> _fetchWishesFor(String uid) async {
     setState(() => _isLoadingWishes = true);
@@ -903,7 +895,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // ── STEP 6: New helper — weekly with null-safe guard ─────────
 
   Future<void> _fetchWeeklyPostersIfNeeded(String? uid) async {
     if (uid == null) return;
@@ -914,7 +905,6 @@ class _HomeScreenState extends State<HomeScreen>
     await weeklyProvider.fetchWeeklyPosters(uid);
   }
 
-  // ── STEP 7: New helper — trending with null-safe guard ───────
 
   Future<void> _fetchTrendingPostersIfNeeded(String? uid) async {
     if (uid == null) return;
@@ -924,7 +914,6 @@ class _HomeScreenState extends State<HomeScreen>
     ).fetchTrendingPosters(uid);
   }
 
-  // ── STEP 8: New helper — reels with null-safe guard ──────────
 
   Future<void> _fetchReelsIfNeeded(String? uid) async {
     if (uid == null) return;
@@ -935,9 +924,7 @@ class _HomeScreenState extends State<HomeScreen>
     await hotTopicsProvider.fetchHotTopicReels(userId: uid);
   }
 
-  // ── STEP 9: Background — plan + modals (non-blocking) ────────
 
-  /// Runs after screen is visible. Fetches plan then shows modals.
   Future<void> _fetchMyPlanAndModals(String uid) async {
     try {
       await Provider.of<MyPlanProvider>(
@@ -950,9 +937,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // ── STEP 10: Background — stories (non-blocking) ─────────────
-
-  /// Runs after screen is visible. Stories don't block the main UI.
   Future<void> _fetchStoriesBackground() async {
     try {
       final storyProvider = Provider.of<StoryProvider>(context, listen: false);
@@ -964,9 +948,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // ── STEP 11: Updated _initializeProviders (simplified) ───────
-  // This is now a no-op shell; logic moved into _initializeAllData.
-  // Keep the method to avoid breaking other call sites, but it's empty.
+
 
   Future<void> _initializeProviders() async {
     // Logic moved to _initializeAllData Phase 2
@@ -1326,7 +1308,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     if (!forceRefresh && festivalProvider.hasCachedDataForDate(date)) {
-      // FIX: Only call setState if still loading — avoids unnecessary rebuild
       if (_isFestivalLoading && mounted) {
         setState(() => _isFestivalLoading = false);
       }
@@ -2380,19 +2361,19 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ),
                           ),
-                        if (isSelected && _isFestivalLoading)
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: isSelected ? Colors.white : _accent,
-                              ),
-                            ),
-                          ),
+                        // if (isSelected && _isFestivalLoading)
+                        //   Positioned(
+                        //     top: 4,
+                        //     right: 4,
+                        //     child: SizedBox(
+                        //       width: 12,
+                        //       height: 12,
+                        //       child: CircularProgressIndicator(
+                        //         strokeWidth: 2,
+                        //         color: isSelected ? Colors.white : _accent,
+                        //       ),
+                        //     ),
+                        //   ),
                       ],
                     ),
                   ),

@@ -1,20 +1,20 @@
 class SignupModel {
   final String id;
   final String name;
-  final String email;
+  String? email;
   final String mobile;
-   String? dob;
-   String? marriageAnniversary;
+  String? dob;
+  String? marriageAnniversary;
   final String? referralCode;
-  final String?fcmtoken;
+  final String? fcmtoken;
 
   SignupModel({
     required this.id,
     required this.name,
-    required this.email,
+    this.email,
     required this.mobile,
-     this.dob,
-     this.marriageAnniversary,
+    this.dob,
+    this.marriageAnniversary,
     this.referralCode,
     this.fcmtoken,
   });
@@ -41,7 +41,7 @@ class SignupModel {
       'dob': dob,
       'marriageAnniversary': marriageAnniversary,
       'referralCode': referralCode,
-      'fcmToken':fcmtoken,
+      'fcmToken': fcmtoken,
     };
   }
 }

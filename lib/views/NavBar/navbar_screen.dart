@@ -3134,17 +3134,36 @@
 //   }
 // }
 
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////// This is a new navbar screen to show the plans in the bottombar//////////////////
+
+
+
+
+
+
+
+// ignore_for_file: unused_import
+
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/showplans/show_pan_screen.dart';
-import 'package:posternova/views/AI/chat_ai.dart';
 import 'package:posternova/views/PosterModule/home.dart';
 import 'package:posternova/views/category/special_category.dart';
-import 'package:posternova/views/chat/customer_list.dart';
 import 'package:posternova/views/customer/customer_screen.dart';
 import 'package:posternova/views/onlinepunchang/online_punchang_screen.dart';
 import 'package:posternova/views/reels/reels_screen.dart';
@@ -3154,9 +3173,7 @@ import 'package:posternova/widgets/premium_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:upgrader/upgrader.dart';
 
-// ─────────────────────────────────────────────
-//  Nav Item Model
-// ─────────────────────────────────────────────
+
 class _NavItem {
   final IconData icon;
   final IconData activeIcon;
@@ -3171,9 +3188,7 @@ class _NavItem {
   });
 }
 
-// ─────────────────────────────────────────────
-//  Main Navigation Screen
-// ─────────────────────────────────────────────
+
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({Key? key}) : super(key: key);
 
@@ -3293,7 +3308,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     );
   }
 
-  // ── Bottom Nav Bar ─────────────────────────────────────────────────────────
   Widget _buildBottomNavBar(String langCode) {
     const navBgColor = Color(0xFF1C1C2E);
 
@@ -3311,8 +3325,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         index: 1,
       ),
       _NavItem(
-        icon: Icons.play_circle_outline, // ← Reels icon (inactive)
-        activeIcon: Icons.play_circle_filled, // ← Reels icon (active)
+        icon: Icons.play_circle_outline,
+        activeIcon: Icons.play_circle_filled, 
         label: 'Reels',
         index: 2,
       ),
@@ -3432,7 +3446,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return UpgradeAlert(
@@ -3444,10 +3457,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         extendBody: true,
         body: Stack(
           children: [
-            // ── Main screen content ──
             _screens[_currentIndex],
 
-            // ── PRO badge overlay (only on Home tab) ──
             Consumer<LanguageProvider>(
               builder: (context, languageProvider, child) {
                 if (_currentIndex != 0) return const SizedBox.shrink();

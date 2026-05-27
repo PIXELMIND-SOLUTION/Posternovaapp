@@ -10805,121 +10805,241 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   // ── FRAMES PANEL ──────────────────────────
 
-  Widget _buildFramesPanel(bool isDarkMode) {
-    return Container(
-      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-            child: Row(
-              children: [
-                const Text(
-                  'Frames — 20 Styles',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+  // Widget _buildFramesPanel(bool isDarkMode) {
+  //   return Container(
+  //     color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Padding(
+  //           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+  //           child: Row(
+  //             children: [
+  //               const Text(
+  //                 'Frames — 20 Styles',
+  //                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+  //               ),
+  //               const Spacer(),
+  //               // Add brand elements to canvas button
+  //               // GestureDetector(
+  //               //   onTap: _showAddBrandElementSheet,
+  //               //   child: Container(
+  //               //     padding: const EdgeInsets.symmetric(
+  //               //       horizontal: 10,
+  //               //       vertical: 4,
+  //               //     ),
+  //               //     decoration: BoxDecoration(
+  //               //       color: const Color(0xFF37474F),
+  //               //       borderRadius: BorderRadius.circular(16),
+  //               //     ),
+  //               //     child: const Row(
+  //               //       children: [
+  //               //         Icon(Icons.add_business, size: 14, color: Colors.white),
+  //               //         SizedBox(width: 4),
+  //               //         Text(
+  //               //           'Add Elements',
+  //               //           style: TextStyle(
+  //               //             fontSize: 11,
+  //               //             fontWeight: FontWeight.bold,
+  //               //             color: Colors.white,
+  //               //           ),
+  //               //         ),
+  //               //       ],
+  //               //     ),
+  //               //   ),
+  //               // ),
+  //               // const SizedBox(width: 6),
+  //               GestureDetector(
+  //                 onTap: () => _pickImage(forLogo: false),
+  //                 child: Container(
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 10,
+  //                     vertical: 4,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     color: const Color.fromARGB(255, 48, 81, 217),
+  //                     borderRadius: BorderRadius.circular(16),
+  //                   ),
+  //                   child: const Row(
+  //                     children: [
+  //                       Icon(
+  //                         Icons.add_photo_alternate,
+  //                         size: 14,
+  //                         color: Colors.white,
+  //                       ),
+  //                       SizedBox(width: 4),
+  //                       Text(
+  //                         'Upload Image',
+  //                         style: TextStyle(
+  //                           fontSize: 11,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: Colors.white,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         SizedBox(
+  //           height: 110,
+  //           child: ListView.separated(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 12),
+  //             itemCount: _frames.length + 1,
+  //             separatorBuilder: (_, __) => const SizedBox(width: 10),
+  //             itemBuilder: (_, i) {
+  //               if (i == 0)
+  //                 return GestureDetector(
+  //                   onTap: () => setState(() => _selectedFrame = -1),
+  //                   child: _frameThumb(
+  //                     'None',
+  //                     Colors.grey.shade400,
+  //                     _selectedFrame == -1,
+  //                     null,
+  //                   ),
+  //                 );
+  //               final f = _frames[i - 1];
+  //               return GestureDetector(
+  //                 onTap: () => setState(() => _selectedFrame = i - 1),
+  //                 child: _frameThumb(
+  //                   f.name,
+  //                   f.borderColor,
+  //                   _selectedFrame == i - 1,
+  //                   f,
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         const SizedBox(height: 8),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////// This is the new code for hide the given frames/////
+
+
+Widget _buildFramesPanel(bool isDarkMode) {
+  final hiddenFrames = [
+    FrameLayout.diagonal,
+    FrameLayout.curved,  
+    FrameLayout.sideStrip,
+    FrameLayout.filmstrip,
+    FrameLayout.arch,
+  ];
+  
+  // Filter out hidden frames
+  final visibleFrames = _frames.where((frame) => !hiddenFrames.contains(frame.layout)).toList();
+
+  return Container(
+    color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+          child: Row(
+            children: [
+              Text(
+                'Frames — ${visibleFrames.length} Styles',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isDarkMode ? Colors.white : Colors.black87,
                 ),
-                const Spacer(),
-                // Add brand elements to canvas button
-                // GestureDetector(
-                //   onTap: _showAddBrandElementSheet,
-                //   child: Container(
-                //     padding: const EdgeInsets.symmetric(
-                //       horizontal: 10,
-                //       vertical: 4,
-                //     ),
-                //     decoration: BoxDecoration(
-                //       color: const Color(0xFF37474F),
-                //       borderRadius: BorderRadius.circular(16),
-                //     ),
-                //     child: const Row(
-                //       children: [
-                //         Icon(Icons.add_business, size: 14, color: Colors.white),
-                //         SizedBox(width: 4),
-                //         Text(
-                //           'Add Elements',
-                //           style: TextStyle(
-                //             fontSize: 11,
-                //             fontWeight: FontWeight.bold,
-                //             color: Colors.white,
-                //           ),
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                // ),
-                // const SizedBox(width: 6),
-                GestureDetector(
-                  onTap: () => _pickImage(forLogo: false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 48, 81, 217),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(
-                          Icons.add_photo_alternate,
-                          size: 14,
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _pickImage(forLogo: false),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 48, 81, 217),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.add_photo_alternate,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Upload Image',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Upload Image',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          SizedBox(
-            height: 110,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _frames.length + 1,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, i) {
-                if (i == 0)
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedFrame = -1),
-                    child: _frameThumb(
-                      'None',
-                      Colors.grey.shade400,
-                      _selectedFrame == -1,
-                      null,
-                    ),
-                  );
-                final f = _frames[i - 1];
+        ),
+        SizedBox(
+          height: 110,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: visibleFrames.length + 1,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) {
+              if (i == 0)
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedFrame = i - 1),
+                  onTap: () => setState(() => _selectedFrame = -1),
                   child: _frameThumb(
-                    f.name,
-                    f.borderColor,
-                    _selectedFrame == i - 1,
-                    f,
+                    'None',
+                    Colors.grey.shade400,
+                    _selectedFrame == -1,
+                    null,
                   ),
                 );
-              },
-            ),
+              final f = visibleFrames[i - 1];
+              // Find the original index in _frames for proper selection
+              final originalIndex = _frames.indexOf(f);
+              return GestureDetector(
+                onTap: () => setState(() => _selectedFrame = originalIndex),
+                child: _frameThumb(
+                  f.name,
+                  f.borderColor,
+                  _selectedFrame == originalIndex,
+                  f,
+                ),
+              );
+            },
           ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(height: 8),
+      ],
+    ),
+  );
+}
 
   void _showAddBrandElementSheet() {
     showModalBottomSheet(

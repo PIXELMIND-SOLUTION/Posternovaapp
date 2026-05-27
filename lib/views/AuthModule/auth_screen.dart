@@ -3555,7 +3555,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                 // Instagram
                 GestureDetector(
                   onTap: () => _launchUrl(
-                    'https://www.instagram.com/masti_vibes63?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
+                    'https://www.instagram.com/edit_ezy?igsh=MXF6bDhzYnYxcWQ5dg==',
                   ),
                   child: Container(
                     width: 40,
@@ -3603,7 +3603,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
                 // Facebook
                 GestureDetector(
-                  onTap: () => _launchUrl('https://www.facebook.com/'),
+                  onTap: () => _launchUrl('https://www.facebook.com/share/17vjV8fvzW/'),
                   child: Container(
                     width: 40,
                     height: 40,

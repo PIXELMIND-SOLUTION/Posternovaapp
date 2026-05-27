@@ -8,7 +8,6 @@ import 'package:posternova/helper/storage_helper.dart';
 import 'package:posternova/widgets/language_widget.dart';
 import 'package:provider/provider.dart';
 
-// ─── Animated background painter ───────────────────────────────────────────
 class _MandalaBackgroundPainter extends CustomPainter {
   final double animation;
   _MandalaBackgroundPainter(this.animation);
@@ -42,7 +41,6 @@ class _MandalaBackgroundPainter extends CustomPainter {
       old.animation != animation;
 }
 
-// ─── Shimmer loading widget ─────────────────────────────────────────────────
 class _ShimmerBox extends StatefulWidget {
   final double width, height;
   final double radius;
@@ -104,7 +102,6 @@ class _ShimmerBoxState extends State<_ShimmerBox>
   }
 }
 
-// ─── Animated entry widget ──────────────────────────────────────────────────
 class _FadeSlide extends StatefulWidget {
   final Widget child;
   final Duration delay;
@@ -158,7 +155,6 @@ class _FadeSlideState extends State<_FadeSlide>
   }
 }
 
-// ─── Main Screen ────────────────────────────────────────────────────────────
 class OnlinePunchangScreen extends StatefulWidget {
   const OnlinePunchangScreen({super.key});
 
@@ -212,7 +208,6 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
     super.dispose();
   }
 
-  // ── helpers ────────────────────────────────────────────────
   String _t(String key) {
     final lp = Provider.of<LanguageProvider>(context, listen: false);
     return LocalizationService.translate(key, lp.locale.languageCode);
@@ -393,30 +388,75 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
     );
   }
 
-  // ─────────────────────────── BUILD ─────────────────────────────────────────
+  Future<void> _showExitDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Exit?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Are you sure you want to exit?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); 
+              Navigator.pop(context); 
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Exit', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LanguageProvider>(
-      builder: (context, _, __) => Scaffold(
-        backgroundColor: const Color(0xFFFFF8F3),
-        body: AnimatedBuilder(
-          animation: _bgCtrl,
-          builder: (_, child) => CustomPaint(
-            painter: _MandalaBackgroundPainter(_bgCtrl.value),
-            child: child,
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(),
-                Expanded(
-                  child: isLoading
-                      ? _buildLoadingState()
-                      : errorMessage != null
-                      ? _buildErrorState()
-                      : _buildPanchangContent(),
-                ),
-              ],
+      builder: (context, _, __) => PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) _showExitDialog();
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFFFFF8F3),
+          body: AnimatedBuilder(
+            animation: _bgCtrl,
+            builder: (_, child) => CustomPaint(
+              painter: _MandalaBackgroundPainter(_bgCtrl.value),
+              child: child,
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  Expanded(
+                    child: isLoading
+                        ? _buildLoadingState()
+                        : errorMessage != null
+                        ? _buildErrorState()
+                        : _buildPanchangContent(),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -424,7 +464,6 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
     );
   }
 
-  // ─── Header ────────────────────────────────────────────────────────────────
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -432,7 +471,11 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [const Color.fromARGB(255, 48, 81, 217), const Color.fromARGB(255, 48, 81, 217), const Color.fromARGB(255, 48, 81, 217)],
+          colors: [
+            const Color.fromARGB(255, 48, 81, 217),
+            const Color.fromARGB(255, 48, 81, 217),
+            const Color.fromARGB(255, 48, 81, 217),
+          ],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),
@@ -553,7 +596,6 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
     );
   }
 
-  // ─── Loading State ─────────────────────────────────────────────────────────
   Widget _buildLoadingState() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -608,7 +650,6 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
     );
   }
 
-  // ─── Error State ───────────────────────────────────────────────────────────
   Widget _buildErrorState() {
     return Center(
       child: Padding(
@@ -663,7 +704,6 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
     );
   }
 
-  // ─── Main Content ──────────────────────────────────────────────────────────
   Widget _buildPanchangContent() {
     if (panchangData == null || panchangData!['data'] == null)
       return _buildErrorState();
@@ -676,7 +716,6 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // User info
           if (user != null)
             _FadeSlide(
               delay: const Duration(milliseconds: 0),
@@ -684,7 +723,6 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
             ),
           const SizedBox(height: 14),
 
-          // Vaara banner
           if (data['vaara'] != null)
             _FadeSlide(
               delay: const Duration(milliseconds: 60),
@@ -692,14 +730,12 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
             ),
           const SizedBox(height: 14),
 
-          // Sun / Moon 4-column grid
           _FadeSlide(
             delay: const Duration(milliseconds: 120),
             child: _buildSunMoonGrid(data),
           ),
           const SizedBox(height: 14),
 
-          // Auspicious / Inauspicious banner
           if (addInfo != null)
             _FadeSlide(
               delay: const Duration(milliseconds: 180),
@@ -707,7 +743,6 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
             ),
           const SizedBox(height: 14),
 
-          // Panchang elements grid: Tithi / Nakshatra / Yoga / Karana
           _FadeSlide(
             delay: const Duration(milliseconds: 240),
             child: _buildPanchangElementsGrid(data),
