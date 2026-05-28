@@ -10,6 +10,7 @@ import 'package:posternova/models/banner_model.dart';
 import 'package:posternova/models/category_model.dart';
 import 'package:posternova/models/festival_poster_model.dart';
 import 'package:posternova/models/hot_top.dart';
+import 'package:posternova/models/trending_model.dart';
 import 'package:posternova/models/trending_poster_model.dart';
 import 'package:posternova/models/weekly_template_model.dart';
 import 'package:posternova/providers/PosterProvider/getall_poster_provider.dart';
@@ -23,11 +24,13 @@ import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/providers/story/story_provider.dart';
 import 'package:posternova/providers/topics/hot_topic_provider.dart';
 import 'package:posternova/providers/topics/trending_poster_provider.dart';
+import 'package:posternova/providers/trendingprovider/trending_provider.dart';
 import 'package:posternova/providers/weekly/weekly_templates_provider.dart';
 import 'package:posternova/views/ProfileScreen/profile_screen.dart';
 import 'package:posternova/views/SecondPhase/poster_editor.dart';
 import 'package:posternova/views/category/category_detail_screen.dart';
 import 'package:posternova/views/category/search_category.dart';
+import 'package:posternova/views/categorytrending/trending_category_screen.dart';
 import 'package:posternova/views/hot/hot_screen.dart';
 import 'package:posternova/views/notifications/notification_screen.dart';
 import 'package:posternova/views/reels/exo_video_player.dart';
@@ -759,6 +762,13 @@ class _HomeScreenState extends State<HomeScreen>
         context,
         listen: false,
       ).fetchAdminAmounts().catchError((_) {}),
+
+      Provider.of<PosterCategoryProvider>(
+        context,
+        listen: false,
+      ).fetchCategories().catchError((e) {
+        debugPrint('posterCategories: $e');
+      }),
     ]);
 
     if (!mounted) return;
@@ -938,8 +948,6 @@ class _HomeScreenState extends State<HomeScreen>
   //     debugPrint('fetchMyPlanAndModals: $e');
   //   }
   // }
-
-
 
   /////// Newly added Code previous one is the mainly  used////////
 
@@ -1133,8 +1141,6 @@ class _HomeScreenState extends State<HomeScreen>
   //     });
   //   }
   // }
-
-
 
   //////////////////// This is the latest one used previous one is tha mainly used one////////////////
 
@@ -1499,13 +1505,10 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Container(color: Colors.black.withOpacity(0.01)),
                 ),
               ),
-
-            // Add this loading overlay inside your build() Stack children:
-            // Place it as the LAST child inside the Stack in build()
             if (_isInitialLoad)
               Positioned.fill(
                 child: IgnorePointer(
-                  ignoring: false, // blocks all taps during load
+                  ignoring: false,
                   child: Container(
                     color: Colors.black.withOpacity(0.15),
                     child: const Center(
@@ -1597,6 +1600,11 @@ class _HomeScreenState extends State<HomeScreen>
                 context,
                 listen: false,
               ).fetchCelebrationConfig(forceRefresh: true),
+
+              Provider.of<PosterCategoryProvider>(
+                context,
+                listen: false,
+              ).fetchCategories(forceRefresh: true),
             ]);
           },
           color: _accent,
@@ -3124,20 +3132,334 @@ class _HomeScreenState extends State<HomeScreen>
   //   );
   // }
 
-  Widget _buildHotTopicsSection() {
-    return Consumer<TrendingPosterProvider>(
-      builder: (context, trendingProvider, _) {
-        // Don't show the section if:
-        // 1. Still loading and no data yet, OR
-        // 2. Posters list is empty (no trending posters available)
-        if ((trendingProvider.isLoading && !trendingProvider.hasData) ||
-            trendingProvider.posters.isEmpty) {
-          return const SizedBox.shrink(); // Hide the section completely
-        }
+  // Widget _buildHotTopicsSection() {
+  //   return Consumer<TrendingPosterProvider>(
+  //     builder: (context, trendingProvider, _) {
+  //       // Don't show the section if:
+  //       // 1. Still loading and no data yet, OR
+  //       // 2. Posters list is empty (no trending posters available)
+  //       if ((trendingProvider.isLoading && !trendingProvider.hasData) ||
+  //           trendingProvider.posters.isEmpty) {
+  //         return const SizedBox.shrink(); // Hide the section completely
+  //       }
 
-        final categoryName = trendingProvider.posters.isNotEmpty
-            ? trendingProvider.posters.first.categoryName
-            : 'Trending';
+  //       final categoryName = trendingProvider.posters.isNotEmpty
+  //           ? trendingProvider.posters.first.categoryName
+  //           : 'Trending';
+
+  //       return Container(
+  //         padding: const EdgeInsets.only(top: 12, bottom: 12),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Padding(
+  //               padding: const EdgeInsets.symmetric(
+  //                 horizontal: 16,
+  //                 vertical: 2,
+  //               ),
+  //               child: Row(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                 children: [
+  //                   const Text(
+  //                     'Trending Posters',
+  //                     style: TextStyle(
+  //                       fontSize: 17,
+  //                       fontWeight: FontWeight.bold,
+  //                       color: Colors.black87,
+  //                     ),
+  //                   ),
+  //                   GestureDetector(
+  //                     onTap: () {
+  //                       if (!_requireNetwork()) return;
+  //                       Navigator.push(
+  //                         context,
+  //                         MaterialPageRoute(
+  //                           builder: (_) =>
+  //                               DetailsScreen(category: categoryName),
+  //                         ),
+  //                       );
+  //                     },
+  //                     child: const Text(
+  //                       'View All',
+  //                       style: TextStyle(
+  //                         color: Color(0xFFFFC107),
+  //                         fontSize: 13,
+  //                         fontWeight: FontWeight.w600,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             const SizedBox(height: 10),
+  //             SizedBox(
+  //               height: 180,
+  //               child: _buildTrendingPostersContent(trendingProvider),
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  // Widget _buildTrendingPostersContent(TrendingPosterProvider provider) {
+  //   if (provider.isLoading) {
+  //     return ListView.builder(
+  //       scrollDirection: Axis.horizontal,
+  //       padding: const EdgeInsets.symmetric(horizontal: 12),
+  //       itemCount: 5,
+  //       itemBuilder: (_, __) => Container(
+  //         width: 120,
+  //         margin: const EdgeInsets.only(right: 10),
+  //         decoration: BoxDecoration(
+  //           color: Colors.grey.shade200,
+  //           borderRadius: BorderRadius.circular(12),
+  //         ),
+  //         child: const SkeletonBox(width: 120, height: 180, borderRadius: 12),
+  //       ),
+  //     );
+  //   }
+
+  //   if (provider.posters.isEmpty) {
+  //     return const Center(
+  //       child: Text(
+  //         'No trending posters available',
+  //         style: TextStyle(color: Color.fromARGB(255, 0, 0, 0), fontSize: 13),
+  //       ),
+  //     );
+  //   }
+
+  //   return ListView.builder(
+  //     scrollDirection: Axis.horizontal,
+  //     padding: const EdgeInsets.symmetric(horizontal: 12),
+  //     itemCount: provider.posters.length,
+  //     itemBuilder: (_, i) => _buildTrendingPosterCard(provider.posters[i]),
+  //   );
+  // }
+
+  // // Widget _buildTrendingPosterCard(TrendingPoster poster) {
+  // //   return GestureDetector(
+  // //     onTap: () {
+  // //       if (!_requireNetwork()) return;
+  // //       final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
+  // //           ? poster.designData.bgImage.url
+  // //           : poster.posterImage.url;
+  // //       Navigator.push(
+  // //         context,
+  // //         MaterialPageRoute(
+  // //           builder: (_) =>
+  // //               PosterEditorScreen(posterAsset: bgImageUrl, itemid: poster.id),
+  // //         ),
+  // //       );
+  // //     },
+  // //     child: Container(
+  // //       width: 120,
+  // //       margin: const EdgeInsets.only(right: 10),
+  // //       decoration: BoxDecoration(
+  // //         color: _sectionBg,
+  // //         borderRadius: BorderRadius.circular(12),
+  // //         boxShadow: [
+  // //           BoxShadow(
+  // //             color: Colors.black.withOpacity(0.10),
+  // //             blurRadius: 6,
+  // //             offset: const Offset(0, 3),
+  // //           ),
+  // //         ],
+  // //       ),
+  // //       child: ClipRRect(
+  // //         borderRadius: BorderRadius.circular(12),
+  // //         child: Stack(
+  // //           fit: StackFit.expand,
+  // //           children: [
+  // //             Image.network(
+  // //               poster.posterImage.url,
+  // //               fit: BoxFit.cover,
+  // //               errorBuilder: (_, __, ___) => Container(
+  // //                 color: const Color(0xFFF3F4F6),
+  // //                 child: const Center(
+  // //                   child: Icon(
+  // //                     Icons.image_outlined,
+  // //                     color: Colors.grey,
+  // //                     size: 32,
+  // //                   ),
+  // //                 ),
+  // //               ),
+  // //               loadingBuilder: (_, child, progress) {
+  // //                 if (progress == null) return child;
+  // //                 return const SkeletonBox(
+  // //                   width: 120,
+  // //                   height: 180,
+  // //                   borderRadius: 0,
+  // //                 );
+  // //               },
+  // //             ),
+  // //             // Gradient overlay at bottom
+  // //             Positioned(
+  // //               bottom: 0,
+  // //               left: 0,
+  // //               right: 0,
+  // //               child: Container(
+  // //                 padding: const EdgeInsets.all(8),
+  // //                 decoration: BoxDecoration(
+  // //                   gradient: LinearGradient(
+  // //                     colors: [
+  // //                       Colors.transparent,
+  // //                       Colors.black.withOpacity(0.65),
+  // //                     ],
+  // //                     begin: Alignment.topCenter,
+  // //                     end: Alignment.bottomCenter,
+  // //                   ),
+  // //                 ),
+  // //                 child: Text(
+  // //                   poster.title.isNotEmpty
+  // //                       ? poster.title
+  // //                       : poster.categoryName,
+  // //                   style: const TextStyle(
+  // //                     color: Colors.white,
+  // //                     fontSize: 11,
+  // //                     fontWeight: FontWeight.w600,
+  // //                   ),
+  // //                   maxLines: 2,
+  // //                   overflow: TextOverflow.ellipsis,
+  // //                 ),
+  // //               ),
+  // //             ),
+  // //           ],
+  // //         ),
+  // //       ),
+  // //     ),
+  // //   );
+  // // }
+
+  // Widget _buildTrendingPosterCard(TrendingPoster poster) {
+  //   return Consumer<MyPlanProvider>(
+  //     builder: (context, myPlanProvider, _) {
+  //       return GestureDetector(
+  //         onTap: () {
+  //           if (!_requireNetwork()) return;
+  //           if (myPlanProvider.isPurchase == true) {
+  //             final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
+  //                 ? poster.designData.bgImage.url
+  //                 : poster.posterImage.url;
+  //             Navigator.push(
+  //               context,
+  //               MaterialPageRoute(
+  //                 builder: (_) => PosterEditorScreen(
+  //                   posterAsset: bgImageUrl,
+  //                   itemid: poster.id,
+  //                 ),
+  //               ),
+  //             );
+  //           } else {
+  //             CommonModal.showWarning(
+  //               context: context,
+  //               title: "Premium Category",
+  //               message:
+  //                   "This section offers premium content. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+  //               primaryButtonText: "Upgrade Now",
+  //               secondaryButtonText: "Cancel",
+  //               onPrimaryPressed: () {
+  //                 Navigator.push(
+  //                   context,
+  //                   MaterialPageRoute(
+  //                     builder: (context) => SubscriptionPlansPage(),
+  //                   ),
+  //                 );
+  //               },
+  //               onSecondaryPressed: () => Navigator.of(context).pop(),
+  //             );
+  //           }
+  //         },
+  //         child: Container(
+  //           width: 120,
+  //           margin: const EdgeInsets.only(right: 10),
+  //           decoration: BoxDecoration(
+  //             color: _sectionBg,
+  //             borderRadius: BorderRadius.circular(12),
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: Colors.black.withOpacity(0.10),
+  //                 blurRadius: 6,
+  //                 offset: const Offset(0, 3),
+  //               ),
+  //             ],
+  //           ),
+  //           child: ClipRRect(
+  //             borderRadius: BorderRadius.circular(12),
+  //             child: Stack(
+  //               fit: StackFit.expand,
+  //               children: [
+  //                 Image.network(
+  //                   poster.posterImage.url,
+  //                   fit: BoxFit.cover,
+  //                   errorBuilder: (_, __, ___) => Container(
+  //                     color: const Color(0xFFF3F4F6),
+  //                     child: const Center(
+  //                       child: Icon(
+  //                         Icons.image_outlined,
+  //                         color: Colors.grey,
+  //                         size: 32,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   loadingBuilder: (_, child, progress) {
+  //                     if (progress == null) return child;
+  //                     return const SkeletonBox(
+  //                       width: 120,
+  //                       height: 180,
+  //                       borderRadius: 0,
+  //                     );
+  //                   },
+  //                 ),
+  //                 Positioned(
+  //                   bottom: 0,
+  //                   left: 0,
+  //                   right: 0,
+  //                   child: Container(
+  //                     padding: const EdgeInsets.all(8),
+  //                     decoration: BoxDecoration(
+  //                       gradient: LinearGradient(
+  //                         colors: [
+  //                           Colors.transparent,
+  //                           Colors.black.withOpacity(0.65),
+  //                         ],
+  //                         begin: Alignment.topCenter,
+  //                         end: Alignment.bottomCenter,
+  //                       ),
+  //                     ),
+  //                     child: Text(
+  //                       poster.title.isNotEmpty
+  //                           ? poster.title
+  //                           : poster.categoryName,
+  //                       style: const TextStyle(
+  //                         color: Colors.white,
+  //                         fontSize: 11,
+  //                         fontWeight: FontWeight.w600,
+  //                       ),
+  //                       maxLines: 2,
+  //                       overflow: TextOverflow.ellipsis,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  Widget _buildHotTopicsSection() {
+    return Consumer<PosterCategoryProvider>(
+      builder: (context, categoryProvider, _) {
+        // Hide entirely while loading with no data, or when empty
+        if ((categoryProvider.isLoading && !categoryProvider.hasData) ||
+            (!categoryProvider.isLoading &&
+                categoryProvider.categories.isEmpty)) {
+          return const SizedBox.shrink();
+        }
 
         return Container(
           padding: const EdgeInsets.only(top: 12, bottom: 12),
@@ -3152,41 +3474,44 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    // Text(
+                    //   'Categories',
+                    //   style: TextStyle(
+                    //     fontSize: 17,
+                    //     fontWeight: FontWeight.bold,
+                    //     color: _primaryText,
+                    //   ),
+                    // ),
+                    Text(
                       'Trending Posters',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: _primaryText,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        if (!_requireNetwork()) return;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                DetailsScreen(category: categoryName),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'View All',
-                        style: TextStyle(
-                          color: Color(0xFFFFC107),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     if (!_requireNetwork()) return;
+                    //     // Navigate to a full categories screen if you have one,
+                    //     // e.g. Navigator.push(context, MaterialPageRoute(builder: (_) => CategoriesScreen()));
+                    //   },
+                    //   child: const Text(
+                    //     'View All',
+                    //     style: TextStyle(
+                    //       color: Color(0xFFFFC107),
+                    //       fontSize: 13,
+                    //       fontWeight: FontWeight.w600,
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
               const SizedBox(height: 10),
               SizedBox(
-                height: 180,
-                child: _buildTrendingPostersContent(trendingProvider),
+                height: 130,
+                child: _buildCategoryContent(categoryProvider),
               ),
             ],
           ),
@@ -3195,29 +3520,37 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildTrendingPostersContent(TrendingPosterProvider provider) {
+  Widget _buildCategoryContent(PosterCategoryProvider provider) {
+    // Still loading but has stale data — show stale data with a subtle shimmer overlay
     if (provider.isLoading) {
       return ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: 5,
         itemBuilder: (_, __) => Container(
-          width: 120,
+          width: 100,
           margin: const EdgeInsets.only(right: 10),
           decoration: BoxDecoration(
             color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const SkeletonBox(width: 120, height: 180, borderRadius: 12),
+          child: const SkeletonBox(width: 100, height: 130, borderRadius: 12),
         ),
       );
     }
 
-    if (provider.posters.isEmpty) {
-      return const Center(
-        child: Text(
-          'No trending posters available',
-          style: TextStyle(color: Color.fromARGB(255, 0, 0, 0), fontSize: 13),
+    if (provider.hasError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: Colors.grey.shade400, size: 28),
+            const SizedBox(height: 6),
+            Text(
+              'Could not load categories',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+            ),
+          ],
         ),
       );
     }
@@ -3225,124 +3558,39 @@ class _HomeScreenState extends State<HomeScreen>
     return ListView.builder(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      itemCount: provider.posters.length,
-      itemBuilder: (_, i) => _buildTrendingPosterCard(provider.posters[i]),
+      itemCount: provider.categories.length,
+      itemBuilder: (_, i) => _buildPosterCategoryCard(provider.categories[i]),
     );
   }
 
-  // Widget _buildTrendingPosterCard(TrendingPoster poster) {
-  //   return GestureDetector(
-  //     onTap: () {
-  //       if (!_requireNetwork()) return;
-  //       final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
-  //           ? poster.designData.bgImage.url
-  //           : poster.posterImage.url;
-  //       Navigator.push(
-  //         context,
-  //         MaterialPageRoute(
-  //           builder: (_) =>
-  //               PosterEditorScreen(posterAsset: bgImageUrl, itemid: poster.id),
-  //         ),
-  //       );
-  //     },
-  //     child: Container(
-  //       width: 120,
-  //       margin: const EdgeInsets.only(right: 10),
-  //       decoration: BoxDecoration(
-  //         color: _sectionBg,
-  //         borderRadius: BorderRadius.circular(12),
-  //         boxShadow: [
-  //           BoxShadow(
-  //             color: Colors.black.withOpacity(0.10),
-  //             blurRadius: 6,
-  //             offset: const Offset(0, 3),
-  //           ),
-  //         ],
-  //       ),
-  //       child: ClipRRect(
-  //         borderRadius: BorderRadius.circular(12),
-  //         child: Stack(
-  //           fit: StackFit.expand,
-  //           children: [
-  //             Image.network(
-  //               poster.posterImage.url,
-  //               fit: BoxFit.cover,
-  //               errorBuilder: (_, __, ___) => Container(
-  //                 color: const Color(0xFFF3F4F6),
-  //                 child: const Center(
-  //                   child: Icon(
-  //                     Icons.image_outlined,
-  //                     color: Colors.grey,
-  //                     size: 32,
-  //                   ),
-  //                 ),
-  //               ),
-  //               loadingBuilder: (_, child, progress) {
-  //                 if (progress == null) return child;
-  //                 return const SkeletonBox(
-  //                   width: 120,
-  //                   height: 180,
-  //                   borderRadius: 0,
-  //                 );
-  //               },
-  //             ),
-  //             // Gradient overlay at bottom
-  //             Positioned(
-  //               bottom: 0,
-  //               left: 0,
-  //               right: 0,
-  //               child: Container(
-  //                 padding: const EdgeInsets.all(8),
-  //                 decoration: BoxDecoration(
-  //                   gradient: LinearGradient(
-  //                     colors: [
-  //                       Colors.transparent,
-  //                       Colors.black.withOpacity(0.65),
-  //                     ],
-  //                     begin: Alignment.topCenter,
-  //                     end: Alignment.bottomCenter,
-  //                   ),
-  //                 ),
-  //                 child: Text(
-  //                   poster.title.isNotEmpty
-  //                       ? poster.title
-  //                       : poster.categoryName,
-  //                   style: const TextStyle(
-  //                     color: Colors.white,
-  //                     fontSize: 11,
-  //                     fontWeight: FontWeight.w600,
-  //                   ),
-  //                   maxLines: 2,
-  //                   overflow: TextOverflow.ellipsis,
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  Widget _buildTrendingPosterCard(TrendingPoster poster) {
+  Widget _buildPosterCategoryCard(PosterCategoryModel category) {
     return Consumer<MyPlanProvider>(
       builder: (context, myPlanProvider, _) {
         return GestureDetector(
           onTap: () {
             if (!_requireNetwork()) return;
             if (myPlanProvider.isPurchase == true) {
-              final bgImageUrl = poster.designData.bgImage.url.isNotEmpty
-                  ? poster.designData.bgImage.url
-                  : poster.posterImage.url;
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => PosterEditorScreen(
-                    posterAsset: bgImageUrl,
-                    itemid: poster.id,
+                  builder: (_) => CategoryDetailScreen(
+                    categoryId: category.id,
+                    categoryName: category.name,
+                    categoryImage: _resolveImageUrl(
+                      category.image,
+                    ), // pass image
                   ),
                 ),
               );
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (_) => CategoryDetailScreen(
+              //       categoryId: category.id,
+              //       categoryName: category.name,
+              //     ),
+              //   ),
+              // );
             } else {
               CommonModal.showWarning(
                 context: context,
@@ -3364,14 +3612,14 @@ class _HomeScreenState extends State<HomeScreen>
             }
           },
           child: Container(
-            width: 120,
+            width: 100,
             margin: const EdgeInsets.only(right: 10),
             decoration: BoxDecoration(
               color: _sectionBg,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.10),
+                  color: Colors.black.withOpacity(0.08),
                   blurRadius: 6,
                   offset: const Offset(0, 3),
                 ),
@@ -3382,48 +3630,31 @@ class _HomeScreenState extends State<HomeScreen>
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    poster.posterImage.url,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFFF3F4F6),
-                      child: const Center(
-                        child: Icon(
-                          Icons.image_outlined,
-                          color: Colors.grey,
-                          size: 32,
-                        ),
-                      ),
-                    ),
-                    loadingBuilder: (_, child, progress) {
-                      if (progress == null) return child;
-                      return const SkeletonBox(
-                        width: 120,
-                        height: 180,
-                        borderRadius: 0,
-                      );
-                    },
-                  ),
+                  // ── Thumbnail ──────────────────────────────────
+                  _buildCategoryImage(category.image),
+
+                  // ── Gradient overlay + label ───────────────────
                   Positioned(
                     bottom: 0,
                     left: 0,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.65),
+                            Colors.black.withOpacity(0.68),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         ),
                       ),
                       child: Text(
-                        poster.title.isNotEmpty
-                            ? poster.title
-                            : poster.categoryName,
+                        _capitalizeFirst(category.name),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -3441,6 +3672,48 @@ class _HomeScreenState extends State<HomeScreen>
         );
       },
     );
+  }
+
+  /// Resolves the image URL — some entries use localhost or relative paths
+  /// which won't work on a real device; fall back to a placeholder in that case.
+  Widget _buildCategoryImage(String rawUrl) {
+    final url = _resolveImageUrl(rawUrl);
+
+    if (url == null) {
+      return Container(
+        color: const Color(0xFFF3F4F6),
+        child: const Center(
+          child: Icon(Icons.image_outlined, color: Colors.grey, size: 32),
+        ),
+      );
+    }
+
+    return Image.network(
+      url,
+      fit: BoxFit.cover,
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return const SkeletonBox(width: 100, height: 130, borderRadius: 0);
+      },
+      errorBuilder: (_, __, ___) => Container(
+        color: const Color(0xFFF3F4F6),
+        child: const Center(
+          child: Icon(
+            Icons.broken_image_outlined,
+            color: Colors.grey,
+            size: 28,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Returns null for localhost / relative-path URLs (unreachable from device).
+  String? _resolveImageUrl(String raw) {
+    if (raw.isEmpty) return null;
+    if (raw.startsWith('/')) return null; // relative path
+    if (raw.contains('localhost')) return null; // localhost — unreachable
+    return raw;
   }
 
   // Widget _buildHotTopicsSection() {
