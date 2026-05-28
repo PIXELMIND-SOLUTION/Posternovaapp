@@ -318,26 +318,6 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:posternova/widgets/language_widget.dart';
 
@@ -363,7 +343,7 @@ class AboutScreen extends StatelessWidget {
       appBar: AppBar(
         title: AppText(
           "about_us",
-          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+          style: TextStyle(fontWeight: FontWeight.bold, color: textColor,fontSize: 20),
         ),
         centerTitle: true,
         elevation: 0,
@@ -397,8 +377,10 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(),
-                    child: Image.asset('assets/mainlogo.jpeg', width: 100),
+                    decoration:  BoxDecoration(
+                      //  borderRadius: BorderRadius.circular(20)
+                    ),
+                    child: Image.asset('assets/latestdesigned.jpeg', width: 100),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -475,14 +457,49 @@ class AboutScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
+
+                      // Text(
+                      //   'Edit Ezy is a smart and simple platform designed to help you create, manage, and grow your business effortlessly. Built for entrepreneurs, small business owners, and creators, Editezy brings everything you need into one easy-to-use app.\n\n'
+                      //   'In today\'s fast-moving digital world, creating professional designs and staying connected with customers should be quick and hassle-free. Editezy makes this possible with ready-made posters and customizable templates that allow you to design stunning visuals in just a few taps—no design skills required.\n\n'
+                      //   'Whether you want to promote your business, share festival wishes, or create daily social media content, Editezy gives you professionally designed templates that you can easily customize with your text, logo, and branding.\n\n'
+                      //   'Beyond design, Editezy helps you build stronger customer relationships. With the built-in customer management feature, you can add and organize your contacts, track important dates like birthdays and anniversaries, and stay connected with your customers consistently.\n\n'
+                      //   'You can also create professional business cards to establish your brand identity and leave a lasting impression.\n\n'
+                      //   'At Editezy, our goal is simple — to give you the tools you need to design faster, connect better, and grow your business smarter.',
+
+                      //   style: TextStyle(
+                      //     fontSize: 14,
+                      //     color: textColor,
+                      //     height: 1.6,
+                      //   ),
+                      //   textAlign: TextAlign.start,
+                      // ),
                       Text(
-                        'Edit Ezy is a smart and simple platform designed to help you create, manage, and grow your business effortlessly. Built for entrepreneurs, small business owners, and creators, Editezy brings everything you need into one easy-to-use app.\n\n'
-                        'In today\'s fast-moving digital world, creating professional designs and staying connected with customers should be quick and hassle-free. Editezy makes this possible with ready-made posters and customizable templates that allow you to design stunning visuals in just a few taps—no design skills required.\n\n'
-                        'Whether you want to promote your business, share festival wishes, or create daily social media content, Editezy gives you professionally designed templates that you can easily customize with your text, logo, and branding.\n\n'
-                        'Beyond design, Editezy helps you build stronger customer relationships. With the built-in customer management feature, you can add and organize your contacts, track important dates like birthdays and anniversaries, and stay connected with your customers consistently.\n\n'
-                        'You can also create professional business cards to establish your brand identity and leave a lasting impression.\n\n'
-                        'At Editezy, our goal is simple — to give you the tools you need to design faster, connect better, and grow your business smarter.',
-                        
+                        'Edit Ezy is a smart and easy-to-use platform designed to help businesses, creators, and entrepreneurs create stunning content, manage customer relationships, and grow their brand effortlessly — all in one app.\n\n'
+                        'In today’s fast-moving digital world, businesses need quick, professional, and engaging content every day. Edit Ezy makes this possible with powerful tools and ready-made solutions that save time and boost creativity.\n\n'
+                        'With ready-made posters and festival templates, you can create eye-catching designs within seconds — no design skills needed. Whether it’s festival wishes, business promotions, or social media posts, Edit Ezy provides professionally designed templates that are easy to customize with your logo, text, and branding.\n\n'
+                        'Edit Ezy also empowers your creativity with smart tools like Logo Maker, AI Background Remover, AI Text Remover, Custom Template Creator, and Chicha AI.\n\n'
+                        'Our platform also helps businesses stay connected with customers through smart customer management features. Add contacts, track birthdays and anniversaries, and receive special reminders so you never miss an important occasion.\n\n'
+                        'To help businesses stay active online, Edit Ezy provides daily content updates, festival and special occasion posters, advertisement reels, and an online Panchang.\n\n'
+                        'You can also grow with our Refer & Earn Program — refer 3 friends and get your yearly subscription amount back.\n\n'
+                        'At Edit Ezy, our mission is simple:\n'
+                        'To help you create faster, manage smarter, and grow bigger with powerful tools designed for modern businesses.\n\n'
+                        'Features of Edit Ezy:\n'
+                        '• Ready-Made Festival Posters & Templates\n'
+                        '• Create Your Own Templates\n'
+                        '• Logo Maker\n'
+                        '• AI Background Remover\n'
+                        '• AI Text Remover\n'
+                        '• Chicha AI\n'
+                        '• Advertisement Reels\n'
+                        '• Online Panchang\n'
+                        '• Contact & Reminder Management\n'
+                        '• Birthday & Anniversary Alerts\n'
+                        '• Daily Social Media Content\n'
+                        '• Festival Content Updates\n'
+                        '• Refer & Earn Program\n\n'
+                        'Edit Ezy\n'
+                        'Create • Manage • Grow',
+
                         style: TextStyle(
                           fontSize: 14,
                           color: textColor,
@@ -528,6 +545,66 @@ class AboutScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Feature Grid
+                  // GridView.count(
+                  //   shrinkWrap: true,
+                  //   physics: const NeverScrollableScrollPhysics(),
+                  //   crossAxisCount: 2,
+                  //   mainAxisSpacing: 12,
+                  //   crossAxisSpacing: 12,
+                  //   childAspectRatio: 1.2,
+                  //   children: [
+                  //     _featureItem(
+                  //       icon: Icons.image,
+                  //       title: "Ready-made posters",
+                  //       color: accentColor,
+                  //       textColor: textColor,
+                  //       cardColor: cardColor,
+                  //     ),
+                  //     _featureItem(
+                  //       icon: Icons.dashboard_customize,
+                  //       title: "Logo Maker",
+                  //       color: accentColor,
+                  //       textColor: textColor,
+                  //       cardColor: cardColor,
+                  //     ),
+                  //     _featureItem(
+                  //       icon: Icons.credit_card,
+                  //       title: "AI BG Remover",
+                  //       color: accentColor,
+                  //       textColor: textColor,
+                  //       cardColor: cardColor,
+                  //     ),
+                  //     _featureItem(
+                  //       icon: Icons.people_alt,
+                  //       title: "AI Text Remover",
+                  //       color: accentColor,
+                  //       textColor: textColor,
+                  //       cardColor: cardColor,
+                  //     ),
+                  //     _featureItem(
+                  //       icon: Icons.edit,
+                  //       title: "Online Panchang",
+                  //       color: accentColor,
+                  //       textColor: textColor,
+                  //       cardColor: cardColor,
+                  //     ),
+                  //     _featureItem(
+                  //       icon: Icons.trending_up,
+                  //       title: "Reel Ads",
+                  //       color: accentColor,
+                  //       textColor: textColor,
+                  //       cardColor: cardColor,
+                  //     ),
+
+                  //     _featureItem(
+                  //       icon: Icons.trending_up,
+                  //       title: "Special Reminders",
+                  //       color: accentColor,
+                  //       textColor: textColor,
+                  //       cardColor: cardColor,
+                  //     ),
+                  //   ],
+                  // ),
                   GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -537,43 +614,50 @@ class AboutScreen extends StatelessWidget {
                     childAspectRatio: 1.2,
                     children: [
                       _featureItem(
-                        icon: Icons.image,
-                        title: "Ready-made posters",
+                        icon: Icons.image_outlined,
+                        title: "Ready-Made Posters",
                         color: accentColor,
                         textColor: textColor,
                         cardColor: cardColor,
                       ),
                       _featureItem(
-                        icon: Icons.dashboard_customize,
-                        title: "Customizable templates",
+                        icon: Icons.design_services_outlined,
+                        title: "Logo Maker",
                         color: accentColor,
                         textColor: textColor,
                         cardColor: cardColor,
                       ),
                       _featureItem(
-                        icon: Icons.credit_card,
-                        title: "Business card creation",
+                        icon: Icons.auto_fix_high_outlined,
+                        title: "AI BG Remover",
                         color: accentColor,
                         textColor: textColor,
                         cardColor: cardColor,
                       ),
                       _featureItem(
-                        icon: Icons.people_alt,
-                        title: "Customer management with reminders",
+                        icon: Icons.text_fields_outlined,
+                        title: "AI Text Remover",
                         color: accentColor,
                         textColor: textColor,
                         cardColor: cardColor,
                       ),
                       _featureItem(
-                        icon: Icons.edit,
-                        title: "Easy editing & personalization",
+                        icon: Icons.calendar_month_outlined,
+                        title: "Online Panchang",
                         color: accentColor,
                         textColor: textColor,
                         cardColor: cardColor,
                       ),
                       _featureItem(
-                        icon: Icons.trending_up,
-                        title: "Tools to grow your business",
+                        icon: Icons.video_library_outlined,
+                        title: "Reel Ads",
+                        color: accentColor,
+                        textColor: textColor,
+                        cardColor: cardColor,
+                      ),
+                      _featureItem(
+                        icon: Icons.notifications_active_outlined,
+                        title: "Special Reminders",
                         color: accentColor,
                         textColor: textColor,
                         cardColor: cardColor,

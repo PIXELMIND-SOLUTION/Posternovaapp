@@ -101,6 +101,60 @@ class PosterProvider extends ChangeNotifier {
     }
   }
 
+
+
+
+
+  Map<String, List<CategoryModel>> _weeklyTemplates = {};
+bool _isWeeklyLoading = false;
+String? _weeklyError;
+
+Map<String, List<CategoryModel>> get weeklyTemplates => _weeklyTemplates;
+bool get isWeeklyLoading => _isWeeklyLoading;
+String? get weeklyError => _weeklyError;
+
+/// All weekly posters flattened into a single list (useful for language filtering)
+List<CategoryModel> get allWeeklyPosters =>
+    _weeklyTemplates.values.expand((list) => list).toList();
+
+/// Fetch weekly templates using userId from stored user data
+Future<void> fetchWeeklyTemplates() async {
+  print('PosterProvider: Starting fetchWeeklyTemplates');
+  _isWeeklyLoading = true;
+  _weeklyError = null;
+  notifyListeners();
+
+  try {
+    final userData = await AuthPreferences.getUserData();
+
+    if (userData == null || userData.user.id == null) {
+      throw 'User not logged in';
+    }
+
+    final userId = userData.user.id!;
+    print('PosterProvider: Fetching weekly templates for userId: $userId');
+
+    _weeklyTemplates = await _service.fetchWeeklyTemplates(userId);
+    print('PosterProvider: Fetched ${_weeklyTemplates.length} weekly categories');
+  } catch (e) {
+    print('PosterProvider Weekly Error: $e');
+    _weeklyError = 'Failed to load weekly templates: $e';
+  } finally {
+    _isWeeklyLoading = false;
+    notifyListeners();
+  }
+}
+
+
+
+void clearWeeklyTemplates() {
+  _weeklyTemplates = {};
+  _weeklyError = null;
+  _isWeeklyLoading = false;
+  notifyListeners();
+}
+
+
   /// Clear posters and reset state
   void clearPosters() {
     _posters = [];

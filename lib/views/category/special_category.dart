@@ -819,7 +819,7 @@ class _SpecialCategoryState extends State<SpecialCategory>
     ),
     CategoryItem(
       title: 'BG Remover',
-      subtitle: 'AI-powered editing',
+      subtitle: 'AI-powered Background removal',
       icon: Icons.auto_fix_high,
       emoji: '✨',
       gradient: [const Color(0xFF7C3AED), const Color(0xFF4F46E5)],
@@ -836,7 +836,7 @@ class _SpecialCategoryState extends State<SpecialCategory>
 
     CategoryItem(
       title: 'Chicha AI',
-      subtitle: 'AI-powered visual magic',
+      subtitle: 'AI-powered Chat Bot',
       icon: Icons.auto_awesome,
       emoji: '✨',
       gradient: [const Color(0xFF2563EB), const Color(0xFF06B6D4)],
@@ -850,14 +850,14 @@ class _SpecialCategoryState extends State<SpecialCategory>
     //   gradient: [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
     //   destination: const WhatsAppStickerScreen(),
     // ),
-    CategoryItem(
-      title: 'Business Card',
-      subtitle: 'Professional cards',
-      icon: Icons.credit_card,
-      emoji: '💳',
-      gradient: [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)],
-      destination: const BusinessCardScreen(),
-    ),
+    // CategoryItem(
+    //   title: 'Business Card',
+    //   subtitle: 'Professional cards',
+    //   icon: Icons.credit_card,
+    //   emoji: '💳',
+    //   gradient: [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)],
+    //   destination: const BusinessCardScreen(),
+    // ),
   ];
 
   @override
@@ -1469,54 +1469,58 @@ class _AnimatedCardState extends State<_AnimatedCard>
         onTapCancel: _onTapCancel,
 
         onTap: () {
-  // Check plan before navigating
-  final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
-  
-  if (myPlanProvider.isPurchase == true) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, animation, __) => item.destination,
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.06),
-                end: Offset.zero,
-              ).animate(
-                CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                ),
-              ),
-              child: child,
-            ),
+          final myPlanProvider = Provider.of<MyPlanProvider>(
+            context,
+            listen: false,
           );
+          
+
+          if (myPlanProvider.isPurchase == true) {
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (_, animation, __) => item.destination,
+                transitionsBuilder: (_, animation, __, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position:
+                          Tween<Offset>(
+                            begin: const Offset(0, 0.06),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            ),
+                          ),
+                      child: child,
+                    ),
+                  );
+                },
+                transitionDuration: const Duration(milliseconds: 380),
+              ),
+            );
+          } else {
+            CommonModal.showWarning(
+              context: context,
+              title: "Premium Feature",
+              message:
+                  "This feature is available for premium users only. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
+              primaryButtonText: "Upgrade Now",
+              secondaryButtonText: "Cancel",
+              onPrimaryPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubscriptionPlansPage(),
+                  ),
+                );
+              },
+              onSecondaryPressed: () => Navigator.of(context).pop(),
+            );
+          }
         },
-        transitionDuration: const Duration(milliseconds: 380),
-      ),
-    );
-  } else {
-    CommonModal.showWarning(
-      context: context,
-      title: "Premium Feature",
-      message:
-          "This feature is available for premium users only. Unlock exclusive templates and advanced features by upgrading to a premium plan.",
-      primaryButtonText: "Upgrade Now",
-      secondaryButtonText: "Cancel",
-      onPrimaryPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SubscriptionPlansPage(),
-          ),
-        );
-      },
-      onSecondaryPressed: () => Navigator.of(context).pop(),
-    );
-  }
-},
         // onTap: () {
         //   Navigator.push(
         //     context,

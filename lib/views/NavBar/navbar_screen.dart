@@ -3327,13 +3327,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       _NavItem(
         icon: Icons.play_circle_outline,
         activeIcon: Icons.play_circle_filled, 
-        label: 'Reels',
+        label: 'Reel Ads',
         index: 2,
       ),
       _NavItem(
         icon: Icons.auto_awesome_outlined,
         activeIcon: Icons.auto_awesome,
-        label: 'Punchang',
+        label: 'Panchang',
         index: 3,
       ),
       _NavItem(
@@ -3459,16 +3459,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
           children: [
             _screens[_currentIndex],
 
-            Consumer<LanguageProvider>(
-              builder: (context, languageProvider, child) {
-                if (_currentIndex != 0) return const SizedBox.shrink();
-                return Positioned(
-                  right: 4,
-                  bottom: 80 + MediaQuery.of(context).padding.bottom,
-                  child: _buildProBadge(),
-                );
-              },
-            ),
+            // Consumer<LanguageProvider>(
+            //   builder: (context, languageProvider, child) {
+            //     if (_currentIndex != 0) return const SizedBox.shrink();
+            //     return Positioned(
+            //       right: 4,
+            //       bottom: 80 + MediaQuery.of(context).padding.bottom,
+            //       child: _buildProBadge(),
+            //     );
+            //   },
+            // ),
           ],
         ),
         bottomNavigationBar: Consumer<LanguageProvider>(

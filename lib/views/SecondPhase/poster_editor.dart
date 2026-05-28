@@ -1546,20 +1546,20 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             ),
           ),
           // White border at bottom
-          Container(
-            height: 30 * (0.5 + intensity * 0.5),
-            color: Colors.white,
-            child: Center(
-              child: Text(
-                '✦ INSTANT ✦',
-                style: TextStyle(
-                  fontSize: 8 * intensity,
-                  color: Colors.grey.shade400,
-                  letterSpacing: 2,
-                ),
-              ),
-            ),
-          ),
+          // Container(
+          //   height: 30 * (0.5 + intensity * 0.5),
+          //   color: Colors.white,
+          //   child: Center(
+          //     child: Text(
+          //       '✦ INSTANT ✦',
+          //       style: TextStyle(
+          //         fontSize: 8 * intensity,
+          //         color: Colors.grey.shade400,
+          //         letterSpacing: 2,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -2165,8 +2165,10 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   late AnimationController _brandAnimController;
   final Map<String, Animation<double>> _brandAnimations = {};
 
-  EffectType _selectedEffect = EffectType.none;
-  double _effectStrength = 0.5;
+  // EffectType _selectedEffect = EffectType.none;
+  // double _effectStrength = 0.5;
+
+  List<_AppliedEffect> _appliedEffects = [];
 
   String? _selectedAudio;
   final List<AudioTrack> _audioTracks = [
@@ -3034,9 +3036,14 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     super.dispose();
   }
 
+  // bool get _isAnimated =>
+  //     _selectedAnimation != AnimationType.none ||
+  //     _selectedEffect != EffectType.none ||
+  //     _selectedAudio != null;
+
   bool get _isAnimated =>
       _selectedAnimation != AnimationType.none ||
-      _selectedEffect != EffectType.none ||
+      _appliedEffects.isNotEmpty ||
       _selectedAudio != null;
 
   OverlayTextItem? get _selectedText {
@@ -6042,9 +6049,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           ? const Color(0xFF1E293B)
           : const ui.Color.fromARGB(255, 48, 81, 217),
       padding: EdgeInsets.only(
-        top:
-            MediaQuery.of(context).padding.top +
-            4, 
+        top: MediaQuery.of(context).padding.top + 4,
         left: 8,
         right: 8,
         bottom: 8,
@@ -6585,7 +6590,11 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
       ],
     );
 
-    base = _applyEffect(base, _selectedEffect, _effectStrength);
+    // base = _applyEffect(base, _selectedEffect, _effectStrength);
+
+    for (final effect in _appliedEffects) {
+      base = _applyEffect(base, effect.type, effect.strength);
+    }
 
     if (_selectedAnimation != AnimationType.none) {
       return AnimatedBuilder(
@@ -13638,114 +13647,114 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   }
   // ── FRAMES PANEL ──────────────────────────
 
+  ///// Hided Frames /////////
+  Widget _buildFramesPanel() {
+    final isDarkMode = _isDarkMode;
 
+    // Filter out the frames to hide
+    final hiddenFrames = [
+      FrameLayout.diagonal,
+      FrameLayout.curved, // Wave
+      FrameLayout.sideStrip,
+      FrameLayout.filmstrip,
+      FrameLayout.arch,
+    ];
 
-///// Hided Frames /////////
-Widget _buildFramesPanel() {
-  final isDarkMode = _isDarkMode;
-  
-  // Filter out the frames to hide
-  final hiddenFrames = [
-    FrameLayout.diagonal,
-    FrameLayout.curved,  // Wave
-    FrameLayout.sideStrip,
-    FrameLayout.filmstrip,
-    FrameLayout.arch,
-  ];
-  
-  final visibleFrames = _frames.where((frame) => !hiddenFrames.contains(frame.layout)).toList();
+    final visibleFrames = _frames
+        .where((frame) => !hiddenFrames.contains(frame.layout))
+        .toList();
 
-  return Container(
-    color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          child: Row(
-            children: [
-              Text(
-                'Frames — ${visibleFrames.length} Styles',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: isDarkMode ? Colors.white : Colors.black87,
+    return Container(
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Row(
+              children: [
+                Text(
+                  'Frames — ${visibleFrames.length} Styles',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => _pickImage(forLogo: false),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 48, 81, 217),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.add_photo_alternate,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Upload Image',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => _pickImage(forLogo: false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 48, 81, 217),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.add_photo_alternate,
+                          size: 14,
                           color: Colors.white,
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 4),
+                        Text(
+                          'Upload Image',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(
-          height: 110,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: visibleFrames.length + 1,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (_, i) {
-              if (i == 0)
+          SizedBox(
+            height: 110,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: visibleFrames.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) {
+                if (i == 0)
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedFrame = -1),
+                    child: _frameThumb(
+                      'None',
+                      Colors.grey.shade400,
+                      _selectedFrame == -1,
+                      null,
+                    ),
+                  );
+                final f = visibleFrames[i - 1];
+                // Find the original index in _frames to maintain correct selection
+                final originalIndex = _frames.indexOf(f);
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedFrame = -1),
+                  onTap: () => setState(() => _selectedFrame = originalIndex),
                   child: _frameThumb(
-                    'None',
-                    Colors.grey.shade400,
-                    _selectedFrame == -1,
-                    null,
+                    f.name,
+                    f.borderColor,
+                    _selectedFrame == originalIndex,
+                    f,
                   ),
                 );
-              final f = visibleFrames[i - 1];
-              // Find the original index in _frames to maintain correct selection
-              final originalIndex = _frames.indexOf(f);
-              return GestureDetector(
-                onTap: () => setState(() => _selectedFrame = originalIndex),
-                child: _frameThumb(
-                  f.name,
-                  f.borderColor,
-                  _selectedFrame == originalIndex,
-                  f,
-                ),
-              );
-            },
+              },
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
 
   // Widget _buildFramesPanel() {
   //   final isDarkMode = _isDarkMode;
@@ -16195,120 +16204,137 @@ Widget _buildFramesPanel() {
   //   );
   // }
 
-
-
-////This is for adding extra screeen/
+  ////This is for adding extra screeen/
   Widget _buildEffectPanel() {
-  final isDarkMode = _isDarkMode;
+    final isDarkMode = _isDarkMode;
 
-  return Container(
-    color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          child: Row(
-            children: [
-              Text(
-                'Effects',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: isDarkMode ? Colors.white : Colors.black87,
-                ),
-              ),
-              const Spacer(),
-              // Show currently applied effect
-              if (_selectedEffect != EffectType.none)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.purpleAccent.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
+    return Container(
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Row(
+              children: [
+                Text(
+                  'Effects',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isDarkMode ? Colors.white : Colors.black87,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.check_circle, size: 12, color: Colors.purpleAccent),
-                      const SizedBox(width: 4),
-                      Text(
-                        _getEffectName(_selectedEffect),
-                        style: const TextStyle(
-                          fontSize: 11,
+                ),
+                const Spacer(),
+                // Show currently applied effect
+                if (_appliedEffects != EffectType.none)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.purpleAccent.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.check_circle,
+                          size: 12,
                           color: Colors.purpleAccent,
-                          fontWeight: FontWeight.w500,
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${(_effectStrength * 100).toInt()}%',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.purpleAccent,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(width: 4),
+                        Text(
+                          // _getEffectName(_appliedEffects),
+                          '${_appliedEffects.length} effect(s)',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.purpleAccent,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Center button to open effect selection
-        Center(
-          child: GestureDetector(
-            onTap: _openEffectSelectionScreen,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.purpleAccent.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.auto_fix_high,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _selectedEffect != EffectType.none
-                        ? 'Change Effect'
-                        : 'Add Effect',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                        const SizedBox(width: 4),
+
+                        // Text(
+                        //   '${(_effectStrength * 100).toInt()}%',
+                        //   style: const TextStyle(
+                        //     fontSize: 11,
+                        //     color: Colors.purpleAccent,
+                        //     fontWeight: FontWeight.bold,
+                        //   ),
+                        // ),
+                        Text(
+                          '${_appliedEffects.length} effect(s)',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.purpleAccent,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Center button to open effect selection
+          Center(
+            child: GestureDetector(
+              onTap: _openEffectSelectionScreen,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.purpleAccent.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.auto_fix_high,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _appliedEffects != EffectType.none
+                          ? 'Change Effect'
+                          : 'Add Effect',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-      ],
-    ),
-  );
-}
-
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
 
 
   void _openEffectSelectionScreen() {
@@ -16316,24 +16342,109 @@ Widget _buildFramesPanel() {
     MaterialPageRoute(
       fullscreenDialog: true,
       builder: (_) => EffectSelectionScreen(
-        selectedEffect: _selectedEffect,
-        effectStrength: _effectStrength,
-        onEffectApplied: (effect, strength) {
+        appliedEffects: _appliedEffects,
+        onEffectApplied: (effect, strength, replace) {
           setState(() {
-            _selectedEffect = effect;
-            _effectStrength = strength;
+            final idx = _appliedEffects.indexWhere((e) => e.type == effect);
+            if (idx != -1) {
+              _appliedEffects[idx] = _AppliedEffect(effect, strength);
+            } else {
+              _appliedEffects.add(_AppliedEffect(effect, strength));
+            }
           });
         },
         onEffectRemoved: () {
+          setState(() => _appliedEffects.clear());
+        },
+        onSingleEffectRemoved: (effect) { // Add this
           setState(() {
-            _selectedEffect = EffectType.none;
-            _effectStrength = 0.5;
+            _appliedEffects.removeWhere((e) => e.type == effect);
           });
         },
       ),
     ),
   );
 }
+
+//   void _openEffectSelectionScreen() {
+//     Navigator.of(context).push(
+//       MaterialPageRoute(
+//         fullscreenDialog: true,
+//         builder: (_) => EffectSelectionScreen(
+//           appliedEffects: _appliedEffects,
+//           // onEffectApplied: (effect, strength, replace) {
+//           //   setState(() {
+//           //     final idx = _appliedEffects.indexWhere((e) => e.type == effect);
+//           //     if (idx != -1) {
+//           //       _appliedEffects[idx] = _AppliedEffect(effect, strength);
+//           //     } else {
+//           //       _appliedEffects.add(_AppliedEffect(effect, strength));
+//           //     }
+//           //   });
+//           // },
+
+
+//           onEffectApplied: (effect, strength, replace) {
+//   setState(() {
+//     final idx = _appliedEffects.indexWhere((e) => e.type == effect);
+//     if (idx != -1) {
+//       _appliedEffects[idx] = _AppliedEffect(effect, strength);
+//     } else {
+//       _appliedEffects.add(_AppliedEffect(effect, strength));
+//     }
+//   });
+// },
+//           onEffectRemoved: () {
+//             setState(() => _appliedEffects.clear());
+//           },
+//         ),
+//       ),
+//     );
+//   }
+
+  //   void _openEffectSelectionScreen() {
+  //   Navigator.of(context).push(
+  //     MaterialPageRoute(
+  //       fullscreenDialog: true,
+  //       builder: (_) => EffectSelectionScreen(
+  //         selectedEffect: _selectedEffect,
+  //         effectStrength: _effectStrength,
+  //         // onEffectApplied: (effect, strength) {
+  //         //   setState(() {
+  //         //     _selectedEffect = effect;
+  //         //     _effectStrength = strength;
+  //         //   });
+  //         // },
+
+  //         onEffectApplied: (effect, strength, replace) {
+  //   setState(() {
+  //     if (replace) {
+  //       // Remove existing same effect type and replace
+  //       _appliedEffects.removeWhere((e) => e.type == effect);
+  //     }
+  //     // Add if not already present, otherwise update strength
+  //     final idx = _appliedEffects.indexWhere((e) => e.type == effect);
+  //     if (idx != -1) {
+  //       _appliedEffects[idx] = _AppliedEffect(effect, strength);
+  //     } else {
+  //       _appliedEffects.add(_AppliedEffect(effect, strength));
+  //     }
+  //   });
+  // },
+  //         // onEffectRemoved: () {
+  //         //   setState(() {
+  //         //     _selectedEffect = EffectType.none;
+  //         //     _effectStrength = 0.5;
+  //         //   });
+  //         // },
+
+  //         onEffectRemoved: () {
+  //   setState(() => _appliedEffects.clear());
+  // },
+  //       ),
+  //     ),
+  //   );
+  // }
 
   // Helper methods for effects
   String _getEffectName(EffectType effect) {
@@ -16477,6 +16588,96 @@ Widget _buildFramesPanel() {
   //   );
   // }
 
+  // Widget _buildBottomTabBar() {
+  //   final isDarkMode = _isDarkMode;
+  //   final tabs = [
+  //     _TabData(BottomTab.text, Icons.text_fields, 'Text'),
+  //     _TabData(BottomTab.frames, Icons.crop_square, 'Frames'),
+  //     _TabData(BottomTab.audio, Icons.volume_up_outlined, 'Audio'),
+  //     _TabData(BottomTab.animation, Icons.animation, 'Animation'),
+  //     _TabData(
+  //       BottomTab.brandInfo,
+  //       Icons.business_center_outlined,
+  //       'Brand Info',
+  //     ),
+  //     _TabData(BottomTab.sticker, Icons.auto_fix_high, 'Effect'),
+  //     _TabData(BottomTab.fonts, Icons.font_download, 'Fonts'), // Add this
+  //   ];
+  //   return Container(
+  //     color: isDarkMode ? const Color.fromARGB(255, 48, 81, 217) : Colors.white,
+  //     padding: EdgeInsets.only(
+  //       bottom:
+  //           MediaQuery.of(context).padding.bottom +
+  //           4, // Add system bottom padding
+  //       top: 4,
+  //     ),
+  //     child: SafeArea(
+  //       top: false,
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceAround,
+  //         children: tabs
+  //             .map(
+  //               (t) => GestureDetector(
+  //                 onTap: () {
+  //                   if (t.tab == BottomTab.audio) {
+  //                     _openAudioSelectionScreen();
+  //                   } else {
+  //                     setState(() => _activeTab = t.tab);
+  //                   }
+  //                 },
+  //                 // onTap: () => setState(() => _activeTab = t.tab),
+  //                 child: AnimatedContainer(
+  //                   duration: const Duration(milliseconds: 200),
+  //                   padding: const EdgeInsets.symmetric(
+  //                     horizontal: 8,
+  //                     vertical: 4,
+  //                   ),
+  //                   decoration: BoxDecoration(
+  //                     border: Border(
+  //                       bottom: BorderSide(
+  //                         color: _activeTab == t.tab
+  //                             ? const Color.fromARGB(255, 48, 81, 217)
+  //                             : Colors.transparent,
+  //                         width: 2,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   child: Column(
+  //                     mainAxisSize: MainAxisSize.min,
+  //                     children: [
+  //                       Icon(
+  //                         t.icon,
+  //                         size: 22,
+  //                         color: _activeTab == t.tab
+  //                             ? const Color.fromARGB(255, 48, 81, 217)
+  //                             : (isDarkMode ? Colors.white54 : Colors.black54),
+  //                       ),
+  //                       const SizedBox(height: 2),
+  //                       Text(
+  //                         t.label,
+  //                         style: TextStyle(
+  //                           fontSize: 9,
+  //                           color: _activeTab == t.tab
+  //                               ? const Color.fromARGB(255, 48, 81, 217)
+  //                               : (isDarkMode
+  //                                     ? Colors.white54
+  //                                     : Colors.black54),
+  //                           fontWeight: _activeTab == t.tab
+  //                               ? FontWeight.bold
+  //                               : FontWeight.normal,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ),
+  //             )
+  //             .toList(),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildBottomTabBar() {
     final isDarkMode = _isDarkMode;
     final tabs = [
@@ -16490,14 +16691,22 @@ Widget _buildFramesPanel() {
         'Brand Info',
       ),
       _TabData(BottomTab.sticker, Icons.auto_fix_high, 'Effect'),
-      _TabData(BottomTab.fonts, Icons.font_download, 'Fonts'), // Add this
+      _TabData(BottomTab.fonts, Icons.font_download, 'Fonts'),
     ];
+
+    // Define active color based on mode
+    final activeColor = isDarkMode
+        ? Colors.white
+        : const Color.fromARGB(255, 48, 81, 217);
+    final inactiveColor = isDarkMode ? Colors.white54 : Colors.black54;
+    final activeBorderColor = isDarkMode
+        ? Colors.white
+        : const Color.fromARGB(255, 48, 81, 217);
+
     return Container(
       color: isDarkMode ? const Color.fromARGB(255, 48, 81, 217) : Colors.white,
       padding: EdgeInsets.only(
-        bottom:
-            MediaQuery.of(context).padding.bottom +
-            4, // Add system bottom padding
+        bottom: MediaQuery.of(context).padding.bottom + 4,
         top: 4,
       ),
       child: SafeArea(
@@ -16514,7 +16723,6 @@ Widget _buildFramesPanel() {
                       setState(() => _activeTab = t.tab);
                     }
                   },
-                  // onTap: () => setState(() => _activeTab = t.tab),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(
@@ -16525,7 +16733,7 @@ Widget _buildFramesPanel() {
                       border: Border(
                         bottom: BorderSide(
                           color: _activeTab == t.tab
-                              ? const Color.fromARGB(255, 48, 81, 217)
+                              ? activeBorderColor // ✅ Fixed
                               : Colors.transparent,
                           width: 2,
                         ),
@@ -16538,8 +16746,8 @@ Widget _buildFramesPanel() {
                           t.icon,
                           size: 22,
                           color: _activeTab == t.tab
-                              ? const Color.fromARGB(255, 48, 81, 217)
-                              : (isDarkMode ? Colors.white54 : Colors.black54),
+                              ? activeColor // ✅ Fixed
+                              : inactiveColor,
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -16547,10 +16755,8 @@ Widget _buildFramesPanel() {
                           style: TextStyle(
                             fontSize: 9,
                             color: _activeTab == t.tab
-                                ? const Color.fromARGB(255, 48, 81, 217)
-                                : (isDarkMode
-                                      ? Colors.white54
-                                      : Colors.black54),
+                                ? activeColor // ✅ Fixed
+                                : inactiveColor,
                             fontWeight: _activeTab == t.tab
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -16811,7 +17017,7 @@ Widget _buildFramesPanel() {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(22),
                       child: Image.asset(
-                        'assets/mainlogo.jpeg',
+                        'assets/latestdesigned.jpeg',
                         width: 82,
                         height: 82,
                         fit: BoxFit.cover,
@@ -18997,34 +19203,35 @@ class _DownloadArcPainter extends CustomPainter {
   bool shouldRepaint(_DownloadArcPainter old) => old.progress != progress;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 // ─────────────────────────────────────────────
 //  EFFECT SELECTION SCREEN
 // ─────────────────────────────────────────────
 
 class EffectSelectionScreen extends StatefulWidget {
-  final EffectType selectedEffect;
-  final double effectStrength;
-  final Function(EffectType effect, double strength) onEffectApplied;
+  // final EffectType selectedEffect;
+  // final double effectStrength;
+  // final Function(EffectType effect, double strength) onEffectApplied;
+  // final VoidCallback onEffectRemoved;
+
+  final List<_AppliedEffect> appliedEffects; // Changed
+  final Function(EffectType effect, double strength, bool replace)
+  onEffectApplied; // Added bool
   final VoidCallback onEffectRemoved;
+
+   final Function(EffectType effect) onSingleEffectRemoved;
 
   const EffectSelectionScreen({
     Key? key,
-    required this.selectedEffect,
-    required this.effectStrength,
+
+    required this.appliedEffects, // Changed
     required this.onEffectApplied,
     required this.onEffectRemoved,
+
+    required this.onSingleEffectRemoved,
+    // required this.selectedEffect,
+    // required this.effectStrength,
+    // required this.onEffectApplied,
+    // required this.onEffectRemoved,
   }) : super(key: key);
 
   @override
@@ -19038,30 +19245,120 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
 
   final List<_EffectEntry> _effects = [
     _EffectEntry(EffectType.blur, Icons.blur_on, 'Blur', 'Soft focus look'),
-    _EffectEntry(EffectType.grayscale, Icons.filter_b_and_w, 'Grayscale', 'Black & white'),
-    _EffectEntry(EffectType.sepia, Icons.filter_vintage, 'Sepia', 'Warm vintage tone'),
-    _EffectEntry(EffectType.brightness, Icons.brightness_5, 'Brightness', 'Adjust light'),
-    _EffectEntry(EffectType.contrast, Icons.contrast, 'Contrast', 'Adjust contrast'),
-    _EffectEntry(EffectType.ambient, Icons.nature_people, 'Ambient', 'Soft & calm'),
-    _EffectEntry(EffectType.hyperChromatic, Icons.auto_awesome, 'Hyper', 'Vibrant colors'),
-    _EffectEntry(EffectType.vintage, Icons.history, 'Vintage', 'Retro nostalgic'),
-    _EffectEntry(EffectType.chromaticAberration, Icons.grain, 'Chromatic', 'RGB split glitch'),
-    _EffectEntry(EffectType.grainyFilm, Icons.fiber_manual_record, 'Lo-Fi', 'Grainy film'),
-    _EffectEntry(EffectType.dreamyGlow, Icons.wb_sunny, 'Dreamy', 'Soft ethereal glow'),
-    _EffectEntry(EffectType.vaporwave, Icons.sunny, 'Vaporwave', '80s retro-futuristic'),
-    _EffectEntry(EffectType.cyberpunk, Icons.bolt, 'Cyberpunk', 'High-tech neon'),
-    _EffectEntry(EffectType.cinematic, Icons.movie, 'Cinematic', 'Movie film look'),
-    _EffectEntry(EffectType.polaroid, Icons.photo_camera, 'Polaroid', 'Instant film'),
-    _EffectEntry(EffectType.duotone, Icons.gradient, 'Duotone', 'Two-color gradient'),
-    _EffectEntry(EffectType.glitch, Icons.error, 'Glitch', 'Digital distortion'),
+    _EffectEntry(
+      EffectType.grayscale,
+      Icons.filter_b_and_w,
+      'Grayscale',
+      'Black & white',
+    ),
+    _EffectEntry(
+      EffectType.sepia,
+      Icons.filter_vintage,
+      'Sepia',
+      'Warm vintage tone',
+    ),
+    _EffectEntry(
+      EffectType.brightness,
+      Icons.brightness_5,
+      'Brightness',
+      'Adjust light',
+    ),
+    _EffectEntry(
+      EffectType.contrast,
+      Icons.contrast,
+      'Contrast',
+      'Adjust contrast',
+    ),
+    _EffectEntry(
+      EffectType.ambient,
+      Icons.nature_people,
+      'Ambient',
+      'Soft & calm',
+    ),
+    _EffectEntry(
+      EffectType.hyperChromatic,
+      Icons.auto_awesome,
+      'Hyper',
+      'Vibrant colors',
+    ),
+    _EffectEntry(
+      EffectType.vintage,
+      Icons.history,
+      'Vintage',
+      'Retro nostalgic',
+    ),
+    _EffectEntry(
+      EffectType.chromaticAberration,
+      Icons.grain,
+      'Chromatic',
+      'RGB split glitch',
+    ),
+    _EffectEntry(
+      EffectType.grainyFilm,
+      Icons.fiber_manual_record,
+      'Lo-Fi',
+      'Grainy film',
+    ),
+    _EffectEntry(
+      EffectType.dreamyGlow,
+      Icons.wb_sunny,
+      'Dreamy',
+      'Soft ethereal glow',
+    ),
+    _EffectEntry(
+      EffectType.vaporwave,
+      Icons.sunny,
+      'Vaporwave',
+      '80s retro-futuristic',
+    ),
+    _EffectEntry(
+      EffectType.cyberpunk,
+      Icons.bolt,
+      'Cyberpunk',
+      'High-tech neon',
+    ),
+    _EffectEntry(
+      EffectType.cinematic,
+      Icons.movie,
+      'Cinematic',
+      'Movie film look',
+    ),
+    _EffectEntry(
+      EffectType.polaroid,
+      Icons.photo_camera,
+      'Polaroid',
+      'Instant film',
+    ),
+    _EffectEntry(
+      EffectType.duotone,
+      Icons.gradient,
+      'Duotone',
+      'Two-color gradient',
+    ),
+    _EffectEntry(
+      EffectType.glitch,
+      Icons.error,
+      'Glitch',
+      'Digital distortion',
+    ),
   ];
+
+  // @override
+  // void initState() {
+  //   super.initState();
+
+  //    _strength = 0.5;
+  //   // _previewEffect = widget.selectedEffect;
+  //   // _confirmedEffect = widget.selectedEffect;
+  //   // _strength = widget.effectStrength;
+  // }
 
   @override
   void initState() {
     super.initState();
-    _previewEffect = widget.selectedEffect;
-    _confirmedEffect = widget.selectedEffect;
-    _strength = widget.effectStrength;
+    _previewEffect = EffectType.none;
+    _confirmedEffect = EffectType.none;
+    _strength = 0.5;
   }
 
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
@@ -19141,7 +19438,9 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                       max: 1,
                       divisions: 100,
                       activeColor: Colors.purpleAccent,
-                      inactiveColor: isDark ? Colors.grey[700] : Colors.grey[300],
+                      inactiveColor: isDark
+                          ? Colors.grey[700]
+                          : Colors.grey[300],
                       onChanged: (v) {
                         setSlider(() => _strength = v);
                         setState(() => _strength = v);
@@ -19182,8 +19481,17 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                       onPressed: () {
                         Navigator.pop(ctx);
                         setState(() => _confirmedEffect = entry.type);
-                        widget.onEffectApplied(entry.type, _strength);
-                        Navigator.pop(context); // back to poster editor
+                        widget.onEffectApplied(
+                          entry.type,
+                          _strength,
+                          false,
+                        ); // false = add, don't replace
+                        Navigator.pop(context);
+
+                        // Navigator.pop(ctx);
+                        // setState(() => _confirmedEffect = entry.type);
+                        // widget.onEffectApplied(entry.type, _strength);
+                        // Navigator.pop(context); // back to poster editor
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.purpleAccent,
@@ -19235,7 +19543,8 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
           ),
         ),
         actions: [
-          if (_confirmedEffect != EffectType.none)
+          // if (_confirmedEffect != EffectType.none)
+          if (widget.appliedEffects.isNotEmpty)
             TextButton.icon(
               onPressed: () {
                 widget.onEffectRemoved();
@@ -19264,7 +19573,11 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.auto_fix_high, color: Colors.purpleAccent, size: 20),
+                    const Icon(
+                      Icons.auto_fix_high,
+                      color: Colors.purpleAccent,
+                      size: 20,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -19272,14 +19585,21 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                         children: [
                           Text(
                             'Currently applied',
-                            style: TextStyle(fontSize: 11, color: textSecondary),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: textSecondary,
+                            ),
                           ),
                           Text(
                             _effects
                                 .firstWhere(
                                   (e) => e.type == _confirmedEffect,
                                   orElse: () => _EffectEntry(
-                                    EffectType.none, Icons.block, 'None', ''),
+                                    EffectType.none,
+                                    Icons.block,
+                                    'None',
+                                    '',
+                                  ),
                                 )
                                 .label,
                             style: TextStyle(
@@ -19291,15 +19611,27 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                         ],
                       ),
                     ),
+
+                    // Text(
+                    //   '${(widget.effectStrength * 100).toInt()}%',
+                    //   style: const TextStyle(
+                    //     color: Colors.purpleAccent,
+                    //     fontWeight: FontWeight.bold,
+                    //   ),
+                    // ),
                     Text(
-                      '${(widget.effectStrength * 100).toInt()}%',
+                      '${widget.appliedEffects.map((e) => (e.strength * 100).toInt()).join(', ')}%',
                       style: const TextStyle(
                         color: Colors.purpleAccent,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Icon(Icons.check_circle, color: Colors.purpleAccent, size: 20),
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.purpleAccent,
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
@@ -19322,7 +19654,10 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.purpleAccent.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
@@ -19353,7 +19688,11 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
               ),
               delegate: SliverChildBuilderDelegate((_, i) {
                 final entry = _effects[i];
-                final isSelected = _confirmedEffect == entry.type;
+                // final isSelected = _confirmedEffect == entry.type;
+
+                final isSelected = widget.appliedEffects.any(
+                  (e) => e.type == entry.type,
+                );
                 return GestureDetector(
                   onTap: () => _onEffectTap(entry),
                   child: Container(
@@ -19386,8 +19725,8 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                             color: isSelected
                                 ? Colors.purpleAccent.withOpacity(0.2)
                                 : (isDark
-                                    ? Colors.white10
-                                    : Colors.grey.shade100),
+                                      ? Colors.white10
+                                      : Colors.grey.shade100),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -19419,20 +19758,55 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 9,
-                              color: textSecondary,
-                            ),
+                            style: TextStyle(fontSize: 9, color: textSecondary),
                           ),
                         ),
+                        // if (isSelected) ...[
+                        //   const SizedBox(height: 6),
+                        //   const Icon(
+                        //     Icons.check_circle,
+                        //     size: 16,
+                        //     color: Colors.purpleAccent,
+                        //   ),
+                        // ],
+
+
+
+
                         if (isSelected) ...[
-                          const SizedBox(height: 6),
-                          const Icon(
-                            Icons.check_circle,
-                            size: 16,
-                            color: Colors.purpleAccent,
-                          ),
-                        ],
+  const SizedBox(height: 6),
+  Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      const Icon(
+        Icons.check_circle,
+        size: 14,
+        color: Colors.purpleAccent,
+      ),
+      const SizedBox(width: 4),
+      GestureDetector(
+        onTap: () {
+          setState(() {
+            widget.appliedEffects.removeWhere((e) => e.type == entry.type);
+          });
+            widget.onSingleEffectRemoved(entry.type);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.close,
+            size: 10,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    ],
+  ),
+],
                       ],
                     ),
                   ),
@@ -19458,4 +19832,10 @@ class _EffectEntry {
   final String label;
   final String description;
   _EffectEntry(this.type, this.icon, this.label, this.description);
+}
+
+class _AppliedEffect {
+  final EffectType type;
+  final double strength;
+  _AppliedEffect(this.type, this.strength);
 }

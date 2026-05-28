@@ -289,6 +289,14 @@ class _HomeScreenState extends State<HomeScreen>
 
     _checkNetwork();
     _initializeAllData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Keep your existing call if you still need it elsewhere
+      // context.read<PosterProvider>().fetchPosters();
+
+      // Add this
+      context.read<PosterProvider>().fetchWeeklyTemplates();
+    });
     // _checkNetwork().then((_) {
     //   if (_hasNetwork) {
     //     Future.microtask(() => _initializeAllData());
@@ -848,7 +856,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-
   Future<void> _fetchUserProfileBackground(String? uid) async {
     if (uid == null) return;
     try {
@@ -866,7 +873,6 @@ class _HomeScreenState extends State<HomeScreen>
       debugPrint('fetchUserProfileBackground: $e');
     }
   }
-
 
   Future<void> _fetchWishesFor(String uid) async {
     setState(() => _isLoadingWishes = true);
@@ -895,7 +901,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-
   Future<void> _fetchWeeklyPostersIfNeeded(String? uid) async {
     if (uid == null) return;
     final weeklyProvider = Provider.of<WeeklyTemplatesProvider>(
@@ -905,7 +910,6 @@ class _HomeScreenState extends State<HomeScreen>
     await weeklyProvider.fetchWeeklyPosters(uid);
   }
 
-
   Future<void> _fetchTrendingPostersIfNeeded(String? uid) async {
     if (uid == null) return;
     await Provider.of<TrendingPosterProvider>(
@@ -913,7 +917,6 @@ class _HomeScreenState extends State<HomeScreen>
       listen: false,
     ).fetchTrendingPosters(uid);
   }
-
 
   Future<void> _fetchReelsIfNeeded(String? uid) async {
     if (uid == null) return;
@@ -924,6 +927,21 @@ class _HomeScreenState extends State<HomeScreen>
     await hotTopicsProvider.fetchHotTopicReels(userId: uid);
   }
 
+  // Future<void> _fetchMyPlanAndModals(String uid) async {
+  //   try {
+  //     await Provider.of<MyPlanProvider>(
+  //       context,
+  //       listen: false,
+  //     ).fetchMyPlan(uid);
+  //     if (mounted) _showInitialModals();
+  //   } catch (e) {
+  //     debugPrint('fetchMyPlanAndModals: $e');
+  //   }
+  // }
+
+
+
+  /////// Newly added Code previous one is the mainly  used////////
 
   Future<void> _fetchMyPlanAndModals(String uid) async {
     try {
@@ -931,7 +949,13 @@ class _HomeScreenState extends State<HomeScreen>
         context,
         listen: false,
       ).fetchMyPlan(uid);
-      if (mounted) _showInitialModals();
+      if (mounted) {
+        // Wait until screen is fully painted AND add extra delay
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          await Future.delayed(const Duration(milliseconds: 1500));
+          if (mounted) _showInitialModals();
+        });
+      }
     } catch (e) {
       debugPrint('fetchMyPlanAndModals: $e');
     }
@@ -947,8 +971,6 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) setState(() => _isStoriesLoading = false);
     }
   }
-
-
 
   Future<void> _initializeProviders() async {
     // Logic moved to _initializeAllData Phase 2
@@ -1083,26 +1105,68 @@ class _HomeScreenState extends State<HomeScreen>
   //   }
   // }
 
+  // void _showInitialModals() async {
+  //   if (!mounted) return;
+
+  //   final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
+  //   if (!myPlanProvider.isPurchase) {
+  //     final shouldShowSub = await _shouldShowSubscriptionModal();
+  //     if (shouldShowSub) {
+  //       await _saveSubscriptionModalShownTime(); // save BEFORE showing
+  //       WidgetsBinding.instance.addPostFrameCallback((_) {
+  //         if (mounted)
+  //           Navigator.push(
+  //             context,
+  //             MaterialPageRoute(builder: (_) => SubscriptionPlansPage()),
+  //           );
+  //       });
+  //     }
+  //   }
+
+  //   final shouldShow = await _shouldShowReferModal();
+  //   if (shouldShow && !_hasShownReferAndEarnModal) {
+  //     WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       if (mounted) {
+  //         showReferAndEarnModal(context);
+  //         _hasShownReferAndEarnModal = true;
+  //       }
+  //     });
+  //   }
+  // }
+
+
+
+  //////////////////// This is the latest one used previous one is tha mainly used one////////////////
+
   void _showInitialModals() async {
     if (!mounted) return;
+
+    if (_isInitialLoad || _isFestivalLoading || _isWeeklyLoading) {
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (mounted) _showInitialModals();
+      return;
+    }
 
     final myPlanProvider = Provider.of<MyPlanProvider>(context, listen: false);
     if (!myPlanProvider.isPurchase) {
       final shouldShowSub = await _shouldShowSubscriptionModal();
       if (shouldShowSub) {
-        await _saveSubscriptionModalShownTime(); // save BEFORE showing
+        await _saveSubscriptionModalShownTime();
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted)
+          if (mounted) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => SubscriptionPlansPage()),
             );
+          }
         });
       }
     }
 
     final shouldShow = await _shouldShowReferModal();
     if (shouldShow && !_hasShownReferAndEarnModal) {
+      // Add a small gap between subscription modal and refer modal
+      await Future.delayed(const Duration(milliseconds: 400));
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           showReferAndEarnModal(context);
@@ -1433,6 +1497,38 @@ class _HomeScreenState extends State<HomeScreen>
                 child: IgnorePointer(
                   ignoring: false,
                   child: Container(color: Colors.black.withOpacity(0.01)),
+                ),
+              ),
+
+            // Add this loading overlay inside your build() Stack children:
+            // Place it as the LAST child inside the Stack in build()
+            if (_isInitialLoad)
+              Positioned.fill(
+                child: IgnorePointer(
+                  ignoring: false, // blocks all taps during load
+                  child: Container(
+                    color: Colors.black.withOpacity(0.15),
+                    child: const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // CircularProgressIndicator(
+                          //   color: Color.fromARGB(255, 48, 81, 217),
+                          //   strokeWidth: 3,
+                          // ),
+                          // SizedBox(height: 14),
+                          // Text(
+                          //   'Loading...',
+                          //   style: TextStyle(
+                          //     color: Colors.white,
+                          //     fontSize: 14,
+                          //     fontWeight: FontWeight.w500,
+                          //   ),
+                          // ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -2220,7 +2316,7 @@ class _HomeScreenState extends State<HomeScreen>
   // Update _buildDateSelector to work with FestivalPostersProvider:
   Widget _buildDateSelector(DateTimeProvider dtp) {
     final today = DateTime.now();
-    final dates = List.generate(7, (i) => today.add(Duration(days: i)));
+    final dates = List.generate(5, (i) => today.add(Duration(days: i)));
 
     return Consumer<FestivalPostersProvider>(
       builder: (context, festivalProvider, _) {
@@ -2282,7 +2378,7 @@ class _HomeScreenState extends State<HomeScreen>
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: 58,
+                  width: 63,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     color: isSelected ? _accent : _sectionBg,
@@ -3571,10 +3667,176 @@ class _HomeScreenState extends State<HomeScreen>
   // ALL CATEGORIES
   // ══════════════════════════════════════════════════════════════════════════
 
+  // Widget _buildAllCategoriesSection() {
+  //   return Consumer<PosterProvider>(
+  //     builder: (context, posterProvider, _) {
+  //       if (posterProvider.isLoading) {
+  //         return Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: List.generate(
+  //             3,
+  //             (catIdx) => Padding(
+  //               padding: const EdgeInsets.only(bottom: 20),
+  //               child: Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Padding(
+  //                     padding: const EdgeInsets.symmetric(
+  //                       horizontal: 16,
+  //                       vertical: 4,
+  //                     ),
+  //                     child: Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                       children: [
+  //                         SkeletonBox(width: 130, height: 18, borderRadius: 4),
+  //                         SkeletonBox(width: 60, height: 14, borderRadius: 4),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 10),
+  //                   SizedBox(
+  //                     height: 150,
+  //                     child: ListView.builder(
+  //                       scrollDirection: Axis.horizontal,
+  //                       padding: const EdgeInsets.symmetric(horizontal: 16),
+  //                       itemCount: 4,
+  //                       itemBuilder: (_, __) => Padding(
+  //                         padding: const EdgeInsets.only(right: 12),
+  //                         child: const SkeletonBox(
+  //                           width: 110,
+  //                           height: 130,
+  //                           borderRadius: 16,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         );
+  //       }
+
+  //       final allPosters = posterProvider.posters;
+  //       final Set<String> seen = {};
+  //       final List<String> categories = [];
+  //       for (final p in allPosters) {
+  //         if (p is CategoryModel &&
+  //             p.categoryName.isNotEmpty &&
+  //             seen.add(p.categoryName))
+  //           categories.add(p.categoryName);
+  //       }
+  //       if (categories.isEmpty) return const SizedBox.shrink();
+
+  //       return Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: categories.map((category) {
+  //           final categoryPosters = allPosters
+  //               .whereType<CategoryModel>()
+  //               .where(
+  //                 (p) => p.categoryName.toLowerCase() == category.toLowerCase(),
+  //               )
+  //               .toList();
+  //           if (categoryPosters.isEmpty) return const SizedBox.shrink();
+  //           return Container(
+  //             // color: _sectionBg,
+  //             margin: const EdgeInsets.only(bottom: 4),
+  //             padding: const EdgeInsets.only(top: 14, bottom: 14),
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Padding(
+  //                   padding: const EdgeInsets.symmetric(horizontal: 16),
+  //                   child: Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                     children: [
+  //                       Expanded(
+  //                         child: Text(
+  //                           _capitalizeFirst(category),
+  //                           style: TextStyle(
+  //                             fontSize: 17,
+  //                             fontWeight: FontWeight.w700,
+  //                             color: _primaryText,
+  //                           ),
+  //                           maxLines: 1,
+  //                           overflow: TextOverflow.ellipsis,
+  //                         ),
+  //                       ),
+  //                       Consumer<MyPlanProvider>(
+  //                         builder: (context, myPlanProvider, _) {
+  //                           return GestureDetector(
+  //                             onTap: () {
+  //                               if (!_requireNetwork()) return;
+  //                               // if (myPlanProvider.isPurchase)
+  //                               Navigator.push(
+  //                                 context,
+  //                                 MaterialPageRoute(
+  //                                   builder: (_) =>
+  //                                       DetailsScreen(category: category),
+  //                                 ),
+  //                               );
+  //                               // else
+  //                               //   _showPremiumDialog();
+  //                             },
+  //                             child: Row(
+  //                               mainAxisSize: MainAxisSize.min,
+  //                               children: [
+  //                                 Text(
+  //                                   'View All',
+  //                                   style: TextStyle(
+  //                                     fontSize: 13,
+  //                                     fontWeight: FontWeight.w600,
+  //                                     color: _primaryText,
+  //                                   ),
+  //                                 ),
+  //                                 const SizedBox(width: 3),
+  //                                 Icon(
+  //                                   Icons.arrow_forward_ios_rounded,
+  //                                   size: 12,
+  //                                   color: _primaryText,
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           );
+  //                         },
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 12),
+  //                 SizedBox(
+  //                   height: 130,
+  //                   child: ListView.builder(
+  //                     scrollDirection: Axis.horizontal,
+  //                     physics: const BouncingScrollPhysics(),
+  //                     padding: const EdgeInsets.symmetric(horizontal: 16),
+  //                     itemCount: categoryPosters.length,
+  //                     itemBuilder: (context, index) {
+  //                       final poster = categoryPosters[index];
+  //                       return Padding(
+  //                         padding: EdgeInsets.only(
+  //                           right: index == categoryPosters.length - 1 ? 0 : 12,
+  //                         ),
+  //                         child: _buildCategoryPosterCard(poster),
+  //                       );
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           );
+  //         }).toList(),
+  //       );
+  //     },
+  //   );
+  // }
+
+  ///////////////////////// New code for showing birthday,anniversary,weekly templates//////////////
+
   Widget _buildAllCategoriesSection() {
     return Consumer<PosterProvider>(
       builder: (context, posterProvider, _) {
-        if (posterProvider.isLoading) {
+        if (posterProvider.isWeeklyLoading) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: List.generate(
@@ -3621,29 +3883,23 @@ class _HomeScreenState extends State<HomeScreen>
           );
         }
 
-        final allPosters = posterProvider.posters;
-        final Set<String> seen = {};
-        final List<String> categories = [];
-        for (final p in allPosters) {
-          if (p is CategoryModel &&
-              p.categoryName.isNotEmpty &&
-              seen.add(p.categoryName))
-            categories.add(p.categoryName);
-        }
-        if (categories.isEmpty) return const SizedBox.shrink();
+        final weeklyMap = posterProvider.weeklyTemplates;
+
+        if (weeklyMap.isEmpty) return const SizedBox.shrink();
+
+        final entries = weeklyMap.entries
+            .where((e) => e.value.isNotEmpty)
+            .toList();
+
+        if (entries.isEmpty) return const SizedBox.shrink();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: categories.map((category) {
-            final categoryPosters = allPosters
-                .whereType<CategoryModel>()
-                .where(
-                  (p) => p.categoryName.toLowerCase() == category.toLowerCase(),
-                )
-                .toList();
-            if (categoryPosters.isEmpty) return const SizedBox.shrink();
+          children: entries.map((entry) {
+            final category = entry.key;
+            final categoryPosters = entry.value;
+
             return Container(
-              // color: _sectionBg,
               margin: const EdgeInsets.only(bottom: 4),
               padding: const EdgeInsets.only(top: 14, bottom: 14),
               child: Column(
@@ -3671,7 +3927,6 @@ class _HomeScreenState extends State<HomeScreen>
                             return GestureDetector(
                               onTap: () {
                                 if (!_requireNetwork()) return;
-                                // if (myPlanProvider.isPurchase)
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -3679,8 +3934,6 @@ class _HomeScreenState extends State<HomeScreen>
                                         DetailsScreen(category: category),
                                   ),
                                 );
-                                // else
-                                //   _showPremiumDialog();
                               },
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,

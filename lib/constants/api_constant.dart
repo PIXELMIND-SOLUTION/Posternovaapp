@@ -19,6 +19,11 @@ class ApiConstants {
   static String updateCustomer(String userId, String customerId) =>
       '$baseUrl/update-customers/$userId/$customerId';
 
+
+
+      static const String getWeeklyTemplates =
+    'http://31.97.228.17:4061/api/poster/weekly-templates/:userId';
+
   static const String getAllCategories =
       'http://31.97.228.17:4061/api/category/getall-cateogry';
 

@@ -83,7 +83,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/mainlogo.jpeg"
+  image_path: "assets/blackremovelogo.png"
 
 
   
@@ -93,12 +93,16 @@ flutter:
 
   assets:
     - assets\appstore.png
+    - assets\whitebg.jpeg
     - assets\correctlog.png
     - assets\editezylogo.png
+    - assets\latestdesigned.jpeg
+    - assets\swasthik.jpeg
     - assets\mainlogo.jpeg
     - assets\latestapplogo.jpeg
     - assets\largelogo.png
     - assets\latestlogo.png
+    - assets\blackremovelogo.png
     - assets\ugadi.png
     - assets/videos/bg.webm
     - assets/videos/celebration.mp4

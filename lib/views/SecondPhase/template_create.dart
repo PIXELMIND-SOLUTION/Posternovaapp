@@ -13872,7 +13872,7 @@ Widget _buildFramesPanel(bool isDarkMode) {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(22),
                       child: Image.asset(
-                        'assets/mainlogo.jpeg',
+                        'assets/latestdesigned.jpeg',
                         width: 82,
                         height: 82,
                         fit: BoxFit.cover,

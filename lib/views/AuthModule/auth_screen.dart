@@ -3117,10 +3117,10 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       _snack('Please enter your name');
       return;
     }
-    if (_emailCtrl.text.trim().isEmpty) {
-      _snack('Please enter your email');
-      return;
-    }
+    // if (_emailCtrl.text.trim().isEmpty) {
+    //   _snack('Please enter your email');
+    //   return;
+    // }
     if (_mobileCtrl.text.trim().isEmpty ||
         _mobileCtrl.text.trim().length != 10) {
       _snack('Please enter a valid 10-digit mobile number');
@@ -3273,7 +3273,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(18),
                         child: Image.asset(
-                          'assets/mainlogo.jpeg',
+                          'assets/latestdesigned.jpeg',
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -3457,7 +3457,19 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                       builder: (context, googleProvider, child) {
                         return _socialLoginBtn(
                           label: 'Google',
-                          icon: _GoogleIcon(),
+
+                          icon: Image.network(
+                            'https://www.google.com/favicon.ico',
+                            width: 20,
+                            height: 20,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                                  Icons.g_mobiledata,
+                                  color: Color(0xFF4285F4),
+                                  size: 20,
+                                ),
+                          ),
+                          // icon: _GoogleIcon(),
                           color: const Color(0xFF4285F4),
                           isLoading: googleProvider.isLoading,
                           onTap: googleProvider.isLoading
@@ -3603,7 +3615,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
                 // Facebook
                 GestureDetector(
-                  onTap: () => _launchUrl('https://www.facebook.com/share/17vjV8fvzW/'),
+                  onTap: () =>
+                      _launchUrl('https://www.facebook.com/share/17vjV8fvzW/'),
                   child: Container(
                     width: 40,
                     height: 40,

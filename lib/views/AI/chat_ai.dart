@@ -93,7 +93,6 @@
 // // //   //   await _flutterTts.speak(text);
 // // //   // }
 
-
 // // //     //// This is the new code for showing the message///
 
 // // //     Future<void> _speakGreeting() async {
@@ -1110,23 +1109,6 @@
 // // //   }
 // // // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // // import 'dart:convert';
 // // import 'dart:io';
 // // import 'dart:math';
@@ -1249,11 +1231,6 @@
 // //     }
 // //   }
 
-
-
-
-
-
 // //   // Show exit confirmation dialog
 // // Future<bool> _onWillPop() async {
 // //   return await showDialog(
@@ -1315,7 +1292,7 @@
 // //                 ),
 // //               ),
 // //               const SizedBox(height: 20),
-              
+
 // //               // Title
 // //               const Text(
 // //                 'Exit App?',
@@ -1327,7 +1304,7 @@
 // //                 ),
 // //               ),
 // //               const SizedBox(height: 12),
-              
+
 // //               // Message
 // //               Text(
 // //                 'Are you sure you want to exit the app?',
@@ -1342,7 +1319,7 @@
 // //                 ),
 // //               ),
 // //               const SizedBox(height: 28),
-              
+
 // //               // Buttons
 // //               Row(
 // //                 children: [
@@ -1378,7 +1355,7 @@
 // //                     ),
 // //                   ),
 // //                   const SizedBox(width: 12),
-                  
+
 // //                   // Exit button
 // //                   Expanded(
 // //                     child: GestureDetector(
@@ -1550,7 +1527,6 @@
 // //   //     }
 // //   //   }
 // //   // }
-
 
 // // Future<void> _sendChatMessage(String userMessage) async {
 // //   setState(() {
@@ -2582,31 +2558,7 @@
 // //   }
 // // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ///////////// New screen for checking the backnd with AI//////////////
-
 
 // import 'dart:convert';
 // import 'dart:io';
@@ -2638,7 +2590,6 @@
 
 //   File? _logoFile;
 //   bool _isImageGenerationMode = false;
-
 
 //   bool _showLoadingOverlay = false;
 
@@ -2675,7 +2626,7 @@
 //       }
 
 //       attempt++;
-//       final delaySec = pow(2, attempt).toInt(); 
+//       final delaySec = pow(2, attempt).toInt();
 //       debugPrint(
 //         '[Retry] 429 rate-limited. Waiting ${delaySec}s before attempt $attempt/$maxRetries...',
 //       );
@@ -2980,7 +2931,7 @@
 //             Uint8List imageBytes;
 
 //             if (imageUrl.startsWith('data:')) {
-   
+
 //               final commaIndex = imageUrl.indexOf(',');
 //               if (commaIndex == -1) {
 //                 throw Exception('Invalid base64 data URL format');
@@ -3922,8 +3873,7 @@
 //                 )
 //               : null,
 //         ),
-        
-        
+
 //       ),
 //     );
 //   }
@@ -3937,23 +3887,7 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ///////////////////////////// Added New code for showing the animation/////////////////////
-
-
-
 
 // ignore_for_file: dangling_library_doc_comments
 
@@ -3962,6 +3896,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -3988,6 +3923,8 @@ class _AiScreenState extends State<AiScreen> {
   File? _logoFile;
   bool _isImageGenerationMode = false;
 
+  Uint8List? _logoOverlayBytes;
+
   final FlutterTts _flutterTts = FlutterTts();
 
   static const String _baseUrl = 'http://31.97.228.17:4061/api/users/chat';
@@ -3998,12 +3935,59 @@ class _AiScreenState extends State<AiScreen> {
   void initState() {
     super.initState();
     _initTts();
+
+    _loadOverlayImage();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {});
         _speakGreeting();
       }
     });
+  }
+
+  Future<void> _loadOverlayImage() async {
+    final data = await rootBundle.load('assetslatestdesigned.jpeg');
+    if (mounted) {
+      setState(() {
+        _logoOverlayBytes = data.buffer.asUint8List();
+      });
+    }
+  }
+
+  void _showImagePreview(Uint8List imageBytes) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(12),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.memory(imageBytes, fit: BoxFit.contain),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<http.Response> _postWithRetry(
@@ -4020,7 +4004,9 @@ class _AiScreenState extends State<AiScreen> {
       }
       attempt++;
       final delaySec = pow(2, attempt).toInt();
-      debugPrint('[Retry] 429 rate-limited. Waiting ${delaySec}s before attempt $attempt/$maxRetries...');
+      debugPrint(
+        '[Retry] 429 rate-limited. Waiting ${delaySec}s before attempt $attempt/$maxRetries...',
+      );
       await Future.delayed(Duration(seconds: delaySec));
     }
   }
@@ -4037,8 +4023,10 @@ class _AiScreenState extends State<AiScreen> {
       final preferred = voiceList.firstWhere(
         (v) =>
             (v['name']?.toString().toLowerCase().contains('female') == true ||
-                v['name']?.toString().toLowerCase().contains('samantha') == true ||
-                v['name']?.toString().toLowerCase().contains('karen') == true) &&
+                v['name']?.toString().toLowerCase().contains('samantha') ==
+                    true ||
+                v['name']?.toString().toLowerCase().contains('karen') ==
+                    true) &&
             v['locale']?.toString().startsWith('en') == true,
         orElse: () => {},
       );
@@ -4093,7 +4081,10 @@ class _AiScreenState extends State<AiScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: const LinearGradient(
-                          colors: [Color.fromARGB(255, 48, 81, 217), Color.fromARGB(255, 48, 81, 217)],
+                          colors: [
+                            Color.fromARGB(255, 48, 81, 217),
+                            Color.fromARGB(255, 48, 81, 217),
+                          ],
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -4121,7 +4112,7 @@ class _AiScreenState extends State<AiScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Are you sure you want to exit the app?',
+                      'Are you sure you want to exit Chicha Ai?',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
@@ -4143,7 +4134,9 @@ class _AiScreenState extends State<AiScreen> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.white.withOpacity(0.2)
                                       : Colors.black.withOpacity(0.2),
                                   width: 1.5,
@@ -4153,7 +4146,9 @@ class _AiScreenState extends State<AiScreen> {
                                 'Cancel',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Theme.of(context).brightness == Brightness.dark
+                                  color:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
                                       ? Colors.white.withOpacity(0.8)
                                       : Colors.black.withOpacity(0.8),
                                   fontWeight: FontWeight.w600,
@@ -4179,7 +4174,12 @@ class _AiScreenState extends State<AiScreen> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color.fromARGB(255, 48, 81, 217),
+                                    color: const Color.fromARGB(
+                                      255,
+                                      48,
+                                      81,
+                                      217,
+                                    ),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -4217,7 +4217,8 @@ class _AiScreenState extends State<AiScreen> {
   }
 
   Future<void> _speakGreeting() async {
-    const text = "Hello Welcome back! I am Chicha AI. How can I help you today?";
+    const text =
+        "Hello Welcome back! I am Chicha AI. How can I help you today?";
     await _flutterTts.speak(text);
   }
 
@@ -4263,7 +4264,7 @@ class _AiScreenState extends State<AiScreen> {
     setState(() {
       _messages.add({'role': 'user', 'text': userMessage, 'type': 'text'});
       _isLoading = true;
-      _showLoadingOverlay = true;
+      // _showLoadingOverlay = true;
       _messageController.clear();
     });
     _scrollToBottom();
@@ -4272,7 +4273,7 @@ class _AiScreenState extends State<AiScreen> {
       final userId = await _getUserId();
       if (userId == null || userId.isEmpty) {
         setState(() {
-          _showLoadingOverlay = false;
+          // _showLoadingOverlay = false;
           _messages.add({
             'role': 'bot',
             'text': 'Unable to identify user. Please log in again.',
@@ -4286,11 +4287,9 @@ class _AiScreenState extends State<AiScreen> {
       debugPrint('[CHAT] POST $url');
       debugPrint('[CHAT] Message: $userMessage');
 
-      final response = await _postWithRetry(
-        url,
-        {'Content-Type': 'application/json'},
-        jsonEncode({'message': userMessage}),
-      );
+      final response = await _postWithRetry(url, {
+        'Content-Type': 'application/json',
+      }, jsonEncode({'message': userMessage}));
 
       debugPrint('[CHAT] Status: ${response.statusCode}');
       debugPrint('[CHAT] Body: ${response.body}');
@@ -4298,14 +4297,16 @@ class _AiScreenState extends State<AiScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
 
-        final String botReply = data['reply'] ??
+        final String botReply =
+            data['reply'] ??
             data['message'] ??
             data['response'] ??
             data['data']?['reply'] ??
             data['data']?['message'] ??
             'Sorry, I could not generate a response.';
 
-        final String? imageUrl = data['imageUrl'] ??
+        final String? imageUrl =
+            data['imageUrl'] ??
             data['image_url'] ??
             data['data']?['imageUrl'] ??
             data['data']?['image_url'];
@@ -4315,23 +4316,33 @@ class _AiScreenState extends State<AiScreen> {
             Uint8List imageBytes;
             if (imageUrl.startsWith('data:')) {
               final commaIndex = imageUrl.indexOf(',');
-              if (commaIndex == -1) throw Exception('Invalid base64 data URL format');
+              if (commaIndex == -1)
+                throw Exception('Invalid base64 data URL format');
               final base64Str = imageUrl.substring(commaIndex + 1);
               imageBytes = base64Decode(base64Str);
             } else {
-              final imgRes = await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 30));
-              if (imgRes.statusCode != 200) throw Exception('Image fetch failed: ${imgRes.statusCode}');
+              final imgRes = await http
+                  .get(Uri.parse(imageUrl))
+                  .timeout(const Duration(seconds: 30));
+              if (imgRes.statusCode != 200)
+                throw Exception('Image fetch failed: ${imgRes.statusCode}');
               imageBytes = imgRes.bodyBytes;
             }
             setState(() {
-              _messages.add({'role': 'bot', 'type': 'image', 'image': imageBytes});
+              _messages.add({
+                'role': 'bot',
+                'type': 'image',
+                'image': imageBytes,
+              });
             });
           } catch (e) {
             debugPrint('[IMAGE LOAD] Error: $e');
             setState(() {
               _messages.add({
                 'role': 'bot',
-                'text': botReply.isNotEmpty ? botReply : 'Could not load the generated image.',
+                'text': botReply.isNotEmpty
+                    ? botReply
+                    : 'Could not load the generated image.',
                 'type': 'text',
               });
             });
@@ -4346,7 +4357,8 @@ class _AiScreenState extends State<AiScreen> {
         setState(() {
           _messages.add({
             'role': 'bot',
-            'text': 'Sorry, I encountered an error (${response.statusCode}). Please try again.',
+            'text':
+                'Sorry, I encountered an error (${response.statusCode}). Please try again.',
             'type': 'text',
           });
         });
@@ -4367,7 +4379,7 @@ class _AiScreenState extends State<AiScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _showLoadingOverlay = false;
+          // _showLoadingOverlay = false;
         });
         _scrollToBottom();
       }
@@ -4380,7 +4392,7 @@ class _AiScreenState extends State<AiScreen> {
     setState(() {
       _messages.add({'role': 'user', 'text': userPrompt, 'type': 'text'});
       _isLoading = true;
-      _showLoadingOverlay = true;
+      // _showLoadingOverlay = true;
       _messageController.clear();
     });
     _scrollToBottom();
@@ -4389,7 +4401,7 @@ class _AiScreenState extends State<AiScreen> {
       final userId = await _getUserId();
       if (userId == null || userId.isEmpty) {
         setState(() {
-          _showLoadingOverlay = false;
+          // _showLoadingOverlay = false;
           _messages.add({
             'role': 'bot',
             'text': 'Unable to identify user. Please log in again.',
@@ -4414,15 +4426,15 @@ class _AiScreenState extends State<AiScreen> {
         final request = http.MultipartRequest('POST', url)
           ..headers['Content-Type'] = 'multipart/form-data'
           ..fields['message'] = message
-          ..files.add(await http.MultipartFile.fromPath('logo', _logoFile!.path));
+          ..files.add(
+            await http.MultipartFile.fromPath('logo', _logoFile!.path),
+          );
         final streamedResponse = await request.send();
         response = await http.Response.fromStream(streamedResponse);
       } else {
-        response = await _postWithRetry(
-          url,
-          {'Content-Type': 'application/json'},
-          jsonEncode({'message': message}),
-        );
+        response = await _postWithRetry(url, {
+          'Content-Type': 'application/json',
+        }, jsonEncode({'message': message}));
       }
 
       debugPrint('[POSTER] Status: ${response.statusCode}');
@@ -4431,12 +4443,14 @@ class _AiScreenState extends State<AiScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
 
-        final String? imageUrl = data['imageUrl'] ??
+        final String? imageUrl =
+            data['imageUrl'] ??
             data['image_url'] ??
             data['data']?['imageUrl'] ??
             data['data']?['image_url'];
 
-        final String botReply = data['reply'] ??
+        final String botReply =
+            data['reply'] ??
             data['message'] ??
             data['response'] ??
             data['data']?['reply'] ??
@@ -4447,16 +4461,24 @@ class _AiScreenState extends State<AiScreen> {
             Uint8List imageBytes;
             if (imageUrl.startsWith('data:')) {
               final commaIndex = imageUrl.indexOf(',');
-              if (commaIndex == -1) throw Exception('Invalid base64 data URL format');
+              if (commaIndex == -1)
+                throw Exception('Invalid base64 data URL format');
               final base64Str = imageUrl.substring(commaIndex + 1);
               imageBytes = base64Decode(base64Str);
             } else {
-              final imgRes = await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 30));
-              if (imgRes.statusCode != 200) throw Exception('Image fetch failed: ${imgRes.statusCode}');
+              final imgRes = await http
+                  .get(Uri.parse(imageUrl))
+                  .timeout(const Duration(seconds: 30));
+              if (imgRes.statusCode != 200)
+                throw Exception('Image fetch failed: ${imgRes.statusCode}');
               imageBytes = imgRes.bodyBytes;
             }
             setState(() {
-              _messages.add({'role': 'bot', 'type': 'image', 'image': imageBytes});
+              _messages.add({
+                'role': 'bot',
+                'type': 'image',
+                'image': imageBytes,
+              });
             });
           } catch (e) {
             debugPrint('[POSTER IMAGE] Error: $e');
@@ -4485,7 +4507,8 @@ class _AiScreenState extends State<AiScreen> {
         setState(() {
           _messages.add({
             'role': 'bot',
-            'text': 'Failed to generate poster (${response.statusCode}). Please try again.',
+            'text':
+                'Failed to generate poster (${response.statusCode}). Please try again.',
             'type': 'text',
           });
         });
@@ -4506,7 +4529,7 @@ class _AiScreenState extends State<AiScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _showLoadingOverlay = false;
+          // _showLoadingOverlay = false;
         });
         _scrollToBottom();
       }
@@ -4516,7 +4539,9 @@ class _AiScreenState extends State<AiScreen> {
   Future<void> _downloadImage(Uint8List imageBytes) async {
     try {
       final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.png');
+      final tempFile = File(
+        '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
       await tempFile.writeAsBytes(imageBytes);
       await Gal.putImage(tempFile.path);
       await tempFile.delete();
@@ -4530,9 +4555,13 @@ class _AiScreenState extends State<AiScreen> {
   Future<void> _shareImage(Uint8List imageBytes) async {
     try {
       final tempDir = await getTemporaryDirectory();
-      final file = await File('${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.png').create();
+      final file = await File(
+        '${tempDir.path}/poster_${DateTime.now().millisecondsSinceEpoch}.png',
+      ).create();
       await file.writeAsBytes(imageBytes);
-      await Share.shareXFiles([XFile(file.path)], text: 'Check out this poster created with Chicha AI!');
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'Check out this poster created with Chicha AI!');
     } catch (e) {
       debugPrint('Error sharing image: $e');
       _showSnackbar('Error sharing image: $e');
@@ -4556,7 +4585,10 @@ class _AiScreenState extends State<AiScreen> {
   void _showSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black87)),
+        content: Text(
+          message,
+          style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black87),
+        ),
         backgroundColor: _isDarkMode ? const Color(0xFF1E293B) : Colors.white,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -4594,7 +4626,9 @@ class _AiScreenState extends State<AiScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const CircularProgressIndicator(color: Color.fromARGB(255, 48, 81, 217)),
+                    const CircularProgressIndicator(
+                      color: Color.fromARGB(255, 48, 81, 217),
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Generating your image...',
@@ -4627,11 +4661,15 @@ class _AiScreenState extends State<AiScreen> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                      color: isDarkMode
+                          ? const Color(0xFF1E293B)
+                          : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.08),
+                          color: Colors.black.withOpacity(
+                            isDarkMode ? 0.3 : 0.08,
+                          ),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -4639,24 +4677,39 @@ class _AiScreenState extends State<AiScreen> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: Image.memory(message['image'] as Uint8List, fit: BoxFit.cover),
+
+                      // child: Image.memory(message['image'] as Uint8List, fit: BoxFit.cover),
+                      child: GestureDetector(
+                        onTap: () =>
+                            _showImagePreview(message['image'] as Uint8List),
+                        child: Image.memory(
+                          message['image'] as Uint8List,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       TextButton.icon(
-                        onPressed: () => _downloadImage(message['image'] as Uint8List),
+                        onPressed: () =>
+                            _downloadImage(message['image'] as Uint8List),
                         icon: const Icon(Icons.download, size: 18),
                         label: const Text('Download'),
-                        style: TextButton.styleFrom(foregroundColor: const Color.fromARGB(255, 0, 0, 0)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       TextButton.icon(
-                        onPressed: () => _shareImage(message['image'] as Uint8List),
+                        onPressed: () =>
+                            _shareImage(message['image'] as Uint8List),
                         icon: const Icon(Icons.share, size: 18),
                         label: const Text('Share'),
-                        style: TextButton.styleFrom(foregroundColor: const Color.fromARGB(255, 0, 0, 0)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+                        ),
                       ),
                     ],
                   ),
@@ -4672,23 +4725,27 @@ class _AiScreenState extends State<AiScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!isUser) ...[
-            _botAvatar(),
-            const SizedBox(width: 12),
-          ],
+          if (!isUser) ...[_botAvatar(), const SizedBox(width: 12)],
           Flexible(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               decoration: BoxDecoration(
                 gradient: isUser
                     ? const LinearGradient(
-                        colors: [Color.fromARGB(255, 48, 81, 217), Color.fromARGB(255, 48, 81, 217)],
+                        colors: [
+                          Color.fromARGB(255, 48, 81, 217),
+                          Color.fromARGB(255, 48, 81, 217),
+                        ],
                       )
                     : null,
-                color: isUser ? null : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
+                color: isUser
+                    ? null
+                    : (isDarkMode ? const Color(0xFF1E293B) : Colors.white),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(20),
                   topRight: const Radius.circular(20),
@@ -4708,7 +4765,9 @@ class _AiScreenState extends State<AiScreen> {
               child: Text(
                 message['text'] ?? '',
                 style: TextStyle(
-                  color: isUser ? Colors.white : (isDarkMode ? Colors.white : const Color(0xFF2D3748)),
+                  color: isUser
+                      ? Colors.white
+                      : (isDarkMode ? Colors.white : const Color(0xFF2D3748)),
                   fontSize: 15,
                   height: 1.5,
                 ),
@@ -4721,7 +4780,9 @@ class _AiScreenState extends State<AiScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF4FD1C5), Color(0xFF3182CE)]),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4FD1C5), Color(0xFF3182CE)],
+                ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -4731,7 +4792,11 @@ class _AiScreenState extends State<AiScreen> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.person_outline,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ],
         ],
@@ -4745,7 +4810,10 @@ class _AiScreenState extends State<AiScreen> {
       height: 36,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color.fromARGB(255, 48, 81, 217), Color.fromARGB(255, 48, 81, 217)],
+          colors: [
+            Color.fromARGB(255, 48, 81, 217),
+            Color.fromARGB(255, 48, 81, 217),
+          ],
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
@@ -4756,7 +4824,11 @@ class _AiScreenState extends State<AiScreen> {
           ),
         ],
       ),
-      child: const Icon(Icons.auto_awesome, color: Color.fromARGB(221, 255, 255, 255), size: 20),
+      child: const Icon(
+        Icons.auto_awesome,
+        color: Color.fromARGB(221, 255, 255, 255),
+        size: 20,
+      ),
     );
   }
 
@@ -4772,7 +4844,10 @@ class _AiScreenState extends State<AiScreen> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color.fromARGB(255, 48, 81, 217), Color.fromARGB(255, 48, 81, 217)],
+                  colors: [
+                    Color.fromARGB(255, 48, 81, 217),
+                    Color.fromARGB(255, 48, 81, 217),
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
@@ -4783,11 +4858,17 @@ class _AiScreenState extends State<AiScreen> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.auto_awesome, size: 48, color: Color.fromARGB(221, 255, 255, 255)),
+              child: const Icon(
+                Icons.auto_awesome,
+                size: 48,
+                color: Color.fromARGB(221, 255, 255, 255),
+              ),
             ),
             const SizedBox(height: 32),
             AppText(
-              _isImageGenerationMode ? 'Create Amazing Posters' : 'chat_with_chicha',
+              _isImageGenerationMode
+                  ? 'Create Amazing Posters'
+                  : 'chat_with_chicha',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -4797,8 +4878,13 @@ class _AiScreenState extends State<AiScreen> {
             ),
             const SizedBox(height: 16),
             AppText(
-              _isImageGenerationMode ? 'Describe your poster and let AI create it' : 'ask_me_anything',
-              style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[400] : Colors.grey[600]),
+              _isImageGenerationMode
+                  ? 'Describe your poster and let AI create it'
+                  : 'ask_me_anything',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -4819,259 +4905,343 @@ class _AiScreenState extends State<AiScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = _isDarkMode;
-    return WillPopScope(
-      onWillPop: _onWillPop,
-      child: SafeArea(
-        child: Stack(
-          children: [
-            Scaffold(
-              backgroundColor: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF7FAFC),
-              appBar: AppBar(
-                automaticallyImplyLeading: true,
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        _isImageGenerationMode ? Icons.image : Icons.auto_awesome,
-                        size: 18,
-                        color: Colors.white,
-                      ),
+    return SafeArea(
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: isDarkMode
+                ? const Color(0xFF0F172A)
+                : const Color(0xFFF7FAFC),
+            appBar: AppBar(
+              automaticallyImplyLeading: true,
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(width: 12),
-                    AppText(
-                      _isImageGenerationMode ? 'Post with Chicha' : 'chat_with_chicha',
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Colors.white),
-                    ),
-                  ],
-                ),
-                centerTitle: true,
-                flexibleSpace: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color.fromARGB(255, 48, 81, 217), Color.fromARGB(255, 48, 81, 217)],
+                    child: Icon(
+                      _isImageGenerationMode ? Icons.image : Icons.auto_awesome,
+                      size: 18,
+                      color: Colors.white,
                     ),
                   ),
-                ),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                actions: [
-                  IconButton(
-                    onPressed: _speakGreeting,
-                    icon: const Icon(Icons.volume_up_rounded, size: 22),
-                    color: Colors.white,
-                    tooltip: 'Replay greeting',
-                  ),
-                  InkWell(
-                    onTap: _toggleImageGenerationMode,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(_isImageGenerationMode ? Icons.chat : Icons.image, size: 22, color: Colors.white),
-                          const SizedBox(height: 2),
-                          AppText(
-                            _isImageGenerationMode ? 'Chat' : 'poster',
-                            style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
+                  const SizedBox(width: 12),
+                  AppText(
+                    _isImageGenerationMode
+                        ? 'Post with Chicha'
+                        : 'chat_with_chicha',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: Colors.white,
                     ),
                   ),
                 ],
               ),
-              body: Column(
-                children: [
-                  if (_isImageGenerationMode && _logoFile != null)
-                    Container(
-                      margin: const EdgeInsets.all(16),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+              centerTitle: true,
+              flexibleSpace: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color.fromARGB(255, 48, 81, 217),
+                      Color.fromARGB(255, 48, 81, 217),
+                    ],
+                  ),
+                ),
+              ),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              actions: [
+                IconButton(
+                  onPressed: _speakGreeting,
+                  icon: const Icon(Icons.volume_up_rounded, size: 22),
+                  color: Colors.white,
+                  tooltip: 'Replay greeting',
+                ),
+                InkWell(
+                  onTap: _toggleImageGenerationMode,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _isImageGenerationMode ? Icons.chat : Icons.image,
+                          size: 22,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(height: 2),
+                        AppText(
+                          _isImageGenerationMode ? 'Chat' : 'poster',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            body: Column(
+              children: [
+                if (_isImageGenerationMode && _logoFile != null)
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? const Color(0xFF1E293B)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(
+                            isDarkMode ? 0.3 : 0.05,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            _logoFile!,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Logo selected',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF2D3748),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20),
+                          onPressed: () => setState(() => _logoFile = null),
+                          color: isDarkMode
+                              ? Colors.grey[400]
+                              : Colors.grey[600],
+                        ),
+                      ],
+                    ),
+                  ),
+                Expanded(
+                  child: _messages.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                          itemCount: _messages.length,
+                          itemBuilder: (context, index) =>
+                              _buildMessage(_messages[index]),
+                        ),
+                ),
+              ],
+            ),
+            bottomSheet: Container(
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isLoading)
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(_logoFile!, width: 60, height: 60, fit: BoxFit.cover),
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color.fromARGB(255, 48, 81, 217),
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Logo selected',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
-                              ),
+                          Text(
+                            _isImageGenerationMode
+                                ? 'Creating magic...'
+                                : 'AI analyzing',
+                            style: TextStyle(
+                              color: isDarkMode
+                                  ? Colors.grey[400]
+                                  : Colors.grey[700],
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 20),
-                            onPressed: () => setState(() => _logoFile = null),
-                            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                           ),
                         ],
                       ),
                     ),
-                  Expanded(
-                    child: _messages.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                            itemCount: _messages.length,
-                            itemBuilder: (context, index) => _buildMessage(_messages[index]),
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (_isImageGenerationMode)
+                            const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: isDarkMode
+                                        ? const Color(0xFF0F172A)
+                                        : const Color(0xFFF7FAFC),
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: isDarkMode
+                                          ? const Color(0xFF334155)
+                                          : Colors.grey[200]!,
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _messageController,
+                                    textInputAction: TextInputAction.send,
+                                    onSubmitted: (_) => _sendMessage(),
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : const Color(0xFF2D3748),
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: _isImageGenerationMode
+                                          ? AppText.translate(
+                                              context,
+                                              'describe_poster',
+                                            )
+                                          : AppText.translate(
+                                              context,
+                                              'ask_me_anything',
+                                            ),
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 14,
+                                          ),
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    minLines: 1,
+                                    maxLines: 4,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color.fromARGB(255, 48, 81, 217),
+                                      Color.fromARGB(255, 48, 81, 217),
+                                    ],
+                                  ),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color.fromARGB(
+                                        255,
+                                        48,
+                                        81,
+                                        217,
+                                      ),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  onPressed: _isLoading ? null : _sendMessage,
+                                  icon: Icon(
+                                    _isImageGenerationMode
+                                        ? Icons.auto_awesome
+                                        : Icons.send_rounded,
+                                    size: 22,
+                                  ),
+                                  color: const Color.fromARGB(
+                                    221,
+                                    255,
+                                    255,
+                                    255,
+                                  ),
+                                  splashRadius: 24,
+                                ),
+                              ),
+                            ],
                           ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
-              bottomSheet: Container(
-                decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, -4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_isLoading)
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 48, 81, 217)),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              _isImageGenerationMode ? 'Creating magic...' : 'AI analyzing',
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (_isImageGenerationMode) const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF7FAFC),
-                                      borderRadius: BorderRadius.circular(24),
-                                      border: Border.all(
-                                        color: isDarkMode ? const Color(0xFF334155) : Colors.grey[200]!,
-                                      ),
-                                    ),
-                                    child: TextField(
-                                      controller: _messageController,
-                                      textInputAction: TextInputAction.send,
-                                      onSubmitted: (_) => _sendMessage(),
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: _isImageGenerationMode
-                                            ? AppText.translate(context, 'describe_poster')
-                                            : AppText.translate(context, 'ask_me_anything'),
-                                        border: InputBorder.none,
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                                        hintStyle: TextStyle(color: Colors.grey[500], fontSize: 15),
-                                      ),
-                                      minLines: 1,
-                                      maxLines: 4,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color.fromARGB(255, 48, 81, 217), Color.fromARGB(255, 48, 81, 217)],
-                                    ),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color.fromARGB(255, 48, 81, 217),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: IconButton(
-                                    onPressed: _isLoading ? null : _sendMessage,
-                                    icon: Icon(
-                                      _isImageGenerationMode ? Icons.auto_awesome : Icons.send_rounded,
-                                      size: 22,
-                                    ),
-                                    color: const Color.fromARGB(221, 255, 255, 255),
-                                    splashRadius: 24,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              floatingActionButton: _isImageGenerationMode
-                  ? FloatingActionButton(
-                      onPressed: _pickLogo,
-                      backgroundColor: const Color(0xFFF5C518),
-                      foregroundColor: Colors.black87,
-                      elevation: 6,
-                      tooltip: _logoFile == null ? 'Add Logo' : 'Change Logo',
-                      child: Icon(_logoFile == null ? Icons.add_photo_alternate : Icons.edit, size: 26),
-                    )
-                  : null,
             ),
+            floatingActionButton: _isImageGenerationMode
+                ? FloatingActionButton(
+                    onPressed: _pickLogo,
+                    backgroundColor: const Color(0xFFF5C518),
+                    foregroundColor: Colors.black87,
+                    elevation: 6,
+                    tooltip: _logoFile == null ? 'Add Logo' : 'Change Logo',
+                    child: Icon(
+                      _logoFile == null
+                          ? Icons.add_photo_alternate
+                          : Icons.edit,
+                      size: 26,
+                    ),
+                  )
+                : null,
+          ),
 
-            // ── Animated loading overlay ──────────────────────────────────
-            _showLoadingOverlay
-                ? const Positioned.fill(child: _ChatLoadingOverlay())
-                : const SizedBox.shrink(),
-          ],
-        ),
+          // ── Animated loading overlay ──────────────────────────────────
+          // _showLoadingOverlay
+          //     ? const Positioned.fill(child: _ChatLoadingOverlay())
+          // //     : const SizedBox.shrink(),
+          // _showLoadingOverlay
+          //     ? Positioned.fill(
+          //         child: _ChatLoadingOverlay(imageBytes: _logoOverlayBytes),
+          //       )
+          //     : const SizedBox.shrink(),
+        ],
       ),
     );
   }
@@ -5085,9 +5255,16 @@ class _AiScreenState extends State<AiScreen> {
   }
 }
 
+// class _ChatLoadingOverlay extends StatefulWidget {
+//   const _ChatLoadingOverlay();
+
+//   @override
+//   State<_ChatLoadingOverlay> createState() => _ChatLoadingOverlayState();
+// }
 
 class _ChatLoadingOverlay extends StatefulWidget {
-  const _ChatLoadingOverlay();
+  final Uint8List? imageBytes; // ← add this
+  const _ChatLoadingOverlay({this.imageBytes});
 
   @override
   State<_ChatLoadingOverlay> createState() => _ChatLoadingOverlayState();
@@ -5105,8 +5282,8 @@ class _ChatLoadingOverlayState extends State<_ChatLoadingOverlay>
   late Animation<double> _shimmer;
   late Animation<double> _dots;
 
-  static const Color _brandBlue   = Color.fromARGB(255, 48, 81, 217);
-  static const Color _brandLight  = Color(0xFF7B9BFF);
+  static const Color _brandBlue = Color.fromARGB(255, 48, 81, 217);
+  static const Color _brandLight = Color(0xFF7B9BFF);
   static const Color _brandAccent = Color(0xFFAAC4FF);
 
   @override
@@ -5114,25 +5291,37 @@ class _ChatLoadingOverlayState extends State<_ChatLoadingOverlay>
     super.initState();
 
     _rotateController = AnimationController(
-        vsync: this, duration: const Duration(seconds: 3))..repeat();
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
 
     _pulseController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1200))..repeat(reverse: true);
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
 
     _orbitController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1800))..repeat();
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
 
     _shimmerController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2000))..repeat();
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
 
     _dotController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1600))..repeat();
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat();
 
     _pulse = Tween<double>(begin: 0.92, end: 1.08).animate(
-        CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
 
     _shimmer = Tween<double>(begin: -1.5, end: 2.5).animate(
-        CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut));
+      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
+    );
 
     _dots = Tween<double>(begin: 0, end: 1).animate(_dotController);
   }
@@ -5203,7 +5392,10 @@ class _ChatLoadingOverlayState extends State<_ChatLoadingOverlay>
                       ),
                       child: Container(
                         margin: const EdgeInsets.all(3),
-                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ),
@@ -5231,7 +5423,10 @@ class _ChatLoadingOverlayState extends State<_ChatLoadingOverlay>
                       ),
                       child: Container(
                         margin: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ),
@@ -5248,8 +5443,16 @@ class _ChatLoadingOverlayState extends State<_ChatLoadingOverlay>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: [
-                          BoxShadow(color: _brandLight.withOpacity(0.35), blurRadius: 24, spreadRadius: 8),
-                          BoxShadow(color: _brandAccent.withOpacity(0.2), blurRadius: 40, spreadRadius: 14),
+                          BoxShadow(
+                            color: _brandLight.withOpacity(0.35),
+                            blurRadius: 24,
+                            spreadRadius: 8,
+                          ),
+                          BoxShadow(
+                            color: _brandAccent.withOpacity(0.2),
+                            blurRadius: 40,
+                            spreadRadius: 14,
+                          ),
                         ],
                       ),
                     ),
@@ -5281,26 +5484,59 @@ class _ChatLoadingOverlayState extends State<_ChatLoadingOverlay>
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(22),
-                      child: Image.asset(
-                        'assets/mainlogo.jpeg',
-                        width: 82,
-                        height: 82,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 82,
-                          height: 82,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(22),
-                            gradient: const LinearGradient(
-                              colors: [_brandBlue, _brandLight],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                          child: const Icon(Icons.auto_awesome, size: 40, color: Colors.white),
-                        ),
+
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: widget.imageBytes != null
+                            ? Image.memory(
+                                widget.imageBytes!,
+                                width: 82,
+                                height: 82,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                width: 82,
+                                height: 82,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(22),
+                                  gradient: const LinearGradient(
+                                    colors: [_brandBlue, _brandLight],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.auto_awesome,
+                                  size: 40,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
+                    //   child: Image.asset(
+                    //     'assets/latestdesigned.jpeg',
+                    //     width: 82,
+                    //     height: 82,
+                    //     fit: BoxFit.cover,
+                    //     errorBuilder: (_, __, ___) => Container(
+                    //       width: 82,
+                    //       height: 82,
+                    //       decoration: BoxDecoration(
+                    //         borderRadius: BorderRadius.circular(22),
+                    //         gradient: const LinearGradient(
+                    //           colors: [_brandBlue, _brandLight],
+                    //           begin: Alignment.topLeft,
+                    //           end: Alignment.bottomRight,
+                    //         ),
+                    //       ),
+                    //       child: const Icon(
+                    //         Icons.auto_awesome,
+                    //         size: 40,
+                    //         color: Colors.white,
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                   ),
                 ],
               ),
@@ -5317,8 +5553,10 @@ class _ChatLoadingOverlayState extends State<_ChatLoadingOverlay>
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     ...List.generate(label.length, (i) {
-                      final offset = sin((_dots.value * 2 * pi) + (i * 0.45)) * 4.0;
-                      final t = (sin((_dots.value * 2 * pi) + (i * 0.5)) + 1) / 2;
+                      final offset =
+                          sin((_dots.value * 2 * pi) + (i * 0.45)) * 4.0;
+                      final t =
+                          (sin((_dots.value * 2 * pi) + (i * 0.5)) + 1) / 2;
                       final color = Color.lerp(_brandBlue, _brandAccent, t)!;
                       return Transform.translate(
                         offset: Offset(0, offset),
@@ -5336,14 +5574,19 @@ class _ChatLoadingOverlayState extends State<_ChatLoadingOverlay>
                     ...List.generate(3, (i) {
                       final dotPhase = (_dots.value * 3 - i).floor() % 3 == 0;
                       return Padding(
-                        padding: EdgeInsets.only(bottom: dotPhase ? 5 : 0, left: i == 0 ? 2 : 1),
+                        padding: EdgeInsets.only(
+                          bottom: dotPhase ? 5 : 0,
+                          left: i == 0 ? 2 : 1,
+                        ),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           width: 4,
                           height: 4,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: dotPhase ? _brandAccent : Colors.white.withOpacity(0.3),
+                            color: dotPhase
+                                ? _brandAccent
+                                : Colors.white.withOpacity(0.3),
                           ),
                         ),
                       );

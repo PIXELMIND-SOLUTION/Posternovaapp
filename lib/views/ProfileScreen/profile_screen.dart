@@ -404,27 +404,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 //   isPurchased:
                                 //       myPlanProvider.isPurchase ?? false,
                                 // ),
-
-
-
                                 _buildMenuItem(
-  icon: Icons.person,
-  title: 'profile',
-  onTap: () {
-    if (myPlanProvider.isPurchase == true) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const EditProfile()),
-      ).then((result) {
-        if (result == true) _refreshProfileAfterEdit();
-      });
-    } else {
-      _showPremiumRequiredDialog(context);
-    }
-  },
-  isPremiumRequired: true,
-  isPurchased: myPlanProvider.isPurchase ?? false,
-),
+                                  icon: Icons.person,
+                                  title: 'profile',
+                                  onTap: () {
+                                    if (myPlanProvider.isPurchase == true) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const EditProfile(),
+                                        ),
+                                      ).then((result) {
+                                        if (result == true)
+                                          _refreshProfileAfterEdit();
+                                      });
+                                    } else {
+                                      _showPremiumRequiredDialog(context);
+                                    }
+                                  },
+                                  isPremiumRequired: true,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
+                                ),
 
                                 _buildMenuItem(
                                   icon: Icons.policy,
@@ -475,24 +477,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 //   isPurchased:
                                 //       myPlanProvider.isPurchase ?? false,
                                 // ),
-
-
                                 _buildMenuItem(
-  icon: Icons.info_outline,
-  title: 'About Us',
-  onTap: () {
-    if (myPlanProvider.isPurchase == true) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AboutScreen()),
-      );
-    } else {
-      _showPremiumRequiredDialog(context);
-    }
-  },
-  isPremiumRequired: true,
-  isPurchased: myPlanProvider.isPurchase ?? false,
-),
+                                  icon: Icons.info_outline,
+                                  title: 'About Us',
+                                  onTap: () {
+                                    if (myPlanProvider.isPurchase == true) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => AboutScreen(),
+                                        ),
+                                      );
+                                    } else {
+                                      _showPremiumRequiredDialog(context);
+                                    }
+                                  },
+                                  isPremiumRequired: true,
+                                  isPurchased:
+                                      myPlanProvider.isPurchase ?? false,
+                                ),
 
                                 // _buildMenuItem(
                                 //   icon: Icons.wallet,
@@ -515,27 +518,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 //   isPurchased:
                                 //       myPlanProvider.isPurchase ?? false,
                                 // ),
-
-
-                                _buildMenuItem(
-  icon: Icons.wallet,
-  title: 'Wallet',
-  onTap: () {
-    if (myPlanProvider.isPurchase == true) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const WalletScreen()),
-      ).then((result) {
-        if (result == true) _refreshProfileAfterEdit();
-      });
-    } else {
-      _showPremiumRequiredDialog(context);
-    }
-  },
-  isPremiumRequired: true,
-  isPurchased: myPlanProvider.isPurchase ?? false,
-),
-
+                                // _buildMenuItem(
+                                //   icon: Icons.wallet,
+                                //   title: 'Wallet',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) =>
+                                //               const WalletScreen(),
+                                //         ),
+                                //       ).then((result) {
+                                //         if (result == true)
+                                //           _refreshProfileAfterEdit();
+                                //       });
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased:
+                                //       myPlanProvider.isPurchase ?? false,
+                                // ),
 
                                 // _buildMenuItem(
                                 //   icon: Icons.wallet,
@@ -564,30 +569,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 //       myPlanProvider.isPurchase ?? false,
                                 // ),
 
-
-
-
-
-_buildMenuItem(
-  icon: Icons.wallet,
-  title: 'Payment History',
-  onTap: () {
-    if (myPlanProvider.isPurchase == true) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentHistoryScreen(userId: user!.user.id),
-        ),
-      ).then((result) {
-        if (result == true) _refreshProfileAfterEdit();
-      });
-    } else {
-      _showPremiumRequiredDialog(context);
-    }
-  },
-  isPremiumRequired: true,
-  isPurchased: myPlanProvider.isPurchase ?? false,
-),
+                                // _buildMenuItem(
+                                //   icon: Icons.wallet,
+                                //   title: 'Payment History',
+                                //   onTap: () {
+                                //     if (myPlanProvider.isPurchase == true) {
+                                //       Navigator.push(
+                                //         context,
+                                //         MaterialPageRoute(
+                                //           builder: (context) => PaymentHistoryScreen(userId: user!.user.id),
+                                //         ),
+                                //       ).then((result) {
+                                //         if (result == true) _refreshProfileAfterEdit();
+                                //       });
+                                //     } else {
+                                //       _showPremiumRequiredDialog(context);
+                                //     }
+                                //   },
+                                //   isPremiumRequired: true,
+                                //   isPurchased: myPlanProvider.isPurchase ?? false,
+                                // ),
                                 // _buildMenuItem(
                                 //   icon: Icons.request_page,
                                 //   title: 'invoice',

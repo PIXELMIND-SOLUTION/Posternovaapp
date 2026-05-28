@@ -49,4 +49,54 @@ class PosterService {
       rethrow; // rethrow to be handled by the provider
     }
   }
+
+
+
+
+
+  Future<Map<String, List<CategoryModel>>> fetchWeeklyTemplates(String userId) async {
+  print('Starting API request to fetch weekly templates for userId: $userId');
+
+  try {
+    final url = ApiConstants.getWeeklyTemplates.replaceAll(':userId', userId);
+    print('Weekly Templates API URL: $url');
+
+    final response = await http.get(Uri.parse(url));
+    print('Weekly Templates Response Status: ${response.statusCode}');
+
+
+    print('Response status code for new api dataaaaaaaaa ${response.statusCode}');
+        print('Response bodyyyyyyyyyyyyyyyy for new api dataaaaaaaaa ${response.body}');
+
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      print('Weekly template keys: ${data.keys.toList()}');
+
+      final Map<String, List<CategoryModel>> result = {};
+      data.forEach((key, value) {
+        if (value is List && value.isNotEmpty) {
+          result[key] = value
+              .map((json) => CategoryModel.fromJson(json))
+              .toList();
+          print('Weekly "$key": ${result[key]!.length} posters');
+        }
+      });
+
+      return result;
+    } else {
+      print('Weekly Templates API Error: ${response.statusCode}');
+      throw Exception('Failed to load weekly templates: ${response.statusCode}');
+    }
+  } on SocketException catch (e) {
+    print('No internet connection: $e');
+    throw 'Please turn on your internet connection';
+  } catch (e) {
+    print('Exception in fetchWeeklyTemplates: $e');
+    if (NetworkHelper.isNoInternetError(e)) {
+      throw 'Please turn on your internet connection';
+    }
+    rethrow;
+  }
+}
 }

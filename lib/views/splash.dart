@@ -418,7 +418,7 @@ class _SplashScreenState extends State<SplashScreen>
                                             32,
                                           ),
                                           child: Image.asset(
-                                            'assets/mainlogo.jpeg',
+                                            'assets/latestdesigned.jpeg',
                                             fit: BoxFit.cover,
                                             errorBuilder: (_, __, ___) =>
                                                 Container(

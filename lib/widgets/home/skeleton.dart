@@ -377,7 +377,7 @@ class _LogoPlaceholderState extends State<LogoPlaceholder>
                     child: Opacity(
                       opacity: 0.35 + (_pulse.value - 0.85) * 0.8,
                       child: Image.asset(
-                        'assets/mainlogo.jpeg',
+                        'assets/latestdesigned.jpeg',
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Icon(
                           Icons.auto_awesome_rounded,

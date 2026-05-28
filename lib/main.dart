@@ -55,6 +55,8 @@ void main() async {
 
   await dotenv.load(fileName: ".env");
 
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
   try {
     /// 1️⃣ Initialize Firebase FIRST
     await Firebase.initializeApp(
@@ -123,7 +125,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CategoriesProvider()),
         ChangeNotifierProvider(create: (_) => CelebrationProvider()),
         ChangeNotifierProvider(create: (_) => AdminAmountProvider()),
-                ChangeNotifierProvider(create: (_) => TrendingPosterProvider()),
+        ChangeNotifierProvider(create: (_) => TrendingPosterProvider()),
 
         ChangeNotifierProvider(create: (_) => UsageProvider()..init()),
       ],

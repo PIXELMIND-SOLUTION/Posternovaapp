@@ -171,7 +171,7 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
   final TextEditingController _locationController = TextEditingController();
   String location = 'Hyderabad, Telangana, India';
   String? _userName;
-
+  String? _profileImageUrl;
   late AnimationController _bgCtrl;
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
@@ -246,7 +246,10 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() => _userName = data['name']?.toString());
+        setState(() {
+          _userName = data['name']?.toString();
+          _profileImageUrl = data['profileImage']?.toString(); // ← add this
+        }); // ←
       }
     } catch (e) {
       debugPrint('Profile fetch error: $e');
@@ -412,8 +415,8 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context); 
-              Navigator.pop(context); 
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
@@ -464,6 +467,102 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
     );
   }
 
+  // Widget _buildHeader() {
+  //   return Container(
+  //     padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+  //     decoration: const BoxDecoration(
+  //       gradient: LinearGradient(
+  //         begin: Alignment.topLeft,
+  //         end: Alignment.bottomRight,
+  //         colors: [
+  //           const Color.fromARGB(255, 48, 81, 217),
+  //           const Color.fromARGB(255, 48, 81, 217),
+  //           const Color.fromARGB(255, 48, 81, 217),
+  //         ],
+  //       ),
+  //       borderRadius: BorderRadius.only(
+  //         bottomLeft: Radius.circular(32),
+  //         bottomRight: Radius.circular(32),
+  //       ),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Color(0x40E64A19),
+  //           blurRadius: 20,
+  //           offset: Offset(0, 8),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //           children: [
+  //             Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(
+  //                   '🪔 ${_t('Online Panchang')}',
+  //                   style: const TextStyle(
+  //                     fontSize: 22,
+  //                     fontWeight: FontWeight.w800,
+  //                     color: Colors.white,
+  //                     letterSpacing: 0.5,
+  //                   ),
+  //                 ),
+  //                 // Text(
+  //                 //   _t('panchang_subtitle') ?? 'Vedic Daily Almanac',
+  //                 //   style: const TextStyle(fontSize: 12, color: Colors.white70),
+  //                 // ),
+  //               ],
+  //             ),
+  //             AnimatedBuilder(
+  //               animation: _pulseAnim,
+  //               builder: (_, child) =>
+  //                   Transform.scale(scale: _pulseAnim.value, child: child),
+  //               child: GestureDetector(
+  //                 onTap: _fetchPanchangData,
+  //                 child: Container(
+  //                   padding: const EdgeInsets.all(10),
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.white.withOpacity(0.2),
+  //                     borderRadius: BorderRadius.circular(14),
+  //                     border: Border.all(color: Colors.white.withOpacity(0.3)),
+  //                   ),
+  //                   child: const Icon(
+  //                     Icons.refresh_rounded,
+  //                     color: Colors.white,
+  //                     size: 22,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         const SizedBox(height: 16),
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: _buildHeaderChip(
+  //                 Icons.calendar_today_rounded,
+  //                 _formatDate(selectedDate),
+  //                 onTap: () => _selectDate(context),
+  //               ),
+  //             ),
+  //             const SizedBox(width: 10),
+  //             Expanded(
+  //               child: _buildHeaderChip(
+  //                 Icons.location_on_rounded,
+  //                 location,
+  //                 onTap: _showLocationDialog,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -472,9 +571,9 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color.fromARGB(255, 48, 81, 217),
-            const Color.fromARGB(255, 48, 81, 217),
-            const Color.fromARGB(255, 48, 81, 217),
+            Color.fromARGB(255, 48, 81, 217),
+            Color.fromARGB(255, 48, 81, 217),
+            Color.fromARGB(255, 48, 81, 217),
           ],
         ),
         borderRadius: BorderRadius.only(
@@ -497,18 +596,25 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '🪔 ${_t('online_punchang')}',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  Text(
-                    _t('panchang_subtitle') ?? 'Vedic Daily Almanac',
-                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/swasthik.jpeg',
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_t('Online Panchang')}',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -803,6 +909,25 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
       decoration: _cardDeco(),
       child: Row(
         children: [
+          // Container(
+          //   width: 58,
+          //   height: 58,
+          //   decoration: BoxDecoration(
+          //     gradient: const LinearGradient(
+          //       colors: [Color(0xFFE64A19), Color(0xFFFF8F00)],
+          //     ),
+          //     borderRadius: BorderRadius.circular(18),
+          //   ),
+          //   alignment: Alignment.center,
+          //   child: Text(
+          //     name.isNotEmpty ? name[0].toUpperCase() : 'U',
+          //     style: const TextStyle(
+          //       fontSize: 26,
+          //       fontWeight: FontWeight.w900,
+          //       color: Colors.white,
+          //     ),
+          //   ),
+          // ),
           Container(
             width: 58,
             height: 58,
@@ -812,15 +937,46 @@ class _OnlinePunchangScreenState extends State<OnlinePunchangScreen>
               ),
               borderRadius: BorderRadius.circular(18),
             ),
-            alignment: Alignment.center,
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : 'U',
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-              ),
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                ? Image.network(
+                    _profileImageUrl!,
+                    width: 58,
+                    height: 58,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                              value: progress.expectedTotalBytes != null
+                                  ? progress.cumulativeBytesLoaded /
+                                        progress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                  )
+                : Center(
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(width: 14),
           Expanded(
