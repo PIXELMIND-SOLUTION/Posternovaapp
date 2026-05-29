@@ -3454,7 +3454,6 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildHotTopicsSection() {
     return Consumer<PosterCategoryProvider>(
       builder: (context, categoryProvider, _) {
-        // Hide entirely while loading with no data, or when empty
         if ((categoryProvider.isLoading && !categoryProvider.hasData) ||
             (!categoryProvider.isLoading &&
                 categoryProvider.categories.isEmpty)) {
@@ -3474,14 +3473,6 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Text(
-                    //   'Categories',
-                    //   style: TextStyle(
-                    //     fontSize: 17,
-                    //     fontWeight: FontWeight.bold,
-                    //     color: _primaryText,
-                    //   ),
-                    // ),
                     Text(
                       'Trending Posters',
                       style: TextStyle(
@@ -3521,7 +3512,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildCategoryContent(PosterCategoryProvider provider) {
-    // Still loading but has stale data — show stale data with a subtle shimmer overlay
     if (provider.isLoading) {
       return ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -3576,21 +3566,10 @@ class _HomeScreenState extends State<HomeScreen>
                   builder: (_) => CategoryDetailScreen(
                     categoryId: category.id,
                     categoryName: category.name,
-                    categoryImage: _resolveImageUrl(
-                      category.image,
-                    ), // pass image
+                    categoryImage: _resolveImageUrl(category.image),
                   ),
                 ),
               );
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(
-              //     builder: (_) => CategoryDetailScreen(
-              //       categoryId: category.id,
-              //       categoryName: category.name,
-              //     ),
-              //   ),
-              // );
             } else {
               CommonModal.showWarning(
                 context: context,
@@ -3630,10 +3609,8 @@ class _HomeScreenState extends State<HomeScreen>
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // ── Thumbnail ──────────────────────────────────
                   _buildCategoryImage(category.image),
 
-                  // ── Gradient overlay + label ───────────────────
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -3674,8 +3651,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  /// Resolves the image URL — some entries use localhost or relative paths
-  /// which won't work on a real device; fall back to a placeholder in that case.
   Widget _buildCategoryImage(String rawUrl) {
     final url = _resolveImageUrl(rawUrl);
 
@@ -3708,11 +3683,10 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  /// Returns null for localhost / relative-path URLs (unreachable from device).
   String? _resolveImageUrl(String raw) {
     if (raw.isEmpty) return null;
-    if (raw.startsWith('/')) return null; // relative path
-    if (raw.contains('localhost')) return null; // localhost — unreachable
+    if (raw.startsWith('/')) return null; 
+    if (raw.contains('localhost')) return null; 
     return raw;
   }
 
@@ -3806,11 +3780,11 @@ class _HomeScreenState extends State<HomeScreen>
 
     return GestureDetector(
       onTap: () {
-        print("Reel tapped at index: $index"); // Debug log
+        print("Reel tapped at index: $index");
         if (!_requireNetwork()) return;
         _goToReelsScreen(index);
       },
-      behavior: HitTestBehavior.opaque, // Add this to ensure taps are detected
+      behavior: HitTestBehavior.opaque,
       child: Container(
         width: 105,
         margin: const EdgeInsets.only(right: 10),
@@ -3830,7 +3804,6 @@ class _HomeScreenState extends State<HomeScreen>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Wrap AutoPlayReelVideo with IgnorePointer to let taps pass through
               IgnorePointer(
                 ignoring: true,
                 child: AutoPlayReelVideo(thumbnailUrl: reel.thumbnailUrl ?? ''),
@@ -3862,7 +3835,6 @@ class _HomeScreenState extends State<HomeScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // Optional: Add title if available
                       if (reel.title != null && reel.title!.isNotEmpty)
                         Expanded(
                           child: Text(
@@ -4475,10 +4447,6 @@ class _HomeScreenState extends State<HomeScreen>
     return text[0].toUpperCase() + text.substring(1);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SECTION HEADER
-  // ══════════════════════════════════════════════════════════════════════════
-
   Widget _buildSectionHeader({
     required String titleKey,
     required String subtitleKey,
@@ -4534,9 +4502,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // LANGUAGE SELECTOR
-  // ══════════════════════════════════════════════════════════════════════════
 
   void _showLanguageSelector(BuildContext context) {
     showDialog(
@@ -4648,9 +4613,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // PREMIUM DIALOG
-  // ══════════════════════════════════════════════════════════════════════════
+
 
   void _showPremiumDialog() {
     showDialog(

@@ -22,6 +22,7 @@ import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/views/SecondPhase/poster_cropper_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
 
 // ─────────────────────────────────────────────
 //  DATA MODELS
@@ -2641,16 +2642,15 @@ class _TemplateCreateState extends State<TemplateCreate>
         //   _brandAnimController.repeat();
         // }
 
-
         if (mounted) {
-  // Always reset and restart — don't rely on wasAnimating
-  _animController.reset();
-  _brandAnimController.reset();
-  if (_selectedAnimation != AnimationType.none) {
-    _animController.repeat(reverse: true);
-    _brandAnimController.repeat();
-  }
-}
+          // Always reset and restart — don't rely on wasAnimating
+          _animController.reset();
+          _brandAnimController.reset();
+          if (_selectedAnimation != AnimationType.none) {
+            _animController.repeat(reverse: true);
+            _brandAnimController.repeat();
+          }
+        }
 
         await Future.delayed(const Duration(milliseconds: 400));
         if (mounted) {
@@ -2847,53 +2847,197 @@ class _TemplateCreateState extends State<TemplateCreate>
   //   );
   // }
 
+  // Widget _buildTopBar() {
+  //   final isDarkMode = _isDarkMode;
+
+  //   return Container(
+  //     color: isDarkMode
+  //         ? const Color(0xFF1E293B)
+  //         : const ui.Color.fromARGB(255, 48, 81, 217),
+  //     padding: EdgeInsets.only(
+  //       top: MediaQuery.of(context).padding.top + 4,
+  //       left: 8,
+  //       right: 8,
+  //       bottom: 8,
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         IconButton(
+  //           icon: Icon(
+  //             Icons.arrow_back,
+  //             color: isDarkMode
+  //                 ? Colors.white
+  //                 : const ui.Color.fromARGB(221, 255, 255, 255),
+  //             size: 22,
+  //           ),
+  //           onPressed: () => Navigator.maybePop(context),
+  //         ),
+  //         IconButton(
+  //           icon: Icon(
+  //             Icons.layers,
+  //             color: isDarkMode
+  //                 ? Colors.white
+  //                 : const ui.Color.fromARGB(221, 255, 255, 255),
+  //             size: 22,
+  //           ),
+  //           onPressed: _showLayersSheet,
+  //         ),
+  //         IconButton(
+  //           icon: Icon(
+  //             Icons.add_photo_alternate,
+  //             color: isDarkMode
+  //                 ? Colors.white
+  //                 : const ui.Color.fromARGB(221, 255, 255, 255),
+  //             size: 22,
+  //           ),
+  //           tooltip: 'Upload Background',
+  //           onPressed: () => _pickImage(forLogo: false),
+  //         ),
+  //         if (_isAnimated)
+  //           IconButton(
+  //             icon: Icon(
+  //               _animController.isAnimating
+  //                   ? Icons.pause_circle_outline
+  //                   : Icons.play_circle_outline,
+  //               color: isDarkMode ? Colors.white : Colors.black87,
+  //               size: 22,
+  //             ),
+  //             onPressed: () {
+  //               setState(() {
+  //                 if (_animController.isAnimating) {
+  //                   _animController.stop();
+  //                   _brandAnimController.stop();
+  //                 } else {
+  //                   _animController.repeat(reverse: true);
+  //                   _brandAnimController.repeat();
+  //                 }
+  //               });
+  //             },
+  //           ),
+  //         const Spacer(),
+  //         GestureDetector(
+  //           onTap: _startDownload,
+  //           child: Container(
+  //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //             decoration: BoxDecoration(
+  //               color: isDarkMode ? Colors.white : Colors.black87,
+  //               borderRadius: BorderRadius.circular(6),
+  //             ),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   _isAnimated ? Icons.videocam : Icons.download,
+  //                   color: isDarkMode ? Colors.black87 : Colors.white,
+  //                   size: 18,
+  //                 ),
+  //                 const SizedBox(width: 6),
+  //                 Text(
+  //                   _isAnimated ? 'Export MP4' : 'Download',
+  //                   style: TextStyle(
+  //                     color: isDarkMode ? Colors.black87 : Colors.white,
+  //                     fontWeight: FontWeight.w600,
+  //                     fontSize: 14,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+
+  //         // Share button — add this before the download button
+  //         GestureDetector(
+  //           onTap: _shareMedia,
+  //           child: Container(
+  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //             margin: const EdgeInsets.only(right: 8),
+  //             decoration: BoxDecoration(
+  //                         color: Colors.black,
+  //               // color: isDarkMode
+  //               //     ? Colors.white.withOpacity(0.15)
+  //               //     : Colors.white.withOpacity(0.2),
+  //               borderRadius: BorderRadius.circular(6),
+  //             ),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   Icons.share,
+  //                   color: isDarkMode ? Colors.white : Colors.white,
+  //                   size: 18,
+  //                 ),
+  //                 // const SizedBox(width: 6),
+  //                 // Text(
+  //                 //   'Share',
+  //                 //   style: TextStyle(
+  //                 //     color: isDarkMode ? Colors.white : Colors.white,
+  //                 //     fontWeight: FontWeight.w600,
+  //                 //     fontSize: 14,
+  //                 //   ),
+  //                 // ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
+//////////////////// commented is the previous code used ///////////////////////////////
+
+
+////////////////// This is the new code for added the share functionality/////////////////
+
+
+
   Widget _buildTopBar() {
     final isDarkMode = _isDarkMode;
 
     return Container(
       color: isDarkMode
           ? const Color(0xFF1E293B)
-          : const ui.Color.fromARGB(255, 48, 81, 217),
+          : const Color.fromARGB(255, 48, 81, 217),
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 4,
-        left: 8,
+        left: 4,
         right: 8,
         bottom: 8,
       ),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: isDarkMode ? Colors.white : const ui.Color.fromARGB(221, 255, 255, 255),
-              size: 22,
-            ),
+            icon: Icon(Icons.arrow_back, color: Colors.white, size: 22),
             onPressed: () => Navigator.maybePop(context),
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            padding: const EdgeInsets.all(6),
           ),
+
           IconButton(
-            icon: Icon(
-              Icons.layers,
-              color: isDarkMode ? Colors.white : const ui.Color.fromARGB(221, 255, 255, 255),
-              size: 22,
-            ),
+            icon: const Icon(Icons.layers, color: Colors.white, size: 22),
             onPressed: _showLayersSheet,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            padding: const EdgeInsets.all(6),
           ),
+
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.add_photo_alternate,
-              color: isDarkMode ? Colors.white : const ui.Color.fromARGB(221, 255, 255, 255),
+              color: Colors.white,
               size: 22,
             ),
             tooltip: 'Upload Background',
             onPressed: () => _pickImage(forLogo: false),
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            padding: const EdgeInsets.all(6),
           ),
+
           if (_isAnimated)
             IconButton(
               icon: Icon(
                 _animController.isAnimating
                     ? Icons.pause_circle_outline
                     : Icons.play_circle_outline,
-                color: isDarkMode ? Colors.white : Colors.black87,
+                color: Colors.white,
                 size: 22,
               ),
               onPressed: () {
@@ -2907,39 +3051,262 @@ class _TemplateCreateState extends State<TemplateCreate>
                   }
                 });
               },
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              padding: const EdgeInsets.all(6),
             ),
+
           const Spacer(),
+
           GestureDetector(
             onTap: _startDownload,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: _isAnimated ? 10 : 14,
+                vertical: 7,
+              ),
               decoration: BoxDecoration(
                 color: isDarkMode ? Colors.white : Colors.black87,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     _isAnimated ? Icons.videocam : Icons.download,
                     color: isDarkMode ? Colors.black87 : Colors.white,
-                    size: 18,
+                    size: 16,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Text(
-                    _isAnimated ? 'Export MP4' : 'Download',
+                    _isAnimated ? 'Export' : 'Save',
                     style: TextStyle(
                       color: isDarkMode ? Colors.black87 : Colors.white,
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
           ),
+
+          const SizedBox(width: 6),
+
+          GestureDetector(
+            onTap: _shareMedia,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.share, color: Colors.white, size: 16),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _shareMedia() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+      String mediaPath;
+
+      if (_isAnimated) {
+        final framesDir = Directory(
+          '${tempDir.path}/share_frames_${DateTime.now().millisecondsSinceEpoch}',
+        );
+        await framesDir.create(recursive: true);
+
+        const int fps = 20;
+        const int durationSec = 3;
+        final int totalFrames = fps * durationSec;
+
+        final bool wasAnimating = _animController.isAnimating;
+        if (wasAnimating) {
+          _animController.stop();
+          _brandAnimController.stop();
+        }
+
+        for (int i = 0; i < totalFrames; i++) {
+          final double progress = i / totalFrames;
+          double animValue;
+          switch (_selectedAnimation) {
+            case AnimationType.none:
+              animValue = 1.0;
+              break;
+            case AnimationType.rotate:
+            case AnimationType.flipIn:
+            case AnimationType.wobble:
+            case AnimationType.rollin:
+              animValue = progress;
+              break;
+            default:
+              animValue = (sin(progress * pi) * 0.5) + 0.5;
+          }
+          _animController.value = animValue;
+          _brandAnimController.value = progress;
+          setState(() {});
+          await WidgetsBinding.instance.endOfFrame;
+          await Future.delayed(const Duration(milliseconds: 2));
+
+          final boundary =
+              _posterKey.currentContext?.findRenderObject()
+                  as RenderRepaintBoundary?;
+          if (boundary == null) throw Exception('Poster not found');
+
+          final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+          final byteData = await image.toByteData(
+            format: ui.ImageByteFormat.png,
+          );
+          final frameFile = File(
+            '${framesDir.path}/frame_${i.toString().padLeft(4, '0')}.png',
+          );
+          await frameFile.writeAsBytes(byteData!.buffer.asUint8List());
+        }
+
+        // Prepare audio
+        String? audioFilePath;
+        if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+          try {
+            final userTrack = _userAudioTracks.firstWhere(
+              (t) => t.name == _selectedAudio,
+              orElse: () =>
+                  UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+            );
+            if (userTrack.filePath.isNotEmpty &&
+                await File(userTrack.filePath).exists()) {
+              final tempAudio = File(
+                '${tempDir.path}/share_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+              );
+              await File(userTrack.filePath).copy(tempAudio.path);
+              audioFilePath = tempAudio.path;
+            } else {
+              final adminTrack = _adminAudioTracks.firstWhere(
+                (t) => t.title == _selectedAudio,
+                orElse: () => AdminAudioTrack(
+                  id: '',
+                  title: '',
+                  artist: '',
+                  audioUrl: '',
+                ),
+              );
+              if (adminTrack.audioUrl.isNotEmpty) {
+                final response = await http.get(Uri.parse(adminTrack.audioUrl));
+                if (response.statusCode == 200) {
+                  final tempAudio = File(
+                    '${tempDir.path}/share_admin_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudio.writeAsBytes(response.bodyBytes);
+                  audioFilePath = tempAudio.path;
+                }
+              }
+            }
+          } catch (e) {
+            print('Audio load error for share: $e');
+          }
+        }
+
+        // Run FFmpeg
+        final outputPath =
+            '${tempDir.path}/share_video_${DateTime.now().millisecondsSinceEpoch}.mp4';
+        String ffmpegCommand;
+        if (audioFilePath != null && await File(audioFilePath).exists()) {
+          ffmpegCommand =
+              '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
+              '-i "$audioFilePath" '
+              '-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest '
+              '-crf 23 -preset ultrafast '
+              '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+              '"$outputPath"';
+        } else {
+          ffmpegCommand =
+              '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
+              '-c:v libx264 -pix_fmt yuv420p '
+              '-crf 23 -preset ultrafast '
+              '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+              '"$outputPath"';
+        }
+
+        final session = await FFmpegKit.execute(ffmpegCommand);
+        final returnCode = await session.getReturnCode();
+        if (!ReturnCode.isSuccess(returnCode)) {
+          throw Exception('Video generation failed');
+        }
+
+        mediaPath = outputPath;
+
+        // Restart animation
+        if (mounted) {
+          _animController.reset();
+          _brandAnimController.reset();
+          if (_selectedAnimation != AnimationType.none) {
+            _animController.repeat(reverse: true);
+            _brandAnimController.repeat();
+          }
+        }
+
+        // Cleanup
+        try {
+          await framesDir.delete(recursive: true);
+          if (audioFilePath != null) await File(audioFilePath).delete();
+        } catch (_) {}
+      } else {
+        // Static image
+        final boundary =
+            _posterKey.currentContext?.findRenderObject()
+                as RenderRepaintBoundary?;
+        if (boundary == null) throw Exception('Poster not found');
+
+        final double targetPixelRatio =
+            widget.posterSize.width / boundary.size.width;
+        final ui.Image image = await boundary.toImage(
+          pixelRatio: targetPixelRatio,
+        );
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        if (byteData == null) throw Exception('Failed to encode image');
+
+        final file = File(
+          '${tempDir.path}/share_poster_${DateTime.now().millisecondsSinceEpoch}.png',
+        );
+        await file.writeAsBytes(byteData.buffer.asUint8List());
+        mediaPath = file.path;
+      }
+
+      if (mounted) Navigator.pop(context); // close loading
+
+      await Share.shareXFiles(
+        [XFile(mediaPath)],
+        text: _brandInfo.name.isNotEmpty
+            ? '${_brandInfo.name} — Created with Edit Ezy'
+            : 'Created with PosterNova',
+        subject: _isAnimated ? 'My Poster Video' : 'My Poster',
+      );
+
+      // Cleanup after share
+      Future.delayed(const Duration(seconds: 30), () {
+        try {
+          File(mediaPath).deleteSync();
+        } catch (_) {}
+      });
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Share failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildPosterArea() {
@@ -10921,125 +11288,113 @@ class _TemplateCreateState extends State<TemplateCreate>
   //   );
   // }
 
+  /////////////// This is the new code for hide the given frames/////
 
+  Widget _buildFramesPanel(bool isDarkMode) {
+    final hiddenFrames = [
+      FrameLayout.diagonal,
+      FrameLayout.curved,
+      FrameLayout.sideStrip,
+      FrameLayout.filmstrip,
+      FrameLayout.arch,
+    ];
 
+    // Filter out hidden frames
+    final visibleFrames = _frames
+        .where((frame) => !hiddenFrames.contains(frame.layout))
+        .toList();
 
-
-
-
-
-
-
-
-
-
-
-/////////////// This is the new code for hide the given frames/////
-
-
-Widget _buildFramesPanel(bool isDarkMode) {
-  final hiddenFrames = [
-    FrameLayout.diagonal,
-    FrameLayout.curved,  
-    FrameLayout.sideStrip,
-    FrameLayout.filmstrip,
-    FrameLayout.arch,
-  ];
-  
-  // Filter out hidden frames
-  final visibleFrames = _frames.where((frame) => !hiddenFrames.contains(frame.layout)).toList();
-
-  return Container(
-    color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          child: Row(
-            children: [
-              Text(
-                'Frames — ${visibleFrames.length} Styles',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: isDarkMode ? Colors.white : Colors.black87,
+    return Container(
+      color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Row(
+              children: [
+                Text(
+                  'Frames — ${visibleFrames.length} Styles',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => _pickImage(forLogo: false),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 48, 81, 217),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.add_photo_alternate,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Upload Image',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => _pickImage(forLogo: false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 48, 81, 217),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.add_photo_alternate,
+                          size: 14,
                           color: Colors.white,
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 4),
+                        Text(
+                          'Upload Image',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(
-          height: 110,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: visibleFrames.length + 1,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (_, i) {
-              if (i == 0)
+          SizedBox(
+            height: 110,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: visibleFrames.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) {
+                if (i == 0)
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedFrame = -1),
+                    child: _frameThumb(
+                      'None',
+                      Colors.grey.shade400,
+                      _selectedFrame == -1,
+                      null,
+                    ),
+                  );
+                final f = visibleFrames[i - 1];
+                // Find the original index in _frames for proper selection
+                final originalIndex = _frames.indexOf(f);
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedFrame = -1),
+                  onTap: () => setState(() => _selectedFrame = originalIndex),
                   child: _frameThumb(
-                    'None',
-                    Colors.grey.shade400,
-                    _selectedFrame == -1,
-                    null,
+                    f.name,
+                    f.borderColor,
+                    _selectedFrame == originalIndex,
+                    f,
                   ),
                 );
-              final f = visibleFrames[i - 1];
-              // Find the original index in _frames for proper selection
-              final originalIndex = _frames.indexOf(f);
-              return GestureDetector(
-                onTap: () => setState(() => _selectedFrame = originalIndex),
-                child: _frameThumb(
-                  f.name,
-                  f.borderColor,
-                  _selectedFrame == originalIndex,
-                  f,
-                ),
-              );
-            },
+              },
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
 
   void _showAddBrandElementSheet() {
     showModalBottomSheet(

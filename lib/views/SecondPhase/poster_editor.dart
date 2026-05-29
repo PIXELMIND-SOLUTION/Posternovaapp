@@ -23,6 +23,7 @@ import 'package:provider/provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
 
 // ─────────────────────────────────────────────
 //  DATA MODELS
@@ -6041,59 +6042,200 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   );
   // }
 
+  // Widget _buildTopBar() {
+  //   final isDarkMode = _isDarkMode;
+
+  //   return Container(
+  //     color: isDarkMode
+  //         ? const Color(0xFF1E293B)
+  //         : const ui.Color.fromARGB(255, 48, 81, 217),
+  //     padding: EdgeInsets.only(
+  //       top: MediaQuery.of(context).padding.top + 4,
+  //       left: 8,
+  //       right: 8,
+  //       bottom: 8,
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         IconButton(
+  //           icon: Icon(
+  //             Icons.arrow_back,
+  //             color: isDarkMode
+  //                 ? Colors.white
+  //                 : const ui.Color.fromARGB(221, 255, 255, 255),
+  //             size: 22,
+  //           ),
+  //           onPressed: () => Navigator.maybePop(context),
+  //         ),
+  //         IconButton(
+  //           icon: Icon(
+  //             Icons.layers,
+  //             color: isDarkMode
+  //                 ? Colors.white
+  //                 : const ui.Color.fromARGB(221, 255, 255, 255),
+  //             size: 22,
+  //           ),
+  //           onPressed: _showLayersSheet,
+  //         ),
+  //         IconButton(
+  //           icon: Icon(
+  //             Icons.add_photo_alternate,
+  //             color: isDarkMode
+  //                 ? Colors.white
+  //                 : const ui.Color.fromARGB(221, 255, 255, 255),
+  //             size: 22,
+  //           ),
+  //           tooltip: 'Upload Background',
+  //           onPressed: () => _pickImage(forLogo: false),
+  //         ),
+  //         if (_isAnimated)
+  //           IconButton(
+  //             icon: Icon(
+  //               _animController.isAnimating
+  //                   ? Icons.pause_circle_outline
+  //                   : Icons.play_circle_outline,
+  //               color: isDarkMode ? Colors.white : Colors.black87,
+  //               size: 22,
+  //             ),
+  //             onPressed: () {
+  //               setState(() {
+  //                 if (_animController.isAnimating) {
+  //                   _animController.stop();
+  //                   _brandAnimController.stop();
+  //                 } else {
+  //                   _animController.repeat(reverse: true);
+  //                   _brandAnimController.repeat();
+  //                 }
+  //               });
+  //             },
+  //           ),
+  //         const Spacer(),
+  //         GestureDetector(
+  //           onTap: _startDownload,
+  //           child: Container(
+  //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //             decoration: BoxDecoration(
+  //               color: isDarkMode ? Colors.white : Colors.black87,
+  //               borderRadius: BorderRadius.circular(6),
+  //             ),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   _isAnimated ? Icons.videocam : Icons.download,
+  //                   color: isDarkMode ? Colors.black87 : Colors.white,
+  //                   size: 18,
+  //                 ),
+  //                 const SizedBox(width: 6),
+  //                 Text(
+  //                   _isAnimated ? 'Export MP4' : 'Download',
+  //                   style: TextStyle(
+  //                     color: isDarkMode ? Colors.black87 : Colors.white,
+  //                     fontWeight: FontWeight.w600,
+  //                     fontSize: 14,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //         SizedBox(width: 6),
+  //         GestureDetector(
+  //           onTap: _shareMedia,
+  //           child: Container(
+  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //             margin: const EdgeInsets.only(right: 8),
+  //             decoration: BoxDecoration(
+  //               color: Colors.black,
+  //               // color: isDarkMode
+  //               //     ? const ui.Color.fromARGB(255, 0, 0, 0).withOpacity(0.15)
+  //               //     : const ui.Color.fromARGB(255, 0, 0, 0).withOpacity(0.2),
+  //               // borderRadius: BorderRadius.circular(6),
+  //               borderRadius: BorderRadius.circular(6),
+  //             ),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   Icons.share,
+  //                   color: isDarkMode
+  //                       ? const ui.Color.fromARGB(255, 0, 0, 0)
+  //                       : Colors.white,
+  //                   size: 18,
+  //                 ),
+  //                 // const SizedBox(width: 6),
+  //                 // Text(
+  //                 //   'Share',
+  //                 //   style: TextStyle(
+  //                 //     color: isDarkMode ? Colors.white : Colors.white,
+  //                 //     fontWeight: FontWeight.w600,
+  //                 //     fontSize: 14,
+  //                 //   ),
+  //                 // ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
+ ////////////// Commented is the previous code used/////////// 
+
+
+
+
+/////////// This is the new code for added the share option in the appbar //////////////////
+
+
   Widget _buildTopBar() {
     final isDarkMode = _isDarkMode;
 
     return Container(
       color: isDarkMode
           ? const Color(0xFF1E293B)
-          : const ui.Color.fromARGB(255, 48, 81, 217),
+          : const Color.fromARGB(255, 48, 81, 217),
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 4,
-        left: 8,
+        left: 4,
         right: 8,
         bottom: 8,
       ),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: isDarkMode
-                  ? Colors.white
-                  : const ui.Color.fromARGB(221, 255, 255, 255),
-              size: 22,
-            ),
+            icon: Icon(Icons.arrow_back, color: Colors.white, size: 22),
             onPressed: () => Navigator.maybePop(context),
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            padding: const EdgeInsets.all(6),
           ),
+
           IconButton(
-            icon: Icon(
-              Icons.layers,
-              color: isDarkMode
-                  ? Colors.white
-                  : const ui.Color.fromARGB(221, 255, 255, 255),
-              size: 22,
-            ),
+            icon: const Icon(Icons.layers, color: Colors.white, size: 22),
             onPressed: _showLayersSheet,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            padding: const EdgeInsets.all(6),
           ),
+
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.add_photo_alternate,
-              color: isDarkMode
-                  ? Colors.white
-                  : const ui.Color.fromARGB(221, 255, 255, 255),
+              color: Colors.white,
               size: 22,
             ),
             tooltip: 'Upload Background',
             onPressed: () => _pickImage(forLogo: false),
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            padding: const EdgeInsets.all(6),
           ),
+
           if (_isAnimated)
             IconButton(
               icon: Icon(
                 _animController.isAnimating
                     ? Icons.pause_circle_outline
                     : Icons.play_circle_outline,
-                color: isDarkMode ? Colors.white : Colors.black87,
+                color: Colors.white,
                 size: 22,
               ),
               onPressed: () {
@@ -6107,39 +6249,264 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                   }
                 });
               },
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              padding: const EdgeInsets.all(6),
             ),
+
           const Spacer(),
+
           GestureDetector(
             onTap: _startDownload,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: _isAnimated ? 10 : 14,
+                vertical: 7,
+              ),
               decoration: BoxDecoration(
                 color: isDarkMode ? Colors.white : Colors.black87,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     _isAnimated ? Icons.videocam : Icons.download,
                     color: isDarkMode ? Colors.black87 : Colors.white,
-                    size: 18,
+                    size: 16,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Text(
-                    _isAnimated ? 'Export MP4' : 'Download',
+                    _isAnimated ? 'Export' : 'Save',
                     style: TextStyle(
                       color: isDarkMode ? Colors.black87 : Colors.white,
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
           ),
+
+          const SizedBox(width: 6),
+
+          GestureDetector(
+            onTap: _shareMedia,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.share, color: Colors.white, size: 16),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _shareMedia() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+      String mediaPath;
+
+      if (_isAnimated) {
+        final framesDir = Directory(
+          '${tempDir.path}/share_frames_${DateTime.now().millisecondsSinceEpoch}',
+        );
+        await framesDir.create(recursive: true);
+
+        const int fps = 20;
+        const int durationSec = 3;
+        final int totalFrames = fps * durationSec;
+
+        final bool wasAnimating = _animController.isAnimating;
+        if (wasAnimating) {
+          _animController.stop();
+          _brandAnimController.stop();
+        }
+
+        for (int i = 0; i < totalFrames; i++) {
+          final double progress = i / totalFrames;
+          double animValue;
+          switch (_selectedAnimation) {
+            case AnimationType.none:
+              animValue = 1.0;
+              break;
+            case AnimationType.rotate:
+            case AnimationType.flipIn:
+            case AnimationType.wobble:
+            case AnimationType.rollin:
+              animValue = progress;
+              break;
+            default:
+              animValue = (sin(progress * pi) * 0.5) + 0.5;
+          }
+          _animController.value = animValue;
+          _brandAnimController.value = progress;
+          setState(() {});
+
+          await WidgetsBinding.instance.endOfFrame;
+          await Future.delayed(const Duration(milliseconds: 2));
+
+          final boundary =
+              _posterKey.currentContext?.findRenderObject()
+                  as RenderRepaintBoundary?;
+          if (boundary == null) throw Exception('Poster not found');
+
+          final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+          final byteData = await image.toByteData(
+            format: ui.ImageByteFormat.png,
+          );
+          final frameFile = File(
+            '${framesDir.path}/frame_${i.toString().padLeft(4, '0')}.png',
+          );
+          await frameFile.writeAsBytes(byteData!.buffer.asUint8List());
+        }
+
+        // Prepare audio if selected
+        String? audioFilePath;
+        if (_selectedAudio != null && _selectedAudio != 'No Audio') {
+          try {
+            final userTrack = _userAudioTracks.firstWhere(
+              (t) => t.name == _selectedAudio,
+              orElse: () =>
+                  UserAudioTrack(name: '', filePath: '', durationInSeconds: 0),
+            );
+
+            if (userTrack.filePath.isNotEmpty &&
+                await File(userTrack.filePath).exists()) {
+              final tempAudio = File(
+                '${tempDir.path}/share_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+              );
+              await File(userTrack.filePath).copy(tempAudio.path);
+              audioFilePath = tempAudio.path;
+            } else {
+              final adminTrack = _adminAudioTracks.firstWhere(
+                (t) => t.title == _selectedAudio,
+                orElse: () => AdminAudioTrack(
+                  id: '',
+                  title: '',
+                  artist: '',
+                  audioUrl: '',
+                ),
+              );
+              if (adminTrack.audioUrl.isNotEmpty) {
+                final response = await http.get(Uri.parse(adminTrack.audioUrl));
+                if (response.statusCode == 200) {
+                  final tempAudio = File(
+                    '${tempDir.path}/share_admin_audio_${DateTime.now().millisecondsSinceEpoch}.mp3',
+                  );
+                  await tempAudio.writeAsBytes(response.bodyBytes);
+                  audioFilePath = tempAudio.path;
+                }
+              }
+            }
+          } catch (e) {
+            print('Audio load error for share: $e');
+          }
+        }
+
+        // Run FFmpeg
+        final outputPath =
+            '${tempDir.path}/share_video_${DateTime.now().millisecondsSinceEpoch}.mp4';
+        String ffmpegCommand;
+
+        if (audioFilePath != null && await File(audioFilePath).exists()) {
+          ffmpegCommand =
+              '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
+              '-i "$audioFilePath" '
+              '-c:v libx264 -pix_fmt yuv420p -c:a aac -shortest '
+              '-crf 23 -preset ultrafast '
+              '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+              '"$outputPath"';
+        } else {
+          ffmpegCommand =
+              '-y -framerate $fps -i "${framesDir.path}/frame_%04d.png" '
+              '-c:v libx264 -pix_fmt yuv420p '
+              '-crf 23 -preset ultrafast '
+              '-vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" '
+              '"$outputPath"';
+        }
+
+        final session = await FFmpegKit.execute(ffmpegCommand);
+        final returnCode = await session.getReturnCode();
+
+        if (!ReturnCode.isSuccess(returnCode)) {
+          throw Exception('Video generation failed');
+        }
+
+        mediaPath = outputPath;
+
+        // Restart animation
+        if (mounted) {
+          _animController.reset();
+          _brandAnimController.reset();
+          if (_selectedAnimation != AnimationType.none) {
+            _animController.repeat(reverse: true);
+            _brandAnimController.repeat();
+          }
+        }
+
+        // Cleanup frames
+        try {
+          await framesDir.delete(recursive: true);
+          if (audioFilePath != null) await File(audioFilePath).delete();
+        } catch (_) {}
+      } else {
+        // ── Capture static image for sharing ──
+        final boundary =
+            _posterKey.currentContext?.findRenderObject()
+                as RenderRepaintBoundary?;
+        if (boundary == null) throw Exception('Poster not found');
+
+        final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        if (byteData == null) throw Exception('Failed to encode image');
+
+        final file = File(
+          '${tempDir.path}/share_poster_${DateTime.now().millisecondsSinceEpoch}.png',
+        );
+        await file.writeAsBytes(byteData.buffer.asUint8List());
+        mediaPath = file.path;
+      }
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Share the file
+      await Share.shareXFiles(
+        [XFile(mediaPath)],
+        text: _brandInfo.name.isNotEmpty
+            ? '${_brandInfo.name} — Created with Edit Ezy'
+            : 'Created with PosterNova',
+        subject: _isAnimated ? 'My Poster Video' : 'My Poster',
+      );
+
+      // Cleanup shared file after delay
+      Future.delayed(const Duration(seconds: 30), () {
+        try {
+          File(mediaPath).deleteSync();
+        } catch (_) {}
+      });
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Share failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildPosterArea() {
@@ -16336,71 +16703,70 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     );
   }
 
-
   void _openEffectSelectionScreen() {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      fullscreenDialog: true,
-      builder: (_) => EffectSelectionScreen(
-        appliedEffects: _appliedEffects,
-        onEffectApplied: (effect, strength, replace) {
-          setState(() {
-            final idx = _appliedEffects.indexWhere((e) => e.type == effect);
-            if (idx != -1) {
-              _appliedEffects[idx] = _AppliedEffect(effect, strength);
-            } else {
-              _appliedEffects.add(_AppliedEffect(effect, strength));
-            }
-          });
-        },
-        onEffectRemoved: () {
-          setState(() => _appliedEffects.clear());
-        },
-        onSingleEffectRemoved: (effect) { // Add this
-          setState(() {
-            _appliedEffects.removeWhere((e) => e.type == effect);
-          });
-        },
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => EffectSelectionScreen(
+          appliedEffects: _appliedEffects,
+          onEffectApplied: (effect, strength, replace) {
+            setState(() {
+              final idx = _appliedEffects.indexWhere((e) => e.type == effect);
+              if (idx != -1) {
+                _appliedEffects[idx] = _AppliedEffect(effect, strength);
+              } else {
+                _appliedEffects.add(_AppliedEffect(effect, strength));
+              }
+            });
+          },
+          onEffectRemoved: () {
+            setState(() => _appliedEffects.clear());
+          },
+          onSingleEffectRemoved: (effect) {
+            // Add this
+            setState(() {
+              _appliedEffects.removeWhere((e) => e.type == effect);
+            });
+          },
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-//   void _openEffectSelectionScreen() {
-//     Navigator.of(context).push(
-//       MaterialPageRoute(
-//         fullscreenDialog: true,
-//         builder: (_) => EffectSelectionScreen(
-//           appliedEffects: _appliedEffects,
-//           // onEffectApplied: (effect, strength, replace) {
-//           //   setState(() {
-//           //     final idx = _appliedEffects.indexWhere((e) => e.type == effect);
-//           //     if (idx != -1) {
-//           //       _appliedEffects[idx] = _AppliedEffect(effect, strength);
-//           //     } else {
-//           //       _appliedEffects.add(_AppliedEffect(effect, strength));
-//           //     }
-//           //   });
-//           // },
+  //   void _openEffectSelectionScreen() {
+  //     Navigator.of(context).push(
+  //       MaterialPageRoute(
+  //         fullscreenDialog: true,
+  //         builder: (_) => EffectSelectionScreen(
+  //           appliedEffects: _appliedEffects,
+  //           // onEffectApplied: (effect, strength, replace) {
+  //           //   setState(() {
+  //           //     final idx = _appliedEffects.indexWhere((e) => e.type == effect);
+  //           //     if (idx != -1) {
+  //           //       _appliedEffects[idx] = _AppliedEffect(effect, strength);
+  //           //     } else {
+  //           //       _appliedEffects.add(_AppliedEffect(effect, strength));
+  //           //     }
+  //           //   });
+  //           // },
 
-
-//           onEffectApplied: (effect, strength, replace) {
-//   setState(() {
-//     final idx = _appliedEffects.indexWhere((e) => e.type == effect);
-//     if (idx != -1) {
-//       _appliedEffects[idx] = _AppliedEffect(effect, strength);
-//     } else {
-//       _appliedEffects.add(_AppliedEffect(effect, strength));
-//     }
-//   });
-// },
-//           onEffectRemoved: () {
-//             setState(() => _appliedEffects.clear());
-//           },
-//         ),
-//       ),
-//     );
-//   }
+  //           onEffectApplied: (effect, strength, replace) {
+  //   setState(() {
+  //     final idx = _appliedEffects.indexWhere((e) => e.type == effect);
+  //     if (idx != -1) {
+  //       _appliedEffects[idx] = _AppliedEffect(effect, strength);
+  //     } else {
+  //       _appliedEffects.add(_AppliedEffect(effect, strength));
+  //     }
+  //   });
+  // },
+  //           onEffectRemoved: () {
+  //             setState(() => _appliedEffects.clear());
+  //           },
+  //         ),
+  //       ),
+  //     );
+  //   }
 
   //   void _openEffectSelectionScreen() {
   //   Navigator.of(context).push(
@@ -19218,7 +19584,7 @@ class EffectSelectionScreen extends StatefulWidget {
   onEffectApplied; // Added bool
   final VoidCallback onEffectRemoved;
 
-   final Function(EffectType effect) onSingleEffectRemoved;
+  final Function(EffectType effect) onSingleEffectRemoved;
 
   const EffectSelectionScreen({
     Key? key,
@@ -19761,6 +20127,7 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                             style: TextStyle(fontSize: 9, color: textSecondary),
                           ),
                         ),
+
                         // if (isSelected) ...[
                         //   const SizedBox(height: 6),
                         //   const Icon(
@@ -19769,44 +20136,42 @@ class _EffectSelectionScreenState extends State<EffectSelectionScreen> {
                         //     color: Colors.purpleAccent,
                         //   ),
                         // ],
-
-
-
-
                         if (isSelected) ...[
-  const SizedBox(height: 6),
-  Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      const Icon(
-        Icons.check_circle,
-        size: 14,
-        color: Colors.purpleAccent,
-      ),
-      const SizedBox(width: 4),
-      GestureDetector(
-        onTap: () {
-          setState(() {
-            widget.appliedEffects.removeWhere((e) => e.type == entry.type);
-          });
-            widget.onSingleEffectRemoved(entry.type);
-        },
-        child: Container(
-          padding: const EdgeInsets.all(2),
-          decoration: const BoxDecoration(
-            color: Colors.red,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.close,
-            size: 10,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    ],
-  ),
-],
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.check_circle,
+                                size: 14,
+                                color: Colors.purpleAccent,
+                              ),
+                              const SizedBox(width: 4),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    widget.appliedEffects.removeWhere(
+                                      (e) => e.type == entry.type,
+                                    );
+                                  });
+                                  widget.onSingleEffectRemoved(entry.type);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 10,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),

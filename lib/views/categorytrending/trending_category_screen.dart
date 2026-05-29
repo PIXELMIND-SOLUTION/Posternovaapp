@@ -657,10 +657,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen>
                       color: Color(0xFF6B7280),
                     ),
                   ),
-                  const Spacer(),
-                  // Optional: sort/filter icon placeholder
-                  Icon(Icons.tune_rounded,
-                      size: 20, color: Colors.grey.shade400),
+                  // const Spacer(),
+                  // // Optional: sort/filter icon placeholder
+                  // Icon(Icons.tune_rounded,
+                  //     size: 20, color: Colors.grey.shade400),
                 ],
               ),
             ),
