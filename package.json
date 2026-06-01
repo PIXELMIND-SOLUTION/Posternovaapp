@@ -1,0 +1,28 @@
+{
+  "name": "posternovaapp",
+  "version": "1.0.0",
+  "description": "A new Flutter project.",
+  "main": "test.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PIXELMIND-SOLUTION/Posternovaapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/PIXELMIND-SOLUTION/Posternovaapp/issues"
+  },
+  "homepage": "https://github.com/PIXELMIND-SOLUTION/Posternovaapp#readme",
+  "dependencies": {
+    "webdriverio": "^9.27.1"
+  }
+}

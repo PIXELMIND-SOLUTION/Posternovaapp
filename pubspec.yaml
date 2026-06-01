@@ -2,8 +2,8 @@ name: posternova
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.10+75
-# version: 1.0.24+31
+version: 1.0.10+76
+# version: 1.0.28+35
 
 
 environment:
@@ -22,7 +22,7 @@ dependencies:
   gal: ^2.3.2
   image_picker: ^1.2.0
   path_provider: ^2.1.5
-  share_plus: ^12.0.0
+  share_plus: ^12.0.0 
   smooth_page_indicator: ^1.2.1
   shared_preferences: ^2.5.3
   shimmer: ^3.0.0
@@ -92,18 +92,18 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets\appstore.png
-    - assets\whitebg.jpeg
-    - assets\correctlog.png
-    - assets\editezylogo.png
-    - assets\latestdesigned.jpeg
-    - assets\swasthik.jpeg
-    - assets\mainlogo.jpeg
-    - assets\latestapplogo.jpeg
-    - assets\largelogo.png
-    - assets\latestlogo.png
-    - assets\blackremovelogo.png
-    - assets\ugadi.png
+    - assets/appstore.png
+    - assets/whitebg.jpeg
+    - assets/correctlog.png
+    - assets/editezylogo.png
+    - assets/latestdesigned.jpeg
+    - assets/swasthik.jpeg
+    - assets/mainlogo.jpeg
+    - assets/latestapplogo.jpeg
+    - assets/largelogo.png
+    - assets/latestlogo.png
+    - assets/blackremovelogo.png
+    - assets/ugadi.png
     - assets/videos/bg.webm
     - assets/videos/celebration.mp4
     - assets/audio/Aaja Mahiya - Lofi _ Slowed Reverb.mp3
