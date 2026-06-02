@@ -138,10 +138,16 @@ class BgImageModel {
 
   BgImageModel({required this.url, required this.publicId});
 
+  // factory BgImageModel.fromJson(Map<String, dynamic> json) => BgImageModel(
+  //       url: json['url'] as String,
+  //       publicId: json['publicId'] as String,
+  //     );
+
+
   factory BgImageModel.fromJson(Map<String, dynamic> json) => BgImageModel(
-        url: json['url'] as String,
-        publicId: json['publicId'] as String,
-      );
+  url: json['url'] as String? ?? '',
+  publicId: json['publicId'] as String? ?? '',
+);
 
   Map<String, dynamic> toJson() => {'url': url, 'publicId': publicId};
 }
@@ -157,12 +163,20 @@ class OverlayImageModel {
     required this.publicId,
   });
 
+  // factory OverlayImageModel.fromJson(Map<String, dynamic> json) =>
+  //     OverlayImageModel(
+  //       id: json['_id'] as String,
+  //       url: json['url'] as String,
+  //       publicId: json['publicId'] as String,
+  //     );
+
+
   factory OverlayImageModel.fromJson(Map<String, dynamic> json) =>
-      OverlayImageModel(
-        id: json['_id'] as String,
-        url: json['url'] as String,
-        publicId: json['publicId'] as String,
-      );
+    OverlayImageModel(
+      id: json['_id'] as String? ?? '',
+      url: json['url'] as String? ?? '',
+      publicId: json['publicId'] as String? ?? '',
+    );
 
   Map<String, dynamic> toJson() => {
         '_id': id,
@@ -289,29 +303,61 @@ class PosterSubcategoryModel {
     required this.updatedAt,
   });
 
+  // factory PosterSubcategoryModel.fromJson(Map<String, dynamic> json) {
+  //   return PosterSubcategoryModel(
+  //     id: json['_id'] as String,
+  //     categoryId: json['categoryId'] as String,
+  //     name: json['name'] as String,
+  //     categoryName: json['categoryName'] as String,
+  //     festivalDate: DateTime.parse(json['festivalDate'] as String),
+  //     description: json['description'] as String,
+  //     tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+  //     email: json['email'] as String,
+  //     mobile: json['mobile'] as String,
+  //     title: json['title'] as String,
+  //     posterLang: json['posterlang'] as String,
+  //     isTrending: json['isTrending'] as bool,
+  //     posterImage: json['posterImage'] as String,
+  //     images:
+  //         (json['images'] as List<dynamic>).map((e) => e as String).toList(),
+  //     designData: DesignDataModel.fromJson(
+  //         json['designData'] as Map<String, dynamic>),
+  //     createdAt: DateTime.parse(json['createdAt'] as String),
+  //     updatedAt: DateTime.parse(json['updatedAt'] as String),
+  //   );
+  // }
+
+
+
   factory PosterSubcategoryModel.fromJson(Map<String, dynamic> json) {
-    return PosterSubcategoryModel(
-      id: json['_id'] as String,
-      categoryId: json['categoryId'] as String,
-      name: json['name'] as String,
-      categoryName: json['categoryName'] as String,
-      festivalDate: DateTime.parse(json['festivalDate'] as String),
-      description: json['description'] as String,
-      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
-      email: json['email'] as String,
-      mobile: json['mobile'] as String,
-      title: json['title'] as String,
-      posterLang: json['posterlang'] as String,
-      isTrending: json['isTrending'] as bool,
-      posterImage: json['posterImage'] as String,
-      images:
-          (json['images'] as List<dynamic>).map((e) => e as String).toList(),
-      designData: DesignDataModel.fromJson(
-          json['designData'] as Map<String, dynamic>),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-    );
-  }
+  return PosterSubcategoryModel(
+    id: json['_id'] as String,
+    categoryId: json['categoryId'] as String,
+    name: json['name'] as String? ?? '',
+    categoryName: json['categoryName'] as String? ?? '',
+    festivalDate: DateTime.tryParse(json['festivalDate'] as String? ?? '') 
+        ?? DateTime.now(),
+    description: json['description'] as String? ?? '',
+    tags: (json['tags'] as List<dynamic>? ?? [])
+        .map((e) => e as String)
+        .toList(),
+    email: json['email'] as String? ?? '',
+    mobile: json['mobile'] as String? ?? '',
+    title: json['title'] as String? ?? '',
+    posterLang: json['posterlang'] as String? ?? 'en',
+    isTrending: json['isTrending'] as bool? ?? false,
+    posterImage: json['posterImage'] as String? ?? '',
+    images: (json['images'] as List<dynamic>? ?? [])
+        .map((e) => e as String)
+        .toList(),
+    designData: DesignDataModel.fromJson(
+        json['designData'] as Map<String, dynamic>),
+    createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') 
+        ?? DateTime.now(),
+    updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') 
+        ?? DateTime.now(),
+  );
+}
 }
 
 class PosterSubcategoriesResponse {
