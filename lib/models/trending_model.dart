@@ -184,7 +184,6 @@ class OverlayImageModel {
         'publicId': publicId,
       };
 }
-
 class OverlayPosition {
   final double x;
   final double y;
