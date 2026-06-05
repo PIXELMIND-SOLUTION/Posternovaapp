@@ -1327,27 +1327,14 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
 ///////////////////////// New code added for showing the download animation with logo/////////////////
-
-
 
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -1397,51 +1384,88 @@ class _ReelsScreenState extends State<ReelsScreen> {
     super.dispose();
   }
 
+  //    Future<void> _showExitDialog() async {
+  //   await showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       backgroundColor: const Color(0xFF1E1E1E),
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  //       title: const Text(
+  //         'Exit?',
+  //         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+  //       ),
+  //       content: const Text(
+  //         'Are you sure you want to exit?',
+  //         style: TextStyle(color: Colors.white70),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+  //         ),
+  //         ElevatedButton(
+  //           onPressed: () {
+  //             Navigator.pop(context); // close dialog
+  //             Navigator.pop(context); // exit screen
+  //           },
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor: Colors.redAccent,
+  //             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  //           ),
+  //           child: const Text('Exit', style: TextStyle(color: Colors.white)),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-
-   Future<void> _showExitDialog() async {
-  await showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text(
-        'Exit?',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
-      content: const Text(
-        'Are you sure you want to exit?',
-        style: TextStyle(color: Colors.white70),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+  Future<void> _showExitDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Exit?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context); // close dialog
-            Navigator.pop(context); // exit screen
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        content: const Text(
+          'Are you sure you want to exit?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
           ),
-          child: const Text('Exit', style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
-}
-
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              SystemNavigator.pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Exit', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-    onPopInvokedWithResult: (didPop, result) {
-      if (!didPop) _showExitDialog();
-    },
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _showExitDialog();
+      },
       child: Scaffold(
         backgroundColor: Colors.black,
         extendBodyBehindAppBar: true,
@@ -1480,7 +1504,10 @@ class _ReelsScreenState extends State<ReelsScreen> {
                     const SizedBox(height: 16),
                     Text(
                       reelProvider.error!,
-                      style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
@@ -1561,7 +1588,6 @@ class _ReelsScreenState extends State<ReelsScreen> {
   }
 }
 
-
 class _DownloadOverlay extends StatefulWidget {
   final double progress;
 
@@ -1631,8 +1657,7 @@ class _DownloadOverlayState extends State<_DownloadOverlay>
     return AnimatedBuilder(
       animation: _orbitController,
       builder: (_, __) {
-        final computedAngle =
-            angle + (_orbitController.value * 2 * math.pi);
+        final computedAngle = angle + (_orbitController.value * 2 * math.pi);
         const radius = 52.0;
         final dx = math.cos(computedAngle) * radius;
         final dy = math.sin(computedAngle) * radius;
@@ -1653,10 +1678,6 @@ class _DownloadOverlayState extends State<_DownloadOverlay>
       },
     );
   }
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -1688,10 +1709,7 @@ class _DownloadOverlayState extends State<_DownloadOverlay>
                       height: 140,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.transparent,
-                          width: 0,
-                        ),
+                        border: Border.all(color: Colors.transparent, width: 0),
                         gradient: const SweepGradient(
                           colors: [
                             Colors.transparent,
@@ -2009,8 +2027,7 @@ class _AnimatedDownloadLabelState extends State<_AnimatedDownloadLabel>
                   math.sin((_wave.value * 2 * math.pi) + (i * 0.45)) * 4.0;
               final t =
                   (math.sin((_wave.value * 2 * math.pi) + (i * 0.5)) + 1) / 2;
-              final color =
-                  Color.lerp(_tealDark, _accent, t) ?? _tealLight;
+              final color = Color.lerp(_tealDark, _accent, t) ?? _tealLight;
               return Transform.translate(
                 offset: Offset(0, offset),
                 child: Text(
@@ -2038,9 +2055,7 @@ class _AnimatedDownloadLabelState extends State<_AnimatedDownloadLabel>
                   height: 4,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: dotPhase
-                        ? _accent
-                        : Colors.white.withOpacity(0.3),
+                    color: dotPhase ? _accent : Colors.white.withOpacity(0.3),
                   ),
                 ),
               );
@@ -2571,10 +2586,7 @@ class _ReelItemState extends State<ReelItem>
               end: Alignment.bottomCenter,
             ),
             border: Border(
-              top: BorderSide(
-                color: Colors.white.withOpacity(0.3),
-                width: 1,
-              ),
+              top: BorderSide(color: Colors.white.withOpacity(0.3), width: 1),
             ),
           ),
           child: Row(
@@ -2699,10 +2711,7 @@ class _ReelItemState extends State<ReelItem>
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withOpacity(0.9),
-                  Colors.transparent,
-                ],
+                colors: [Colors.black.withOpacity(0.9), Colors.transparent],
               ),
             ),
           ),
@@ -2745,16 +2754,12 @@ class _ReelItemState extends State<ReelItem>
             children: [
               Consumer<ReelProvider>(
                 builder: (context, reelProvider, child) {
-                  final currentReel =
-                      reelProvider.getReelById(widget.reel.id);
-                  final isLiked =
-                      currentReel?.isLiked ?? widget.reel.isLiked;
+                  final currentReel = reelProvider.getReelById(widget.reel.id);
+                  final isLiked = currentReel?.isLiked ?? widget.reel.isLiked;
                   final likeCount =
                       currentReel?.likeCount ?? widget.reel.likeCount;
                   return _ActionButton(
-                    icon: isLiked
-                        ? Icons.favorite
-                        : Icons.favorite_border,
+                    icon: isLiked ? Icons.favorite : Icons.favorite_border,
                     iconColor: isLiked ? Colors.red : Colors.white,
                     label: _formatCount(likeCount),
                     onTap: _toggleLike,
@@ -2793,12 +2798,10 @@ class _ReelItemState extends State<ReelItem>
                     height: 32,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border:
-                          Border.all(color: Colors.white, width: 1),
+                      border: Border.all(color: Colors.white, width: 1),
                       color: Colors.grey[800],
                     ),
-                    child: _profileImage != null &&
-                            _profileImage!.isNotEmpty
+                    child: _profileImage != null && _profileImage!.isNotEmpty
                         ? ClipOval(
                             child: Image.network(
                               _profileImage!,
@@ -2839,8 +2842,7 @@ class _ReelItemState extends State<ReelItem>
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(Icons.music_note,
-                      color: Colors.white, size: 14),
+                  const Icon(Icons.music_note, color: Colors.white, size: 14),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
@@ -2863,9 +2865,7 @@ class _ReelItemState extends State<ReelItem>
 
         // ── Animated Download Overlay ──────────────────────────
         if (_isDownloading)
-          Positioned.fill(
-            child: _DownloadOverlay(progress: _downloadProgress),
-          ),
+          Positioned.fill(child: _DownloadOverlay(progress: _downloadProgress)),
       ],
     );
   }

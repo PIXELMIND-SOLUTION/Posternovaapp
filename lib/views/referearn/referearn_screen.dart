@@ -912,22 +912,49 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
     }
   }
 
+  //   void shareReferralCode() {
+  //     if (referralCode != null && referralCode!.isNotEmpty) {
+  //       final shareText =
+  //           '''
+  // 🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
+
+  // Use my referral code: *$referralCode*
+
+  // You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
+
+  // Download EditEzy now:
+  // https://play.google.com/store/apps/details?id=com.posternova.posternova
+
+  // Don't miss out on this opportunity! 🚀
+  // ''';
+  //       Share.share(shareText, subject: 'Join EditEzy using my referral code');
+  //     }
+  //   }
+
   void shareReferralCode() {
     if (referralCode != null && referralCode!.isNotEmpty) {
       final shareText =
           '''
-🎉 Join me on EditEzy - Amazing Photo & Poster Editor!
+🎉 Invite Your Friends to Edit Ezy & Earn Rewards!
 
 Use my referral code: *$referralCode*
 
-You'll get exclusive benefits, and I'll earn ₹200 when you upgrade your account!
+💰 Earn ₹200 for every successful referral!
 
-Download EditEzy now:
+How it works:
+✅ Share your referral code with friends
+✅ Your friend subscribes to any Edit Ezy plan
+✅ You receive ₹200 reward instantly
+
+🚀 Start referring today and earn more with every subscription!
+
+Download Edit Ezy now:
 https://play.google.com/store/apps/details?id=com.posternova.posternova
 
-Don't miss out on this opportunity! 🚀
+Don't miss out! 🎨✨
 ''';
-      Share.share(shareText, subject: 'Join EditEzy using my referral code');
+
+      Share.share(shareText, subject: 'Join Edit Ezy using my referral code');
     }
   }
 
@@ -1173,7 +1200,9 @@ class _HeaderCard extends StatelessWidget {
           AppText(
             'earn_now',
             style: TextStyle(
-              color: isDarkMode ? primaryColor : const Color.fromARGB(221, 255, 255, 255),
+              color: isDarkMode
+                  ? primaryColor
+                  : const Color.fromARGB(221, 255, 255, 255),
               fontWeight: FontWeight.w700,
               fontSize: 18,
             ),
@@ -1215,9 +1244,9 @@ class _HeaderCard extends StatelessWidget {
               child: AppText(
                 'redeem_now',
                 style: TextStyle(
-                  // color: isDarkMode ? Colors.black87 : primaryColor,
-                                    color: isDarkMode ? Colors.black87 : Colors.white,
+                  color: isDarkMode ? Colors.black87 : primaryColor,
 
+                  // color: isDarkMode ? Colors.black87 : Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
@@ -1269,7 +1298,9 @@ class _StatTile extends StatelessWidget {
                 : Text(
                     value!,
                     style: TextStyle(
-                      color: isDarkMode ? Colors.white : const Color.fromARGB(221, 255, 255, 255),
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color.fromARGB(221, 255, 255, 255),
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1278,7 +1309,9 @@ class _StatTile extends StatelessWidget {
             AppText(
               labelKey,
               style: TextStyle(
-                color: isDarkMode ? Colors.white70 : const Color.fromARGB(179, 255, 255, 255),
+                color: isDarkMode
+                    ? Colors.white70
+                    : const Color.fromARGB(179, 255, 255, 255),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -1431,7 +1464,7 @@ class _HowItWorks extends StatelessWidget {
       _HowItWorksItem(
         icon: Icons.volunteer_activism,
         title: 'both_get_rewards',
-        subtitle: 'credits_after_purchase.',
+        subtitle: 'Credits after purchase.',
       ),
     ];
 

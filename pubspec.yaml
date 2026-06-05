@@ -2,7 +2,7 @@ name: posternova
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.10+77
+version: 1.0.10+80
 # version: 1.0.28+35
 
 
@@ -83,7 +83,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/blackremovelogo.png"
+  image_path: "assets/mainlogo.jpeg"
 
 
   

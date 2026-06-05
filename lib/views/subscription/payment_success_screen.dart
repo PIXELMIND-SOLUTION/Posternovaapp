@@ -62,6 +62,9 @@ class _PlanDetailsAndPaymentScreenState
   String? selectedPaymentMethod;
   bool isLoading = false;
   String? userId;
+
+  String? userEmail;
+  String? userPhone;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -73,12 +76,11 @@ class _PlanDetailsAndPaymentScreenState
   StreamSubscription<List<PurchaseDetails>>? _subscription;
   bool _available = false;
   List<ProductDetails> _products = [];
-    bool _isIapInitialized = false;
+  bool _isIapInitialized = false;
   bool _isInitializingIap = false;
-    final Set<String> _ignoredRestoredPurchases = {};
+  final Set<String> _ignoredRestoredPurchases = {};
 
-    bool _shouldProcessRestoredPurchases = false;
-
+  bool _shouldProcessRestoredPurchases = false;
 
   // Prevent duplicate triggers
   bool _isOpeningPurchase = false; // guards showing store modal
@@ -141,12 +143,27 @@ class _PlanDetailsAndPaymentScreenState
     _processingTransactionIds.clear();
   }
 
+  // Future<void> _loadUserId() async {
+  //   try {
+  //     final userData = await AuthPreferences.getUserData();
+  //     if (userData != null) {
+  //       setState(() {
+  //         userId = userData.user.id;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print('Error loading user ID: $e');
+  //   }
+  // }
+
   Future<void> _loadUserId() async {
     try {
       final userData = await AuthPreferences.getUserData();
       if (userData != null) {
         setState(() {
           userId = userData.user.id;
+          userEmail = userData.user.email; 
+          userPhone = userData.user.mobile; 
         });
       }
     } catch (e) {
@@ -329,12 +346,12 @@ class _PlanDetailsAndPaymentScreenState
   // -------------------- IN-APP PURCHASE (iOS) --------------------
   Future<void> _initIAP() async {
     print('Initializing In-App Purchase...');
-  if (_isIapInitialized || _isInitializingIap) {
+    if (_isIapInitialized || _isInitializingIap) {
       print('IAP already initialized or initializing - skipping');
       return;
     }
 
-        _isInitializingIap = true;
+    _isInitializingIap = true;
 
     // Cancel old subscription listener (if any)
     _subscription?.cancel();
@@ -396,7 +413,7 @@ class _PlanDetailsAndPaymentScreenState
       //   'Successfully loaded ${_products.length} real products from App Store',
       // );
 
-       if (response.error != null) {
+      if (response.error != null) {
         print('ProductDetails query error: ${response.error}');
         print('Using dummy products as fallback');
         _createDummyProducts();
@@ -410,7 +427,9 @@ class _PlanDetailsAndPaymentScreenState
             _products = response.productDetails;
           });
         }
-        print('Successfully loaded ${_products.length} real products from App Store');
+        print(
+          'Successfully loaded ${_products.length} real products from App Store',
+        );
       }
 
       // Mark as initialized
@@ -418,9 +437,8 @@ class _PlanDetailsAndPaymentScreenState
     } catch (e) {
       print('Exception during IAP initialization: $e');
       _createDummyProducts();
-    }finally{
-            _isInitializingIap = false;
-
+    } finally {
+      _isInitializingIap = false;
     }
   }
 
@@ -500,8 +518,6 @@ class _PlanDetailsAndPaymentScreenState
   //   }
   // }
 
-
-
   // void _listenToPurchaseUpdated(List<PurchaseDetails> purchases) async {
   //   print('Purchase updated, ${purchases.length} purchase(s)');
 
@@ -513,7 +529,7 @@ class _PlanDetailsAndPaymentScreenState
   //     // ⭐⭐ KEY FIX: IGNORE RESTORED PURCHASES THAT WE'VE ALREADY PROCESSED ⭐⭐
   //     if (purchase.status == PurchaseStatus.restored) {
   //       final txnId = purchase.purchaseID ?? 'unknown_txn';
-        
+
   //       if (_ignoredRestoredPurchases.contains(txnId)) {
   //         print('🚫 Ignoring already processed restored purchase: $txnId');
   //         if (purchase.pendingCompletePurchase) {
@@ -521,11 +537,11 @@ class _PlanDetailsAndPaymentScreenState
   //         }
   //         continue;
   //       }
-        
+
   //       // Mark this restored purchase as ignored to prevent future processing
   //       _ignoredRestoredPurchases.add(txnId);
   //       print('📝 Added restored purchase to ignore list: $txnId');
-        
+
   //       // Still complete the purchase but don't process it
   //       if (purchase.pendingCompletePurchase) {
   //         await _iap.completePurchase(purchase);
@@ -579,516 +595,562 @@ class _PlanDetailsAndPaymentScreenState
   //   }
   // }
 
+  Future<void> _listenToPurchaseUpdated(List<PurchaseDetails> purchases) async {
+    print('Purchase updated, ${purchases.length} purchase(s)');
 
+    for (final purchase in purchases) {
+      final productId = purchase.productID ?? 'unknown_product';
+      final txnId = purchase.purchaseID ?? 'txn-$productId';
 
-Future<void> _listenToPurchaseUpdated(List<PurchaseDetails> purchases) async {
-  print('Purchase updated, ${purchases.length} purchase(s)');
-
-  for (final purchase in purchases) {
-    final productId = purchase.productID ?? 'unknown_product';
-    final txnId = purchase.purchaseID ?? 'txn-$productId';
-
-    print('Purchase event: product=$productId, status=${purchase.status}, txn=$txnId');
-
-    // If we've explicitly ignored this restored txn already, complete & skip.
-    if (purchase.status == PurchaseStatus.restored &&
-        _ignoredRestoredPurchases.contains(txnId)) {
-      print('Ignoring already-processed restored txn: $txnId');
-      if (purchase.pendingCompletePurchase) {
-        try {
-          await _iap.completePurchase(purchase);
-        } catch (e) {
-          print('completePurchase error (ignored restored): $e');
-        }
-      }
-      continue;
-    }
-
-    // If already processing this transaction, just ensure completion and skip.
-    if (_processingTransactionIds.contains(txnId)) {
-      print('Already processing txn: $txnId -> skipping handling');
-      if (purchase.pendingCompletePurchase) {
-        try {
-          await _iap.completePurchase(purchase);
-        } catch (e) {
-          print('completePurchase error (already processing): $e');
-        }
-      }
-      continue;
-    }
-
-    // Mark as processing to avoid re-entrancy
-    _processingTransactionIds.add(txnId);
-
-    try {
-      switch (purchase.status) {
-        case PurchaseStatus.pending:
-          _handlePendingPurchase(purchase);
-          break;
-
-        case PurchaseStatus.error:
-          _handlePurchaseError(purchase);
-          break;
-
-        case PurchaseStatus.purchased:
-          // Normal successful purchase -> verify with backend and complete
-          // await _verifyAndCompletePurchase(purchase);
-          break;
-
-        // case PurchaseStatus.restored:
-        //   // Restored purchase: we must decide whether to verify/apply or ignore.
-        //   // Approach: ask user consent (non-silent). If you want auto-apply, set `apply = true` here.
-        //   bool apply = false;
-
-        //   // If the app has a user-initiated flag to process restores, respect it.
-        //   // Example: set _shouldProcessRestoredPurchases = true when user taps "Restore Purchases".
-        //   if (_shouldProcessRestoredPurchases) {
-        //     apply = true;
-        //     // reset the flag so spontaneous restores don't keep applying
-        //     _shouldProcessRestoredPurchases = false;
-        //   } else {
-        //     // Ask user consent before mapping this restored purchase to their app account
-        //     if (mounted) {
-        //       try {
-        //         apply = await showDialog<bool>(
-        //               context: context,
-        //               barrierDismissible: false,
-        //               builder: (ctx) => AlertDialog(
-        //                 title: const Text('Restore purchase found'),
-        //                 content: Text(
-        //                   'A purchase for "$productId" was found on this device\'s App Store account.\n\n'
-        //                   'If you need to purchase the plan signout existing account?',
-        //                 ),
-        //                 actions: [
-        //                   TextButton(
-        //                     onPressed: () => Navigator.of(ctx).pop(false),
-        //                     child: const Text('No'),
-        //                   ),
-        //                   ElevatedButton(
-        //                     onPressed: () => Navigator.of(ctx).pop(true),
-        //                     child: const Text('Yes'),
-        //                   ),
-        //                 ],
-        //               ),
-        //             ) ??
-        //             false;
-        //       } catch (dialogErr) {
-        //         print('Dialog error for restored consent: $dialogErr');
-        //         apply = false;
-        //       }
-        //     } else {
-        //       apply = false;
-        //     }
-        //   }
-
-        //   if (apply) {
-        //     // User consented (or we were in explicit restore flow) -> verify & complete
-        //     await _verifyAndCompletePurchase(purchase);
-        //     // Optionally mark this restored txn as processed so future restore events for same txn are ignored
-        //     _ignoredRestoredPurchases.add(txnId);
-        //   } else {
-        //     // User declined -> do NOT verify or map; just complete so store doesn't re-emit repeatedly
-        //     print('User declined to apply restored txn: $txnId');
-        //   }
-        //   break;
-
-
-  //       case PurchaseStatus.restored:
-  // final txnId = purchase.purchaseID ?? 'unknown_txn';
-  // final receiptData = purchase.verificationData.serverVerificationData;
-  // final planProvider = Provider.of<PlanProvider>(context, listen: false);
-
-  // // Show loading while verifying
-  // if (mounted) EasyLoading.show(status: 'Checking subscription...');
-
-  // Map<String, dynamic>? verificationResult;
-  // try {
-  //   verificationResult = await planProvider.verifyIosPurchase(
-  //     userId: userId ?? '',
-  //     planId: widget.plan.id,
-  //     receiptData: receiptData,
-  //     productId: purchase.productID ?? _productIdForCurrentPlan,
-  //     transactionId: txnId,
-  //   );
-  // } catch (e) {
-  //   verificationResult = {'success': false, 'message': 'Verification failed: $e'};
-  // } finally {
-  //   if (mounted) EasyLoading.dismiss();
-  // }
-
-  // // Build a helpful message for user from backend response
-  // String dialogMessage;
-  // bool backendSuccess = verificationResult != null && verificationResult['success'] == true;
-  // if (backendSuccess && verificationResult!['subscription'] != null) {
-  //   final sub = verificationResult['subscription'];
-  //   final start = sub['startDate'] ?? 'N/A';
-  //   final end = sub['endDate'] ?? 'N/A';
-  //   final ownerNote = verificationResult['purchaseRecorded'] == true
-  //       ? 'This purchase is already recorded in our system.'
-  //       : 'This purchase is valid but not recorded for any account yet.';
-  //   dialogMessage =
-  //       'An active subscription was found for this Apple ID:\n\n'
-  //       'Plan: ${sub['name'] ?? widget.plan.name}\n'
-  //       'Start: $start\n'
-  //       'End: $end\n\n'
-  //       '$ownerNote\n\n'
-  //       'Do you want to apply this subscription to the currently signed-in app account?';
-  // } else {
-  //   // Backend says payment already processed or any other message
-  //   final backendMsg = verificationResult?['message'] ?? 'Could not verify purchase.';
-  //   dialogMessage =
-  //       'The App Store shows this purchase already exists for this Apple ID.\n\n'
-  //       '$backendMsg\n\n'
-  //       'If you want to use a different Apple ID to purchase, sign out of the App Store and sign in with a different account.\n\n';
-  // }
-
-  // // Show the dynamic confirmation dialog
-  // bool apply = false;
-  // if (mounted) {
-  //   apply = await showDialog<bool>(
-  //         context: context,
-  //         barrierDismissible: false,
-  //         builder: (ctx) => AlertDialog(
-  //           title: const Text('Restore purchase found'),
-  //           content: Text(dialogMessage),
-  //           actions: [
-  //             TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('No')),
-  //             ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Go')),
-  //           ],
-  //         ),
-  //       ) ??
-  //       false;
-  // }
-
-  // if (apply) {
-  //   // If backend already returned success true and purchaseRecorded is true,
-  //   // you might only need to call purchasePlan() to fetch/confirm mapping locally,
-  //   // else call purchaseIOSPlan or verifyAndCompletePurchase to map.
-  //   if (backendSuccess) {
-  //     // The backend verified the receipt — now record/link on server if needed.
-  //     // Call the same helper you use for post-purchase mapping:
-  //     try {
-  //       // await planProvider.verifyIosPurchase(
-  //       //   userId: userId ?? '',
-  //       //   planId: widget.plan.id,
-  //       //   receiptData: receiptData,
-  //       //   productId: purchase.productID ?? _productIdForCurrentPlan,
-  //       //   transactionId: txnId,
-  //       // );
-  //       // // Now show success UI
-  //       // showPaymentSuccessDialog(context, message: 'Subscription applied to this account.');
-  //     } catch (e) {
-  //       _showErrorDialog('Failed to apply subscription: $e');
-  //     }
-  //   } else {
-  //     // backend did not verify (e.g. message "Payment already processed") but user insisted.
-  //     // Decide policy: either attempt mapping anyway (if your backend supports forced mapping/transfer),
-  //     // or instruct user about transfer steps.
-  //     // _showErrorDialog(verificationResult?['message'] ??
-  //     //     'Could not apply this subscription. Contact support with transaction id: $txnId.');
-  //   }
-  //   // Optionally mark ignored or processed
-  //   _ignoredRestoredPurchases.add(txnId);
-  // } else {
-  //   // User declined: just complete the transaction so it won't reappear
-  //   print('User declined to apply restored txn: $txnId');
-  // }
-  // break;
-
-
-
-// case PurchaseStatus.restored:
-//   final txnId = purchase.purchaseID ?? 'unknown_txn';
-//   final receiptData = purchase.verificationData.serverVerificationData;
-//   final planProvider = Provider.of<PlanProvider>(context, listen: false);
-
-//   // 1) Verify with backend first
-//   if (mounted) EasyLoading.show(status: 'Checking subscription...');
-//   Map<String, dynamic>? verificationResult;
-//   try {
-//     verificationResult = await planProvider.verifyIosPurchase(
-//       userId: userId ?? '',
-//       planId: widget.plan.id,
-//       receiptData: receiptData,
-//       productId: purchase.productID ?? _productIdForCurrentPlan,
-//       transactionId: txnId,
-//     );
-//     print('verifyIosPurchase -> $verificationResult');
-//   } catch (e) {
-//     verificationResult = {'success': false, 'message': 'Verification failed: $e'};
-//   } finally {
-//     if (mounted) EasyLoading.dismiss();
-//   }
-
-//   final bool backendSuccess = verificationResult != null && verificationResult['success'] == true;
-//   final Map<String, dynamic>? sub = backendSuccess ? (verificationResult!['subscription'] as Map<String, dynamic>?) : null;
-//   final String ownerUserId = sub?['ownerUserId'] ?? sub?['userId'] ?? '';
-
-//   // 2) If backend says it's already linked to CURRENT user -> auto-apply, no dialog
-//   if (backendSuccess && ownerUserId.isNotEmpty && ownerUserId == (userId ?? '')) {
-//     print('Restored purchase already linked to this user -> auto-apply txn:$txnId');
-//     // show success UI and mark processed
-//     showPaymentSuccessDialog(context, message: 'Subscription already active for this account.');
-//     _ignoredRestoredPurchases.add(txnId);
-//     // ensure we call completePurchase later (code below does this)
-//   } else {
-//     // 3) Otherwise build a dynamic message and ask the user for consent
-//     String dialogMessage;
-//     if (backendSuccess && sub != null) {
-//       final start = sub['startDate'] ?? 'N/A';
-//       final end = sub['endDate'] ?? 'N/A';
-//       final recorded = verificationResult!['purchaseRecorded'] == true;
-//       final ownerNote = recorded ? 'This purchase is already recorded in our system.' : '';
-//       dialogMessage =
-//           'An active subscription was found for this Apple ID:\n\n'
-//           'Plan: ${sub['name'] ?? widget.plan.name}\n'
-//           'Start: $start\n'
-//           'End: $end\n\n'
-//           '$ownerNote\n\n';
-//     } else {
-//       final backendMsg = verificationResult?['message'] ?? 'Could not verify purchase.';
-//       dialogMessage =
-//           'A purchase for this Apple ID was found.\n\n'
-//           '$backendMsg\n\n'
-//           'If this purchase is linked to another app account, you will not be able to apply it here. You can sign out of the App Store and sign in with a different account to purchase.';
-//     }
-
-//     bool apply = false;
-//     if (mounted) {
-//       apply = await showDialog<bool>(
-//             context: context,
-//             barrierDismissible: false,
-//             builder: (ctx) => AlertDialog(
-//               title: const Text('Details'),
-//               content: Text(dialogMessage),
-//               actions: [
-//                 TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('No')),
-//                 ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Go')),
-//               ],
-//             ),
-//           ) ??
-//           false;
-//     }
-
-//     if (apply) {
-//       // If backend verification succeeded but was not recorded, attempt to map it now
-//       if (backendSuccess) {
-//         try {
-//           // Use your server endpoint that records the receipt & links to this app user
-//           final purchaseResult = await planProvider.verifyIosPurchase(
-//             userId: userId ?? '',
-//             planId: widget.plan.id,
-//             receiptData: receiptData,
-//             productId: purchase.productID ?? _productIdForCurrentPlan,
-//             transactionId: txnId,
-//           );
-//           print('purchaseIOSPlan result: $purchaseResult');
-//           if (purchaseResult != null && (purchaseResult['success'] == true || purchaseResult['status'] == 'success')) {
-//             print("fksfsfsfsdkfsfhdfhdsfhsdfhfhfffk");
-//             showPaymentSuccessDialog(context, message: 'Subscription applied to this account.');
-//             _ignoredRestoredPurchases.add(txnId);
-//           } else {
-//             print("uuuuuuuuuddddfffffffddfdfdfdfdfdfd${purchaseResult?['message']}");
-//             _showErrorDialog(purchaseResult?['message'] ?? 'Failed to link subscription.');
-//           }
-//         } catch (e) {
-//           _showErrorDialog('Failed to apply subscription: $e');
-//         }
-//       } else {
-//         // Backend didn't verify: inform user and give next steps
-//         _showErrorDialog(verificationResult?['message'] ?? 'Could not verify purchase. Contact support.');
-//       }
-//     } else {
-//       print('User declined to apply restored txn:$txnId');
-//     }
-//   }
-
-//   // 4) Ensure transaction is completed so it won't reappear
-//   if (purchase.pendingCompletePurchase) {
-//     try {
-//       await _iap.completePurchase(purchase);
-//       print('completePurchase called for restored txn:$txnId');
-//     } catch (e) {
-//       print('completePurchase error for restored txn:$txnId -> $e');
-//     }
-//   }
-
-//   break;
-
-
-
-case PurchaseStatus.restored:
-  // reuse txnId declared at top of loop
-  final receiptData = purchase.verificationData.serverVerificationData;
-  final planProvider = Provider.of<PlanProvider>(context, listen: false);
-
-  // 1) Verify with backend (authoritative)
-  if (mounted) EasyLoading.show(status: 'Checking subscription...');
-  Map<String, dynamic>? verificationResult;
-  try {
-    verificationResult = await planProvider.verifyIosPurchase(
-      userId: userId ?? '',
-      planId: widget.plan.id,
-      receiptData: receiptData,
-      productId: purchase.productID ?? _productIdForCurrentPlan,
-      transactionId: txnId,
-    );
-    print('verifyIosPurchase -> $verificationResult');
-          if (verificationResult != null && (verificationResult['success'] == true || verificationResult['status'] == 'success')) {
-           print('Restored purchase already linked to this user -> auto-apply txn..........');
-
-        showPaymentSuccessDialog(context, message: 'Subscription applied to this account.');
-        _ignoredRestoredPurchases.add(txnId);
-      } else {
-            print('Restored purchase already linked to this user -> auto-apply txnnnnnnnnnn');
-      }
-  } catch (e) {
-    verificationResult = {'success': false, 'message': 'Verification failed: $e'};
-  } finally {
-    if (mounted) EasyLoading.dismiss();
-  }
-
-  final bool backendSuccess = verificationResult != null && verificationResult['success'] == true;
-  // server should ideally return purchaseRecorded and ownerUserId (or equivalent)
-  final bool purchaseRecorded = verificationResult?['purchaseRecorded'] == true;
-  final Map<String, dynamic>? sub = backendSuccess ? (verificationResult!['subscription'] as Map<String, dynamic>?) : null;
-  final String ownerUserId = sub?['ownerUserId'] ?? sub?['userId'] ?? '';
-
-  // 2) If linked to this user already -> auto-apply (no dialog)
-  if (backendSuccess && ownerUserId.isNotEmpty && ownerUserId == (userId ?? '')) {
-    print('Restored purchase already linked to this user -> auto-apply txn:$txnId');
-    showPaymentSuccessDialog(context, message: 'Subscription already active for this account.');
-    _ignoredRestoredPurchases.add(txnId);
-    // We'll call completePurchase in the shared completion step below.
-    break;
-  }
-
-  // 3) Build dialog message only if we actually need user confirmation
-  String dialogMessage;
-  if (backendSuccess && sub != null) {
-    final start = sub['startDate'] ?? 'N/A';
-    final end = sub['endDate'] ?? 'N/A';
-    final recordedNote = purchaseRecorded ? 'This purchase is already recorded in our system.' : 'This purchase is valid but not recorded for any account yet.';
-    dialogMessage =
-        'An active subscription was found for this Apple ID:\n\n'
-        'Plan: ${sub['name'] ?? widget.plan.name}\n'
-        'Start: $start\n'
-        'End: $end\n\n'
-        '$recordedNote\n\n'
-        'Do you want to apply this subscription to the currently signed-in app account?';
-  } else {
-    final backendMsg = verificationResult?['message'] ?? 'Could not verify purchase.';
-    dialogMessage =
-        'A purchase for this Apple ID was found.\n\n'
-        '$backendMsg\n\n'
-        'If this purchase is linked to another app account, you will not be able to apply it here. Contact support or use the original account to restore.';
-  }
-
-  // 4) Ask user only if necessary (i.e., when not auto-linked and backendSuccess is true but not recorded)
-  bool shouldPrompt = true;
-  // If the backend indicates the purchase is linked to another user (success false or message says so), still show info.
-  if (!backendSuccess && (verificationResult?['message'] == 'Payment already processed')) {
-    // No mapping allowed — show info and don't prompt for mapping
-    if (mounted) {
-      await showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Already used'),
-          content: Text('This purchase is already processed on another account.\n\nContact support or use the original account to restore.'),
-          actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('OK'))],
-        ),
+      print(
+        'Purchase event: product=$productId, status=${purchase.status}, txn=$txnId',
       );
-    }
-    // mark as ignored so it doesn't reappear
-    _ignoredRestoredPurchases.add(txnId);
-    break;
-  }
 
-  // if (!backendSuccess && verificationResult != null) {
-  //   // backend failed for other reasons — show error and don't prompt mapping
-  //   _showErrorDialog(verificationResult['message'] ?? 'Verification failed');
-  //   _ignoredRestoredPurchases.add(txnId);
-  //   break;
-  // }
-
-  // If backend success but not recorded yet -> ask user consent to link
-  bool apply = false;
-  if (mounted && shouldPrompt) {
-    apply = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Restore purchase found'),
-            content: Text(dialogMessage),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('No')),
-              ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Yes, apply')),
-            ],
-          ),
-        ) ??
-        false;
-  }
-
-  if (apply) {
-    // User chose to apply -> call mapping endpoint (do NOT re-call verify)
-    try {
-      final linkResult = await planProvider.verifyIosPurchase(
-        userId: userId ?? '',
-        planId: widget.plan.id,
-        receiptData: receiptData,
-        productId: purchase.productID ?? _productIdForCurrentPlan,
-        transactionId: txnId,
-      );
-      print('purchaseIOSPlan result: $linkResult');
-      if (linkResult != null && (linkResult['success'] == true || linkResult['status'] == 'success')) {
-        showPaymentSuccessDialog(context, message: 'Subscription applied to this account.');
-        _ignoredRestoredPurchases.add(txnId);
-      } else {
-        // _showErrorDialog(linkResult?['message'] ?? 'Failed to link subscription.');
-      }
-    } catch (e) {
-      _showErrorDialog('Failed to apply subscription: $e');
-    }
-  } else {
-    print('User declined to apply restored txn:$txnId');
-    // optionally mark it ignored so it doesn't reappear
-    _ignoredRestoredPurchases.add(txnId);
-  }
-
-  // ensure we fall through to completion below (the common completion code will call completePurchase)
-  break;
-
-
-        case PurchaseStatus.canceled:
-          _handlePurchaseCanceled(purchase);
-          break;
-
-        default:
-          print('Unhandled purchase status: ${purchase.status}');
-          break;
-      }
-
-      // Ensure we complete the purchase if StoreKit requires it
-      if (purchase.pendingCompletePurchase) {
-        try {
-          await _iap.completePurchase(purchase);
-          print('completePurchase called for txn:$txnId');
-        } catch (e) {
-          print('completePurchase error: $e');
+      // If we've explicitly ignored this restored txn already, complete & skip.
+      if (purchase.status == PurchaseStatus.restored &&
+          _ignoredRestoredPurchases.contains(txnId)) {
+        print('Ignoring already-processed restored txn: $txnId');
+        if (purchase.pendingCompletePurchase) {
+          try {
+            await _iap.completePurchase(purchase);
+          } catch (e) {
+            print('completePurchase error (ignored restored): $e');
+          }
         }
+        continue;
       }
-    } catch (e) {
-      print('Error handling purchase txn:$txnId -> $e');
-    } finally {
-      // remove txnId from processing set after a tiny delay to avoid races with repeated events
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _processingTransactionIds.remove(txnId);
-      });
-    }
-  } // end for
-}
 
+      // If already processing this transaction, just ensure completion and skip.
+      if (_processingTransactionIds.contains(txnId)) {
+        print('Already processing txn: $txnId -> skipping handling');
+        if (purchase.pendingCompletePurchase) {
+          try {
+            await _iap.completePurchase(purchase);
+          } catch (e) {
+            print('completePurchase error (already processing): $e');
+          }
+        }
+        continue;
+      }
 
+      // Mark as processing to avoid re-entrancy
+      _processingTransactionIds.add(txnId);
+
+      try {
+        switch (purchase.status) {
+          case PurchaseStatus.pending:
+            _handlePendingPurchase(purchase);
+            break;
+
+          case PurchaseStatus.error:
+            _handlePurchaseError(purchase);
+            break;
+
+          case PurchaseStatus.purchased:
+            // Normal successful purchase -> verify with backend and complete
+            // await _verifyAndCompletePurchase(purchase);
+            break;
+
+          // case PurchaseStatus.restored:
+          //   // Restored purchase: we must decide whether to verify/apply or ignore.
+          //   // Approach: ask user consent (non-silent). If you want auto-apply, set `apply = true` here.
+          //   bool apply = false;
+
+          //   // If the app has a user-initiated flag to process restores, respect it.
+          //   // Example: set _shouldProcessRestoredPurchases = true when user taps "Restore Purchases".
+          //   if (_shouldProcessRestoredPurchases) {
+          //     apply = true;
+          //     // reset the flag so spontaneous restores don't keep applying
+          //     _shouldProcessRestoredPurchases = false;
+          //   } else {
+          //     // Ask user consent before mapping this restored purchase to their app account
+          //     if (mounted) {
+          //       try {
+          //         apply = await showDialog<bool>(
+          //               context: context,
+          //               barrierDismissible: false,
+          //               builder: (ctx) => AlertDialog(
+          //                 title: const Text('Restore purchase found'),
+          //                 content: Text(
+          //                   'A purchase for "$productId" was found on this device\'s App Store account.\n\n'
+          //                   'If you need to purchase the plan signout existing account?',
+          //                 ),
+          //                 actions: [
+          //                   TextButton(
+          //                     onPressed: () => Navigator.of(ctx).pop(false),
+          //                     child: const Text('No'),
+          //                   ),
+          //                   ElevatedButton(
+          //                     onPressed: () => Navigator.of(ctx).pop(true),
+          //                     child: const Text('Yes'),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ) ??
+          //             false;
+          //       } catch (dialogErr) {
+          //         print('Dialog error for restored consent: $dialogErr');
+          //         apply = false;
+          //       }
+          //     } else {
+          //       apply = false;
+          //     }
+          //   }
+
+          //   if (apply) {
+          //     // User consented (or we were in explicit restore flow) -> verify & complete
+          //     await _verifyAndCompletePurchase(purchase);
+          //     // Optionally mark this restored txn as processed so future restore events for same txn are ignored
+          //     _ignoredRestoredPurchases.add(txnId);
+          //   } else {
+          //     // User declined -> do NOT verify or map; just complete so store doesn't re-emit repeatedly
+          //     print('User declined to apply restored txn: $txnId');
+          //   }
+          //   break;
+
+          //       case PurchaseStatus.restored:
+          // final txnId = purchase.purchaseID ?? 'unknown_txn';
+          // final receiptData = purchase.verificationData.serverVerificationData;
+          // final planProvider = Provider.of<PlanProvider>(context, listen: false);
+
+          // // Show loading while verifying
+          // if (mounted) EasyLoading.show(status: 'Checking subscription...');
+
+          // Map<String, dynamic>? verificationResult;
+          // try {
+          //   verificationResult = await planProvider.verifyIosPurchase(
+          //     userId: userId ?? '',
+          //     planId: widget.plan.id,
+          //     receiptData: receiptData,
+          //     productId: purchase.productID ?? _productIdForCurrentPlan,
+          //     transactionId: txnId,
+          //   );
+          // } catch (e) {
+          //   verificationResult = {'success': false, 'message': 'Verification failed: $e'};
+          // } finally {
+          //   if (mounted) EasyLoading.dismiss();
+          // }
+
+          // // Build a helpful message for user from backend response
+          // String dialogMessage;
+          // bool backendSuccess = verificationResult != null && verificationResult['success'] == true;
+          // if (backendSuccess && verificationResult!['subscription'] != null) {
+          //   final sub = verificationResult['subscription'];
+          //   final start = sub['startDate'] ?? 'N/A';
+          //   final end = sub['endDate'] ?? 'N/A';
+          //   final ownerNote = verificationResult['purchaseRecorded'] == true
+          //       ? 'This purchase is already recorded in our system.'
+          //       : 'This purchase is valid but not recorded for any account yet.';
+          //   dialogMessage =
+          //       'An active subscription was found for this Apple ID:\n\n'
+          //       'Plan: ${sub['name'] ?? widget.plan.name}\n'
+          //       'Start: $start\n'
+          //       'End: $end\n\n'
+          //       '$ownerNote\n\n'
+          //       'Do you want to apply this subscription to the currently signed-in app account?';
+          // } else {
+          //   // Backend says payment already processed or any other message
+          //   final backendMsg = verificationResult?['message'] ?? 'Could not verify purchase.';
+          //   dialogMessage =
+          //       'The App Store shows this purchase already exists for this Apple ID.\n\n'
+          //       '$backendMsg\n\n'
+          //       'If you want to use a different Apple ID to purchase, sign out of the App Store and sign in with a different account.\n\n';
+          // }
+
+          // // Show the dynamic confirmation dialog
+          // bool apply = false;
+          // if (mounted) {
+          //   apply = await showDialog<bool>(
+          //         context: context,
+          //         barrierDismissible: false,
+          //         builder: (ctx) => AlertDialog(
+          //           title: const Text('Restore purchase found'),
+          //           content: Text(dialogMessage),
+          //           actions: [
+          //             TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('No')),
+          //             ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Go')),
+          //           ],
+          //         ),
+          //       ) ??
+          //       false;
+          // }
+
+          // if (apply) {
+          //   // If backend already returned success true and purchaseRecorded is true,
+          //   // you might only need to call purchasePlan() to fetch/confirm mapping locally,
+          //   // else call purchaseIOSPlan or verifyAndCompletePurchase to map.
+          //   if (backendSuccess) {
+          //     // The backend verified the receipt — now record/link on server if needed.
+          //     // Call the same helper you use for post-purchase mapping:
+          //     try {
+          //       // await planProvider.verifyIosPurchase(
+          //       //   userId: userId ?? '',
+          //       //   planId: widget.plan.id,
+          //       //   receiptData: receiptData,
+          //       //   productId: purchase.productID ?? _productIdForCurrentPlan,
+          //       //   transactionId: txnId,
+          //       // );
+          //       // // Now show success UI
+          //       // showPaymentSuccessDialog(context, message: 'Subscription applied to this account.');
+          //     } catch (e) {
+          //       _showErrorDialog('Failed to apply subscription: $e');
+          //     }
+          //   } else {
+          //     // backend did not verify (e.g. message "Payment already processed") but user insisted.
+          //     // Decide policy: either attempt mapping anyway (if your backend supports forced mapping/transfer),
+          //     // or instruct user about transfer steps.
+          //     // _showErrorDialog(verificationResult?['message'] ??
+          //     //     'Could not apply this subscription. Contact support with transaction id: $txnId.');
+          //   }
+          //   // Optionally mark ignored or processed
+          //   _ignoredRestoredPurchases.add(txnId);
+          // } else {
+          //   // User declined: just complete the transaction so it won't reappear
+          //   print('User declined to apply restored txn: $txnId');
+          // }
+          // break;
+
+          // case PurchaseStatus.restored:
+          //   final txnId = purchase.purchaseID ?? 'unknown_txn';
+          //   final receiptData = purchase.verificationData.serverVerificationData;
+          //   final planProvider = Provider.of<PlanProvider>(context, listen: false);
+
+          //   // 1) Verify with backend first
+          //   if (mounted) EasyLoading.show(status: 'Checking subscription...');
+          //   Map<String, dynamic>? verificationResult;
+          //   try {
+          //     verificationResult = await planProvider.verifyIosPurchase(
+          //       userId: userId ?? '',
+          //       planId: widget.plan.id,
+          //       receiptData: receiptData,
+          //       productId: purchase.productID ?? _productIdForCurrentPlan,
+          //       transactionId: txnId,
+          //     );
+          //     print('verifyIosPurchase -> $verificationResult');
+          //   } catch (e) {
+          //     verificationResult = {'success': false, 'message': 'Verification failed: $e'};
+          //   } finally {
+          //     if (mounted) EasyLoading.dismiss();
+          //   }
+
+          //   final bool backendSuccess = verificationResult != null && verificationResult['success'] == true;
+          //   final Map<String, dynamic>? sub = backendSuccess ? (verificationResult!['subscription'] as Map<String, dynamic>?) : null;
+          //   final String ownerUserId = sub?['ownerUserId'] ?? sub?['userId'] ?? '';
+
+          //   // 2) If backend says it's already linked to CURRENT user -> auto-apply, no dialog
+          //   if (backendSuccess && ownerUserId.isNotEmpty && ownerUserId == (userId ?? '')) {
+          //     print('Restored purchase already linked to this user -> auto-apply txn:$txnId');
+          //     // show success UI and mark processed
+          //     showPaymentSuccessDialog(context, message: 'Subscription already active for this account.');
+          //     _ignoredRestoredPurchases.add(txnId);
+          //     // ensure we call completePurchase later (code below does this)
+          //   } else {
+          //     // 3) Otherwise build a dynamic message and ask the user for consent
+          //     String dialogMessage;
+          //     if (backendSuccess && sub != null) {
+          //       final start = sub['startDate'] ?? 'N/A';
+          //       final end = sub['endDate'] ?? 'N/A';
+          //       final recorded = verificationResult!['purchaseRecorded'] == true;
+          //       final ownerNote = recorded ? 'This purchase is already recorded in our system.' : '';
+          //       dialogMessage =
+          //           'An active subscription was found for this Apple ID:\n\n'
+          //           'Plan: ${sub['name'] ?? widget.plan.name}\n'
+          //           'Start: $start\n'
+          //           'End: $end\n\n'
+          //           '$ownerNote\n\n';
+          //     } else {
+          //       final backendMsg = verificationResult?['message'] ?? 'Could not verify purchase.';
+          //       dialogMessage =
+          //           'A purchase for this Apple ID was found.\n\n'
+          //           '$backendMsg\n\n'
+          //           'If this purchase is linked to another app account, you will not be able to apply it here. You can sign out of the App Store and sign in with a different account to purchase.';
+          //     }
+
+          //     bool apply = false;
+          //     if (mounted) {
+          //       apply = await showDialog<bool>(
+          //             context: context,
+          //             barrierDismissible: false,
+          //             builder: (ctx) => AlertDialog(
+          //               title: const Text('Details'),
+          //               content: Text(dialogMessage),
+          //               actions: [
+          //                 TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('No')),
+          //                 ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Go')),
+          //               ],
+          //             ),
+          //           ) ??
+          //           false;
+          //     }
+
+          //     if (apply) {
+          //       // If backend verification succeeded but was not recorded, attempt to map it now
+          //       if (backendSuccess) {
+          //         try {
+          //           // Use your server endpoint that records the receipt & links to this app user
+          //           final purchaseResult = await planProvider.verifyIosPurchase(
+          //             userId: userId ?? '',
+          //             planId: widget.plan.id,
+          //             receiptData: receiptData,
+          //             productId: purchase.productID ?? _productIdForCurrentPlan,
+          //             transactionId: txnId,
+          //           );
+          //           print('purchaseIOSPlan result: $purchaseResult');
+          //           if (purchaseResult != null && (purchaseResult['success'] == true || purchaseResult['status'] == 'success')) {
+          //             print("fksfsfsfsdkfsfhdfhdsfhsdfhfhfffk");
+          //             showPaymentSuccessDialog(context, message: 'Subscription applied to this account.');
+          //             _ignoredRestoredPurchases.add(txnId);
+          //           } else {
+          //             print("uuuuuuuuuddddfffffffddfdfdfdfdfdfd${purchaseResult?['message']}");
+          //             _showErrorDialog(purchaseResult?['message'] ?? 'Failed to link subscription.');
+          //           }
+          //         } catch (e) {
+          //           _showErrorDialog('Failed to apply subscription: $e');
+          //         }
+          //       } else {
+          //         // Backend didn't verify: inform user and give next steps
+          //         _showErrorDialog(verificationResult?['message'] ?? 'Could not verify purchase. Contact support.');
+          //       }
+          //     } else {
+          //       print('User declined to apply restored txn:$txnId');
+          //     }
+          //   }
+
+          //   // 4) Ensure transaction is completed so it won't reappear
+          //   if (purchase.pendingCompletePurchase) {
+          //     try {
+          //       await _iap.completePurchase(purchase);
+          //       print('completePurchase called for restored txn:$txnId');
+          //     } catch (e) {
+          //       print('completePurchase error for restored txn:$txnId -> $e');
+          //     }
+          //   }
+
+          //   break;
+
+          case PurchaseStatus.restored:
+            // reuse txnId declared at top of loop
+            final receiptData =
+                purchase.verificationData.serverVerificationData;
+            final planProvider = Provider.of<PlanProvider>(
+              context,
+              listen: false,
+            );
+
+            // 1) Verify with backend (authoritative)
+            if (mounted) EasyLoading.show(status: 'Checking subscription...');
+            Map<String, dynamic>? verificationResult;
+            try {
+              verificationResult = await planProvider.verifyIosPurchase(
+                userId: userId ?? '',
+                planId: widget.plan.id,
+                receiptData: receiptData,
+                productId: purchase.productID ?? _productIdForCurrentPlan,
+                transactionId: txnId,
+              );
+              print('verifyIosPurchase -> $verificationResult');
+              if (verificationResult != null &&
+                  (verificationResult['success'] == true ||
+                      verificationResult['status'] == 'success')) {
+                print(
+                  'Restored purchase already linked to this user -> auto-apply txn..........',
+                );
+
+                showPaymentSuccessDialog(
+                  context,
+                  message: 'Subscription applied to this account.',
+                );
+                _ignoredRestoredPurchases.add(txnId);
+              } else {
+                print(
+                  'Restored purchase already linked to this user -> auto-apply txnnnnnnnnnn',
+                );
+              }
+            } catch (e) {
+              verificationResult = {
+                'success': false,
+                'message': 'Verification failed: $e',
+              };
+            } finally {
+              if (mounted) EasyLoading.dismiss();
+            }
+
+            final bool backendSuccess =
+                verificationResult != null &&
+                verificationResult['success'] == true;
+            // server should ideally return purchaseRecorded and ownerUserId (or equivalent)
+            final bool purchaseRecorded =
+                verificationResult?['purchaseRecorded'] == true;
+            final Map<String, dynamic>? sub = backendSuccess
+                ? (verificationResult!['subscription'] as Map<String, dynamic>?)
+                : null;
+            final String ownerUserId =
+                sub?['ownerUserId'] ?? sub?['userId'] ?? '';
+
+            // 2) If linked to this user already -> auto-apply (no dialog)
+            if (backendSuccess &&
+                ownerUserId.isNotEmpty &&
+                ownerUserId == (userId ?? '')) {
+              print(
+                'Restored purchase already linked to this user -> auto-apply txn:$txnId',
+              );
+              showPaymentSuccessDialog(
+                context,
+                message: 'Subscription already active for this account.',
+              );
+              _ignoredRestoredPurchases.add(txnId);
+              // We'll call completePurchase in the shared completion step below.
+              break;
+            }
+
+            // 3) Build dialog message only if we actually need user confirmation
+            String dialogMessage;
+            if (backendSuccess && sub != null) {
+              final start = sub['startDate'] ?? 'N/A';
+              final end = sub['endDate'] ?? 'N/A';
+              final recordedNote = purchaseRecorded
+                  ? 'This purchase is already recorded in our system.'
+                  : 'This purchase is valid but not recorded for any account yet.';
+              dialogMessage =
+                  'An active subscription was found for this Apple ID:\n\n'
+                  'Plan: ${sub['name'] ?? widget.plan.name}\n'
+                  'Start: $start\n'
+                  'End: $end\n\n'
+                  '$recordedNote\n\n'
+                  'Do you want to apply this subscription to the currently signed-in app account?';
+            } else {
+              final backendMsg =
+                  verificationResult?['message'] ??
+                  'Could not verify purchase.';
+              dialogMessage =
+                  'A purchase for this Apple ID was found.\n\n'
+                  '$backendMsg\n\n'
+                  'If this purchase is linked to another app account, you will not be able to apply it here. Contact support or use the original account to restore.';
+            }
+
+            // 4) Ask user only if necessary (i.e., when not auto-linked and backendSuccess is true but not recorded)
+            bool shouldPrompt = true;
+            // If the backend indicates the purchase is linked to another user (success false or message says so), still show info.
+            if (!backendSuccess &&
+                (verificationResult?['message'] ==
+                    'Payment already processed')) {
+              // No mapping allowed — show info and don't prompt for mapping
+              if (mounted) {
+                await showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Already used'),
+                    content: Text(
+                      'This purchase is already processed on another account.\n\nContact support or use the original account to restore.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              // mark as ignored so it doesn't reappear
+              _ignoredRestoredPurchases.add(txnId);
+              break;
+            }
+
+            // if (!backendSuccess && verificationResult != null) {
+            //   // backend failed for other reasons — show error and don't prompt mapping
+            //   _showErrorDialog(verificationResult['message'] ?? 'Verification failed');
+            //   _ignoredRestoredPurchases.add(txnId);
+            //   break;
+            // }
+
+            // If backend success but not recorded yet -> ask user consent to link
+            bool apply = false;
+            if (mounted && shouldPrompt) {
+              apply =
+                  await showDialog<bool>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Restore purchase found'),
+                      content: Text(dialogMessage),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('No'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: const Text('Yes, apply'),
+                        ),
+                      ],
+                    ),
+                  ) ??
+                  false;
+            }
+
+            if (apply) {
+              // User chose to apply -> call mapping endpoint (do NOT re-call verify)
+              try {
+                final linkResult = await planProvider.verifyIosPurchase(
+                  userId: userId ?? '',
+                  planId: widget.plan.id,
+                  receiptData: receiptData,
+                  productId: purchase.productID ?? _productIdForCurrentPlan,
+                  transactionId: txnId,
+                );
+                print('purchaseIOSPlan result: $linkResult');
+                if (linkResult != null &&
+                    (linkResult['success'] == true ||
+                        linkResult['status'] == 'success')) {
+                  showPaymentSuccessDialog(
+                    context,
+                    message: 'Subscription applied to this account.',
+                  );
+                  _ignoredRestoredPurchases.add(txnId);
+                } else {
+                  // _showErrorDialog(linkResult?['message'] ?? 'Failed to link subscription.');
+                }
+              } catch (e) {
+                _showErrorDialog('Failed to apply subscription: $e');
+              }
+            } else {
+              print('User declined to apply restored txn:$txnId');
+              // optionally mark it ignored so it doesn't reappear
+              _ignoredRestoredPurchases.add(txnId);
+            }
+
+            // ensure we fall through to completion below (the common completion code will call completePurchase)
+            break;
+
+          case PurchaseStatus.canceled:
+            _handlePurchaseCanceled(purchase);
+            break;
+
+          default:
+            print('Unhandled purchase status: ${purchase.status}');
+            break;
+        }
+
+        // Ensure we complete the purchase if StoreKit requires it
+        if (purchase.pendingCompletePurchase) {
+          try {
+            await _iap.completePurchase(purchase);
+            print('completePurchase called for txn:$txnId');
+          } catch (e) {
+            print('completePurchase error: $e');
+          }
+        }
+      } catch (e) {
+        print('Error handling purchase txn:$txnId -> $e');
+      } finally {
+        // remove txnId from processing set after a tiny delay to avoid races with repeated events
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _processingTransactionIds.remove(txnId);
+        });
+      }
+    } // end for
+  }
 
   void _handlePendingPurchase(PurchaseDetails purchase) {
     print('Purchase pending: ${purchase.productID}');
@@ -1190,8 +1252,7 @@ case PurchaseStatus.restored:
             // IMPORTANT: Do NOT auto re-open the purchase modal repeatedly.
             // Show a dialog explaining the situation and let the user retry manually.
             // _showNeedToPurchaseDialog(backendStatus);
-                    _handlePurchaseRequired();
-
+            _handlePurchaseRequired();
           }
           // else if (backendStatus == 'Subscription activated successfully (Development Mode)') {
           //   _showErrorDialog('This subscription is linked to another account. Please restore with the correct account.');
@@ -1210,82 +1271,83 @@ case PurchaseStatus.restored:
     }
   }
 
-void _showNeedToPurchaseDialog(String message) {
-                                          print('Error launching purchase```````````````````````````````kjkjjkjkjk');
+  void _showNeedToPurchaseDialog(String message) {
+    print('Error launching purchase```````````````````````````````kjkjjkjkjk');
 
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Purchase Required'),
-      content: Text(
-        message +
-        '\n\nIf this device already has a purchase on the App Store, tap RESTORE to link it to this account. Tap BUY to attempt purchase again (may prompt App Store).',
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Purchase Required'),
+        content: Text(
+          message +
+              '\n\nIf this device already has a purchase on the App Store, tap RESTORE to link it to this account. Tap BUY to attempt purchase again (may prompt App Store).',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+
+          // BUY
+          TextButton(
+            onPressed: () async {
+              print(
+                'Error launching purchase```````````````````````````````00000000',
+              );
+
+              Navigator.of(context).pop();
+
+              // if (_isOpeningPurchase) {
+              //   print(': Already opening purchase. skip.');
+              //   return;
+              // }
+              setState(() => _isOpeningPurchase = true);
+
+              try {
+                print(
+                  'Error launching purchase```````````````````````````````111111',
+                );
+
+                EasyLoading.dismiss();
+                final theme = Theme.of(context);
+                // call your purchase method which will init IAP and call buyNonConsumable
+                await _processSubscription(context, theme);
+              } catch (e) {
+                print('Error launching purchase: $e');
+                failed(mesg: 'Could not open purchase: $e', context: context);
+              } finally {
+                // Do NOT immediately set _isOpeningPurchase = false here if the purchase flow continues
+                // The purchaseStream callbacks should clear it when complete.
+                Future.delayed(const Duration(seconds: 1), () {
+                  if (mounted) setState(() => _isOpeningPurchase = false);
+                });
+              }
+            },
+            child: const Text('Buy'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
+    );
+  }
 
-        // BUY
-        TextButton(
-          onPressed: () async {
-                                        print('Error launching purchase```````````````````````````````00000000');
-
-            Navigator.of(context).pop();
-
-            // if (_isOpeningPurchase) {
-            //   print(': Already opening purchase. skip.');
-            //   return;
-            // }
-            setState(() => _isOpeningPurchase = true);
-
-            try {
-                            print('Error launching purchase```````````````````````````````111111');
-
-              EasyLoading.dismiss();
-              final theme = Theme.of(context);
-              // call your purchase method which will init IAP and call buyNonConsumable
-              await _processSubscription(context, theme);
-            } catch (e) {
-              print('Error launching purchase: $e');
-              failed(mesg: 'Could not open purchase: $e', context: context);
-            } finally {
-              // Do NOT immediately set _isOpeningPurchase = false here if the purchase flow continues
-              // The purchaseStream callbacks should clear it when complete.
-              Future.delayed(const Duration(seconds: 1), () {
-                if (mounted) setState(() => _isOpeningPurchase = false);
-              });
-            }
-          },
-          child: const Text('Buy'),
-        ),
-      ],
-    ),
-  );
-}
-
-
-
-void _handlePurchaseRequired() {
-  print('Direct purchase flow starting...');
+  void _handlePurchaseRequired() {
+    print('Direct purchase flow starting...');
     if (!mounted) return;
 
-  setState(() => _isOpeningPurchase = true);
+    setState(() => _isOpeningPurchase = true);
 
-  try {
-    EasyLoading.dismiss();
-    final theme = Theme.of(context);
-    _processSubscription(context, theme);
-  } catch (e) {
-    print('Error in direct purchase: $e');
-    if (mounted) {
-      failed(mesg: 'Could not open purchase: $e', context: context);
-      setState(() => _isOpeningPurchase = false);
+    try {
+      EasyLoading.dismiss();
+      final theme = Theme.of(context);
+      _processSubscription(context, theme);
+    } catch (e) {
+      print('Error in direct purchase: $e');
+      if (mounted) {
+        failed(mesg: 'Could not open purchase: $e', context: context);
+        setState(() => _isOpeningPurchase = false);
+      }
     }
   }
-}
-
 
   Widget _buildSubscriptionMetadata(ThemeData theme) {
     final title = widget.plan.name;
@@ -1878,8 +1940,11 @@ void _handlePurchaseRequired() {
     );
   }
 
-  Future<void> _processSubscription(BuildContext context, ThemeData theme) async {
-                                print('Error launching purchase```````````````````````````````222222222');
+  Future<void> _processSubscription(
+    BuildContext context,
+    ThemeData theme,
+  ) async {
+    print('Error launching purchase```````````````````````````````222222222');
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userIdLocal = authProvider.user?.user.id ?? userId;
@@ -1976,16 +2041,16 @@ void _handlePurchaseRequired() {
       return;
     }
 
-  if (mounted) {
+    if (mounted) {
       setState(() => isLoading = true);
     }
     try {
       if (Platform.isIOS) {
-                                    print('Error launching purchase```````````````````````````````333333');
+        print('Error launching purchase```````````````````````````````333333');
 
         // Initialize IAP ONLY when subscribe button is clicked
         await _initIAP();
-                                    print('Error launching purchase```````````````````````````````4444444');
+        print('Error launching purchase```````````````````````````````4444444');
 
         if (!_available) {
           _showErrorDialog('In-App Purchases not available on this device');
@@ -2021,21 +2086,21 @@ void _handlePurchaseRequired() {
         // Start purchase - this will trigger the Apple IAP flow
         // Use buyNonConsumable for subscriptions/non-consumable as you did
         try {
-        print('Calling buyNonConsumable...');
-              await Future.delayed(const Duration(milliseconds: 500));
+          print('Calling buyNonConsumable...');
+          await Future.delayed(const Duration(milliseconds: 500));
 
-        await _iap.buyNonConsumable(purchaseParam: purchaseParam);
-        print('buyNonConsumable completed successfully');
-      } catch (e, stackTrace) {
-        print('ERROR in buyNonConsumable: $e');
-        print('Stack trace: $stackTrace');
-        
-        if (mounted) {
-          _showErrorDialog('Failed to start purchase: $e');
-          setState(() => isLoading = false);
+          await _iap.buyNonConsumable(purchaseParam: purchaseParam);
+          print('buyNonConsumable completed successfully');
+        } catch (e, stackTrace) {
+          print('ERROR in buyNonConsumable: $e');
+          print('Stack trace: $stackTrace');
+
+          if (mounted) {
+            _showErrorDialog('Failed to start purchase: $e');
+            setState(() => isLoading = false);
+          }
+          return;
         }
-        return;
-      }
 
         // Set loading to false because the flow continues in purchaseStream
         setState(() => isLoading = false);
@@ -2043,11 +2108,11 @@ void _handlePurchaseRequired() {
         // Android: Razorpay
         _initRazorpay();
 
-          final razorpayKey = dotenv.env['RAZORPAY_KEY'];
+        final razorpayKey = dotenv.env['RAZORPAY_KEY'];
 
-  if (razorpayKey == null || razorpayKey.isEmpty) {
-    throw Exception('Razorpay key not found in .env');
-  }
+        if (razorpayKey == null || razorpayKey.isEmpty) {
+          throw Exception('Razorpay key not found in .env');
+        }
         var options = {
           'key': razorpayKey,
           'amount': (widget.plan.offerPrice * 100).toInt(),
@@ -2055,10 +2120,7 @@ void _handlePurchaseRequired() {
           'description': 'Subscription',
           'retry': {'enabled': true, 'max_count': 1},
           'send_sms_hash': true,
-          'prefill': {
-            'contact': "9961593179",
-            'email': "melvincherian0190@gmail.com",
-          },
+          'prefill': {'contact': userPhone ?? '', 'email': userEmail ?? ''},
           'external': {
             'wallets': ['paytm'],
           },

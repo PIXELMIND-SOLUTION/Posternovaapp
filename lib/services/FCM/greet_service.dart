@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class GreetService {
   Future<GreetResponse> getGreet(String userId) async {
-    final url = Uri.parse('http://31.97.206.144:4061/api/users/getgreet/$userId');
+    final url = Uri.parse('http://31.97.228.17:4061/api/users/getgreet/$userId');
 
     try {
       final response = await http.get(

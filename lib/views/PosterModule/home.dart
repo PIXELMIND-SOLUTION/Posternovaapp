@@ -3685,8 +3685,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   String? _resolveImageUrl(String raw) {
     if (raw.isEmpty) return null;
-    if (raw.startsWith('/')) return null; 
-    if (raw.contains('localhost')) return null; 
+    if (raw.startsWith('/')) return null;
+    if (raw.contains('localhost')) return null;
     return raw;
   }
 
@@ -4502,7 +4502,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-
   void _showLanguageSelector(BuildContext context) {
     showDialog(
       context: context,
@@ -4612,8 +4611,6 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
-
-
 
   void _showPremiumDialog() {
     showDialog(
@@ -4916,12 +4913,37 @@ class _HomeScreenState extends State<HomeScreen>
                       }
                     }
 
+                    // void shareCode() {
+                    //   if (userReferralCode != null) {
+                    //     Share.share(
+                    //       '🎉 Join me on EditEzy!\n\nUse my referral code: $userReferralCode\n\nGet exclusive benefits when you upgrade!\n\nhttps://play.google.com/store/apps/details?id=com.posternova.posternova',
+                    //       subject: 'Join EditEzy',
+                    //     );
+                    //   }
+                    // }
+
                     void shareCode() {
-                      if (userReferralCode != null) {
-                        Share.share(
-                          '🎉 Join me on EditEzy!\n\nUse my referral code: $userReferralCode\n\nGet exclusive benefits when you upgrade!\n\nhttps://play.google.com/store/apps/details?id=com.posternova.posternova',
-                          subject: 'Join EditEzy',
-                        );
+                      if (userReferralCode != null &&
+                          userReferralCode!.isNotEmpty) {
+                        Share.share('''
+🎉 Invite Your Friends to Edit Ezy & Earn Rewards!
+
+Use my referral code: *$userReferralCode*
+
+💰 Earn ₹200 for every successful referral!
+
+How it works:
+✅ Share your referral code with friends
+✅ Your friend subscribes to any Edit Ezy plan
+✅ You receive ₹200 reward instantly
+
+🚀 Start referring today and earn more with every subscription!
+
+Download Edit Ezy now:
+https://play.google.com/store/apps/details?id=com.posternova.posternova
+
+✨ Create amazing posters, designs, and more with Edit Ezy!
+''', subject: 'Join Edit Ezy using my referral code');
                       }
                     }
 
