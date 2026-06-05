@@ -14085,7 +14085,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             ),
           ),
           SizedBox(
-            height: 100,
+            height: 90,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
