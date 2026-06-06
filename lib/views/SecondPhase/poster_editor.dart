@@ -19,6 +19,9 @@ import 'package:posternova/providers/adminamount/admin_amount_provider.dart';
 import 'package:posternova/providers/auth/login_provider.dart';
 import 'package:posternova/providers/plans/my_plan_provider.dart';
 import 'package:posternova/views/SecondPhase/payment_service.dart';
+import 'package:posternova/widgets/anniversary_special_animation.dart';
+import 'package:posternova/widgets/birthday_special_animation.dart';
+import 'package:posternova/widgets/celebration_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -43,6 +46,12 @@ enum AnimationType {
   flipIn,
   wobble,
   rollin,
+  birthday,
+  anniversary,
+  birthdayPop, // NEW
+  birthdayFirework, // NEW
+  anniversaryFloat, // NEW
+  anniversaryPulse,
 }
 
 // In your widget state
@@ -555,10 +564,12 @@ class _ScanlinePainter extends CustomPainter {
 class PosterEditorScreen extends StatefulWidget {
   final String posterAsset;
   final String itemid;
+  final String? categoryName;
   const PosterEditorScreen({
     Key? key,
     required this.posterAsset,
     required this.itemid,
+    this.categoryName,
   }) : super(key: key);
 
   @override
@@ -577,6 +588,10 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   String? _audioLoadError;
 
   bool _isSelectingAudio = false;
+
+  bool _showCelebrationOverlay = false;
+
+  bool _showBirthdayOverlay = false;
 
   final Map<String, TextStyle> _googleFontCache = {};
 
@@ -1790,8 +1805,13 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             case AnimationType.flipIn:
             case AnimationType.wobble:
             case AnimationType.rollin:
+            case AnimationType.birthdayPop:
+            case AnimationType.birthdayFirework:
+            case AnimationType.anniversaryFloat:
+            case AnimationType.anniversaryPulse:
               animValue = progress;
               break;
+
             default:
               animValue = (sin(progress * pi) * 0.5) + 0.5;
           }
@@ -1803,8 +1823,7 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
           // ✅ CRITICAL FIX (UI sync)
           await WidgetsBinding.instance.endOfFrame;
-          await Future.delayed(const Duration(milliseconds: 5));
-
+          await Future.delayed(const Duration(milliseconds: 32));
           final boundary =
               _posterKey.currentContext?.findRenderObject()
                   as RenderRepaintBoundary?;
@@ -2218,6 +2237,18 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     super.initState();
     if (_planProvider == null || !_planProvider!.isPurchase) {
       _preventScreenshots();
+    }
+
+    //   if (widget.categoryName?.toLowerCase() == 'birthday') {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     if (mounted) setState(() => _showBirthdayOverlay = true);
+    //   });
+    // }
+
+    if (CelebrationOverlayHelper._isCelebrationCategory(widget.categoryName)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _showCelebrationOverlay = true);
+      });
     }
     _planProvider = Provider.of<MyPlanProvider>(context, listen: false);
     _checkPurchaseStatus();
@@ -5276,19 +5307,70 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           final DateTime frameStartTime = DateTime.now();
           final double progress = (i % fps) / fps;
 
+          //           double animValue;
+          // switch (_selectedAnimation) {
+          //   case AnimationType.none:
+          //     animValue = 1.0;
+          //     break;
+
+          //   case AnimationType.fade:
+          //     // Triangle wave: 0→1 first half, 1→0 second half
+          //     animValue = progress < 0.5
+          //         ? progress * 2.0
+          //         : (1.0 - progress) * 2.0;
+          //     break;
+
+          //   case AnimationType.rotate:
+          //   case AnimationType.flipIn:
+          //   case AnimationType.wobble:
+          //   case AnimationType.rollin:
+          //     animValue = progress;
+          //     break;
+
+          //   case AnimationType.birthday:
+          //   case AnimationType.anniversary:
+          //     animValue = progress;
+          //     break;
+
+          //   default:
+          //     // zoom, slide variants — sine wave 0→1→0
+          //     animValue = (sin(progress * pi) * 0.5) + 0.5;
+          //     break;
+          // }
+
           double animValue;
           switch (_selectedAnimation) {
             case AnimationType.none:
               animValue = 1.0;
               break;
+
+            case AnimationType.fade:
+              // Goes 1→0→1: poster visible → black overlay → poster visible
+              animValue = 1.0 - sin(progress * pi);
+              break;
+
             case AnimationType.rotate:
             case AnimationType.flipIn:
             case AnimationType.wobble:
             case AnimationType.rollin:
               animValue = progress;
               break;
+
+            // case AnimationType.birthday:
+            // case AnimationType.anniversary:
+            //   animValue = progress;
+            //   break;
+
+            case AnimationType.birthdayPop:
+            case AnimationType.birthdayFirework:
+            case AnimationType.anniversaryFloat:
+            case AnimationType.anniversaryPulse:
+              animValue = progress;
+              break;
+
             default:
               animValue = (sin(progress * pi) * 0.5) + 0.5;
+              break;
           }
 
           _animController.value = animValue;
@@ -5296,7 +5378,29 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           setState(() {});
 
           await WidgetsBinding.instance.endOfFrame;
-          await Future.delayed(const Duration(milliseconds: 2));
+          await Future.delayed(const Duration(milliseconds: 16));
+
+          // double animValue;
+          // switch (_selectedAnimation) {
+          //   case AnimationType.none:
+          //     animValue = 1.0;
+          //     break;
+          //   case AnimationType.rotate:
+          //   case AnimationType.flipIn:
+          //   case AnimationType.wobble:
+          //   case AnimationType.rollin:
+          //     animValue = progress;
+          //     break;
+          //   default:
+          //     animValue = (sin(progress * pi) * 0.5) + 0.5;
+          // }
+
+          // _animController.value = animValue;
+          // _brandAnimController.value = progress;
+          // setState(() {});
+
+          // await WidgetsBinding.instance.endOfFrame;
+          // await Future.delayed(const Duration(milliseconds: 2));
 
           final RenderRepaintBoundary? boundary =
               _posterKey.currentContext?.findRenderObject()
@@ -5954,6 +6058,27 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
             ],
           ),
           if (_isDownloading) _buildDownloadDialog(),
+
+          //  if (_showBirthdayOverlay)
+          // Positioned.fill(
+          //   child: BirthdayCelebrationOverlay(
+          //     onDismiss: () {
+          //       setState(() => _showBirthdayOverlay = false);
+          //     },
+          //   ),
+          // ),
+          Builder(
+            builder: (_) {
+              final overlay = CelebrationOverlayHelper.buildOverlay(
+                categoryName: widget.categoryName,
+                onDismiss: () =>
+                    setState(() => _showCelebrationOverlay = false),
+              );
+              if (!_showCelebrationOverlay || overlay == null)
+                return const SizedBox.shrink();
+              return Positioned.fill(child: overlay);
+            },
+          ),
         ],
       ),
     );
@@ -6179,14 +6304,9 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //   );
   // }
 
+  ////////////// Commented is the previous code used///////////
 
- ////////////// Commented is the previous code used/////////// 
-
-
-
-
-/////////// This is the new code for added the share option in the appbar //////////////////
-
+  /////////// This is the new code for added the share option in the appbar //////////////////
 
   Widget _buildTopBar() {
     final isDarkMode = _isDarkMode;
@@ -6509,6 +6629,129 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     }
   }
 
+  // Widget _buildPosterArea() {
+  //   return GestureDetector(
+  //     onTap: () => setState(() {
+  //       _selectedTextId = null;
+  //       _selectedBrandItemId = null;
+  //     }),
+  //     child: Center(
+  //       child: Padding(
+  //         padding: const EdgeInsets.all(8),
+  //         child: AspectRatio(
+  //           aspectRatio: 3 / 4,
+  //           child: RepaintBoundary(
+  //             key: _posterKey,
+  //             child: ClipRRect(
+  //               borderRadius: BorderRadius.circular(4),
+  //               child: Stack(
+  //                 children: [
+  //                   // ── Frame renders FIRST (behind everything) ──
+  //                   if (_selectedFrame >= 0)
+  //                     Positioned.fill(
+  //                       child: _buildFrameLayout(
+  //                         _frames[_selectedFrame],
+  //                         showLogo: false,
+  //                       ),
+  //                     ),
+
+  //                   // ── Image sits INSIDE the frame insets ──
+  //                   Positioned.fill(
+  //                     child: Padding(
+  //                       padding: _getFrameInsets(),
+  //                       child: _buildPosterBackground(), // ← removed ClipRect
+  //                     ),
+  //                   ),
+
+  //                   // ── Free brand elements (no frame selected) ──
+  //                   if (_selectedFrame < 0) ..._buildFreeBrandElements(),
+
+  //                   // ── Overlay brand items ──
+  //                   ..._overlayBrandItems
+  //                       .where((e) => e.isVisible)
+  //                       .map((e) => _buildOverlayBrandWidget(e)),
+
+  //                   // ── Text widgets ──
+  //                   ..._texts.map((t) => _buildTextWidget(t)),
+
+  //                   // ── Frame logo (draggable) LAST so it's always on top ──
+  //                   if (_selectedFrame >= 0)
+  //                     Positioned(
+  //                       left: _frameLogoPosition.dx,
+  //                       top: _frameLogoPosition.dy,
+  //                       child: GestureDetector(
+  //                         onTap: () => _pickImage(forLogo: true),
+  //                         onPanUpdate: (d) {
+  //                           setState(() {
+  //                             _frameLogoPosition += d.delta;
+  //                           });
+  //                         },
+  //                         child: _uploadedLogoPath != null
+  //                             ? ClipOval(
+  //                                 child: Image.file(
+  //                                   File(_uploadedLogoPath!),
+  //                                   width: 50,
+  //                                   height: 50,
+  //                                   fit: BoxFit.cover,
+  //                                 ),
+  //                               )
+  //                             : (_brandInfo.logoAsset.isNotEmpty &&
+  //                                       (_brandInfo.logoAsset.startsWith(
+  //                                             'http://',
+  //                                           ) ||
+  //                                           _brandInfo.logoAsset.startsWith(
+  //                                             'https://',
+  //                                           ))
+  //                                   ? ClipOval(
+  //                                       child: Image.network(
+  //                                         _brandInfo.logoAsset,
+  //                                         width: 50,
+  //                                         height: 50,
+  //                                         fit: BoxFit.cover,
+  //                                       ),
+  //                                     )
+  //                                   : _logoWidget(
+  //                                       const Color.fromARGB(255, 48, 81, 217),
+  //                                       size: 50,
+  //                                     )),
+  //                       ),
+  //                     ),
+
+  //                   _buildWatermark(),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  //   Widget _buildPosterArea() {
+  //   return GestureDetector(
+  //     onTap: () => setState(() {
+  //       _selectedTextId = null;
+  //       _selectedBrandItemId = null;
+  //     }),
+  //     child: Center(
+  //       child: Padding(
+  //         padding: const EdgeInsets.all(8),
+  //         child: AspectRatio(
+  //           aspectRatio: 3 / 4,
+  //           child: RepaintBoundary(
+  //             key: _posterKey,
+  //             child: ClipRRect(
+  //               borderRadius: BorderRadius.circular(4),
+  //               child: _buildAnimatedPosterStack(), // ← changed
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildPosterArea() {
     return GestureDetector(
       onTap: () => setState(() {
@@ -6520,91 +6763,362 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           padding: const EdgeInsets.all(8),
           child: AspectRatio(
             aspectRatio: 3 / 4,
-            child: RepaintBoundary(
-              key: _posterKey,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Stack(
-                  children: [
-                    // ── Frame renders FIRST (behind everything) ──
-                    if (_selectedFrame >= 0)
-                      Positioned.fill(
-                        child: _buildFrameLayout(
-                          _frames[_selectedFrame],
-                          showLogo: false,
-                        ),
-                      ),
-
-                    // ── Image sits INSIDE the frame insets ──
-                    Positioned.fill(
-                      child: Padding(
-                        padding: _getFrameInsets(),
-                        child: _buildPosterBackground(), // ← removed ClipRect
-                      ),
-                    ),
-
-                    // ── Free brand elements (no frame selected) ──
-                    if (_selectedFrame < 0) ..._buildFreeBrandElements(),
-
-                    // ── Overlay brand items ──
-                    ..._overlayBrandItems
-                        .where((e) => e.isVisible)
-                        .map((e) => _buildOverlayBrandWidget(e)),
-
-                    // ── Text widgets ──
-                    ..._texts.map((t) => _buildTextWidget(t)),
-
-                    // ── Frame logo (draggable) LAST so it's always on top ──
-                    if (_selectedFrame >= 0)
-                      Positioned(
-                        left: _frameLogoPosition.dx,
-                        top: _frameLogoPosition.dy,
-                        child: GestureDetector(
-                          onTap: () => _pickImage(forLogo: true),
-                          onPanUpdate: (d) {
-                            setState(() {
-                              _frameLogoPosition += d.delta;
-                            });
-                          },
-                          child: _uploadedLogoPath != null
-                              ? ClipOval(
-                                  child: Image.file(
-                                    File(_uploadedLogoPath!),
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : (_brandInfo.logoAsset.isNotEmpty &&
-                                        (_brandInfo.logoAsset.startsWith(
-                                              'http://',
-                                            ) ||
-                                            _brandInfo.logoAsset.startsWith(
-                                              'https://',
-                                            ))
-                                    ? ClipOval(
-                                        child: Image.network(
-                                          _brandInfo.logoAsset,
-                                          width: 50,
-                                          height: 50,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                    : _logoWidget(
-                                        const Color.fromARGB(255, 48, 81, 217),
-                                        size: 50,
-                                      )),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+            child: AnimatedBuilder(
+              // ← wrap here for live preview
+              animation: _animController,
+              builder: (_, __) {
+                return RepaintBoundary(
+                  key: _posterKey,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: _buildAnimatedPosterStack(),
+                  ),
+                );
+              },
             ),
           ),
         ),
       ),
     );
   }
+
+  Widget _buildAnimatedPosterStack() {
+    // Build the full poster stack
+    Widget stack = Stack(
+      children: [
+        if (_selectedFrame >= 0)
+          Positioned.fill(
+            child: _buildFrameLayout(_frames[_selectedFrame], showLogo: false),
+          ),
+        Positioned.fill(
+          child: Padding(
+            padding: _getFrameInsets(),
+            child: _buildPosterBackground(),
+          ),
+        ),
+        if (_selectedFrame < 0) ..._buildFreeBrandElements(),
+        ..._overlayBrandItems
+            .where((e) => e.isVisible)
+            .map((e) => _buildOverlayBrandWidget(e)),
+        ..._texts.map((t) => _buildTextWidget(t)),
+        if (_selectedFrame >= 0)
+          Positioned(
+            left: _frameLogoPosition.dx,
+            top: _frameLogoPosition.dy,
+            child: GestureDetector(
+              onTap: () => _pickImage(forLogo: true),
+              onPanUpdate: (d) {
+                setState(() {
+                  _frameLogoPosition += d.delta;
+                });
+              },
+              child: _uploadedLogoPath != null
+                  ? ClipOval(
+                      child: Image.file(
+                        File(_uploadedLogoPath!),
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : (_brandInfo.logoAsset.isNotEmpty &&
+                            (_brandInfo.logoAsset.startsWith('http://') ||
+                                _brandInfo.logoAsset.startsWith('https://'))
+                        ? ClipOval(
+                            child: Image.network(
+                              _brandInfo.logoAsset,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : _logoWidget(
+                            const Color.fromARGB(255, 48, 81, 217),
+                            size: 50,
+                          )),
+            ),
+          ),
+        _buildWatermark(),
+      ],
+    );
+
+    // Apply animation directly using controller value (NOT AnimatedBuilder)
+    // // This works both in preview AND export because setState triggers rebuild
+    // if (_selectedAnimation != AnimationType.none) {
+    //   stack = _applyAnimationWithValue(stack, _animController.value);
+    // }
+
+    // return stack;
+
+    if (_selectedAnimation != AnimationType.none) {
+      double value = _animController.value;
+
+      // For fade: apply sin so preview matches export behavior
+      if (_selectedAnimation == AnimationType.fade) {
+        value = 1.0 - sin(_animController.value * pi);
+      }
+
+      stack = _applyAnimationWithValue(stack, value);
+    }
+
+    return stack;
+  }
+
+  Widget _applyAnimationWithValue(Widget child, double value) {
+    switch (_selectedAnimation) {
+      case AnimationType.fade:
+        // value: 0.0 = full black overlay, 1.0 = poster fully visible
+        // During preview: controller goes 0→1 repeat(reverse:false)
+        //   → sin applied in preview via _animController.value
+        // During export: animValue = 1.0 - sin(progress*pi) gives 1→0→1
+        final double overlayOpacity = (1.0 - value).clamp(0.0, 1.0);
+        return Stack(
+          children: [
+            child,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  color: Colors.black.withOpacity(overlayOpacity),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case AnimationType.zoom:
+        return Transform.scale(scale: 0.95 + 0.05 * value, child: child);
+
+      case AnimationType.rotate:
+        return Transform.rotate(angle: 0.03 * sin(value * pi), child: child);
+
+      case AnimationType.slideLeft:
+        return Transform.translate(
+          offset: Offset(-10 * value, 0),
+          child: child,
+        );
+
+      case AnimationType.slideRight:
+        return Transform.translate(offset: Offset(10 * value, 0), child: child);
+
+      case AnimationType.slideUp:
+        return Transform.translate(
+          offset: Offset(0, -10 * value),
+          child: child,
+        );
+
+      case AnimationType.slideDown:
+        return Transform.translate(offset: Offset(0, 10 * value), child: child);
+
+      case AnimationType.flipIn:
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(0.2 * sin(value * pi)),
+          child: child,
+        );
+
+      case AnimationType.wobble:
+        return Transform.rotate(
+          angle: 0.05 * sin(value * pi * 2),
+          child: child,
+        );
+
+      case AnimationType.rollin:
+        return Transform.rotate(angle: value * 0.1, child: child);
+
+      case AnimationType.birthday:
+        return Stack(
+          children: [
+            child,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(painter: _BirthdayCanvasPainter(t: value)),
+              ),
+            ),
+          ],
+        );
+
+      case AnimationType.anniversary:
+        return Stack(
+          children: [
+            child,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _AnniversaryCanvasPainter(t: value),
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case AnimationType.birthdayPop:
+        return Stack(
+          children: [
+            child,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(painter: _BirthdayPopPainter(t: value)),
+              ),
+            ),
+          ],
+        );
+
+      case AnimationType.birthdayFirework:
+        return Stack(
+          children: [
+            child,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(painter: _BirthdayFireworkPainter(t: value)),
+              ),
+            ),
+          ],
+        );
+
+      case AnimationType.anniversaryFloat:
+        return Stack(
+          children: [
+            child,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(painter: _AnniversaryFloatPainter(t: value)),
+              ),
+            ),
+          ],
+        );
+
+      case AnimationType.anniversaryPulse:
+        final pulseScale = 1.0 + 0.04 * sin(value * pi * 4);
+        return Stack(
+          children: [
+            Transform.scale(scale: pulseScale, child: child),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(painter: _AnniversaryPulsePainter(t: value)),
+              ),
+            ),
+          ],
+        );
+
+      default:
+        return child;
+    }
+  }
+
+  // Widget _applyAnimationWithValue(Widget child, double value) {
+  //   switch (_selectedAnimation) {
+  //     // case AnimationType.fade:
+  //     //   return Opacity(opacity: value.clamp(0.0, 1.0), child: child);
+
+  //     case AnimationType.fade:
+  //   // Stack a black overlay on top — opacity goes 0→1→0
+  //   // The poster is always fully visible underneath
+  //   // Result: poster fades to dark and back — fully visible in yuv420p export
+  //   final double overlayOpacity = (1.0 - value).clamp(0.0, 1.0);
+  //   return Stack(
+  //     children: [
+  //       child, // poster always fully opaque
+  //       Positioned.fill(
+  //         child: IgnorePointer(
+  //           child: Container(
+  //             color: Colors.black.withOpacity(overlayOpacity),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+
+  //     case AnimationType.zoom:
+  //       return Transform.scale(
+  //         scale: 0.95 + 0.05 * value,
+  //         child: child,
+  //       );
+
+  //     case AnimationType.rotate:
+  //       return Transform.rotate(
+  //         angle: 0.03 * sin(value * pi),
+  //         child: child,
+  //       );
+
+  //     case AnimationType.slideLeft:
+  //       return Transform.translate(
+  //         offset: Offset(-10 * value, 0),
+  //         child: child,
+  //       );
+
+  //     case AnimationType.slideRight:
+  //       return Transform.translate(
+  //         offset: Offset(10 * value, 0),
+  //         child: child,
+  //       );
+
+  //     case AnimationType.slideUp:
+  //       return Transform.translate(
+  //         offset: Offset(0, -10 * value),
+  //         child: child,
+  //       );
+
+  //     case AnimationType.slideDown:
+  //       return Transform.translate(
+  //         offset: Offset(0, 10 * value),
+  //         child: child,
+  //       );
+
+  //     case AnimationType.flipIn:
+  //       return Transform(
+  //         alignment: Alignment.center,
+  //         transform: Matrix4.identity()
+  //           ..setEntry(3, 2, 0.001)
+  //           ..rotateY(0.2 * sin(value * pi)),
+  //         child: child,
+  //       );
+
+  //     case AnimationType.wobble:
+  //       return Transform.rotate(
+  //         angle: 0.05 * sin(value * pi * 2),
+  //         child: child,
+  //       );
+
+  //     case AnimationType.rollin:
+  //       return Transform.rotate(
+  //         angle: value * 0.1,
+  //         child: child,
+  //       );
+
+  //     case AnimationType.birthday:
+  //       return Stack(
+  //         children: [
+  //           child,
+  //           Positioned.fill(
+  //             child: IgnorePointer(
+  //               child: CustomPaint(
+  //                 painter: _BirthdayCanvasPainter(t: value),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       );
+
+  //     case AnimationType.anniversary:
+  //       return Stack(
+  //         children: [
+  //           child,
+  //           Positioned.fill(
+  //             child: IgnorePointer(
+  //               child: CustomPaint(
+  //                 painter: _AnniversaryCanvasPainter(t: value),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       );
+
+  //     default:
+  //       return child;
+  //   }
+  // }
 
   // Widget _buildPosterBackground() {
   //   Widget img;
@@ -6963,12 +7477,12 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
       base = _applyEffect(base, effect.type, effect.strength);
     }
 
-    if (_selectedAnimation != AnimationType.none) {
-      return AnimatedBuilder(
-        animation: _animValue,
-        builder: (_, __) => _applyAnimation(base),
-      );
-    }
+    // if (_selectedAnimation != AnimationType.none) {
+    //   return AnimatedBuilder(
+    //     animation: _animValue,
+    //     builder: (_, __) => _applyAnimation(base),
+    //   );
+    // }
     return base;
   }
 
@@ -7013,6 +7527,60 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
   //     );
   //   }
   //   return base;
+  // }
+
+  // Widget _applyAnimation(Widget child) {
+  //   switch (_selectedAnimation) {
+  //     case AnimationType.fade:
+  //       return Opacity(opacity: 0.4 + 0.6 * _animValue.value, child: child);
+  //     case AnimationType.zoom:
+  //       return Transform.scale(
+  //         scale: 0.95 + 0.05 * _animValue.value,
+  //         child: child,
+  //       );
+  //     case AnimationType.rotate:
+  //       return Transform.rotate(
+  //         angle: 0.03 * sin(_animValue.value * pi),
+  //         child: child,
+  //       );
+  //     case AnimationType.slideLeft:
+  //       return Transform.translate(
+  //         offset: Offset(-10 * _animValue.value, 0),
+  //         child: child,
+  //       );
+  //     case AnimationType.slideRight:
+  //       return Transform.translate(
+  //         offset: Offset(10 * _animValue.value, 0),
+  //         child: child,
+  //       );
+  //     case AnimationType.slideUp:
+  //       return Transform.translate(
+  //         offset: Offset(0, -10 * _animValue.value),
+  //         child: child,
+  //       );
+  //     case AnimationType.slideDown:
+  //       return Transform.translate(
+  //         offset: Offset(0, 10 * _animValue.value),
+  //         child: child,
+  //       );
+  //     case AnimationType.flipIn:
+  //       return Transform(
+  //         alignment: Alignment.center,
+  //         transform: Matrix4.identity()
+  //           ..setEntry(3, 2, 0.001)
+  //           ..rotateY(0.2 * sin(_animValue.value * pi)),
+  //         child: child,
+  //       );
+  //     case AnimationType.wobble:
+  //       return Transform.rotate(
+  //         angle: 0.05 * sin(_animValue.value * pi * 2),
+  //         child: child,
+  //       );
+  //     case AnimationType.rollin:
+  //       return Transform.rotate(angle: _animValue.value * 0.1, child: child);
+  //     default:
+  //       return child;
+  //   }
   // }
 
   Widget _applyAnimation(Widget child) {
@@ -7064,10 +7632,92 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
         );
       case AnimationType.rollin:
         return Transform.rotate(angle: _animValue.value * 0.1, child: child);
+      case AnimationType.birthday:
+        return _applyBirthdayAnimation(child);
+      case AnimationType.anniversary:
+        return _applyAnniversaryAnimation(child);
       default:
         return child;
     }
   }
+
+  // Widget _applyBirthdayAnimation(Widget child) {
+  //   return AnimatedBuilder(
+  //     animation: _animController,
+  //     builder: (_, __) {
+  //       return Stack(
+  //         children: [
+  //           child,
+  //           Positioned.fill(
+  //             child: IgnorePointer(
+  //               child: CustomPaint(
+  //                 painter: _BirthdayCanvasPainter(t: _animController.value),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
+  Widget _applyBirthdayAnimation(Widget child) {
+    return AnimatedBuilder(
+      animation: _animController,
+      builder: (_, __) =>
+          _applyAnimationWithValue(child, _animController.value),
+    );
+  }
+
+  // Widget _applyAnniversaryAnimation(Widget child) {
+  //   return AnimatedBuilder(
+  //     animation: _animController,
+  //     builder: (_, __) {
+  //       return Stack(
+  //         children: [
+  //           child,
+  //           Positioned.fill(
+  //             child: IgnorePointer(
+  //               child: CustomPaint(
+  //                 painter: _AnniversaryCanvasPainter(t: _animController.value),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
+  Widget _applyAnniversaryAnimation(Widget child) {
+    return AnimatedBuilder(
+      animation: _animController,
+      builder: (_, __) =>
+          _applyAnimationWithValue(child, _animController.value),
+    );
+  }
+
+  //   Widget _applyBirthdayAnimation(Widget child) {
+  //   return AnimatedBuilder(
+  //     animation: _animController,
+  //     builder: (_, __) {
+  //       return Stack(
+  //         children: [
+  //           child,
+  //           Positioned.fill(
+  //             child: IgnorePointer(
+  //               child: CustomPaint(
+  //                 painter: _BirthdayCanvasPainter(
+  //                   t: _animController.value,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   // ── OVERLAY BRAND ITEMS (movable/deletable/editable) ──────
 
@@ -7581,6 +8231,10 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
           angle: (1 - anim.value) * pi * 2,
           child: Transform.scale(scale: anim.value, child: child),
         );
+
+      case AnimationType.birthday:
+      case AnimationType.anniversary:
+        return child;
       default:
         return child;
     }
@@ -14123,6 +14777,337 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
     );
   }
 
+  // Add this method to _PosterEditorScreenState
+
+  // Widget _buildWatermark() {
+  //   if (_selectedFrame < 0) {
+  //     // No frame — bottom right corner, above any potential brand elements
+  //     return Positioned(
+  //       bottom: 10,
+  //       right: 10,
+  //       child: _watermarkWidget(),
+  //     );
+  //   }
+
+  //   final frame = _frames[_selectedFrame];
+
+  //   // Position watermark based on frame layout to avoid overlap with brand info
+  //   switch (frame.layout) {
+  //     // Frames with footer at BOTTOM — put watermark top-right
+  //     case FrameLayout.classic:
+  //     case FrameLayout.elegant:
+  //     case FrameLayout.neon:
+  //     case FrameLayout.minimal:
+  //     case FrameLayout.card:
+  //     case FrameLayout.diagonal:
+  //     case FrameLayout.curved:
+  //     case FrameLayout.split:
+  //     case FrameLayout.gradient:
+  //     case FrameLayout.zigzag:
+  //     case FrameLayout.shadow:
+  //     case FrameLayout.stripe:
+  //     case FrameLayout.filmstrip:
+  //     case FrameLayout.luxury:
+  //       return Positioned(
+  //         top: 10,
+  //         right: 14,
+  //         child: _watermarkWidget(),
+  //       );
+
+  //     // Frames with header at TOP — put watermark bottom-right
+  //     // (but above the footer if there's also a footer)
+  //     case FrameLayout.ribbon:
+  //     case FrameLayout.arch:
+  //       return Positioned(
+  //         bottom: 10,
+  //         right: 14,
+  //         child: _watermarkWidget(),
+  //       );
+
+  //     // Banner: header top + footer bottom — put watermark mid-right
+  //     case FrameLayout.banner:
+  //       return Positioned(
+  //         top: 60,   // just below the header strip
+  //         right: 14,
+  //         child: _watermarkWidget(),
+  //       );
+
+  //     // Modern: left strip + bottom card — put watermark top-right
+  //     case FrameLayout.modern:
+  //       return Positioned(
+  //         top: 10,
+  //         right: 14,
+  //         child: _watermarkWidget(),
+  //       );
+
+  //     // Side strip: right side strip — put watermark bottom-left
+  //     // (strip occupies the right side, so go left)
+  //     case FrameLayout.sideStrip:
+  //       return Positioned(
+  //         bottom: 10,
+  //         left: 14,
+  //         child: _watermarkWidget(),
+  //       );
+
+  //     // Badge: centered logo top + footer bottom — put watermark mid-right
+  //     case FrameLayout.badge:
+  //       return Positioned(
+  //         top: 90,   // below the circular badge logo
+  //         right: 14,
+  //         child: _watermarkWidget(),
+  //       );
+  //   }
+  // }
+
+  // Widget _watermarkWidget() {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+  //     decoration: BoxDecoration(
+  //       color: Colors.black.withOpacity(0.25),
+  //       borderRadius: BorderRadius.circular(4),
+  //     ),
+  //     child: const Text(
+  //       'EDIT EZY',
+  //       style: TextStyle(
+  //         fontSize: 9,
+  //         fontWeight: FontWeight.w700,
+  //         color: Colors.white,
+  //         letterSpacing: 1.2,
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget _buildWatermark() {
+    if (_selectedFrame < 0) {
+      // No frame — small watermark bottom-right of image
+      return Positioned(
+        bottom: 8,
+        right: 8,
+        child: _watermarkWidget(opacity: 0.35),
+      );
+    }
+
+    final frame = _frames[_selectedFrame];
+
+    switch (frame.layout) {
+      // ── Footer frames: watermark bottom-RIGHT inside the footer strip ──
+      // Footer has: name on left, phone below it → right side is empty
+      case FrameLayout.classic:
+        return Positioned(
+          bottom: 17, // inside the ~50px footer
+          right: 10,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.zigzag:
+        return Positioned(
+          bottom: 8, // inside the ~50px footer
+          right: 125,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.elegant:
+        // Footer is centered text → right edge is empty
+        return Positioned(
+          bottom: 18,
+          right: 10,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.neon:
+        // Bottom card: name left → right side empty
+        return Positioned(
+          bottom: 30, // inside the ~50px footer
+          right: 20,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.card:
+        // Bottom floating card: name+phone on left → right side empty
+        return Positioned(
+          bottom: 30,
+          right: 50,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.shadow:
+        // Bottom card: name+phone left → right empty
+        return Positioned(
+          bottom: 30,
+          right: 20,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.gradient:
+        // Gradient fade bottom: name+phone left → right empty
+        return Positioned(
+          bottom: 16,
+          right: 14,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.diagonal:
+        // Diagonal footer: name+phone left → right empty
+        return Positioned(
+          bottom: 14,
+          right: 14,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.curved:
+        // Wave footer centered → right edge empty
+        return Positioned(
+          bottom: 12,
+          right: 14,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.filmstrip:
+        // Footer between film holes: name left → right empty
+        return Positioned(
+          bottom: 10,
+          right: 30, // inside the strip, clear of right film holes
+          child: _watermarkWidget(color: frame.accentColor),
+        );
+
+      case FrameLayout.luxury:
+        // Footer: name centered top, phone left → right side empty
+        return Positioned(
+          bottom: 20,
+          right: 14,
+          child: _watermarkWidget(color: frame.accentColor),
+        );
+
+      // case FrameLayout.zigzag:
+      //   // Footer: name left, phone right → put above footer top-right
+      //   return Positioned(
+      //     bottom: 42, // just above the footer strip
+      //     right: 10,
+      //     child: _watermarkWidget(opacity: 0.5),
+      //   );
+
+      case FrameLayout.stripe:
+        // Footer row: name left, phone right → above the stripe
+        return Positioned(
+          bottom: 8, // inside the ~50px footer
+          right: 125,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.split:
+        // Bottom row split left/right → no clear gap, go top-right
+        return Positioned(
+          top: 10,
+          right: 10,
+          child: _watermarkWidget(opacity: 0.45),
+        );
+
+      // ── Header frames: watermark in empty space of header right side ──
+      case FrameLayout.ribbon:
+        // Header: logo+name+phone on LEFT → right side of header empty
+        return Positioned(
+          left: 70,
+          top: 20, // inside the ~52px header
+          right: 40,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.arch:
+        // Header arch: name+phone on right → left side empty
+        return Positioned(
+          top: 14,
+          left: 14,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      // ── Both header + footer: use the header's empty side ──
+      case FrameLayout.banner:
+        // Header: logo+name left → far right empty
+        // return Positioned(
+        //   top: 14,
+        //   right: 14,
+        //   child: _watermarkWidget(color: Colors.white),
+        // );
+
+        return Positioned(
+          bottom: 10, // inside the ~50px footer
+          right: 10,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      case FrameLayout.badge:
+        // Header area: badge circle centered → right side empty
+        return Positioned(
+          bottom: 8, // inside the ~50px footer
+          right: 10,
+          child: _watermarkWidget(color: Colors.white),
+        );
+
+      // ── Side strip: strip on RIGHT → watermark bottom of the strip ──
+      case FrameLayout.sideStrip:
+        // Right strip has rotated name+phone centered → bottom of strip empty
+        return Positioned(
+          bottom: 12,
+          right: 8, // inside the 52px right strip
+          child: _watermarkWidget(color: Colors.white, vertical: true),
+        );
+
+      // ── Minimal: corner brackets only → bottom-right inside bracket ──
+      case FrameLayout.minimal:
+        return Positioned(
+          bottom: 20,
+          right: 280,
+          child: _watermarkWidget(color: frame.borderColor),
+        );
+
+      // ── Modern: left strip + bottom card → top-right (away from both) ──
+      case FrameLayout.modern:
+        // return Positioned(
+        //   top: 12,
+        //   right: 12,
+        //   child: _watermarkWidget(opacity: 0.45),
+        // );
+
+        return Positioned(
+          bottom: 30, // inside the ~50px footer
+          right: 30,
+          child: _watermarkWidget(color: Colors.white),
+        );
+    }
+  }
+
+  Widget _watermarkWidget({
+    Color? color,
+    double opacity = 1.0,
+    bool vertical = false,
+  }) {
+    final textColor = color ?? Colors.white;
+
+    Widget text = Text(
+      'EDIT EZY',
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+        color: textColor.withOpacity(opacity < 1.0 ? opacity : 1.0),
+        letterSpacing: 1.5,
+        shadows: [
+          Shadow(
+            color: Colors.black.withOpacity(0.6),
+            offset: const Offset(0.5, 0.5),
+            blurRadius: 2,
+          ),
+        ],
+      ),
+    );
+
+    if (vertical) {
+      text = RotatedBox(quarterTurns: 1, child: text);
+    }
+
+    return Opacity(opacity: opacity, child: text);
+  }
+
   // Widget _buildFramesPanel() {
   //   final isDarkMode = _isDarkMode;
 
@@ -15646,6 +16631,8 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
 
   Widget _buildAnimationPanel() {
     final isDarkMode = _isDarkMode;
+
+    final categoryLower = widget.categoryName?.toLowerCase().trim() ?? '';
     final animations = [
       _AnimData(AnimationType.none, Icons.block, 'None'),
       _AnimData(AnimationType.fade, Icons.opacity, 'Fade'),
@@ -15658,6 +16645,30 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
       _AnimData(AnimationType.slideRight, Icons.arrow_forward, 'Slide →'),
       _AnimData(AnimationType.slideUp, Icons.arrow_upward, 'Slide ↑'),
       _AnimData(AnimationType.slideDown, Icons.arrow_downward, 'Slide ↓'),
+
+      // _AnimData(AnimationType.birthday, Icons.cake, 'Birthday'),
+      // if (categoryLower == 'birthday')
+      //   _AnimData(AnimationType.birthday, Icons.cake, 'Birthday'),
+      // if (categoryLower == 'anniversary')
+      //   _AnimData(AnimationType.anniversary, Icons.favorite, 'Anniversary'),
+      if (categoryLower == 'birthday') ...[
+        _AnimData(AnimationType.birthday, Icons.cake, 'Birthday'),
+        _AnimData(AnimationType.birthdayPop, Icons.celebration, 'Balloons'),
+        _AnimData(
+          AnimationType.birthdayFirework,
+          Icons.auto_awesome,
+          'Firework',
+        ),
+      ],
+      if (categoryLower == 'anniversary') ...[
+        _AnimData(AnimationType.anniversary, Icons.favorite, 'Anniversary'),
+        _AnimData(AnimationType.anniversaryFloat, Icons.air, 'Float'),
+        _AnimData(
+          AnimationType.anniversaryPulse,
+          Icons.favorite_border,
+          'Pulse',
+        ),
+      ],
     ];
     return Container(
       color: isDarkMode ? const Color.fromARGB(255, 48, 81, 217) : Colors.white,
@@ -15687,10 +16698,59 @@ class _PosterEditorScreenState extends State<PosterEditorScreen>
                 final a = animations[i];
                 final sel = _selectedAnimation == a.type;
                 return GestureDetector(
+                  // onTap: () {
+                  //   setState(() => _selectedAnimation = a.type);
+                  //   if (a.type != AnimationType.none) {
+                  //     _animController.repeat(reverse: true);
+                  //     _brandAnimController.repeat();
+                  //   } else {
+                  //     _animController.stop();
+                  //     _animController.reset();
+                  //     _brandAnimController.stop();
+                  //     _brandAnimController.reset();
+                  //   }
+                  // },
+                  // onTap: () {
+                  //   setState(() => _selectedAnimation = a.type);
+                  //   if (a.type != AnimationType.none) {
+                  //     _animController.repeat(
+                  //       reverse: a.type != AnimationType.birthday,
+                  //     );
+                  //     _brandAnimController.repeat();
+                  //   } else {
+                  //     _animController.stop();
+                  //     _animController.reset();
+                  //     _brandAnimController.stop();
+                  //     _brandAnimController.reset();
+                  //   }
+                  // },
+                  // onTap: () {
+                  //   setState(() => _selectedAnimation = a.type);
+                  //   if (a.type != AnimationType.none) {
+                  //     final pingPong =
+                  //         a.type != AnimationType.birthday &&
+                  //         a.type != AnimationType.anniversary;
+                  //     _animController.repeat(reverse: pingPong);
+                  //     _brandAnimController.repeat();
+                  //   } else {
+                  //     _animController.stop();
+                  //     _animController.reset();
+                  //     _brandAnimController.stop();
+                  //     _brandAnimController.reset();
+                  //   }
+                  // },
                   onTap: () {
                     setState(() => _selectedAnimation = a.type);
                     if (a.type != AnimationType.none) {
-                      _animController.repeat(reverse: true);
+                      final pingPong = ![
+                        AnimationType.birthday,
+                        AnimationType.anniversary,
+                        AnimationType.birthdayPop,
+                        AnimationType.birthdayFirework,
+                        AnimationType.anniversaryFloat,
+                        AnimationType.anniversaryPulse,
+                      ].contains(a.type);
+                      _animController.repeat(reverse: pingPong);
                       _brandAnimController.repeat();
                     } else {
                       _animController.stop();
@@ -20203,4 +21263,1119 @@ class _AppliedEffect {
   final EffectType type;
   final double strength;
   _AppliedEffect(this.type, this.strength);
+}
+
+class CelebrationOverlayHelper {
+  static bool _isCelebrationCategory(String? categoryName) {
+    if (categoryName == null) return false;
+    final lower = categoryName.toLowerCase().trim();
+    return lower == 'birthday' || lower == 'anniversary';
+  }
+
+  static bool isBirthday(String? categoryName) =>
+      categoryName?.toLowerCase().trim() == 'birthday';
+
+  static bool isAnniversary(String? categoryName) =>
+      categoryName?.toLowerCase().trim() == 'anniversary';
+
+  /// Returns the overlay widget or null if category doesn't need one.
+  static Widget? buildOverlay({
+    required String? categoryName,
+    required VoidCallback onDismiss,
+  }) {
+    if (isBirthday(categoryName)) {
+      return BirthdayCelebrationOverlay(onDismiss: onDismiss);
+    }
+    if (isAnniversary(categoryName)) {
+      return AnniversaryCelebrationOverlay(onDismiss: onDismiss);
+    }
+    return null;
+  }
+}
+
+// class _BirthdayCanvasPainter extends CustomPainter {
+//   final double t;
+//   static final _rng = Random(42); // fixed seed = deterministic
+//   static final _balloonColors = [
+//     const Color(0xFFFF6B9D),
+//     const Color(0xFFFFD93D),
+//     const Color(0xFF6BCB77),
+//     const Color(0xFF4D96FF),
+//     const Color(0xFFFF6B6B),
+//     const Color(0xFFC77DFF),
+//     const Color(0xFFFF9F1C),
+//     const Color(0xFF00D2FF),
+//   ];
+//   static final _confettiColors = [
+//     const Color(0xFFFF6B9D),
+//     const Color(0xFFFFD93D),
+//     const Color(0xFF6BCB77),
+//     const Color(0xFF4D96FF),
+//     Colors.white,
+//     const Color(0xFFFF9F1C),
+//   ];
+
+//   _BirthdayCanvasPainter({required this.t});
+
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     _drawBalloons(canvas, size);
+//     _drawConfetti(canvas, size);
+//   }
+
+//   void _drawBalloons(Canvas canvas, Size size) {
+//     final rng = Random(42);
+//     for (int i = 0; i < 7; i++) {
+//       final xFrac = (i + 1) / 8.0;
+//       final color = _balloonColors[i % _balloonColors.length];
+//       final radius = 22.0 + rng.nextDouble() * 16;
+//       final speed = 0.8 + rng.nextDouble() * 0.8;
+//       final wobbleOffset = rng.nextDouble() * pi * 2;
+//       final delay = i * 0.12;
+//       final stringLen = 30.0 + rng.nextDouble() * 25;
+
+//       final progress = ((t * speed - delay) % 1.0 + 1.0) % 1.0;
+//       final x = xFrac * size.width;
+//       final y =
+//           size.height -
+//           progress * (size.height + radius * 2 + stringLen + 40) +
+//           radius +
+//           stringLen +
+//           20;
+
+//       if (y < -100 || y > size.height + 100) continue;
+
+//       final wobble = sin(t * pi * 2 * 0.8 + wobbleOffset) * 10;
+
+//       canvas.save();
+//       canvas.translate(x + wobble, y);
+
+//       // String
+//       final stringPaint = Paint()
+//         ..color = Colors.white.withOpacity(0.4)
+//         ..strokeWidth = 1.2
+//         ..style = PaintingStyle.stroke;
+//       final path = Path()
+//         ..moveTo(0, radius)
+//         ..quadraticBezierTo(
+//           wobble * 0.5,
+//           radius + stringLen * 0.5,
+//           0,
+//           radius + stringLen,
+//         );
+//       canvas.drawPath(path, stringPaint);
+
+//       // Body
+//       canvas.drawOval(
+//         Rect.fromCenter(
+//           center: Offset.zero,
+//           width: radius * 2,
+//           height: radius * 2.36,
+//         ),
+//         Paint()..color = color,
+//       );
+
+//       // Highlight
+//       canvas.drawOval(
+//         Rect.fromCenter(
+//           center: Offset(-radius * 0.28, -radius * 0.32),
+//           width: radius * 0.46,
+//           height: radius * 0.28,
+//         ),
+//         Paint()..color = Colors.white.withOpacity(0.35),
+//       );
+
+//       // Knot
+//       canvas.drawCircle(Offset(0, radius + 2), 3.5, Paint()..color = color);
+
+//       canvas.restore();
+//     }
+//   }
+
+//   void _drawConfetti(Canvas canvas, Size size) {
+//     final rng = Random(99);
+//     for (int i = 0; i < 60; i++) {
+//       final xFrac = rng.nextDouble();
+//       final yOffset = -rng.nextDouble() * 1.5;
+//       final speedY = 1.5 + rng.nextDouble() * 3.5;
+//       final speedX = (rng.nextDouble() - 0.5) * 2.0;
+//       final w = 6.0 + rng.nextDouble() * 8;
+//       final h = 4.0 + rng.nextDouble() * 6;
+//       final rot0 = rng.nextDouble() * pi * 2;
+//       final rotSpeed = (rng.nextDouble() - 0.5) * 0.15;
+//       final color = _confettiColors[rng.nextInt(_confettiColors.length)];
+//       final delay = rng.nextDouble() * 0.4;
+
+//       final progress = ((t * (speedY / 3.0) - delay) % 1.0 + 1.0) % 1.0;
+//       final x = xFrac * size.width + speedX * progress * size.height * 0.3;
+//       final y = (yOffset + progress) * size.height * 1.1;
+
+//       if (y < -30 || y > size.height + 30) continue;
+
+//       final rot = rot0 + rotSpeed * t * 60;
+
+//       canvas.save();
+//       canvas.translate(x, y);
+//       canvas.rotate(rot);
+//       canvas.drawRect(
+//         Rect.fromCenter(center: Offset.zero, width: w, height: h),
+//         Paint()..color = color.withOpacity(0.85),
+//       );
+//       canvas.restore();
+//     }
+//   }
+
+//   @override
+//   bool shouldRepaint(_BirthdayCanvasPainter old) => old.t != t;
+// }
+
+class _BirthdayCanvasPainter extends CustomPainter {
+  final double t;
+
+  static const _balloonColors = [
+    Color(0xFFFF6B9D),
+    Color(0xFFFFD93D),
+    Color(0xFF6BCB77),
+    Color(0xFF4D96FF),
+    Color(0xFFFF6B6B),
+    Color(0xFFC77DFF),
+    Color(0xFFFF9F1C),
+    Color(0xFF00D2FF),
+  ];
+  static const _confettiColors = [
+    Color(0xFFFF6B9D),
+    Color(0xFFFFD93D),
+    Color(0xFF6BCB77),
+    Color(0xFF4D96FF),
+    Colors.white,
+    Color(0xFFFF9F1C),
+  ];
+
+  _BirthdayCanvasPainter({required this.t});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    _drawConfetti(canvas, size);
+    _drawBalloons(canvas, size);
+  }
+
+  void _drawBalloons(Canvas canvas, Size size) {
+    final rng = Random(42);
+    for (int i = 0; i < 7; i++) {
+      final xFrac = (i + 1) / 8.0;
+      final color = _balloonColors[i % _balloonColors.length];
+      final radius = 22.0 + rng.nextDouble() * 16;
+      final speed = 0.6 + rng.nextDouble() * 0.6;
+      final wobbleOffset = rng.nextDouble() * pi * 2;
+      final delay = i * 0.13;
+      final stringLen = 30.0 + rng.nextDouble() * 25;
+
+      final progress = ((t * speed - delay) % 1.0 + 1.0) % 1.0;
+      final x = xFrac * size.width;
+      final rawY =
+          size.height -
+          progress * (size.height + radius * 2 + stringLen + 60) +
+          radius +
+          stringLen +
+          20;
+
+      if (rawY < -120 || rawY > size.height + 120) continue;
+
+      final wobble = sin(t * pi * 1.6 + wobbleOffset) * 10;
+
+      canvas.save();
+      canvas.translate(x + wobble, rawY);
+
+      // String
+      final stringPath = Path()
+        ..moveTo(0, radius)
+        ..quadraticBezierTo(
+          wobble * 0.5,
+          radius + stringLen * 0.5,
+          0,
+          radius + stringLen,
+        );
+      canvas.drawPath(
+        stringPath,
+        Paint()
+          ..color = Colors.white.withOpacity(0.5)
+          ..strokeWidth = 1.2
+          ..style = PaintingStyle.stroke,
+      );
+
+      // Body
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: radius * 2,
+          height: radius * 2.36,
+        ),
+        Paint()..color = color,
+      );
+
+      // Highlight
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(-radius * 0.28, -radius * 0.32),
+          width: radius * 0.46,
+          height: radius * 0.28,
+        ),
+        Paint()..color = Colors.white.withOpacity(0.38),
+      );
+
+      // Knot
+      canvas.drawCircle(Offset(0, radius + 2), 3.5, Paint()..color = color);
+
+      canvas.restore();
+    }
+  }
+
+  void _drawConfetti(Canvas canvas, Size size) {
+    final rng = Random(99);
+    for (int i = 0; i < 65; i++) {
+      final xFrac = rng.nextDouble();
+      final yOffset = -rng.nextDouble() * 1.5;
+      final speedY = 1.5 + rng.nextDouble() * 3.5;
+      final speedX = (rng.nextDouble() - 0.5) * 2.0;
+      final w = 6.0 + rng.nextDouble() * 8;
+      final h = 4.0 + rng.nextDouble() * 6;
+      final rot0 = rng.nextDouble() * pi * 2;
+      final rotSpeed = (rng.nextDouble() - 0.5) * 0.15;
+      final color = _confettiColors[rng.nextInt(_confettiColors.length)];
+      final delay = rng.nextDouble() * 0.4;
+
+      final progress = ((t * (speedY / 3.0) - delay) % 1.0 + 1.0) % 1.0;
+      final x = xFrac * size.width + speedX * progress * size.height * 0.3;
+      final y = (yOffset + progress) * size.height * 1.1;
+
+      if (y < -30 || y > size.height + 30) continue;
+
+      final rot = rot0 + rotSpeed * t * 60;
+
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.rotate(rot);
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset.zero, width: w, height: h),
+        Paint()..color = color.withOpacity(0.88),
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BirthdayCanvasPainter old) => old.t != t;
+}
+
+class _AnniversaryCanvasPainter extends CustomPainter {
+  final double t;
+
+  static const _petalColors = [
+    Color(0xFFFF4D6D),
+    Color(0xFFFF6B8A),
+    Color(0xFFFF8FAB),
+    Color(0xFFFF3D5A),
+    Color(0xFFD62839),
+    Color(0xFFFF9EB5),
+    Color(0xFFFFB3C1),
+  ];
+  static const _sparkColors = [
+    Color(0xFFFFD700),
+    Color(0xFFFFC0CB),
+    Color(0xFFFF8FAB),
+    Colors.white,
+    Color(0xFFFFD93D),
+  ];
+
+  _AnniversaryCanvasPainter({required this.t});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    _drawStars(canvas, size);
+    _drawPetals(canvas, size);
+    _drawHearts(canvas, size);
+    _drawSparks(canvas, size);
+  }
+
+  void _drawStars(Canvas canvas, Size size) {
+    final rng = Random(7);
+    for (int i = 0; i < 50; i++) {
+      final xFrac = rng.nextDouble();
+      final yFrac = rng.nextDouble() * 0.75;
+      final radius = 0.8 + rng.nextDouble() * 1.8;
+      final twinkleSpeed = 0.02 + rng.nextDouble() * 0.07;
+      final twinkleOffset = rng.nextDouble() * pi * 2;
+
+      final alpha =
+          0.30 + 0.70 * ((sin(t * twinkleSpeed * 60 + twinkleOffset) + 1) / 2);
+      canvas.drawCircle(
+        Offset(xFrac * size.width, yFrac * size.height),
+        radius,
+        Paint()..color = Colors.white.withOpacity(alpha),
+      );
+    }
+  }
+
+  void _drawPetals(Canvas canvas, Size size) {
+    final rng = Random(13);
+    for (int i = 0; i < 55; i++) {
+      final xFrac = rng.nextDouble();
+      final yOffset = -rng.nextDouble() * 2.0;
+      final speedY = 1.2 + rng.nextDouble() * 2.8;
+      final speedX = (rng.nextDouble() - 0.5) * 1.6;
+      final wobbleAmp = 3.0 + rng.nextDouble() * 6;
+      final wobbleSpeed = 0.03 + rng.nextDouble() * 0.05;
+      final wobbleOffset = rng.nextDouble() * pi * 2;
+      final w = 7.0 + rng.nextDouble() * 8;
+      final h = 4.0 + rng.nextDouble() * 5;
+      final rot0 = rng.nextDouble() * pi * 2;
+      final rotSpeed = (rng.nextDouble() - 0.5) * 0.1;
+      final color = _petalColors[rng.nextInt(_petalColors.length)];
+      final delay = rng.nextDouble() * 0.5;
+
+      final progress = ((t * (speedY / 2.8) - delay) % 1.0 + 1.0) % 1.0;
+      final x =
+          xFrac * size.width +
+          speedX * progress * size.height * 0.25 +
+          sin(t * wobbleSpeed * 60 + wobbleOffset) * wobbleAmp;
+      final y = (yOffset + progress) * size.height * 1.1;
+
+      if (y < -30 || y > size.height + 30) continue;
+
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.rotate(rot0 + rotSpeed * t * 60);
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset.zero, width: w, height: h),
+        Paint()..color = color.withOpacity(0.82),
+      );
+      canvas.restore();
+    }
+  }
+
+  void _drawHearts(Canvas canvas, Size size) {
+    final rng = Random(21);
+    for (int i = 0; i < 8; i++) {
+      final xFrac = 0.08 + rng.nextDouble() * 0.84;
+      final heartSize = 8.0 + rng.nextDouble() * 14;
+      final speedY = 0.5 + rng.nextDouble() * 1.4;
+      final speedX = (rng.nextDouble() - 0.5) * 0.8;
+      final wobbleAmp = 4.0 + rng.nextDouble() * 8;
+      final wobbleSpeed = 0.025 + rng.nextDouble() * 0.04;
+      final wobbleOffset = rng.nextDouble() * pi * 2;
+      final color = _petalColors[rng.nextInt(_petalColors.length)];
+      final delay = rng.nextDouble() * 0.4;
+
+      final progress = ((t * speedY - delay) % 1.0 + 1.0) % 1.0;
+      final x =
+          xFrac * size.width +
+          speedX * progress * size.height * 0.2 +
+          sin(t * wobbleSpeed * 60 + wobbleOffset) * wobbleAmp;
+      final y = size.height - progress * (size.height * 1.15);
+
+      if (y < -40 || y > size.height + 40) continue;
+
+      final alpha = (1.0 - progress * 0.6).clamp(0.0, 1.0);
+      _drawHeart(canvas, Offset(x, y), heartSize, color.withOpacity(alpha));
+    }
+  }
+
+  void _drawSparks(Canvas canvas, Size size) {
+    final rng = Random(37);
+    // Static shimmer sparks (not burst-based — deterministic from t)
+    for (int i = 0; i < 30; i++) {
+      final xFrac = rng.nextDouble();
+      final yFrac = 0.1 + rng.nextDouble() * 0.8;
+      final baseRadius = 1.0 + rng.nextDouble() * 3;
+      final color = _sparkColors[rng.nextInt(_sparkColors.length)];
+      final phase = rng.nextDouble() * pi * 2;
+      final speed = 0.04 + rng.nextDouble() * 0.08;
+
+      final alpha = ((sin(t * speed * 60 + phase) + 1) / 2) * 0.8;
+      if (alpha < 0.05) continue;
+
+      canvas.drawCircle(
+        Offset(xFrac * size.width, yFrac * size.height),
+        baseRadius * alpha,
+        Paint()..color = color.withOpacity(alpha),
+      );
+    }
+  }
+
+  void _drawHeart(Canvas canvas, Offset center, double r, Color color) {
+    final path = Path();
+    final x = center.dx, y = center.dy;
+    path.moveTo(x, y);
+    path.cubicTo(x + r, y - r * 1.1, x + r * 2, y + r * 0.4, x, y + r * 1.4);
+    path.cubicTo(x - r * 2, y + r * 0.4, x - r, y - r * 1.1, x, y);
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_AnniversaryCanvasPainter old) => old.t != t;
+}
+
+class _BirthdayPopPainter extends CustomPainter {
+  final double t;
+
+  static const _colors = [
+    Color(0xFFFF6B9D),
+    Color(0xFFFFD93D),
+    Color(0xFF6BCB77),
+    Color(0xFF4D96FF),
+    Color(0xFFFF6B6B),
+    Color(0xFFC77DFF),
+    Color(0xFFFF9F1C),
+    Color(0xFF00D2FF),
+    Color(0xFFFF4E91),
+    Color(0xFFFFEB3B),
+  ];
+
+  _BirthdayPopPainter({required this.t});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    _drawStreamers(canvas, size);
+    _drawStars(canvas, size);
+    _drawBurst(canvas, size);
+    _drawConfettiRings(canvas, size);
+  }
+
+  void _drawStreamers(Canvas canvas, Size size) {
+    final rng = Random(55);
+    for (int i = 0; i < 10; i++) {
+      final color = _colors[i % _colors.length];
+      final xStart = rng.nextDouble() * size.width;
+      final phase = rng.nextDouble() * pi * 2;
+      final amp = 15 + rng.nextDouble() * 25;
+      final freq = 2 + rng.nextDouble() * 3;
+      final speed = 0.4 + rng.nextDouble() * 0.6;
+      final delay = rng.nextDouble() * 0.5;
+      final progress = ((t * speed - delay) % 1.0 + 1.0) % 1.0;
+
+      final path = Path();
+      final yEnd = progress * size.height * 1.1;
+      final yStart = yEnd - 120;
+
+      if (yStart > size.height || yEnd < 0) continue;
+
+      path.moveTo(xStart, yStart);
+      int segments = 20;
+      for (int s = 1; s <= segments; s++) {
+        final frac = s / segments.toDouble();
+        final y = yStart + (yEnd - yStart) * frac;
+        final x = xStart + sin(frac * freq * pi + phase + t * 3) * amp;
+        path.lineTo(x, y);
+      }
+
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color.withOpacity(0.75)
+          ..strokeWidth = 2.5
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+  }
+
+  void _drawStars(Canvas canvas, Size size) {
+    final rng = Random(77);
+    for (int i = 0; i < 18; i++) {
+      final color = _colors[rng.nextInt(_colors.length)];
+      final xFrac = rng.nextDouble();
+      final speedY = 0.8 + rng.nextDouble() * 1.8;
+      final delay = rng.nextDouble() * 0.5;
+      final starSize = 6.0 + rng.nextDouble() * 10;
+      final rot0 = rng.nextDouble() * pi;
+      final progress = ((t * speedY - delay) % 1.0 + 1.0) % 1.0;
+      final x = xFrac * size.width + sin(progress * pi * 2.5) * 20;
+      final y = -20 + progress * (size.height + 40);
+      if (y < -30 || y > size.height + 30) continue;
+
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.rotate(rot0 + t * 2);
+      _drawStar(canvas, Offset.zero, starSize, color.withOpacity(0.9));
+      canvas.restore();
+    }
+  }
+
+  void _drawBurst(Canvas canvas, Size size) {
+    final rng = Random(33);
+    final numBursts = 3;
+    for (int b = 0; b < numBursts; b++) {
+      final burstProgress = ((t * 0.7 + b * 0.33) % 1.0);
+      if (burstProgress < 0.05 || burstProgress > 0.85) continue;
+
+      final cx = (0.2 + b * 0.3) * size.width;
+      final cy = (0.15 + rng.nextDouble() * 0.3) * size.height;
+      final maxRadius = 30.0 + rng.nextDouble() * 40;
+      final radius = burstProgress * maxRadius;
+      final alpha = (1.0 - burstProgress) * 0.8;
+
+      for (int ray = 0; ray < 8; ray++) {
+        final angle = (ray / 8.0) * pi * 2 + t * 0.5;
+        final color = _colors[(b * 4 + ray) % _colors.length];
+        final x1 = cx + cos(angle) * radius * 0.3;
+        final y1 = cy + sin(angle) * radius * 0.3;
+        final x2 = cx + cos(angle) * radius;
+        final y2 = cy + sin(angle) * radius;
+        canvas.drawLine(
+          Offset(x1, y1),
+          Offset(x2, y2),
+          Paint()
+            ..color = color.withOpacity(alpha)
+            ..strokeWidth = 2.5
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+
+      canvas.drawCircle(
+        Offset(cx, cy),
+        radius * 0.25,
+        Paint()
+          ..color = Colors.white.withOpacity(alpha * 0.7)
+          ..style = PaintingStyle.fill,
+      );
+    }
+  }
+
+  void _drawConfettiRings(Canvas canvas, Size size) {
+    final rng = Random(91);
+    for (int i = 0; i < 25; i++) {
+      final color = _colors[rng.nextInt(_colors.length)];
+      final xFrac = rng.nextDouble();
+      final speedY = 1.2 + rng.nextDouble() * 2.5;
+      final delay = rng.nextDouble() * 0.4;
+      final radius = 3.0 + rng.nextDouble() * 6;
+      final progress = ((t * speedY - delay) % 1.0 + 1.0) % 1.0;
+      final x = xFrac * size.width + sin(progress * pi * 3) * 18;
+      final y = -10 + progress * (size.height + 20);
+      if (y < -20 || y > size.height + 20) continue;
+
+      final useRing = rng.nextBool();
+      if (useRing) {
+        canvas.drawCircle(
+          Offset(x, y),
+          radius,
+          Paint()
+            ..color = color.withOpacity(0.9)
+            ..strokeWidth = 2
+            ..style = PaintingStyle.stroke,
+        );
+      } else {
+        canvas.drawCircle(
+          Offset(x, y),
+          radius,
+          Paint()..color = color.withOpacity(0.85),
+        );
+      }
+    }
+  }
+
+  void _drawStar(Canvas canvas, Offset center, double size, Color color) {
+    final path = Path();
+    const numPoints = 5;
+    final outerR = size;
+    final innerR = size * 0.42;
+    for (int i = 0; i < numPoints * 2; i++) {
+      final angle = (i * pi / numPoints) - pi / 2;
+      final r = i.isEven ? outerR : innerR;
+      final x = center.dx + cos(angle) * r;
+      final y = center.dy + sin(angle) * r;
+      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
+    }
+    path.close();
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_BirthdayPopPainter old) => old.t != t;
+}
+
+class _BirthdayFireworkPainter extends CustomPainter {
+  final double t;
+
+  static const _colors = [
+    Color(0xFFFF6B9D),
+    Color(0xFFFFD93D),
+    Color(0xFF6BCB77),
+    Color(0xFF4D96FF),
+    Color(0xFFFF6B6B),
+    Color(0xFFC77DFF),
+    Color(0xFFFF9F1C),
+    Color(0xFF00D2FF),
+    Colors.white,
+    Color(0xFFFF4E91),
+  ];
+
+  _BirthdayFireworkPainter({required this.t});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    _drawTrails(canvas, size);
+    _drawExplosions(canvas, size);
+    _drawSparkles(canvas, size);
+  }
+
+  void _drawTrails(Canvas canvas, Size size) {
+    final rng = Random(11);
+    final numFireworks = 5;
+    for (int f = 0; f < numFireworks; f++) {
+      final cycleOffset = f / numFireworks.toDouble();
+      final progress = ((t * 0.8 + cycleOffset) % 1.0);
+      if (progress > 0.45) continue;
+
+      final burstX = (0.1 + rng.nextDouble() * 0.8) * size.width;
+      final burstY = (0.1 + rng.nextDouble() * 0.45) * size.height;
+      final launchY = size.height * 1.05;
+      final color = _colors[f % _colors.length];
+      final trailProgress = (progress / 0.45).clamp(0.0, 1.0);
+
+      final currentY = launchY - (launchY - burstY) * trailProgress;
+      final alpha = (0.6 - trailProgress * 0.5).clamp(0.0, 1.0);
+
+      // Glowing trail
+      for (double w in [6.0, 3.5, 1.5]) {
+        canvas.drawLine(
+          Offset(burstX, launchY),
+          Offset(burstX + sin(trailProgress * pi) * 15, currentY),
+          Paint()
+            ..color = color.withOpacity(alpha * (w == 1.5 ? 1.0 : 0.3))
+            ..strokeWidth = w
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+    }
+  }
+
+  void _drawExplosions(Canvas canvas, Size size) {
+    final rng = Random(22);
+    final numFireworks = 5;
+    for (int f = 0; f < numFireworks; f++) {
+      final cycleOffset = f / numFireworks.toDouble();
+      final progress = ((t * 0.8 + cycleOffset) % 1.0);
+      if (progress < 0.45 || progress > 0.95) continue;
+
+      final burstX = (0.1 + rng.nextDouble() * 0.8) * size.width;
+      final burstY = (0.1 + rng.nextDouble() * 0.45) * size.height;
+      final color = _colors[f % _colors.length];
+      final expProgress = ((progress - 0.45) / 0.5).clamp(0.0, 1.0);
+      final maxRadius = 55.0 + rng.nextDouble() * 45;
+      final alpha = (1.0 - expProgress) * 0.9;
+
+      const numRays = 16;
+      for (int ray = 0; ray < numRays; ray++) {
+        final angle = (ray / numRays.toDouble()) * pi * 2;
+        final rayColor = (ray % 2 == 0)
+            ? color
+            : _colors[(f + ray) % _colors.length];
+        final innerR = expProgress * maxRadius * 0.15;
+        final outerR = expProgress * maxRadius;
+        final fadeR = outerR * (1.0 - expProgress * 0.3);
+
+        canvas.drawLine(
+          Offset(burstX + cos(angle) * innerR, burstY + sin(angle) * innerR),
+          Offset(burstX + cos(angle) * fadeR, burstY + sin(angle) * fadeR),
+          Paint()
+            ..color = rayColor.withOpacity(alpha)
+            ..strokeWidth = 2.2
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+
+      // Secondary smaller burst ring
+      if (expProgress > 0.2) {
+        final secAlpha = (1.0 - expProgress) * 0.6;
+        const numSecRays = 10;
+        for (int sr = 0; sr < numSecRays; sr++) {
+          final angle = (sr / numSecRays.toDouble()) * pi * 2 + pi / numSecRays;
+          final secRadius = expProgress * maxRadius * 0.55;
+          canvas.drawLine(
+            Offset(
+              burstX + cos(angle) * secRadius * 0.3,
+              burstY + sin(angle) * secRadius * 0.3,
+            ),
+            Offset(
+              burstX + cos(angle) * secRadius,
+              burstY + sin(angle) * secRadius,
+            ),
+            Paint()
+              ..color = Colors.white.withOpacity(secAlpha)
+              ..strokeWidth = 1.5
+              ..strokeCap = StrokeCap.round,
+          );
+        }
+      }
+
+      // Bright core flash
+      final coreAlpha = ((0.35 - expProgress) * 3).clamp(0.0, 1.0);
+      if (coreAlpha > 0) {
+        canvas.drawCircle(
+          Offset(burstX, burstY),
+          8 * coreAlpha,
+          Paint()..color = Colors.white.withOpacity(coreAlpha * 0.9),
+        );
+      }
+    }
+  }
+
+  void _drawSparkles(Canvas canvas, Size size) {
+    final rng = Random(44);
+    for (int i = 0; i < 35; i++) {
+      final color = _colors[rng.nextInt(_colors.length)];
+      final xFrac = rng.nextDouble();
+      final yFrac = rng.nextDouble();
+      final twinkleSpeed = 0.03 + rng.nextDouble() * 0.09;
+      final twinkleOffset = rng.nextDouble() * pi * 2;
+      final radius = 1.5 + rng.nextDouble() * 3;
+      final alpha =
+          0.2 + 0.8 * ((sin(t * twinkleSpeed * 60 + twinkleOffset) + 1) / 2);
+
+      canvas.drawCircle(
+        Offset(xFrac * size.width, yFrac * size.height),
+        radius * alpha,
+        Paint()..color = color.withOpacity(alpha * 0.85),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BirthdayFireworkPainter old) => old.t != t;
+}
+
+class _AnniversaryFloatPainter extends CustomPainter {
+  final double t;
+
+  static const _heartColors = [
+    Color(0xFFFF4D6D),
+    Color(0xFFFF6B8A),
+    Color(0xFFFF8FAB),
+    Color(0xFFFF3D5A),
+    Color(0xFFD62839),
+    Color(0xFFFF9EB5),
+    Color(0xFFFFB3C1),
+    Color(0xFFC9184A),
+  ];
+  static const _petalColors = [
+    Color(0xFFFF4D6D),
+    Color(0xFFFF8FAB),
+    Color(0xFFF72585),
+    Color(0xFF7209B7),
+    Color(0xFF3A0CA3),
+    Color(0xFF4361EE),
+    Color(0xFF4CC9F0),
+  ];
+
+  _AnniversaryFloatPainter({required this.t});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    _drawFloatingBubbles(canvas, size);
+    _drawRisingHearts(canvas, size);
+    _drawRibbons(canvas, size);
+    _drawGoldSparkles(canvas, size);
+  }
+
+  void _drawFloatingBubbles(Canvas canvas, Size size) {
+    final rng = Random(15);
+    for (int i = 0; i < 20; i++) {
+      final xFrac = rng.nextDouble();
+      final speedY = 0.4 + rng.nextDouble() * 0.9;
+      final delay = rng.nextDouble() * 0.6;
+      final radius = 4.0 + rng.nextDouble() * 14;
+      final wobbleAmp = 6.0 + rng.nextDouble() * 14;
+      final wobbleFreq = 0.02 + rng.nextDouble() * 0.04;
+      final wobbleOffset = rng.nextDouble() * pi * 2;
+      final progress = ((t * speedY - delay) % 1.0 + 1.0) % 1.0;
+      final x =
+          xFrac * size.width +
+          sin(t * wobbleFreq * 60 + wobbleOffset) * wobbleAmp;
+      final y = size.height * (1.05 - progress * 1.15);
+      if (y < -20 || y > size.height + 20) continue;
+
+      final alpha = (1.0 - progress * 0.5).clamp(0.3, 1.0);
+
+      // Bubble ring
+      canvas.drawCircle(
+        Offset(x, y),
+        radius,
+        Paint()
+          ..color = Colors.white.withOpacity(alpha * 0.25)
+          ..strokeWidth = 1.2
+          ..style = PaintingStyle.stroke,
+      );
+      // Bubble fill
+      canvas.drawCircle(
+        Offset(x, y),
+        radius,
+        Paint()..color = Colors.white.withOpacity(alpha * 0.08),
+      );
+      // Highlight
+      canvas.drawCircle(
+        Offset(x - radius * 0.3, y - radius * 0.3),
+        radius * 0.22,
+        Paint()..color = Colors.white.withOpacity(alpha * 0.45),
+      );
+    }
+  }
+
+  void _drawRisingHearts(Canvas canvas, Size size) {
+    final rng = Random(88);
+    for (int i = 0; i < 12; i++) {
+      final color = _heartColors[i % _heartColors.length];
+      final xFrac = 0.05 + rng.nextDouble() * 0.9;
+      final speedY = 0.5 + rng.nextDouble() * 1.1;
+      final delay = rng.nextDouble() * 0.55;
+      final heartSize = 7.0 + rng.nextDouble() * 18;
+      final wobbleAmp = 8.0 + rng.nextDouble() * 16;
+      final wobbleOffset = rng.nextDouble() * pi * 2;
+      final progress = ((t * speedY - delay) % 1.0 + 1.0) % 1.0;
+      final x =
+          xFrac * size.width +
+          sin(progress * pi * 2.2 + wobbleOffset) * wobbleAmp;
+      final y = size.height * (1.05 - progress * 1.15);
+      if (y < -40 || y > size.height + 40) continue;
+
+      final alpha = (1.0 - progress * 0.55).clamp(0.0, 1.0);
+      canvas.save();
+      canvas.translate(x, y);
+      final pulseFactor = 1.0 + 0.1 * sin(t * 4 * pi + i);
+      canvas.scale(pulseFactor, pulseFactor);
+      _drawHeart(canvas, heartSize, color.withOpacity(alpha));
+      canvas.restore();
+    }
+  }
+
+  void _drawRibbons(Canvas canvas, Size size) {
+    final rng = Random(66);
+    for (int i = 0; i < 6; i++) {
+      final color = _petalColors[i % _petalColors.length];
+      final xStart = rng.nextDouble() * size.width;
+      final speed = 0.35 + rng.nextDouble() * 0.55;
+      final delay = rng.nextDouble() * 0.5;
+      final amp1 = 20 + rng.nextDouble() * 30;
+      final amp2 = 15 + rng.nextDouble() * 25;
+      final progress = ((t * speed - delay) % 1.0 + 1.0) % 1.0;
+      final yEnd = size.height * (1.05 - progress * 1.15);
+      final yStart = yEnd + 90;
+
+      if (yStart < 0 || yEnd > size.height + 10) continue;
+
+      final path = Path()..moveTo(xStart, yStart);
+      const steps = 18;
+      for (int s = 1; s <= steps; s++) {
+        final frac = s / steps.toDouble();
+        final y = yStart + (yEnd - yStart) * frac;
+        final x =
+            xStart +
+            sin(frac * pi * 2.5 + t * 2) * amp1 +
+            cos(frac * pi * 1.8 + t * 1.5) * amp2;
+        path.lineTo(x, y);
+      }
+
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color.withOpacity(0.6)
+          ..strokeWidth = 2.0
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+  }
+
+  void _drawGoldSparkles(Canvas canvas, Size size) {
+    final rng = Random(123);
+    const goldColor = Color(0xFFFFD700);
+    const silverColor = Color(0xFFE8E8FF);
+    for (int i = 0; i < 40; i++) {
+      final isGold = rng.nextBool();
+      final color = isGold ? goldColor : silverColor;
+      final xFrac = rng.nextDouble();
+      final yFrac = rng.nextDouble();
+      final twinkle = sin(
+        t * (0.03 + rng.nextDouble() * 0.07) * 60 + rng.nextDouble() * pi * 2,
+      );
+      final alpha = 0.15 + 0.85 * ((twinkle + 1) / 2);
+      final radius = (0.8 + rng.nextDouble() * 2.5) * alpha;
+
+      canvas.drawCircle(
+        Offset(xFrac * size.width, yFrac * size.height),
+        radius,
+        Paint()..color = color.withOpacity(alpha * 0.9),
+      );
+
+      if (radius > 1.8) {
+        // Draw a tiny 4-pointed star
+        final starPath = Path();
+        const arms = [0.0, pi / 2, pi, 3 * pi / 2];
+        for (int a = 0; a < arms.length; a++) {
+          final angle = arms[a];
+          final px = xFrac * size.width + cos(angle) * radius * 2.2;
+          final py = yFrac * size.height + sin(angle) * radius * 2.2;
+          a == 0 ? starPath.moveTo(px, py) : starPath.lineTo(px, py);
+        }
+        canvas.drawPath(
+          starPath,
+          Paint()
+            ..color = color.withOpacity(alpha * 0.5)
+            ..strokeWidth = 0.8
+            ..style = PaintingStyle.stroke,
+        );
+      }
+    }
+  }
+
+  void _drawHeart(Canvas canvas, double size, Color color) {
+    final path = Path();
+    path.moveTo(0, 0);
+    path.cubicTo(size, -size * 1.1, size * 2, size * 0.4, 0, size * 1.4);
+    path.cubicTo(-size * 2, size * 0.4, -size, -size * 1.1, 0, 0);
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_AnniversaryFloatPainter old) => old.t != t;
+}
+
+class _AnniversaryPulsePainter extends CustomPainter {
+  final double t;
+
+  static const _heartColors = [
+    Color(0xFFFF4D6D),
+    Color(0xFFFF6B8A),
+    Color(0xFFFF3D5A),
+    Color(0xFFC9184A),
+    Color(0xFFFF8FAB),
+  ];
+  static const _ringColors = [
+    Color(0xFFFFD700),
+    Color(0xFFFF4D6D),
+    Color(0xFFFF8FAB),
+    Color(0xFFFFC0CB),
+    Colors.white,
+  ];
+
+  _AnniversaryPulsePainter({required this.t});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    _drawPulseRings(canvas, size);
+    _drawOrbitingHearts(canvas, size);
+    _drawCenterPulse(canvas, size);
+    _drawFloatingPetals(canvas, size);
+  }
+
+  void _drawPulseRings(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    for (int wave = 0; wave < 4; wave++) {
+      final waveProgress = ((t * 0.6 + wave * 0.25) % 1.0);
+      final maxRadius = size.width * 0.5;
+      final radius = waveProgress * maxRadius;
+      final alpha = (1.0 - waveProgress) * 0.5;
+      final color = _ringColors[wave % _ringColors.length];
+
+      canvas.drawCircle(
+        Offset(cx, cy),
+        radius,
+        Paint()
+          ..color = color.withOpacity(alpha)
+          ..strokeWidth = 2.5 * (1.0 - waveProgress)
+          ..style = PaintingStyle.stroke,
+      );
+    }
+  }
+
+  void _drawOrbitingHearts(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    const numHearts = 6;
+    for (int i = 0; i < numHearts; i++) {
+      final angle = (i / numHearts.toDouble()) * pi * 2 + t * 0.8;
+      final orbitRadius = size.width * 0.3 + sin(t * 2 + i) * 12;
+      final x = cx + cos(angle) * orbitRadius;
+      final y = cy + sin(angle) * orbitRadius * 0.55; // elliptical orbit
+      final heartSize = 7.0 + 4 * sin(t * 3 + i * 1.1);
+      final color = _heartColors[i % _heartColors.length];
+
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.rotate(angle + pi / 2); // point heart inward
+      _drawHeart(canvas, heartSize, color.withOpacity(0.88));
+      canvas.restore();
+    }
+  }
+
+  void _drawCenterPulse(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final beatPhase = sin(t * pi * 2.5);
+    final scale = 1.0 + 0.18 * beatPhase.abs();
+
+    // Glow rings
+    for (int g = 3; g >= 1; g--) {
+      canvas.drawCircle(
+        Offset(cx, cy),
+        22.0 * scale * g * 0.5,
+        Paint()
+          ..color = const Color(0xFFFF4D6D).withOpacity(0.08 / g)
+          ..style = PaintingStyle.fill,
+      );
+    }
+
+    canvas.save();
+    canvas.translate(cx, cy);
+    canvas.scale(scale, scale);
+    _drawHeart(canvas, 18.0, const Color(0xFFFF4D6D).withOpacity(0.95));
+    // Inner highlight
+    _drawHeart(canvas, 11.0, Colors.white.withOpacity(0.3));
+    canvas.restore();
+  }
+
+  void _drawFloatingPetals(Canvas canvas, Size size) {
+    final rng = Random(77);
+    for (int i = 0; i < 30; i++) {
+      final color = _heartColors[rng.nextInt(_heartColors.length)];
+      final xFrac = rng.nextDouble();
+      final yFrac = rng.nextDouble();
+      final speedX = (rng.nextDouble() - 0.5) * 0.015;
+      final speedY = -(0.005 + rng.nextDouble() * 0.012);
+      final wobbleAmp = 8.0 + rng.nextDouble() * 15;
+      final wobbleOffset = rng.nextDouble() * pi * 2;
+      final petalSize = 3.0 + rng.nextDouble() * 7;
+      final delay = rng.nextDouble();
+
+      final x =
+          ((xFrac + speedX * t * 60 + delay) % 1.0) * size.width +
+          sin(t * 1.2 + wobbleOffset) * wobbleAmp;
+      final y = ((yFrac + speedY * t * 60 + delay) % 1.0) * size.height;
+
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.rotate(t * 0.8 + rng.nextDouble() * pi * 2);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: petalSize * 1.6,
+          height: petalSize,
+        ),
+        Paint()..color = color.withOpacity(0.6),
+      );
+      canvas.restore();
+    }
+  }
+
+  void _drawHeart(Canvas canvas, double size, Color color) {
+    final path = Path();
+    path.moveTo(0, 0);
+    path.cubicTo(size, -size * 1.1, size * 2, size * 0.4, 0, size * 1.4);
+    path.cubicTo(-size * 2, size * 0.4, -size, -size * 1.1, 0, 0);
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_AnniversaryPulsePainter old) => old.t != t;
 }

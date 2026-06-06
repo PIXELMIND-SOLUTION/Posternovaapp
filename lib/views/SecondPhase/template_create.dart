@@ -505,6 +505,11 @@ class _TemplateCreateState extends State<TemplateCreate>
 
   Color _bgColor = const Color(0xFFF5F0E8);
 
+
+
+  Color _bgSolidColor = Colors.white;
+bool _useSolidBg = false;
+
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isAudioPlaying = false;
 
@@ -3491,28 +3496,49 @@ class _TemplateCreateState extends State<TemplateCreate>
         height: double.infinity,
         gaplessPlayback: true,
       );
-    } else {
-      base = Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: isDarkMode ? Colors.black.withOpacity(0.25) : Colors.white,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Icon(
-              //   Icons.add_photo_alternate_outlined,
-              //   size: 48,
-              //   color: isDarkMode
-              //       ? Colors.white.withOpacity(0.3)
-              //       : Colors.black.withOpacity(0.2),
-              // ),
-              const SizedBox(height: 10),
-            ],
-          ),
-        ),
-      );
+
+
+
     }
+
+    else {
+  base = Container(
+    width: double.infinity,
+    height: double.infinity,
+    color: _useSolidBg ? _bgSolidColor : (isDarkMode ? Colors.black.withOpacity(0.25) : Colors.white),
+    child: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 10),
+        ],
+      ),
+    ),
+  );
+}
+    // } else {
+    //   base = Container(
+    //     width: double.infinity,
+    //     height: double.infinity,
+    //     color: isDarkMode ? Colors.black.withOpacity(0.25) : Colors.white,
+    //     child: Center(
+    //       child: Column(
+    //         mainAxisSize: MainAxisSize.min,
+    //         children: [
+    //           // Icon(
+    //           //   Icons.add_photo_alternate_outlined,
+    //           //   size: 48,
+    //           //   color: isDarkMode
+    //           //       ? Colors.white.withOpacity(0.3)
+    //           //       : Colors.black.withOpacity(0.2),
+    //           // ),
+    //           const SizedBox(height: 10),
+    //         ],
+    //       ),
+    //     ),
+    //   );
+    // }
+    
 
     // Apply all effects using the new method
     base = _applyEffect(base, _selectedEffect, _effectStrength);
@@ -11354,6 +11380,27 @@ class _TemplateCreateState extends State<TemplateCreate>
                     ),
                   ),
                 ),
+
+
+                const SizedBox(width: 6),
+GestureDetector(
+  onTap: _showBgColorPickerSheet,
+  child: Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      color: _useSolidBg ? _bgSolidColor : Colors.grey.shade400,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.white, width: 1.5),
+    ),
+    child: const Row(
+      children: [
+        Icon(Icons.color_lens, size: 14, color: Colors.white),
+        SizedBox(width: 4),
+        Text('BG Color', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+      ],
+    ),
+  ),
+),
               ],
             ),
           ),
@@ -11395,6 +11442,155 @@ class _TemplateCreateState extends State<TemplateCreate>
       ),
     );
   }
+
+
+
+  void _showBgColorPickerSheet() {
+  final isDarkMode = _isDarkMode;
+  final List<Color> quickColors = [
+    Colors.white, Colors.black, const Color(0xFF1A1A2E),
+    const Color(0xFF16213E), const Color(0xFF0F3460),
+    Colors.red.shade700, Colors.orange, Colors.yellow.shade700,
+    Colors.green.shade700, Colors.teal, Colors.blue.shade700,
+    Colors.purple.shade700, Colors.pink.shade400,
+    const Color(0xFFD4AF37), Colors.brown.shade600, Colors.grey.shade700,
+  ];
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) {
+      Color tempColor = _useSolidBg ? _bgSolidColor : Colors.white;
+      return StatefulBuilder(
+        builder: (ctx, setSheet) => Container(
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[700] : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(children: [
+                  const Icon(Icons.color_lens, color: Color(0xFFF5C518), size: 22),
+                  const SizedBox(width: 10),
+                  Text('Background Color',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black87)),
+                  const Spacer(),
+                  // Remove BG color toggle
+                  if (_useSolidBg)
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _useSolidBg = false);
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                    ),
+                ]),
+                const SizedBox(height: 16),
+                // Quick color grid
+                Wrap(
+                  spacing: 10, runSpacing: 10,
+                  children: quickColors.map((c) {
+                    final isSelected = tempColor == c;
+                    return GestureDetector(
+                      onTap: () => setSheet(() => tempColor = c),
+                      child: Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          color: c, shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? const Color(0xFFF5C518) : Colors.grey.shade400,
+                            width: isSelected ? 3 : 1.5,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+                // Full color picker
+                SizedBox(
+                  height: 300,
+                  child: ColorPicker(
+                    pickerColor: tempColor,
+                    onColorChanged: (c) => setSheet(() => tempColor = c),
+                    showLabel: false,
+                    pickerAreaHeightPercent: 0.7,
+                    enableAlpha: false,
+                    paletteType: PaletteType.hsv,
+                    portraitOnly: true,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Preview
+                // Container(
+                //   width: double.infinity, height: 50,
+                //   decoration: BoxDecoration(
+                //     color: tempColor,
+                //     borderRadius: BorderRadius.circular(10),
+                //     border: Border.all(color: Colors.grey.shade400),
+                //   ),
+                //   child: Center(
+                //     child: Text('Preview',
+                //       style: TextStyle(
+                //         color: tempColor.computeLuminance() > 0.5 ? Colors.black54 : Colors.white70,
+                //         fontSize: 13,
+                //       ),
+                //     ),
+                //   ),
+                // ),
+                const SizedBox(height: 16),
+                Row(children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _bgSolidColor = tempColor;
+                          _useSolidBg = true;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF5C518),
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
 
   void _showAddBrandElementSheet() {
     showModalBottomSheet(

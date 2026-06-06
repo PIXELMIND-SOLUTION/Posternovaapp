@@ -931,10 +931,38 @@ class _ReferEarnScreenState extends State<ReferEarnScreen> {
   //     }
   //   }
 
-  void shareReferralCode() {
-    if (referralCode != null && referralCode!.isNotEmpty) {
-      final shareText =
-          '''
+//   void shareReferralCode() {
+//     if (referralCode != null && referralCode!.isNotEmpty) {
+//       final shareText =
+//           '''
+// 🎉 Invite Your Friends to Edit Ezy & Earn Rewards!
+
+// Use my referral code: *$referralCode*
+
+// 💰 Earn ₹200 for every successful referral!
+
+// How it works:
+// ✅ Share your referral code with friends
+// ✅ Your friend subscribes to any Edit Ezy plan
+// ✅ You receive ₹200 reward instantly
+
+// 🚀 Start referring today and earn more with every subscription!
+
+// Download Edit Ezy now:
+// https://play.google.com/store/apps/details?id=com.posternova.posternova
+
+// Don't miss out! 🎨✨
+// ''';
+
+//       Share.share(shareText, subject: 'Join Edit Ezy using my referral code');
+//     }
+//   }
+
+
+
+void shareReferralCode() {
+  if (referralCode != null && referralCode!.isNotEmpty) {
+    final shareText = '''
 🎉 Invite Your Friends to Edit Ezy & Earn Rewards!
 
 Use my referral code: *$referralCode*
@@ -948,15 +976,23 @@ How it works:
 
 🚀 Start referring today and earn more with every subscription!
 
-Download Edit Ezy now:
+📱 Download Edit Ezy now:
+
+🤖 Android:
 https://play.google.com/store/apps/details?id=com.posternova.posternova
+
+🍎 iPhone (iOS):
+https://apps.apple.com/in/app/edit-ezy-poster/id6753908761
 
 Don't miss out! 🎨✨
 ''';
 
-      Share.share(shareText, subject: 'Join Edit Ezy using my referral code');
-    }
+    Share.share(
+      shareText,
+      subject: 'Join Edit Ezy using my referral code',
+    );
   }
+}
 
   void showShareOptions() {
     if (referralCode == 'Loading...' ||
